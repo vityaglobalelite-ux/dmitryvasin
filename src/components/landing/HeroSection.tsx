@@ -77,21 +77,29 @@ export function HeroSection() {
               <svg
                 aria-hidden
                 viewBox="0 0 136 76"
-                className="pointer-events-none absolute left-[170px] top-[-22px] hidden h-[64px] w-[116px] text-white/70 sm:block"
+                className="pointer-events-none absolute left-[170px] top-[-22px] hidden h-[64px] w-[116px] text-white opacity-50 sm:block"
                 fill="none"
               >
+                <defs>
+                  <marker
+                    id="hero-cta-arrowhead"
+                    viewBox="0 0 10 10"
+                    refX="9"
+                    refY="5"
+                    markerWidth="10"
+                    markerHeight="10"
+                    orient="auto"
+                    markerUnits="userSpaceOnUse"
+                  >
+                    <path d="M0 1 L9 5 L0 9 Z" fill="currentColor" />
+                  </marker>
+                </defs>
                 <path
-                  d="M128 28C98 -6 49 2 34 54"
+                  d="M128 28C98 -6 49 2 38 52"
                   stroke="currentColor"
                   strokeWidth="2.5"
                   strokeLinecap="round"
-                />
-                <path
-                  d="M34 54L36 39M34 54L49 50"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
+                  markerEnd="url(#hero-cta-arrowhead)"
                 />
               </svg>
 
