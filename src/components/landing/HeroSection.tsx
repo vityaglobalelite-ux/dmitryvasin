@@ -27,6 +27,8 @@ function HeroStar() {
 }
 
 const ACHIEVEMENTS_TRANSITION_MS = 500;
+/** Portrait lift in px (photo + aligned left blocks 2–3; block 1 top stays fixed). */
+const HERO_PHOTO_LIFT_PX = 31;
 
 function HeroNav() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -433,7 +435,7 @@ export function HeroSection() {
               <HeroStickyTitle />
             </div>
 
-            <div className="md:absolute md:inset-x-0 md:top-[46%] md:-translate-y-1/2">
+            <div className="md:absolute md:inset-x-0 md:top-[46%] md:-translate-y-[calc(50%+31px)]">
               <p className="whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
                 Аргентинское танго простым и доступным языком
               </p>
@@ -450,7 +452,9 @@ export function HeroSection() {
               </ul>
             </div>
 
-            <div className="max-md:relative md:absolute md:inset-x-0 md:bottom-[20%]">
+            <div
+              className="max-md:relative md:absolute md:inset-x-0 md:bottom-[20%] md:-translate-y-[31px]"
+            >
               <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 sm:pt-6 md:mt-0 md:pt-0">
                 <Link
                   href="#laifhack"
@@ -502,7 +506,7 @@ export function HeroSection() {
 
           <div
             ref={photoColumnRef}
-            className={`relative mx-auto flex h-full w-full max-w-[540px] -translate-y-10 flex-col overflow-visible md:max-w-[580px] md:-translate-y-16 lg:max-w-[620px] ${
+            className={`relative mx-auto -mb-[31px] flex h-full w-full max-w-[540px] -translate-y-[71px] flex-col overflow-visible md:max-w-[580px] md:-translate-y-[95px] lg:max-w-[620px] ${
               isOverlayElevated ? "z-50" : "z-10"
             }`}
           >
