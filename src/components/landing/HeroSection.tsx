@@ -503,7 +503,7 @@ export function HeroSection() {
             }`}
           >
             <div
-              className="relative aspect-[1680/2518] w-full overflow-hidden"
+              className="relative aspect-[1680/2518] w-full overflow-visible"
               onMouseEnter={openAchievements}
               onMouseLeave={closeAchievements}
               onClick={toggleAchievements}
@@ -526,16 +526,16 @@ export function HeroSection() {
                 priority
                 sizes="(max-width: 768px) 540px, 620px"
               />
-            </div>
 
-            <div className="pointer-events-auto absolute bottom-[7%] left-1/2 z-10 w-[calc(100%-5.5rem)] max-w-[310px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/90 from-[54%] to-[#eb0b0b]/85 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.6)] backdrop-blur-[2px] md:p-5">
-              <p className="text-lg font-semibold uppercase text-white">
-                Дмитрий Васин
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/90">
-                Чемпион Мира, Учитель Чемпионов России и Европы, Финалист
-                проекта «Новые танцы» на ТНТ, Хореограф: «Танцы» на ТНТ»
-              </p>
+              <div className="pointer-events-auto absolute bottom-[14%] left-1/2 z-10 w-[calc(100%-6.5rem)] max-w-[280px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/55 from-[54%] to-[#eb0b0b]/45 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.35)] backdrop-blur-[2px] md:bottom-[15%] md:max-w-[290px] md:p-5">
+                <p className="text-lg font-semibold uppercase text-white">
+                  Дмитрий Васин
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-white/90">
+                  Чемпион Мира, Учитель Чемпионов России и Европы, Финалист
+                  проекта «Новые танцы» на ТНТ, Хореограф: «Танцы» на ТНТ»
+                </p>
+              </div>
             </div>
 
             <div
