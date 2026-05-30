@@ -18,23 +18,8 @@ export const metadata: Metadata = {
     images: [{ url: siteConfig.ogImage }],
   },
   icons: {
-    icon: [
-      {
-        url: assets.favicon32,
-        sizes: "32x32",
-        type: "image/png",
-      },
-      {
-        url: assets.favicon180,
-        sizes: "192x192",
-        type: "image/png",
-      },
-    ],
-    apple: {
-      url: assets.favicon180,
-      sizes: "180x180",
-      type: "image/png",
-    },
+    icon: assets.favicon32,
+    apple: assets.favicon180,
   },
   formatDetection: {
     telephone: false,

@@ -29,25 +29,24 @@ export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
 
   return (
-    <section className="relative overflow-hidden bg-[#090808] pb-16 pt-24 md:pb-20 md:pt-28">
-      <div className="pointer-events-none absolute right-0 top-[50%] bottom-0 w-full md:top-0 md:w-[58%] lg:w-[54%]">
+    <section className="relative overflow-hidden bg-[#090808] pb-16 pt-0 md:pb-20">
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-[58%] lg:w-[54%]">
         <Image
           src={assets.heroPortrait}
           alt=""
           fill
-          className="object-cover object-center"
+          className="object-cover object-top"
           sizes="(max-width: 768px) 100vw, 58vw"
           priority
         />
         <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#090808] via-[#090808]/70 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#090808] to-transparent md:h-36" />
-        <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#090808]/70 to-transparent" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-[1200px] px-4 md:px-6">
-        <div className="grid items-center gap-10 md:grid-cols-2 md:gap-6">
-          <div className="relative z-20">
-            <h1 className="inline-block whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white">
+        <div className="grid items-stretch gap-10 md:grid-cols-2 md:gap-6">
+          <div className="relative z-20 flex flex-col pt-24 md:pt-28 lg:pt-32">
+            <h1 className="w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white">
               СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
             </h1>
 
@@ -66,7 +65,9 @@ export function HeroSection() {
               ))}
             </ul>
 
-            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+            <div className="hidden min-h-0 flex-1 md:block" aria-hidden />
+
+            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-5 md:mt-0 md:mb-[calc(min(100%,460px)*941/628*0.18)]">
               <Link
                 href="#laifhack"
                 className="btn-primary inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
@@ -115,7 +116,7 @@ export function HeroSection() {
           </div>
 
           <div
-            className="relative z-10 mx-auto w-full max-w-[460px]"
+            className="relative z-10 mx-auto flex h-full w-full max-w-[460px] flex-col"
             onMouseEnter={() => setShowAchievements(true)}
             onMouseLeave={() => setShowAchievements(false)}
             onClick={() => setShowAchievements((value) => !value)}

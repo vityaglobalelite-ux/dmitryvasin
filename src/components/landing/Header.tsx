@@ -9,7 +9,7 @@ export function Header() {
 
   return (
     <>
-      <header className="fixed left-0 right-0 top-0 z-40 px-4 pt-4 md:px-6">
+      <header className="fixed left-0 right-0 top-0 z-40 px-4 pt-3 md:px-6 md:pt-4">
         <nav className="mx-auto flex max-w-[1200px] items-center justify-between md:justify-start md:gap-8">
           <div className="hidden items-center gap-6 md:flex">
             {navLinks.map((link) => (
