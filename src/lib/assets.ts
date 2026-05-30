@@ -5,6 +5,11 @@ const img = (name: string) => `/assets/images/${name}`;
 const publitioVideo = (file: string) =>
   `https://media.publit.io/file/Lifehacks/freelifehacks/${file}`;
 
+// Hero image sources (dmitryvasin.com, block rec763916279):
+// hero-badge  → tild3036-3331-4037-b461-343735353861/_11.png
+// hero-portrait → tild6435-6136-4361-a462-343962356236/_2.png
+// contact-photo → tild3361-3131-4162-b730-303738663962/_2-1.png
+
 export const assets = {
   ogPhoto: img("og-photo.png"),
   favicon32: img("favicon-32x32.png"),

@@ -23,13 +23,6 @@ export function Header() {
             ))}
           </div>
 
-          <Link
-            href="#laifhack"
-            className="btn-primary ml-auto hidden min-h-[44px] items-center justify-center rounded-full px-6 text-sm font-medium uppercase md:inline-flex"
-          >
-            Хочу также
-          </Link>
-
           <button
             type="button"
             className="ml-auto flex h-7 w-7 flex-col justify-between md:hidden"
@@ -81,15 +74,6 @@ export function Header() {
                   </Link>
                 </li>
               ))}
-              <li>
-                <Link
-                  href="#laifhack"
-                  className="btn-primary inline-flex min-h-[44px] items-center justify-center rounded-full px-6 text-base uppercase"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Хочу также
-                </Link>
-              </li>
             </ul>
           </aside>
         </div>
