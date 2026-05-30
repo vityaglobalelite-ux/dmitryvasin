@@ -29,6 +29,27 @@ function HeroStar() {
 const ACHIEVEMENTS_TRANSITION_MS = 500;
 /** Portrait lift in px (photo + aligned left blocks 2–3; block 1 top stays fixed). */
 const HERO_PHOTO_LIFT_PX = 31;
+/** Shared fade line for hero background + portrait (percent of portrait height). */
+const HERO_FADE_START = 0.66;
+const HERO_FADE_END = 0.99;
+
+function buildHeroFadeMask(
+  start: number,
+  span: number,
+  unit: "px" | "%",
+) {
+  const fmt = (value: number) => (unit === "%" ? `${value}%` : `${value}px`);
+  const end = start + span;
+  const at = (ratio: number) => start + span * ratio;
+
+  return `linear-gradient(to bottom, #000 ${fmt(0)}, #000 ${fmt(start)}, rgba(0,0,0,0.96) ${fmt(at(0.16))}, rgba(0,0,0,0.78) ${fmt(at(0.42))}, rgba(0,0,0,0.58) ${fmt(at(0.72))}, rgba(0,0,0,0.14) ${fmt(at(0.9))}, transparent ${fmt(end)})`;
+}
+
+const heroBottomFadeMask = buildHeroFadeMask(
+  HERO_FADE_START * 100,
+  (HERO_FADE_END - HERO_FADE_START) * 100,
+  "%",
+);
 
 function HeroNav() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -349,7 +370,7 @@ function HeroStickyTitle() {
 export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [isOverlayElevated, setIsOverlayElevated] = useState(false);
-  const [bgHeight, setBgHeight] = useState<number | null>(null);
+  const [bgFadeMask, setBgFadeMask] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
   const photoColumnRef = useRef<HTMLDivElement>(null);
   const elevateTimeoutRef = useRef<number | null>(null);
@@ -359,23 +380,32 @@ export function HeroSection() {
     const photoColumn = photoColumnRef.current;
     if (!section || !photoColumn) return;
 
-    const syncBgHeight = () => {
-      const sectionTop = section.getBoundingClientRect().top;
-      const photoBottom = photoColumn.getBoundingClientRect().bottom;
-      setBgHeight(Math.max(0, photoBottom - sectionTop));
+    const syncBgFade = () => {
+      const portrait = photoColumn.firstElementChild as HTMLElement | null;
+      if (!portrait) return;
+
+      const sectionRect = section.getBoundingClientRect();
+      const { top, height } = portrait.getBoundingClientRect();
+      const fadeStart = top + height * HERO_FADE_START - sectionRect.top;
+      const fadeSpan = height * (HERO_FADE_END - HERO_FADE_START);
+      setBgFadeMask(buildHeroFadeMask(fadeStart, fadeSpan, "px"));
     };
 
-    syncBgHeight();
+    syncBgFade();
 
-    const resizeObserver = new ResizeObserver(syncBgHeight);
+    const portrait = photoColumn.firstElementChild;
+    const resizeObserver = new ResizeObserver(syncBgFade);
     resizeObserver.observe(section);
     resizeObserver.observe(photoColumn);
+    if (portrait instanceof HTMLElement) {
+      resizeObserver.observe(portrait);
+    }
 
-    window.addEventListener("resize", syncBgHeight);
+    window.addEventListener("resize", syncBgFade);
 
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener("resize", syncBgHeight);
+      window.removeEventListener("resize", syncBgFade);
     };
   }, []);
 
@@ -408,22 +438,28 @@ export function HeroSection() {
 
   return (
     <section ref={sectionRef} className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
-      <div
-        className={`pointer-events-none absolute right-0 w-full md:w-[58%] lg:w-[54%] ${
-          bgHeight === null ? "inset-y-0" : "top-0"
-        }`}
-        style={bgHeight !== null ? { height: bgHeight } : undefined}
-      >
-        <Image
-          src={assets.heroPortrait}
-          alt=""
-          fill
-          className="object-cover object-top"
-          sizes="(max-width: 768px) 100vw, 58vw"
-          priority
-        />
-        <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#090808] via-[#090808]/70 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#090808] to-transparent md:h-36" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-[58%] lg:w-[54%]">
+        <div
+          className="absolute inset-0"
+          style={
+            bgFadeMask
+              ? {
+                  WebkitMaskImage: bgFadeMask,
+                  maskImage: bgFadeMask,
+                }
+              : undefined
+          }
+        >
+          <Image
+            src={assets.heroPortrait}
+            alt=""
+            fill
+            className="object-cover object-top"
+            sizes="(max-width: 768px) 100vw, 58vw"
+            priority
+          />
+          <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#090808] via-[#090808]/70 to-transparent" />
+        </div>
       </div>
 
       <div className="relative z-10 mx-auto max-w-[1200px] px-4 md:px-6">
@@ -526,14 +562,22 @@ export function HeroSection() {
               aria-expanded={showAchievements}
               aria-label="Дмитрий Васин — показать достижения"
             >
-              <Image
-                src={assets.heroBadge}
-                alt="Дмитрий Васин"
-                fill
-                className="object-cover"
-                priority
-                sizes="(max-width: 768px) 540px, 620px"
-              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  WebkitMaskImage: heroBottomFadeMask,
+                  maskImage: heroBottomFadeMask,
+                }}
+              >
+                <Image
+                  src={assets.heroBadge}
+                  alt="Дмитрий Васин"
+                  fill
+                  className="object-cover"
+                  priority
+                  sizes="(max-width: 768px) 540px, 620px"
+                />
+              </div>
 
               <div className="pointer-events-auto absolute bottom-[19%] left-1/2 z-10 w-[calc(100%-6.5rem)] max-w-[280px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/55 from-[54%] to-[#eb0b0b]/45 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.35)] backdrop-blur-[2px] md:bottom-[20%] md:max-w-[290px] md:p-5">
                 <p className="text-lg font-semibold uppercase text-white">
