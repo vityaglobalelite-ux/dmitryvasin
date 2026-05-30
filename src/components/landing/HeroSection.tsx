@@ -67,7 +67,7 @@ export function HeroSection() {
 
             <div className="hidden min-h-0 flex-1 md:block" aria-hidden />
 
-            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-5 md:mt-0 md:mb-[calc(min(100%,460px)*941/628*0.18)]">
+            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 md:mt-0 md:mb-[calc(min(100%,460px)*941/628*0.18)]">
               <Link
                 href="#laifhack"
                 className="btn-primary inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
