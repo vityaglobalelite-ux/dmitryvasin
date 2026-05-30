@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { assets } from "@/lib/assets";
 import { heroAchievements, heroFeatures } from "@/lib/site-data";
 
@@ -25,8 +25,39 @@ function HeroStar() {
   );
 }
 
+const ACHIEVEMENTS_TRANSITION_MS = 500;
+
 export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
+  const [isOverlayElevated, setIsOverlayElevated] = useState(false);
+  const elevateTimeoutRef = useRef<number | null>(null);
+
+  const openAchievements = () => {
+    if (elevateTimeoutRef.current !== null) {
+      window.clearTimeout(elevateTimeoutRef.current);
+      elevateTimeoutRef.current = null;
+    }
+
+    setIsOverlayElevated(true);
+    setShowAchievements(true);
+  };
+
+  const closeAchievements = () => {
+    setShowAchievements(false);
+    elevateTimeoutRef.current = window.setTimeout(() => {
+      setIsOverlayElevated(false);
+      elevateTimeoutRef.current = null;
+    }, ACHIEVEMENTS_TRANSITION_MS);
+  };
+
+  const toggleAchievements = () => {
+    if (showAchievements) {
+      closeAchievements();
+      return;
+    }
+
+    openAchievements();
+  };
 
   return (
     <section className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
@@ -117,15 +148,15 @@ export function HeroSection() {
 
           <div
             className={`relative mx-auto flex h-full w-full max-w-[460px] flex-col overflow-visible ${
-              showAchievements ? "z-50" : "z-10"
+              isOverlayElevated ? "z-50" : "z-10"
             }`}
-            onMouseEnter={() => setShowAchievements(true)}
-            onMouseLeave={() => setShowAchievements(false)}
-            onClick={() => setShowAchievements((value) => !value)}
+            onMouseEnter={openAchievements}
+            onMouseLeave={closeAchievements}
+            onClick={toggleAchievements}
             onKeyDown={(event) => {
               if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
-                setShowAchievements((value) => !value);
+                toggleAchievements();
               }
             }}
             role="button"
@@ -154,10 +185,10 @@ export function HeroSection() {
             </div>
 
             <div
-              className={`absolute bottom-[28%] right-[68%] z-50 w-[min(420px,calc(100%+18rem))] max-w-[420px] rounded-[15px] bg-white p-5 text-[#090808] shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition-all duration-300 ${
+              className={`absolute bottom-[28%] right-[68%] z-50 w-[min(420px,calc(100%+18rem))] max-w-[420px] rounded-[15px] bg-white p-5 text-[#090808] shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition-opacity duration-500 ease-in-out ${
                 showAchievements
-                  ? "pointer-events-auto scale-100 opacity-100"
-                  : "pointer-events-none scale-[0.97] opacity-0"
+                  ? "pointer-events-auto opacity-100"
+                  : "pointer-events-none opacity-0"
               }`}
             >
               <ul className="space-y-2 text-sm leading-snug md:text-base">
