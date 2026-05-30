@@ -108,21 +108,41 @@ function HeroStickyTitle() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const flowTitleRef = useRef<HTMLHeadingElement>(null);
   const isPinnedRef = useRef(false);
+  const phaseRef = useRef<"idle" | "to-center" | "centered" | "to-flow">("idle");
+  const animGenRef = useRef(0);
+  const centerTimerRef = useRef<number | null>(null);
   const unpinTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
   const [isCentered, setIsCentered] = useState(false);
+  const [pinOffset, setPinOffset] = useState({ x: 0, y: 0 });
   const [titleSize, setTitleSize] = useState({ width: 0, height: 0 });
-  const [pinTransform, setPinTransform] = useState({ x: 0, y: 0 });
 
   const titleClassName =
     "w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white";
 
   const PINNED_TOP = 12;
-  const PIN_ANIMATION_MS = 600;
+  const PIN_ANIMATION_MS = 550;
+  const UNPIN_AT = 12;
+  const SNAP_AT = -48;
   const blurHeight =
     titleSize.height > 0 ? PINNED_TOP + titleSize.height + 8 : 0;
+
+  const clearTimers = () => {
+    if (centerTimerRef.current !== null) {
+      window.clearTimeout(centerTimerRef.current);
+      centerTimerRef.current = null;
+    }
+    if (unpinTimerRef.current !== null) {
+      window.clearTimeout(unpinTimerRef.current);
+      unpinTimerRef.current = null;
+    }
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -148,7 +168,7 @@ function HeroStickyTitle() {
     const title = flowTitleRef.current;
     if (!sentinel || !title) return;
 
-    const readPinTransform = () => {
+    const readOffset = () => {
       const rect = title.getBoundingClientRect();
       return {
         x: rect.left + rect.width / 2 - window.innerWidth / 2,
@@ -156,49 +176,90 @@ function HeroStickyTitle() {
       };
     };
 
-    const animateToCenter = () => {
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
+    const finalizeCenter = (gen: number) => {
+      if (gen !== animGenRef.current) return;
+      phaseRef.current = "centered";
+      setIsCentered(true);
+    };
+
+    const animateToCenter = (snap: boolean) => {
+      const gen = ++animGenRef.current;
+      clearTimers();
+      phaseRef.current = "to-center";
+      setIsCentered(false);
+
+      if (snap) {
+        finalizeCenter(gen);
+        return;
       }
 
       rafRef.current = requestAnimationFrame(() => {
         rafRef.current = requestAnimationFrame(() => {
-          setIsCentered(true);
           rafRef.current = null;
+          finalizeCenter(gen);
         });
       });
+
+      centerTimerRef.current = window.setTimeout(() => {
+        finalizeCenter(gen);
+      }, PIN_ANIMATION_MS + 32);
+    };
+
+    const pin = (sentinelTop: number) => {
+      clearTimers();
+
+      if (phaseRef.current === "to-flow") {
+        phaseRef.current = "centered";
+        isPinnedRef.current = true;
+        setIsPinned(true);
+        setIsCentered(true);
+        return;
+      }
+
+      if (isPinnedRef.current && phaseRef.current === "centered") {
+        return;
+      }
+
+      if (isPinnedRef.current && phaseRef.current === "to-center") {
+        return;
+      }
+
+      setPinOffset(readOffset());
+      isPinnedRef.current = true;
+      setIsPinned(true);
+      animateToCenter(sentinelTop <= SNAP_AT);
+    };
+
+    const startUnpin = () => {
+      if (!isPinnedRef.current || phaseRef.current === "to-flow") {
+        return;
+      }
+
+      const gen = ++animGenRef.current;
+      clearTimers();
+      phaseRef.current = "to-flow";
+      setPinOffset(readOffset());
+      setIsCentered(false);
+
+      unpinTimerRef.current = window.setTimeout(() => {
+        if (gen !== animGenRef.current) return;
+        isPinnedRef.current = false;
+        phaseRef.current = "idle";
+        setIsPinned(false);
+        unpinTimerRef.current = null;
+      }, PIN_ANIMATION_MS);
     };
 
     const onScroll = () => {
       const sentinelTop = sentinel.getBoundingClientRect().top;
 
-      if (!isPinnedRef.current && sentinelTop <= 0) {
-        if (unpinTimerRef.current !== null) {
-          window.clearTimeout(unpinTimerRef.current);
-          unpinTimerRef.current = null;
-        }
-
-        setPinTransform(readPinTransform());
-        isPinnedRef.current = true;
-        setIsPinned(true);
-        setIsCentered(false);
-        animateToCenter();
+      if (sentinelTop <= 0) {
+        pin(sentinelTop);
         return;
       }
 
-      if (isPinnedRef.current && sentinelTop > 10) {
-        setPinTransform(readPinTransform());
-        setIsCentered(false);
-
-        if (unpinTimerRef.current !== null) {
-          window.clearTimeout(unpinTimerRef.current);
-        }
-
-        unpinTimerRef.current = window.setTimeout(() => {
-          isPinnedRef.current = false;
-          setIsPinned(false);
-          unpinTimerRef.current = null;
-        }, PIN_ANIMATION_MS);
+      if (sentinelTop > UNPIN_AT && isPinnedRef.current) {
+        startUnpin();
       }
     };
 
@@ -209,25 +270,20 @@ function HeroStickyTitle() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
-      if (unpinTimerRef.current !== null) {
-        window.clearTimeout(unpinTimerRef.current);
-      }
-      if (rafRef.current !== null) {
-        cancelAnimationFrame(rafRef.current);
-      }
+      clearTimers();
     };
   }, []);
 
   const pinnedTransform = isCentered
     ? "translate(-50%, 0) scale(0.94)"
-    : `translate(calc(-50% + ${pinTransform.x}px), ${pinTransform.y}px) scale(1)`;
+    : `translate(calc(-50% + ${pinOffset.x}px), ${pinOffset.y}px) scale(1)`;
 
   const pinnedOverlay =
     isPinned && blurHeight > 0 ? (
       <>
         <div
           aria-hidden
-          className={`pointer-events-none fixed inset-x-0 top-0 z-[100] transition-opacity duration-500 ease-in-out ${
+          className={`pointer-events-none fixed inset-x-0 top-0 z-[100] transition-opacity duration-[550ms] ease-in-out ${
             isCentered ? "opacity-100" : "opacity-0"
           }`}
           style={{ height: blurHeight }}
@@ -236,7 +292,7 @@ function HeroStickyTitle() {
           <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
         </div>
         <div
-          className="pointer-events-none fixed left-1/2 z-[101] transition-transform duration-[600ms] ease-in-out"
+          className="pointer-events-none fixed left-1/2 z-[101] transition-transform duration-[550ms] ease-in-out"
           style={{ top: PINNED_TOP, transform: pinnedTransform }}
         >
           <h1 className={titleClassName} aria-hidden>
