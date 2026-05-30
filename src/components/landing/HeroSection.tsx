@@ -428,70 +428,74 @@ export function HeroSection() {
         <HeroNav />
 
         <div className="grid items-stretch gap-10 md:grid-cols-2 md:gap-6">
-          <div className="relative z-20 flex flex-col pt-4 md:h-[78%] md:justify-end md:pt-0">
-            <HeroStickyTitle />
+          <div className="relative z-20 flex flex-col gap-8 pt-4 md:h-full md:-translate-y-16 md:pt-0">
+            <div className="md:absolute md:inset-x-0 md:top-[16%]">
+              <HeroStickyTitle />
+            </div>
 
-            <p className="mt-4 whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
-              Аргентинское танго простым и доступным языком
-            </p>
+            <div className="md:absolute md:inset-x-0 md:top-[46%] md:-translate-y-1/2">
+              <p className="whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
+                Аргентинское танго простым и доступным языком
+              </p>
 
-            <ul className="mt-6 space-y-3 md:space-y-4 sm:mb-8 md:mb-10">
-              {heroFeatures.map((text) => (
-                <li key={text} className="flex items-center gap-3">
-                  <HeroStar />
-                  <span className="text-lg leading-snug text-white">
-                    {text}
-                  </span>
-                </li>
-              ))}
-            </ul>
+              <ul className="mt-6 space-y-3 md:space-y-4">
+                {heroFeatures.map((text) => (
+                  <li key={text} className="flex items-center gap-3">
+                    <HeroStar />
+                    <span className="text-lg leading-snug text-white">
+                      {text}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-            <div className="hidden min-h-0 flex-1 max-md:block" aria-hidden />
+            <div className="max-md:relative md:absolute md:inset-x-0 md:bottom-[20%]">
+              <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 sm:pt-6 md:mt-0 md:pt-0">
+                <Link
+                  href="#laifhack"
+                  className="btn-primary relative z-10 inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
+                >
+                  лайфхаки
+                </Link>
 
-            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 sm:pt-6 md:mt-0 md:pt-8">
-              <Link
-                href="#laifhack"
-                className="btn-primary relative z-10 inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
-              >
-                лайфхаки
-              </Link>
+                <svg
+                  aria-hidden
+                  viewBox="0 0 136 76"
+                  className="pointer-events-none absolute left-[170px] top-[-20px] z-20 hidden h-[58px] w-[116px] text-white opacity-50 sm:block"
+                  fill="none"
+                >
+                  <defs>
+                    <marker
+                      id="hero-cta-arrowhead"
+                      viewBox="0 0 10 10"
+                      refX="9"
+                      refY="5"
+                      markerWidth="10"
+                      markerHeight="10"
+                      orient="auto"
+                      markerUnits="userSpaceOnUse"
+                    >
+                      <path d="M0 1 L9 5 L0 9 Z" fill="currentColor" />
+                    </marker>
+                  </defs>
+                  <path
+                    d="M128 28C98 -6 49 2 38 52"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    markerEnd="url(#hero-cta-arrowhead)"
+                  />
+                </svg>
 
-              <svg
-                aria-hidden
-                viewBox="0 0 136 76"
-                className="pointer-events-none absolute left-[170px] top-[-10px] z-20 hidden h-[58px] w-[116px] text-white opacity-50 sm:block"
-                fill="none"
-              >
-                <defs>
-                  <marker
-                    id="hero-cta-arrowhead"
-                    viewBox="0 0 10 10"
-                    refX="9"
-                    refY="5"
-                    markerWidth="10"
-                    markerHeight="10"
-                    orient="auto"
-                    markerUnits="userSpaceOnUse"
-                  >
-                    <path d="M0 1 L9 5 L0 9 Z" fill="currentColor" />
-                  </marker>
-                </defs>
-                <path
-                  d="M128 28C98 -6 49 2 38 52"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  markerEnd="url(#hero-cta-arrowhead)"
-                />
-              </svg>
-
-              <div className="relative z-0 min-w-0 max-w-md sm:flex-1 sm:max-w-lg">
-                <p className="text-sm leading-relaxed text-white sm:text-base">
-                  Открывай и{" "}
-                  <span className="bg-[#da0d0d] px-1">смотри прямо сейчас</span>{" "}
-                  бесплатные видеоуроки, чтобы еще больше прокачать в танго
-                  технику, музыкальность, вариативность и взаимодействие
-                </p>
+                <div className="relative z-0 min-w-0 max-w-md sm:flex-1 sm:max-w-lg">
+                  <p className="text-sm leading-relaxed text-white sm:text-base">
+                    Открывай и{" "}
+                    <span className="bg-[#da0d0d] px-1">смотри прямо сейчас</span>{" "}
+                    бесплатные видеоуроки, чтобы еще больше прокачать в танго
+                    технику, музыкальность, вариативность и взаимодействие
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -527,7 +531,7 @@ export function HeroSection() {
                 sizes="(max-width: 768px) 540px, 620px"
               />
 
-              <div className="pointer-events-auto absolute bottom-[14%] left-1/2 z-10 w-[calc(100%-6.5rem)] max-w-[280px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/55 from-[54%] to-[#eb0b0b]/45 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.35)] backdrop-blur-[2px] md:bottom-[15%] md:max-w-[290px] md:p-5">
+              <div className="pointer-events-auto absolute bottom-[19%] left-1/2 z-10 w-[calc(100%-6.5rem)] max-w-[280px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/55 from-[54%] to-[#eb0b0b]/45 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.35)] backdrop-blur-[2px] md:bottom-[20%] md:max-w-[290px] md:p-5">
                 <p className="text-lg font-semibold uppercase text-white">
                   Дмитрий Васин
                 </p>
