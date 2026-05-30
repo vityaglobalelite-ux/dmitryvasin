@@ -29,7 +29,7 @@ export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
 
   return (
-    <section className="relative overflow-hidden bg-[#090808] pb-16 pt-0 md:pb-20">
+    <section className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
       <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-[58%] lg:w-[54%]">
         <Image
           src={assets.heroPortrait}
@@ -116,7 +116,9 @@ export function HeroSection() {
           </div>
 
           <div
-            className="relative z-10 mx-auto flex h-full w-full max-w-[460px] flex-col"
+            className={`relative mx-auto flex h-full w-full max-w-[460px] flex-col overflow-visible ${
+              showAchievements ? "z-50" : "z-10"
+            }`}
             onMouseEnter={() => setShowAchievements(true)}
             onMouseLeave={() => setShowAchievements(false)}
             onClick={() => setShowAchievements((value) => !value)}
@@ -136,16 +138,26 @@ export function HeroSection() {
               alt="Дмитрий Васин"
               width={628}
               height={941}
-              className="relative h-auto w-full"
+              className="relative z-0 h-auto w-full"
               priority
               sizes="(max-width: 768px) 460px, 460px"
             />
 
+            <div className="pointer-events-none absolute bottom-[22%] left-1/2 z-10 w-[calc(100%-5.5rem)] max-w-[310px] -translate-x-1/2 rounded-[15px] bg-gradient-to-b from-[#181616]/75 from-[54%] to-[#eb0b0b]/70 p-4 shadow-[0_4px_8px_rgba(9,8,8,0.6)] backdrop-blur-[2px] md:p-5">
+              <p className="text-lg font-semibold uppercase text-white">
+                Дмитрий Васин
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-white/90">
+                Чемпион Мира, Учитель Чемпионов России и Европы, Финалист
+                проекта «Новые танцы» на ТНТ, Хореограф: «Танцы» на ТНТ»
+              </p>
+            </div>
+
             <div
-              className={`absolute left-1/2 w-[calc(100%-1rem)] max-w-[362px] -translate-x-1/2 rounded-[15px] bg-white p-5 text-[#090808] shadow-[0_8px_24px_rgba(0,0,0,0.45)] transition-all duration-300 ${
+              className={`absolute bottom-[28%] right-[68%] z-50 w-[min(420px,calc(100%+18rem))] max-w-[420px] rounded-[15px] bg-white p-5 text-[#090808] shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition-all duration-300 ${
                 showAchievements
-                  ? "pointer-events-auto bottom-[22%] z-20 scale-100 opacity-100"
-                  : "pointer-events-none bottom-[24%] z-0 scale-95 opacity-0"
+                  ? "pointer-events-auto scale-100 opacity-100"
+                  : "pointer-events-none scale-[0.97] opacity-0"
               }`}
             >
               <ul className="space-y-2 text-sm leading-snug md:text-base">
@@ -164,20 +176,6 @@ export function HeroSection() {
                 ))}
               </ul>
               <p className="mt-4 text-base font-bold">В танго с 2006 года</p>
-            </div>
-
-            <div
-              className={`absolute bottom-[18%] left-1/2 w-[calc(100%-2rem)] max-w-[362px] -translate-x-1/2 rounded-[15px] bg-gradient-to-b from-[#181616] from-[54%] to-[#eb0b0b] p-5 shadow-[0_4px_8px_rgba(9,8,8,1)] transition-opacity duration-300 ${
-                showAchievements ? "opacity-0" : "opacity-100"
-              }`}
-            >
-              <p className="text-lg font-semibold uppercase text-white">
-                Дмитрий Васин
-              </p>
-              <p className="mt-2 text-sm leading-relaxed text-white/90">
-                Чемпион Мира, Учитель Чемпионов России и Европы, Финалист
-                проекта «Новые танцы» на ТНТ, Хореограф: «Танцы» на ТНТ»
-              </p>
             </div>
           </div>
         </div>
