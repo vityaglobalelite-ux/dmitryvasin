@@ -1,26 +1,90 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "MuseoSansCyrl";
+  src: url("/assets/fonts/MuseoSansCyrl-300.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MuseoSansCyrl";
+  src: url("/assets/fonts/MuseoSansCyrl-500.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MuseoSansCyrl";
+  src: url("/assets/fonts/MuseoSansCyrl-700.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MuseoSansCyrl";
+  src: url("/assets/fonts/MuseoSansCyrl-900.woff") format("woff");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #090808;
+  --foreground: #ffffff;
+  --accent: #eb0b0b;
+  --accent-dark: #da0d0d;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-accent: var(--accent);
+  --color-accent-dark: var(--accent-dark);
+  --font-sans: "MuseoSansCyrl", Arial, Helvetica, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+.page-enter {
+  animation: page-fade-in 0.7s ease-out both;
+}
+
+@keyframes page-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.btn-primary {
+  background: linear-gradient(0deg, #181616 0%, #eb0b0b 100%);
+  color: #ffffff;
+  transition: filter 0.2s ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }
