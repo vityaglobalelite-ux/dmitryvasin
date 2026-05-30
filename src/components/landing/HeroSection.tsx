@@ -107,41 +107,65 @@ function HeroNav() {
 function HeroStickyTitle() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const flowTitleRef = useRef<HTMLHeadingElement>(null);
-  const isPinnedRef = useRef(false);
-  const phaseRef = useRef<"idle" | "to-center" | "centered" | "to-flow">("idle");
-  const animGenRef = useRef(0);
-  const centerTimerRef = useRef<number | null>(null);
-  const unpinTimerRef = useRef<number | null>(null);
+  const overlayTitleRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
+  const posRef = useRef({ x: 0, y: 0 });
+  const phaseRef = useRef<"idle" | "to-center" | "centered" | "to-flow">("idle");
+  const animRef = useRef({ start: 0, fromX: 0, fromY: 0 });
+  const blurRef = useRef(false);
+  const isActiveRef = useRef(false);
+  const isElevatedRef = useRef(false);
   const [mounted, setMounted] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
-  const [isCentered, setIsCentered] = useState(false);
-  const [pinOffset, setPinOffset] = useState({ x: 0, y: 0 });
+  const [isActive, setIsActive] = useState(false);
+  const [isElevated, setIsElevated] = useState(false);
+  const [showBlur, setShowBlur] = useState(false);
   const [titleSize, setTitleSize] = useState({ width: 0, height: 0 });
 
   const titleClassName =
     "w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white";
 
   const PINNED_TOP = 12;
-  const PIN_ANIMATION_MS = 550;
-  const UNPIN_AT = 12;
-  const SNAP_AT = -48;
+  const ANIM_MS = 420;
+  const UNPIN_AT = 10;
+  const PIN_LINE = PINNED_TOP + 6;
+  const ELEVATE_AT = 0.38;
+
   const blurHeight =
     titleSize.height > 0 ? PINNED_TOP + titleSize.height + 8 : 0;
 
-  const clearTimers = () => {
-    if (centerTimerRef.current !== null) {
-      window.clearTimeout(centerTimerRef.current);
-      centerTimerRef.current = null;
+  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
+  const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
+
+  const getCenterPos = (width: number) => ({
+    x: window.innerWidth / 2 - width / 2,
+    y: PINNED_TOP,
+  });
+
+  const applyOverlayPos = (x: number, y: number) => {
+    posRef.current = { x, y };
+    const el = overlayTitleRef.current;
+    if (el) {
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
     }
-    if (unpinTimerRef.current !== null) {
-      window.clearTimeout(unpinTimerRef.current);
-      unpinTimerRef.current = null;
-    }
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
+  };
+
+  const setBlur = (next: boolean) => {
+    if (blurRef.current === next) return;
+    blurRef.current = next;
+    setShowBlur(next);
+  };
+
+  const setActive = (next: boolean) => {
+    if (isActiveRef.current === next) return;
+    isActiveRef.current = next;
+    setIsActive(next);
+  };
+
+  const setElevated = (next: boolean) => {
+    if (isElevatedRef.current === next) return;
+    isElevatedRef.current = next;
+    setIsElevated(next);
   };
 
   useEffect(() => {
@@ -168,139 +192,147 @@ function HeroStickyTitle() {
     const title = flowTitleRef.current;
     if (!sentinel || !title) return;
 
-    const readOffset = () => {
+    const getFlowPos = () => {
       const rect = title.getBoundingClientRect();
-      return {
-        x: rect.left + rect.width / 2 - window.innerWidth / 2,
-        y: rect.top - PINNED_TOP,
-      };
+      return { x: rect.left, y: rect.top, width: rect.width };
     };
 
-    const finalizeCenter = (gen: number) => {
-      if (gen !== animGenRef.current) return;
-      phaseRef.current = "centered";
-      setIsCentered(true);
-    };
-
-    const animateToCenter = (snap: boolean) => {
-      const gen = ++animGenRef.current;
-      clearTimers();
+    const startToCenter = (now: number) => {
+      const flow = getFlowPos();
       phaseRef.current = "to-center";
-      setIsCentered(false);
-
-      if (snap) {
-        finalizeCenter(gen);
-        return;
-      }
-
-      rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          finalizeCenter(gen);
-        });
-      });
-
-      centerTimerRef.current = window.setTimeout(() => {
-        finalizeCenter(gen);
-      }, PIN_ANIMATION_MS + 32);
+      animRef.current = { start: now, fromX: flow.x, fromY: flow.y };
+      applyOverlayPos(flow.x, flow.y);
+      setActive(true);
+      setElevated(false);
+      setBlur(false);
     };
 
-    const pin = (sentinelTop: number) => {
-      clearTimers();
-
-      if (phaseRef.current === "to-flow") {
-        phaseRef.current = "centered";
-        isPinnedRef.current = true;
-        setIsPinned(true);
-        setIsCentered(true);
-        return;
-      }
-
-      if (isPinnedRef.current && phaseRef.current === "centered") {
-        return;
-      }
-
-      if (isPinnedRef.current && phaseRef.current === "to-center") {
-        return;
-      }
-
-      setPinOffset(readOffset());
-      isPinnedRef.current = true;
-      setIsPinned(true);
-      animateToCenter(sentinelTop <= SNAP_AT);
-    };
-
-    const startUnpin = () => {
-      if (!isPinnedRef.current || phaseRef.current === "to-flow") {
-        return;
-      }
-
-      const gen = ++animGenRef.current;
-      clearTimers();
+    const startToFlow = (now: number) => {
       phaseRef.current = "to-flow";
-      setPinOffset(readOffset());
-      setIsCentered(false);
-
-      unpinTimerRef.current = window.setTimeout(() => {
-        if (gen !== animGenRef.current) return;
-        isPinnedRef.current = false;
-        phaseRef.current = "idle";
-        setIsPinned(false);
-        unpinTimerRef.current = null;
-      }, PIN_ANIMATION_MS);
+      animRef.current = {
+        start: now,
+        fromX: posRef.current.x,
+        fromY: posRef.current.y,
+      };
+      setActive(true);
+      setElevated(true);
+      setBlur(false);
     };
 
-    const onScroll = () => {
+    const finishIdle = () => {
+      phaseRef.current = "idle";
+      setActive(false);
+      setElevated(false);
+      setBlur(false);
+    };
+
+    const shouldPin = (flowY: number) => flowY <= PIN_LINE;
+
+    const tick = (now: number) => {
       const sentinelTop = sentinel.getBoundingClientRect().top;
+      const flow = getFlowPos();
+      const center = getCenterPos(flow.width);
+      let phase = phaseRef.current;
 
-      if (sentinelTop <= 0) {
-        pin(sentinelTop);
-        return;
+      if (phase === "idle" && shouldPin(flow.y)) {
+        startToCenter(now);
+        phase = "to-center";
+      } else if (
+        (phase === "centered" || phase === "to-center") &&
+        sentinelTop > UNPIN_AT
+      ) {
+        startToFlow(now);
+        phase = "to-flow";
+      } else if (phase === "to-flow" && shouldPin(flow.y)) {
+        startToCenter(now);
+        phase = "to-center";
       }
 
-      if (sentinelTop > UNPIN_AT && isPinnedRef.current) {
-        startUnpin();
+      if (phase === "to-center") {
+        const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
+        const eased = easeOutCubic(t);
+        const x = lerp(animRef.current.fromX, center.x, eased);
+        const y =
+          t < ELEVATE_AT
+            ? animRef.current.fromY
+            : lerp(
+                animRef.current.fromY,
+                center.y,
+                easeOutCubic((t - ELEVATE_AT) / (1 - ELEVATE_AT)),
+              );
+
+        applyOverlayPos(x, y);
+        setElevated(t >= ELEVATE_AT);
+        setBlur(t >= ELEVATE_AT + 0.08);
+
+        if (t >= 1) {
+          phaseRef.current = "centered";
+          applyOverlayPos(center.x, center.y);
+          setElevated(true);
+          setBlur(true);
+        }
+      } else if (phase === "centered") {
+        applyOverlayPos(center.x, center.y);
+        setElevated(true);
+        setBlur(true);
+      } else if (phase === "to-flow") {
+        const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
+        const eased = easeOutCubic(t);
+        applyOverlayPos(
+          lerp(animRef.current.fromX, flow.x, eased),
+          lerp(animRef.current.fromY, flow.y, eased),
+        );
+        setElevated(t < 1 - ELEVATE_AT);
+        setBlur(false);
+
+        if (t >= 1) {
+          if (shouldPin(flow.y)) {
+            startToCenter(now);
+          } else {
+            applyOverlayPos(flow.x, flow.y);
+            finishIdle();
+          }
+        }
       }
+
+      rafRef.current = requestAnimationFrame(tick);
     };
 
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    onScroll();
+    rafRef.current = requestAnimationFrame(tick);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      clearTimers();
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
-  const pinnedTransform = isCentered
-    ? "translate(-50%, 0) scale(0.94)"
-    : `translate(calc(-50% + ${pinOffset.x}px), ${pinOffset.y}px) scale(1)`;
-
-  const pinnedOverlay =
-    isPinned && blurHeight > 0 ? (
-      <>
-        <div
-          aria-hidden
-          className={`pointer-events-none fixed inset-x-0 top-0 z-[100] transition-opacity duration-[550ms] ease-in-out ${
-            isCentered ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ height: blurHeight }}
-        >
-          <div className="absolute inset-0 bg-[#090808]/45 backdrop-blur-sm" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
-        </div>
-        <div
-          className="pointer-events-none fixed left-1/2 z-[101] transition-transform duration-[550ms] ease-in-out"
-          style={{ top: PINNED_TOP, transform: pinnedTransform }}
-        >
-          <h1 className={titleClassName} aria-hidden>
-            СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
-          </h1>
-        </div>
-      </>
-    ) : null;
+  const pinnedOverlay = mounted ? (
+    <>
+      <div
+        aria-hidden
+        className={`pointer-events-none fixed inset-x-0 top-0 transition-opacity duration-[420ms] ease-out ${
+          isElevated && showBlur ? "z-[100] opacity-100" : "z-20 opacity-0"
+        }`}
+        style={{ height: blurHeight > 0 ? blurHeight : undefined }}
+      >
+        <div className="absolute inset-0 bg-[#090808]/45 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
+      </div>
+      <div
+        ref={overlayTitleRef}
+        className={`pointer-events-none fixed ${isElevated ? "z-[101]" : "z-20"}`}
+        style={{
+          left: posRef.current.x,
+          top: posRef.current.y,
+          opacity: isActive ? 1 : 0,
+          visibility: isActive ? "visible" : "hidden",
+        }}
+      >
+        <h1 className={titleClassName} aria-hidden>
+          СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
+        </h1>
+      </div>
+    </>
+  ) : null;
 
   return (
     <div className="relative py-2">
@@ -310,20 +342,18 @@ function HeroStickyTitle() {
         aria-hidden
       />
 
-      <div style={{ minHeight: isPinned ? titleSize.height : undefined }}>
+      <div style={{ minHeight: titleSize.height || undefined }}>
         <h1
           ref={flowTitleRef}
           className={`${titleClassName} relative z-20 ${
-            isPinned ? "invisible" : ""
+            isActive ? "invisible" : ""
           }`}
         >
           СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
         </h1>
       </div>
 
-      {mounted && pinnedOverlay
-        ? createPortal(pinnedOverlay, document.body)
-        : null}
+      {pinnedOverlay ? createPortal(pinnedOverlay, document.body) : null}
     </div>
   );
 }
@@ -379,14 +409,14 @@ export function HeroSection() {
         <HeroNav />
 
         <div className="grid items-stretch gap-10 md:grid-cols-2 md:gap-6">
-          <div className="relative z-20 flex flex-col pt-4 md:pt-6">
+          <div className="relative z-20 flex flex-col pt-4 md:h-[78%] md:justify-end md:pt-0">
             <HeroStickyTitle />
 
             <p className="mt-4 whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
               Аргентинское танго простым и доступным языком
             </p>
 
-            <ul className="mt-6 space-y-3 md:space-y-4">
+            <ul className="mt-6 space-y-3 md:space-y-4 sm:mb-8 md:mb-10">
               {heroFeatures.map((text) => (
                 <li key={text} className="flex items-center gap-3">
                   <HeroStar />
@@ -397,12 +427,12 @@ export function HeroSection() {
               ))}
             </ul>
 
-            <div className="hidden min-h-0 flex-1 md:block" aria-hidden />
+            <div className="hidden min-h-0 flex-1 max-md:block" aria-hidden />
 
-            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 md:mt-0 md:mb-[calc(min(100%,460px)*941/628*0.18)]">
+            <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 sm:pt-6 md:mt-0 md:pt-8">
               <Link
                 href="#laifhack"
-                className="btn-primary inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
+                className="btn-primary relative z-10 inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
               >
                 лайфхаки
               </Link>
@@ -410,7 +440,7 @@ export function HeroSection() {
               <svg
                 aria-hidden
                 viewBox="0 0 136 76"
-                className="pointer-events-none absolute left-[170px] top-[-22px] hidden h-[64px] w-[116px] text-white opacity-50 sm:block"
+                className="pointer-events-none absolute left-[170px] top-[-10px] z-20 hidden h-[58px] w-[116px] text-white opacity-50 sm:block"
                 fill="none"
               >
                 <defs>
@@ -436,7 +466,7 @@ export function HeroSection() {
                 />
               </svg>
 
-              <div className="min-w-0 max-w-md sm:flex-1 sm:max-w-lg">
+              <div className="relative z-0 min-w-0 max-w-md sm:flex-1 sm:max-w-lg">
                 <p className="text-sm leading-relaxed text-white sm:text-base">
                   Открывай и{" "}
                   <span className="bg-[#da0d0d] px-1">смотри прямо сейчас</span>{" "}
@@ -448,7 +478,7 @@ export function HeroSection() {
           </div>
 
           <div
-            className={`relative mx-auto flex h-full w-full max-w-[460px] flex-col overflow-visible ${
+            className={`relative mx-auto flex h-full w-full max-w-[540px] flex-col overflow-visible md:max-w-[580px] lg:max-w-[620px] ${
               isOverlayElevated ? "z-50" : "z-10"
             }`}
             onMouseEnter={openAchievements}
@@ -465,15 +495,16 @@ export function HeroSection() {
             aria-expanded={showAchievements}
             aria-label="Дмитрий Васин — показать достижения"
           >
-            <Image
-              src={assets.heroBadge}
-              alt="Дмитрий Васин"
-              width={628}
-              height={941}
-              className="relative z-0 h-auto w-full"
-              priority
-              sizes="(max-width: 768px) 460px, 460px"
-            />
+            <div className="relative aspect-[628/734] w-full overflow-hidden">
+              <Image
+                src={assets.heroBadge}
+                alt="Дмитрий Васин"
+                fill
+                className="object-cover object-[50%_24%]"
+                priority
+                sizes="(max-width: 768px) 540px, 620px"
+              />
+            </div>
 
             <div className="pointer-events-none absolute bottom-[22%] left-1/2 z-10 w-[calc(100%-5.5rem)] max-w-[310px] -translate-x-1/2 rounded-[15px] bg-gradient-to-b from-[#181616]/75 from-[54%] to-[#eb0b0b]/70 p-4 shadow-[0_4px_8px_rgba(9,8,8,0.6)] backdrop-blur-[2px] md:p-5">
               <p className="text-lg font-semibold uppercase text-white">
