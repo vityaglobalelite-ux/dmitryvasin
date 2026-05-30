@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { socialLinks } from "@/lib/site-data";
 
@@ -26,11 +27,22 @@ export function Footer() {
               <a
                 key={link.href}
                 href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex h-12 min-w-[48px] items-center justify-center rounded-full border border-[#eb0b0b]/40 px-3 text-sm text-white transition hover:bg-[#eb0b0b]/20"
+                target={link.href.startsWith("mailto:") ? undefined : "_blank"}
+                rel={
+                  link.href.startsWith("mailto:")
+                    ? undefined
+                    : "noopener noreferrer"
+                }
+                aria-label={link.label}
+                className="inline-flex h-12 w-12 shrink-0 transition hover:opacity-80"
               >
-                {link.label}
+                <Image
+                  src={link.icon}
+                  alt={link.label}
+                  width={48}
+                  height={48}
+                  className="h-12 w-12"
+                />
               </a>
             ))}
           </div>

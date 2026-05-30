@@ -55,4 +55,13 @@ export const assets = {
     img("review-4.png"),
     img("review-5.png"),
   ],
+  social: {
+    instagram: img("social-instagram.png"),
+    telegram: img("social-telegram.png"),
+    vk: img("social-vk.png"),
+    facebook: img("social-facebook.png"),
+    youtube: img("social-youtube.png"),
+    whatsapp: img("social-whatsapp.png"),
+    email: img("social-email.png"),
+  },
 } as const;

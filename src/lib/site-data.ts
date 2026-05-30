@@ -235,28 +235,38 @@ export const reviews = [
 
 export const socialLinks = [
   {
+    href: "https://www.instagram.com/dmitryvasintango?igsh=MWQ1ZGUxMzBkMA%3D%3D",
+    label: "Instagram",
+    icon: assets.social.instagram,
+  },
+  {
     href: "https://t.me/DmitryVasinTango",
     label: "Telegram",
-    icon: "telegram",
+    icon: assets.social.telegram,
   },
   {
     href: "https://vk.com/dmitryvasintango",
     label: "VK",
-    icon: "vk",
+    icon: assets.social.vk,
   },
   {
-    href: "https://www.youtube.com/@dmitryvasintango",
-    label: "YouTube",
-    icon: "youtube",
-  },
-  {
-    href: "https://wa.me/79858337136",
-    label: "WhatsApp",
-    icon: "whatsapp",
+    href: "https://www.facebook.com/DmitryVasinSagdianaHamzina?mibextid=LQQJ4d",
+    label: "Facebook",
+    icon: assets.social.facebook,
   },
   {
     href: "mailto:tango@dmitryvasin.com",
     label: "Email",
-    icon: "email",
+    icon: assets.social.email,
+  },
+  {
+    href: "https://www.youtube.com/@dmitryvasintango",
+    label: "YouTube",
+    icon: assets.social.youtube,
+  },
+  {
+    href: "https://wa.me/79858337136",
+    label: "WhatsApp",
+    icon: assets.social.whatsapp,
   },
 ];
