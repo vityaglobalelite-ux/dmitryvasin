@@ -464,24 +464,26 @@ export function HeroSection() {
           </div>
 
           <div
-            className={`relative mx-auto flex h-full w-full max-w-[540px] flex-col overflow-visible md:max-w-[580px] lg:max-w-[620px] ${
+            className={`relative mx-auto flex h-full w-full max-w-[540px] -translate-y-10 flex-col overflow-visible md:max-w-[580px] md:-translate-y-16 lg:max-w-[620px] ${
               isOverlayElevated ? "z-50" : "z-10"
             }`}
-            onMouseEnter={openAchievements}
-            onMouseLeave={closeAchievements}
-            onClick={toggleAchievements}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                toggleAchievements();
-              }
-            }}
-            role="button"
-            tabIndex={0}
-            aria-expanded={showAchievements}
-            aria-label="Дмитрий Васин — показать достижения"
           >
-            <div className="relative aspect-[628/734] w-full overflow-hidden">
+            <div
+              className="relative aspect-[628/734] w-full overflow-hidden"
+              onMouseEnter={openAchievements}
+              onMouseLeave={closeAchievements}
+              onClick={toggleAchievements}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  toggleAchievements();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-expanded={showAchievements}
+              aria-label="Дмитрий Васин — показать достижения"
+            >
               <Image
                 src={assets.heroBadge}
                 alt="Дмитрий Васин"
@@ -492,7 +494,7 @@ export function HeroSection() {
               />
             </div>
 
-            <div className="pointer-events-none absolute bottom-[22%] left-1/2 z-10 w-[calc(100%-5.5rem)] max-w-[310px] -translate-x-1/2 rounded-[15px] bg-gradient-to-b from-[#181616]/75 from-[54%] to-[#eb0b0b]/70 p-4 shadow-[0_4px_8px_rgba(9,8,8,0.6)] backdrop-blur-[2px] md:p-5">
+            <div className="pointer-events-auto absolute bottom-[7%] left-1/2 z-10 w-[calc(100%-5.5rem)] max-w-[310px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/90 from-[54%] to-[#eb0b0b]/85 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.6)] backdrop-blur-[2px] md:p-5">
               <p className="text-lg font-semibold uppercase text-white">
                 Дмитрий Васин
               </p>
