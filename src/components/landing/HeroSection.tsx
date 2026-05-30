@@ -125,10 +125,8 @@ function HeroStickyTitle() {
     "w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white";
 
   const PINNED_TOP = 12;
-  const ANIM_MS = 420;
+  const ANIM_MS = 380;
   const UNPIN_AT = 10;
-  const PIN_LINE = PINNED_TOP + 6;
-  const ELEVATE_AT = 0.38;
 
   const blurHeight =
     titleSize.height > 0 ? PINNED_TOP + titleSize.height + 8 : 0;
@@ -204,7 +202,7 @@ function HeroStickyTitle() {
       applyOverlayPos(flow.x, flow.y);
       setActive(true);
       setElevated(false);
-      setBlur(false);
+      setBlur(true);
     };
 
     const startToFlow = (now: number) => {
@@ -215,7 +213,7 @@ function HeroStickyTitle() {
         fromY: posRef.current.y,
       };
       setActive(true);
-      setElevated(true);
+      setElevated(false);
       setBlur(false);
     };
 
@@ -226,7 +224,7 @@ function HeroStickyTitle() {
       setBlur(false);
     };
 
-    const shouldPin = (flowY: number) => flowY <= PIN_LINE;
+    const shouldPin = () => sentinel.getBoundingClientRect().top <= 0;
 
     const tick = (now: number) => {
       const sentinelTop = sentinel.getBoundingClientRect().top;
@@ -234,7 +232,7 @@ function HeroStickyTitle() {
       const center = getCenterPos(flow.width);
       let phase = phaseRef.current;
 
-      if (phase === "idle" && shouldPin(flow.y)) {
+      if (phase === "idle" && shouldPin()) {
         startToCenter(now);
         phase = "to-center";
       } else if (
@@ -243,7 +241,7 @@ function HeroStickyTitle() {
       ) {
         startToFlow(now);
         phase = "to-flow";
-      } else if (phase === "to-flow" && shouldPin(flow.y)) {
+      } else if (phase === "to-flow" && shouldPin()) {
         startToCenter(now);
         phase = "to-center";
       }
@@ -251,30 +249,19 @@ function HeroStickyTitle() {
       if (phase === "to-center") {
         const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
         const eased = easeOutCubic(t);
-        const x = lerp(animRef.current.fromX, center.x, eased);
-        const y =
-          t < ELEVATE_AT
-            ? animRef.current.fromY
-            : lerp(
-                animRef.current.fromY,
-                center.y,
-                easeOutCubic((t - ELEVATE_AT) / (1 - ELEVATE_AT)),
-              );
-
-        applyOverlayPos(x, y);
-        setElevated(t >= ELEVATE_AT);
-        setBlur(t >= ELEVATE_AT + 0.08);
-
+        applyOverlayPos(
+          lerp(animRef.current.fromX, center.x, eased),
+          lerp(animRef.current.fromY, center.y, eased),
+        );
+        setElevated(t >= 1);
         if (t >= 1) {
           phaseRef.current = "centered";
           applyOverlayPos(center.x, center.y);
           setElevated(true);
-          setBlur(true);
         }
       } else if (phase === "centered") {
         applyOverlayPos(center.x, center.y);
         setElevated(true);
-        setBlur(true);
       } else if (phase === "to-flow") {
         const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
         const eased = easeOutCubic(t);
@@ -282,11 +269,8 @@ function HeroStickyTitle() {
           lerp(animRef.current.fromX, flow.x, eased),
           lerp(animRef.current.fromY, flow.y, eased),
         );
-        setElevated(t < 1 - ELEVATE_AT);
-        setBlur(false);
-
         if (t >= 1) {
-          if (shouldPin(flow.y)) {
+          if (shouldPin()) {
             startToCenter(now);
           } else {
             applyOverlayPos(flow.x, flow.y);
@@ -309,17 +293,19 @@ function HeroStickyTitle() {
     <>
       <div
         aria-hidden
-        className={`pointer-events-none fixed inset-x-0 top-0 transition-opacity duration-[420ms] ease-out ${
-          isElevated && showBlur ? "z-[100] opacity-100" : "z-20 opacity-0"
+        className={`pointer-events-none fixed inset-x-0 top-0 z-[100] ${
+          showBlur ? "opacity-100" : "opacity-0"
         }`}
-        style={{ height: blurHeight > 0 ? blurHeight : undefined }}
+        style={{
+          height: blurHeight > 0 ? blurHeight : PINNED_TOP + 48,
+        }}
       >
         <div className="absolute inset-0 bg-[#090808]/45 backdrop-blur-sm" />
         <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
       </div>
       <div
         ref={overlayTitleRef}
-        className={`pointer-events-none fixed ${isElevated ? "z-[101]" : "z-20"}`}
+        className={`pointer-events-none fixed ${isActive ? "z-[101]" : "z-20"}`}
         style={{
           left: posRef.current.x,
           top: posRef.current.y,
