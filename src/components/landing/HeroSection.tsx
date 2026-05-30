@@ -347,7 +347,35 @@ function HeroStickyTitle() {
 export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [isOverlayElevated, setIsOverlayElevated] = useState(false);
+  const [bgHeight, setBgHeight] = useState<number | null>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const photoColumnRef = useRef<HTMLDivElement>(null);
   const elevateTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const section = sectionRef.current;
+    const photoColumn = photoColumnRef.current;
+    if (!section || !photoColumn) return;
+
+    const syncBgHeight = () => {
+      const sectionTop = section.getBoundingClientRect().top;
+      const photoBottom = photoColumn.getBoundingClientRect().bottom;
+      setBgHeight(Math.max(0, photoBottom - sectionTop));
+    };
+
+    syncBgHeight();
+
+    const resizeObserver = new ResizeObserver(syncBgHeight);
+    resizeObserver.observe(section);
+    resizeObserver.observe(photoColumn);
+
+    window.addEventListener("resize", syncBgHeight);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", syncBgHeight);
+    };
+  }, []);
 
   const openAchievements = () => {
     if (elevateTimeoutRef.current !== null) {
@@ -377,8 +405,13 @@ export function HeroSection() {
   };
 
   return (
-    <section className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-[58%] lg:w-[54%]">
+    <section ref={sectionRef} className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
+      <div
+        className={`pointer-events-none absolute right-0 w-full md:w-[58%] lg:w-[54%] ${
+          bgHeight === null ? "inset-y-0" : "top-0"
+        }`}
+        style={bgHeight !== null ? { height: bgHeight } : undefined}
+      >
         <Image
           src={assets.heroPortrait}
           alt=""
@@ -464,12 +497,13 @@ export function HeroSection() {
           </div>
 
           <div
+            ref={photoColumnRef}
             className={`relative mx-auto flex h-full w-full max-w-[540px] -translate-y-10 flex-col overflow-visible md:max-w-[580px] md:-translate-y-16 lg:max-w-[620px] ${
               isOverlayElevated ? "z-50" : "z-10"
             }`}
           >
             <div
-              className="relative aspect-[628/734] w-full overflow-hidden"
+              className="relative aspect-[1680/2518] w-full overflow-hidden"
               onMouseEnter={openAchievements}
               onMouseLeave={closeAchievements}
               onClick={toggleAchievements}
@@ -488,7 +522,7 @@ export function HeroSection() {
                 src={assets.heroBadge}
                 alt="Дмитрий Васин"
                 fill
-                className="object-cover object-[50%_24%]"
+                className="object-cover"
                 priority
                 sizes="(max-width: 768px) 540px, 620px"
               />
