@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { assets } from "@/lib/assets";
-import { heroAchievements, heroFeatures } from "@/lib/site-data";
+import { heroAchievements, heroFeatures, navLinks } from "@/lib/site-data";
 
 function HeroStar() {
   return (
@@ -26,6 +27,250 @@ function HeroStar() {
 }
 
 const ACHIEVEMENTS_TRANSITION_MS = 500;
+
+function HeroNav() {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <>
+      <nav className="relative z-20 flex items-center justify-between pt-3 md:justify-start md:gap-8 md:pt-4">
+        <div className="hidden items-center gap-6 md:flex">
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-base text-white transition hover:text-[#eb0b0b]"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className="ml-auto flex h-7 w-7 flex-col justify-between md:hidden"
+          onClick={() => setMenuOpen(true)}
+          aria-label="Открыть меню"
+          aria-expanded={menuOpen}
+        >
+          {[0, 1, 2, 3].map((i) => (
+            <span
+              key={i}
+              className="block h-[3px] w-full bg-[#eb0b0b]"
+              style={
+                i === 1 || i === 2
+                  ? { width: "80%", marginLeft: "20%" }
+                  : undefined
+              }
+            />
+          ))}
+        </button>
+      </nav>
+
+      {menuOpen && (
+        <div className="fixed inset-0 z-50 flex">
+          <button
+            type="button"
+            className="absolute inset-0 bg-[#090808]/70"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Закрыть меню"
+          />
+          <aside className="relative ml-auto flex h-full w-full max-w-xs flex-col bg-[#090808] p-8">
+            <button
+              type="button"
+              onClick={() => setMenuOpen(false)}
+              className="mb-10 self-end text-white"
+              aria-label="Закрыть"
+            >
+              ✕
+            </button>
+            <ul className="flex flex-col gap-6">
+              {navLinks.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="text-lg text-white"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </aside>
+        </div>
+      )}
+    </>
+  );
+}
+
+function HeroStickyTitle() {
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const flowTitleRef = useRef<HTMLHeadingElement>(null);
+  const isPinnedRef = useRef(false);
+  const unpinTimerRef = useRef<number | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isCentered, setIsCentered] = useState(false);
+  const [titleSize, setTitleSize] = useState({ width: 0, height: 0 });
+  const [pinTransform, setPinTransform] = useState({ x: 0, y: 0 });
+
+  const titleClassName =
+    "w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white";
+
+  const PINNED_TOP = 12;
+  const PIN_ANIMATION_MS = 600;
+  const blurHeight =
+    titleSize.height > 0 ? PINNED_TOP + titleSize.height + 8 : 0;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const title = flowTitleRef.current;
+    if (!title) return;
+
+    const updateSize = () => {
+      setTitleSize({ width: title.offsetWidth, height: title.offsetHeight });
+    };
+
+    updateSize();
+    const resizeObserver = new ResizeObserver(updateSize);
+    resizeObserver.observe(title);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const title = flowTitleRef.current;
+    if (!sentinel || !title) return;
+
+    const readPinTransform = () => {
+      const rect = title.getBoundingClientRect();
+      return {
+        x: rect.left + rect.width / 2 - window.innerWidth / 2,
+        y: rect.top - PINNED_TOP,
+      };
+    };
+
+    const animateToCenter = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = requestAnimationFrame(() => {
+          setIsCentered(true);
+          rafRef.current = null;
+        });
+      });
+    };
+
+    const onScroll = () => {
+      const sentinelTop = sentinel.getBoundingClientRect().top;
+
+      if (!isPinnedRef.current && sentinelTop <= 0) {
+        if (unpinTimerRef.current !== null) {
+          window.clearTimeout(unpinTimerRef.current);
+          unpinTimerRef.current = null;
+        }
+
+        setPinTransform(readPinTransform());
+        isPinnedRef.current = true;
+        setIsPinned(true);
+        setIsCentered(false);
+        animateToCenter();
+        return;
+      }
+
+      if (isPinnedRef.current && sentinelTop > 10) {
+        setPinTransform(readPinTransform());
+        setIsCentered(false);
+
+        if (unpinTimerRef.current !== null) {
+          window.clearTimeout(unpinTimerRef.current);
+        }
+
+        unpinTimerRef.current = window.setTimeout(() => {
+          isPinnedRef.current = false;
+          setIsPinned(false);
+          unpinTimerRef.current = null;
+        }, PIN_ANIMATION_MS);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    onScroll();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (unpinTimerRef.current !== null) {
+        window.clearTimeout(unpinTimerRef.current);
+      }
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  const pinnedTransform = isCentered
+    ? "translate(-50%, 0) scale(0.94)"
+    : `translate(calc(-50% + ${pinTransform.x}px), ${pinTransform.y}px) scale(1)`;
+
+  const pinnedOverlay =
+    isPinned && blurHeight > 0 ? (
+      <>
+        <div
+          aria-hidden
+          className={`pointer-events-none fixed inset-x-0 top-0 z-[100] transition-opacity duration-500 ease-in-out ${
+            isCentered ? "opacity-100" : "opacity-0"
+          }`}
+          style={{ height: blurHeight }}
+        >
+          <div className="absolute inset-0 bg-[#090808]/45 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
+        </div>
+        <div
+          className="pointer-events-none fixed left-1/2 z-[101] transition-transform duration-[600ms] ease-in-out"
+          style={{ top: PINNED_TOP, transform: pinnedTransform }}
+        >
+          <h1 className={titleClassName} aria-hidden>
+            СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
+          </h1>
+        </div>
+      </>
+    ) : null;
+
+  return (
+    <div className="relative py-2">
+      <div
+        ref={sentinelRef}
+        className="pointer-events-none absolute top-0 h-px w-full"
+        aria-hidden
+      />
+
+      <div style={{ minHeight: isPinned ? titleSize.height : undefined }}>
+        <h1
+          ref={flowTitleRef}
+          className={`${titleClassName} relative z-20 ${
+            isPinned ? "invisible" : ""
+          }`}
+        >
+          СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
+        </h1>
+      </div>
+
+      {mounted && pinnedOverlay
+        ? createPortal(pinnedOverlay, document.body)
+        : null}
+    </div>
+  );
+}
 
 export function HeroSection() {
   const [showAchievements, setShowAchievements] = useState(false);
@@ -75,11 +320,11 @@ export function HeroSection() {
       </div>
 
       <div className="relative z-10 mx-auto max-w-[1200px] px-4 md:px-6">
+        <HeroNav />
+
         <div className="grid items-stretch gap-10 md:grid-cols-2 md:gap-6">
-          <div className="relative z-20 flex flex-col pt-24 md:pt-28 lg:pt-32">
-            <h1 className="w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white">
-              СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
-            </h1>
+          <div className="relative z-20 flex flex-col pt-4 md:pt-6">
+            <HeroStickyTitle />
 
             <p className="mt-4 whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
               Аргентинское танго простым и доступным языком
