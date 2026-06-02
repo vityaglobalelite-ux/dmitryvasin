@@ -32,10 +32,6 @@
 | `/api/*` | Bypass cache |
 | HTML-страницы | По умолчанию или Bypass для динамики |
 
-## API и healthcheck
-
-`GET /api/health` — для мониторинга. В Cloudflare для этого пути: **Bypass cache**.
-
 ## Заголовки (опционально)
 
 Transform Rules или **Settings → Security → Headers**:

@@ -1,6 +1,8 @@
 /** Local copies of media from Tilda (see public/assets). Videos stream from Publit.io. */
 
-const img = (name: string) => `/assets/images/${name}`;
+const assetPrefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
+const img = (name: string) => `${assetPrefix}/assets/images/${name}`;
 
 const publitioVideo = (file: string) =>
   `https://media.publit.io/file/Lifehacks/freelifehacks/${file}`;

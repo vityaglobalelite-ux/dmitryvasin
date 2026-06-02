@@ -11,11 +11,11 @@ Supabase подключается отдельно. В проекте зарез
 
 ```
 src/
-  app/              # страницы и API (App Router)
-    api/health/     # проверка деплоя
+  app/              # страницы (App Router)
   lib/              # утилиты (по мере роста проекта)
 docs/
   cloudflare.md     # DNS, SSL, кэш
+.github/workflows/  # деплой на GitHub Pages
 ```
 
 ## Старт
@@ -27,6 +27,22 @@ npm run dev
 ```
 
 [http://localhost:3000](http://localhost:3000)
+
+## GitHub Pages
+
+Сайт публикуется при push в `master`: [GitHub Actions](.github/workflows/deploy-pages.yml).
+
+**Один раз в репозитории на GitHub:** Settings → Pages → Build and deployment → **Source: GitHub Actions**.
+
+После успешного деплоя: **https://vityaglobalelite-ux.github.io/dmitryvasin/**
+
+Локальная проверка сборки как на Pages:
+
+```bash
+set NEXT_PUBLIC_BASE_PATH=/dmitryvasin
+npm run build
+npx serve out
+```
 
 ## Cloudflare
 
