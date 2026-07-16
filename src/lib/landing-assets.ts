@@ -30,7 +30,7 @@ export const landingAssets = {
     calendar: landingAsset("icon-calendar.svg"),
     calendarTariff: landingAsset("icon-calendar-tariff.svg"),
     stopwatch: landingAsset("icon-stopwatch.svg"),
-    check: landingAsset("icon-check-gradient.svg"),
+    check: `${landingAsset("icon-check-gradient.svg")}?v=2`,
     arrowUp: landingAsset("icon-arrow-up.svg"),
     questionCircle: landingAsset("icon-question-circle-bg.svg"),
     questionMark: landingAsset("icon-question-mark.svg"),
@@ -50,7 +50,7 @@ export const landingAssets = {
     directionsRow: `${landingAsset("chip-directions-row.png")}?v=5`,
     questionChip: landingAsset("chip-question.svg"),
     questionCircleBg: landingAsset("icon-question-circle-bg.svg"),
-    calendarGradientChip: landingAsset("chip-calendar-gradient.svg"),
+    calendarGradientChip: `${landingAsset("chip-calendar-gradient.svg")}?v=2`,
     stopwatchChip: landingAsset("chip-stopwatch.png"),
     calendarTariffChip: landingAsset("chip-calendar-tariff.png"),
     stepChips: [
@@ -73,7 +73,7 @@ export const landingAssets = {
     myView: `${landingAsset("photo-myview.png")}?v=2`,
     lessonsTall: `${landingAsset("photo-lessons.png")}?v=3`,
     telegramTall: landingAsset("photo-telegram.png"),
-    whatChanges: landingAsset("photo-whatchanges.png"),
+    whatChanges: `${landingAsset("photo-whatchanges.png")}?v=2`,
     videoPreview: landingAsset("video-preview.png"),
   },
   quote: {

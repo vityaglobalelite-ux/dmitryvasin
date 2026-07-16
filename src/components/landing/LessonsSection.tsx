@@ -100,64 +100,91 @@ export function LessonsSection() {
         className="pointer-events-none absolute left-[1470px] top-[8408px] z-[3] h-[230px] w-[210px] max-w-none"
       />
 
-      <div className="absolute left-[240px] top-[8853px] z-[2] w-[442px]">
+      {/* 249:1567 */}
+      <div className="absolute left-[240px] top-[8853px] z-[2] flex w-[442px] flex-col gap-[20px]">
         <h2 className="h-section whitespace-pre">
-          {`Что\u00a0изменится за\u00a0эти\u00a090\u00a0дней?`}
+          {`Что\u00a0изменится
+за\u00a0эти\u00a090\u00a0дней?`}
         </h2>
-        <p className="mt-[20px] w-[410px] text-[24px] font-medium leading-[1.2] text-text-dark">
-          Вы&nbsp;начнёте замечать в&nbsp;своём танце то, что&nbsp;раньше
-          оставалось незаметным.
+        <p className="w-[410px] whitespace-pre text-[24px] font-medium leading-[1.2] text-text">
+          {`Вы\u00a0начнёте замечать в\u00a0своём
+танце то, что\u00a0раньше оставалось
+незаметным.`}
         </p>
       </div>
-      <p className="absolute left-[240px] top-[9100px] z-[2] w-[442px] text-[16px] font-normal leading-[1.5] text-text">
-        То, что&nbsp;казалось случайным, станет в&nbsp;разы понятнее. То,
-        что&nbsp;раньше требовало постоянного контроля и&nbsp;усилий,
-        постепенно начнёт происходить естественнее.
-      </p>
-
-      <div className="absolute left-[727px] top-[8853px] z-[2] h-[563px] w-[466px] rounded-[30px] bg-light-gray">
-        <p className="absolute left-[30px] top-[30px] w-[406px] text-[20px] font-medium leading-[29px] text-text-dark">
-          Вы наверняка обнаружите, что:
+      {/* 249:1560 */}
+      <div className="absolute left-[240px] top-[9100px] z-[2] w-[442px] text-[16px] font-normal leading-[1.5] text-text">
+        <p>То, что&nbsp;казалось случайным, станет в&nbsp;разы понятнее.</p>
+        <p>
+          То, что&nbsp;раньше требовало постоянного контроля и&nbsp;усилий,
+          постепенно начнёт происходить естественнее.
         </p>
-        <ul className="absolute left-[30px] top-[79px] flex w-[406px] flex-col gap-[10px]">
-          {outcomesChecklist.map((item) => (
-            <li key={item} className="flex h-[48px] items-center gap-[10px]">
+      </div>
+
+      {/* 249:2068 — белая карточка + SemiBold акценты */}
+      <div className="absolute left-[727px] top-[8853px] z-[2] flex h-[563px] w-[466px] flex-col gap-[20px] rounded-[20px] bg-white p-[30px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
+        <p className="text-[24px] font-medium leading-[1.2] text-text">
+          Вы&nbsp;наверняка обнаружите, что:
+        </p>
+        <ul className="flex flex-col gap-[10px]">
+          {outcomesChecklist.map((item, i) => (
+            <li key={i} className="flex min-h-[48px] items-center gap-[10px]">
               <img
                 src={landingAssets.icons.check}
                 alt=""
                 className="size-[18px] shrink-0"
+                width={18}
+                height={18}
               />
-              <span className="w-[378px] text-[16px] leading-[24px] text-text">
-                {item}
-              </span>
+              <p className="flex-1 text-[16px] font-normal leading-[1.5] text-text">
+                {item.parts.map((p, j) =>
+                  p.bold ? (
+                    <span key={j} className="font-semibold">
+                      {p.t}
+                    </span>
+                  ) : (
+                    <span key={j}>{p.t}</span>
+                  ),
+                )}
+              </p>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="absolute left-[1214px] top-[8853px] z-[2] h-[563px] w-[468px] rounded-[30px] bg-light-gray">
-        <p className="absolute left-[30px] top-[30px] w-[408px] text-[20px] font-medium leading-[1.2] text-text-dark">
-          Но&nbsp;главное изменение может оказаться совсем не&nbsp;там,
-          где&nbsp;вы&nbsp;его ожидаете.
+      {/* 249:1570 — градиент 107.9° + белый текст */}
+      <div
+        className="absolute left-[1214px] top-[8853px] z-[2] flex h-[563px] w-[468px] flex-col items-start gap-[20px] overflow-hidden rounded-[20px] p-[30px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(107.94deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+        }}
+      >
+        <p className="w-[408px] whitespace-pre text-[24px] font-semibold leading-[1.2] text-white">
+          {`Но\u00a0главное изменение может
+оказаться совсем не\u00a0там,
+где\u00a0вы\u00a0его ожидаете.`}
         </p>
-        <p className="absolute left-[30px] top-[137px] w-[408px] text-[16px] font-normal leading-[1.5] text-text">
-          Потому что&nbsp;это&nbsp;исследование&nbsp;— не&nbsp;про&nbsp;изучение
-          новых фигур. Оно&nbsp;про&nbsp;то, как&nbsp;научиться видеть
-          в&nbsp;уже&nbsp;знакомом танце гораздо больше, чем&nbsp;раньше.
-        </p>
-        <a
-          href="#tariffs"
-          className="btn-primary absolute left-[30px] top-[253px]"
-        >
+        <div className="w-[408px] text-[16px] font-normal leading-[1.5] text-white">
+          <p>
+            Потому что&nbsp;это&nbsp;исследование&nbsp;— не&nbsp;про&nbsp;изучение
+            новых фигур.
+          </p>
+          <p>
+            Оно&nbsp;про&nbsp;то, как&nbsp;научиться видеть в&nbsp;уже&nbsp;знакомом
+            танце гораздо больше, чем&nbsp;раньше.
+          </p>
+        </div>
+        <a href="#tariffs" className="btn-primary">
           Присоединиться
         </a>
+        {/* 249:2119 */}
+        <img
+          src={landingAssets.photos.whatChanges}
+          alt=""
+          className="pointer-events-none absolute left-[181px] top-[277px] h-[365px] w-[285px] max-w-none object-contain"
+        />
       </div>
-
-      <img
-        src={landingAssets.photos.whatChanges}
-        alt=""
-        className="pointer-events-none absolute left-[1395px] top-[9130px] z-[3] h-[365px] w-[285px] object-contain"
-      />
     </>
   );
 }
