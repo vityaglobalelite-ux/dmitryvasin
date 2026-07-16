@@ -1,0 +1,13 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 627 684" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Rectangle 27">
+<rect width="627" height="684" rx="40" fill="var(--fill-0, white)"/>
+<rect width="627" height="684" rx="40" fill="url(#paint0_linear_0_7)"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_7" x1="-3.4864" y1="73.2521" x2="793.372" y2="357.679" gradientUnits="userSpaceOnUse">
+<stop stop-color="#DB0C25"/>
+<stop offset="0.33" stop-color="#E04C29"/>
+<stop offset="1" stop-color="#EFB991"/>
+</linearGradient>
+</defs>
+</svg>

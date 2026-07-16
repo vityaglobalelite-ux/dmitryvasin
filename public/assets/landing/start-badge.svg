@@ -1,0 +1,16 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="mdi:stopwatch-start">
+<rect width="24" height="24" fill="white"/>
+<g id="Vector">
+<path d="M15 3H9V1H15V3ZM13 19C13 20.03 13.26 21 13.71 21.83C13.16 21.94 12.59 22 12 22C9.61305 22 7.32387 21.0518 5.63604 19.364C3.94821 17.6761 3 15.3869 3 13C3 10.6131 3.94821 8.32387 5.63604 6.63604C7.32387 4.94821 9.61305 4 12 4C14.12 4 16.07 4.74 17.62 6L19.04 4.56C19.55 5 20 5.46 20.45 5.97L19.03 7.39C20.3061 8.98126 21.001 10.9603 21 13V13.35C20.36 13.13 19.7 13 19 13C15.69 13 13 15.69 13 19ZM13 7H11V14H13V7ZM17 16V22L22 19L17 16Z" fill="white"/>
+<path d="M15 3H9V1H15V3ZM13 19C13 20.03 13.26 21 13.71 21.83C13.16 21.94 12.59 22 12 22C9.61305 22 7.32387 21.0518 5.63604 19.364C3.94821 17.6761 3 15.3869 3 13C3 10.6131 3.94821 8.32387 5.63604 6.63604C7.32387 4.94821 9.61305 4 12 4C14.12 4 16.07 4.74 17.62 6L19.04 4.56C19.55 5 20 5.46 20.45 5.97L19.03 7.39C20.3061 8.98126 21.001 10.9603 21 13V13.35C20.36 13.13 19.7 13 19 13C15.69 13 13 15.69 13 19ZM13 7H11V14H13V7ZM17 16V22L22 19L17 16Z" fill="url(#paint0_linear_0_4)"/>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="2.89435" y1="3.24897" x2="27.1122" y2="11.7809" gradientUnits="userSpaceOnUse">
+<stop stop-color="#DB0C25"/>
+<stop offset="0.33" stop-color="#E04C29"/>
+<stop offset="1" stop-color="#EFB991"/>
+</linearGradient>
+</defs>
+</svg>

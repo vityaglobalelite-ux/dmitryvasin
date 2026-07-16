@@ -1,76 +1,66 @@
-import Image from "next/image";
-import Link from "next/link";
-import { socialLinks } from "@/lib/site-data";
+import { landingAssets } from "@/lib/landing-assets";
+import { footerLinks, socialLinks } from "@/lib/landing-data";
 
-function SocialIcon({ link }: { link: (typeof socialLinks)[number] }) {
-  return (
-    <a
-      href={link.href}
-      target={link.href.startsWith("mailto:") ? undefined : "_blank"}
-      rel={
-        link.href.startsWith("mailto:") ? undefined : "noopener noreferrer"
-      }
-      aria-label={link.label}
-      className="inline-flex h-[4.5rem] w-[4.5rem] shrink-0 transition hover:opacity-80"
-    >
-      <Image
-        src={link.icon}
-        alt={link.label}
-        width={72}
-        height={72}
-        className="h-[4.5rem] w-[4.5rem]"
-      />
-    </a>
-  );
-}
+/* Figma: Rectangle 41 (0,14807,1920x324) */
+
+const socialRow1 = socialLinks.slice(0, 4);
+const socialRow2 = socialLinks.slice(4, 7);
 
 export function Footer() {
-  const topSocialLinks = socialLinks.slice(0, 4);
-  const bottomSocialLinks = socialLinks.slice(4);
-
   return (
-    <footer className="relative w-full bg-[#090808] py-[4.5rem] md:py-24">
-      <div className="flex w-full flex-col gap-[3.75rem] px-4 md:flex-row md:items-start md:gap-9 md:px-6 lg:px-10">
-        <div className="min-w-0 flex-1 basis-0 text-xl leading-relaxed text-white/90">
-          <p>© Все права защищены, контент сайта</p>
-          <p>принадлежит Дмитрию Васину</p>
-          <p className="mt-3">ИП Васин Д.В.</p>
-          <p>ИНН 771574228268</p>
-          <p>ОГРНИП 307770000362132</p>
-        </div>
+    <footer
+      id="contacts"
+      className="absolute left-0 top-[14807px] h-[324px] w-[1920px] bg-[#1a1a1a]"
+    >
+      <p className="absolute left-[241px] top-[100px] w-[520px] text-[16px] leading-[24px] text-white/60">
+        Все права защищены, контент сайта принадлежит BeTango Global LLC
+        Address: Florida, U.S.A. limited liability company with a registered
+        agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702
+      </p>
+      <p className="absolute left-[241px] top-[212px] text-[16px] leading-[24px] text-white/60">
+        © 2026
+      </p>
 
-        <nav className="flex min-w-0 flex-1 basis-0 flex-col items-center text-2xl leading-snug text-white">
-          <div className="w-fit text-left">
-            <div className="flex flex-col gap-3">
-              <Link href="/oferta">Договор оферты</Link>
-              <Link href="/politika">Политика конфиденциальности</Link>
-              <Link href="/soglasie">
-                Согласие на получение
-                <br />
-                рекламной и информационной
-                <br />
-                рассылки
-              </Link>
-            </div>
-          </div>
-        </nav>
+      <nav className="absolute left-[848px] top-[100px] flex w-[516px] flex-col gap-[20px]">
+        {footerLinks.map((link) => (
+          <a
+            key={link}
+            href="#"
+            className="w-[297px] text-[16px] leading-[24px] text-white hover:text-white/70"
+          >
+            {link}
+          </a>
+        ))}
+      </nav>
 
-        <div className="flex min-w-0 flex-1 basis-0 flex-col items-center">
-          <div className="w-fit text-left">
-            <div className="grid grid-cols-4 gap-[1.125rem]">
-              {topSocialLinks.map((link) => (
-                <SocialIcon key={link.href} link={link} />
-              ))}
-              {bottomSocialLinks.map((link) => (
-                <SocialIcon key={link.href} link={link} />
-              ))}
-            </div>
-            <p className="mt-6 text-lg italic text-white/60">
-              *Meta запрещена на территории РФ
-            </p>
-          </div>
-        </div>
+      {/* socials: row 1 at x1450..1680, row 2 at x1510..1680 */}
+      <div className="absolute left-[1450px] top-[100px] flex gap-[10px]">
+        {socialRow1.map((s) => (
+          <a
+            key={s.label}
+            href={s.href}
+            aria-label={s.label}
+            className="grid size-[50px] place-items-center rounded-full bg-white/10 transition hover:bg-white/20"
+          >
+            <img src={s.icon} alt="" className="size-[30px]" />
+          </a>
+        ))}
       </div>
+      <div className="absolute left-[1510px] top-[160px] flex gap-[10px]">
+        {socialRow2.map((s) => (
+          <a
+            key={s.label}
+            href={s.href}
+            aria-label={s.label}
+            className="grid size-[50px] place-items-center rounded-full bg-white/10 transition hover:bg-white/20"
+          >
+            <img src={s.icon} alt="" className="size-[30px]" />
+          </a>
+        ))}
+      </div>
+      <p className="absolute left-[1456px] top-[221px] w-[224px] text-[12px] leading-[18px] text-white/40">
+        *Meta запрещена на территории РФ
+      </p>
     </footer>
   );
 }

@@ -1,54 +1,87 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "MuseoSansCyrl";
-  src: url("/assets/fonts/MuseoSansCyrl-300.woff") format("woff");
-  font-weight: 300;
+  font-family: "Involve";
+  src: url("/assets/fonts/Involve-Regular.ttf") format("truetype");
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "MuseoSansCyrl";
-  src: url("/assets/fonts/MuseoSansCyrl-500.woff") format("woff");
+  font-family: "Involve";
+  src: url("/assets/fonts/Involve-Medium.ttf") format("truetype");
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "MuseoSansCyrl";
-  src: url("/assets/fonts/MuseoSansCyrl-700.woff") format("woff");
-  font-weight: 700;
+  font-family: "Involve";
+  src: url("/assets/fonts/Involve-SemiBold.ttf") format("truetype");
+  font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "MuseoSansCyrl";
-  src: url("/assets/fonts/MuseoSansCyrl-900.woff") format("woff");
-  font-weight: 900;
+  font-family: "Involve";
+  src: url("/assets/fonts/Involve-Bold.ttf") format("truetype");
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --background: #090808;
-  --foreground: #ffffff;
-  --accent: #eb0b0b;
-  --accent-dark: #da0d0d;
+  --background: #ffffff;
+  --foreground: #252525;
+  --text: #252525;
+  --text-dark: #1a1a1a;
+  --light-gray: #f4f4f6;
+  --accent-red: #db0c25;
+  --accent-orange: #c2461e;
+  --plum: #4c0d32;
+  --brand-gradient: linear-gradient(
+    149deg,
+    #db0c25 2.6%,
+    #e04c29 36.6%,
+    #efb991 105.7%
+  );
+  --cta-gradient: linear-gradient(90deg, #9e151e, #4c0d32);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-accent: var(--accent);
-  --color-accent-dark: var(--accent-dark);
-  --font-sans: "MuseoSansCyrl", Arial, Helvetica, sans-serif;
+  --color-text: var(--text);
+  --color-text-dark: var(--text-dark);
+  --color-light-gray: var(--light-gray);
+  --color-accent-red: var(--accent-red);
+  --color-accent-orange: var(--accent-orange);
+  --color-plum: var(--plum);
+  --font-sans: "Involve", Arial, Helvetica, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Figma hero display lines: 106px line boxes */
+.hero-display {
+  font-size: 88px;
+  line-height: 106px;
+  font-weight: 600;
+  letter-spacing: -2.5px;
+  color: #ffffff;
+}
+
+/* Section heading, Figma 55px line box */
+.h-section {
+  font-size: 50px;
+  line-height: 55px;
+  font-weight: 500;
+  letter-spacing: -1.5px;
+  color: var(--text-dark);
 }
 
 body {
@@ -71,13 +104,54 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(0deg, #181616 0%, #eb0b0b 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 259px;
+  height: 60px;
+  border-radius: 60px;
+  background: var(--cta-gradient);
   color: #ffffff;
-  transition: filter 0.2s ease;
+  font-family: "Involve", Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  border: none;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.2s ease;
+  text-decoration: none;
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.08);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary--light {
+  background: #ffffff;
+  color: var(--plum);
+}
+
+.btn-primary--light:hover {
+  filter: brightness(0.97);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 30s linear infinite;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .scrollbar-hide {

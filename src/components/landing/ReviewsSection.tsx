@@ -1,118 +1,119 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useState } from "react";
-import { reviews } from "@/lib/site-data";
+import { useState } from "react";
+import { landingAssets } from "@/lib/landing-assets";
+import { reviews } from "@/lib/landing-data";
 
-type Review = (typeof reviews)[number];
+/* Figma: Rectangle 40 (0,12784,1920x1020 тёмный) + коллаж + карточки отзывов */
 
-function ReviewModal({
-  review,
-  onClose,
-}: {
-  review: Review;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+const a = landingAssets;
+const collage = [
+  { src: a.collage[0], x: 240, y: 12969, w: 345, h: 632 },
+  { src: a.collageExtra[0], x: 605, y: 12969, w: 345, h: 73 },
+  { src: a.collageExtra[1], x: 605, y: 13062, w: 345, h: 156 },
+  { src: a.collage[2], x: 605, y: 13238, w: 345, h: 180 },
+  { src: a.collage[4], x: 605, y: 13438, w: 344, h: 106 },
+  { src: a.collage[1], x: 970, y: 12969, w: 345, h: 265 },
+  { src: a.collage[6], x: 970, y: 13254, w: 345, h: 98 },
+  { src: a.collage[7], x: 970, y: 13372, w: 345, h: 222 },
+  { src: a.collage[3], x: 1335, y: 12969, w: 345, h: 173 },
+  { src: a.collage[5], x: 1335, y: 13162, w: 345, h: 309 },
+  { src: a.collage[8], x: 1335, y: 13491, w: 343, h: 82 },
+];
 
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#090808]/95 p-4 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`Отзыв: ${review.name}`}
-    >
-      <div
-        className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-gradient-to-b from-[#181616] to-[#eb0b0b]/80 p-6 md:p-10"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 text-white/80 transition hover:text-white"
-          aria-label="Закрыть"
-        >
-          ✕
-        </button>
-
-        <h3 className="text-2xl font-black uppercase text-white">
-          {review.name}
-        </h3>
-        <p className="mt-2 text-sm italic text-white/80">{review.role}</p>
-        <p className="mt-6 text-base leading-relaxed text-white">
-          «{review.fullText}»
-        </p>
-      </div>
-    </div>
-  );
-}
+const cardX = [240, 726, 1214];
 
 export function ReviewsSection() {
-  const [active, setActive] = useState<Review | null>(null);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   return (
-    <section id="otzivy" className="bg-[#090808] py-16 md:py-20">
-      <div className="mx-auto max-w-[1200px] px-4 md:px-6">
-        <h2 className="text-center text-4xl font-black uppercase text-white md:text-6xl">
-          отзывы
-        </h2>
-        <p className="mx-auto mt-4 max-w-md text-center text-base text-white md:text-xl">
-          Листай и читай: вот, каких успехов другие уже добились в танго с моей
-          помощью →
+    <>
+      {/* dark background */}
+      <div className="absolute left-0 top-[12784px] h-[1020px] w-[1920px] bg-[#1a1a1a]" />
+
+      <h2 className="h-section absolute left-[730px] top-[12874px] w-[459px] text-center !text-white">
+        Отзывы участников
+      </h2>
+
+      {collage.map((c) => (
+        <img
+          key={c.src}
+          src={c.src}
+          alt=""
+          className="absolute rounded-[10px] object-cover"
+          style={{ left: c.x, top: c.y, width: c.w, height: c.h }}
+        />
+      ))}
+
+      {/* CTA внутри тёмного блока (831,13634) */}
+      <a href="#tariffs" className="btn-primary absolute left-[831px] top-[13634px]">
+        Присоединиться сейчас
+      </a>
+
+      {/* subheading (240,13914,1057x159) */}
+      <div className="absolute left-[240px] top-[13914px] w-[1057px]">
+        <p className="h-section">
+          А вот такие результаты получают ученики, работая со мной в онлайн
+          и оффлайн.
+        </p>
+        <p className="mt-[20px] text-[20px] leading-[29px] text-text">
+          Листайте и читайте →
         </p>
       </div>
 
-      <div className="mt-10 overflow-x-auto pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="mx-auto flex w-max gap-5 px-4 md:px-[max(1.5rem,calc((100vw-1200px)/2))]">
-          {reviews.map((review) => (
-            <article
-              key={review.id}
-              className="relative w-[340px] shrink-0 overflow-hidden rounded-2xl bg-gradient-to-b from-[#050505]/90 to-[#eb0b0b]/60 p-5 shadow-[0_4px_30px_rgba(235,11,11,1)]"
-            >
-              <div className="relative mx-auto mb-4 h-48 w-full overflow-hidden">
-                <Image
-                  src={review.image}
-                  alt={review.name}
-                  fill
-                  className="object-contain object-top"
-                  sizes="340px"
-                />
-              </div>
-              <h3 className="text-xl font-black uppercase text-white">
-                {review.name}
-              </h3>
-              <p className="mt-2 text-sm italic text-white/80">{review.role}</p>
-              <p className="mt-4 text-base text-white">
-                {review.excerpt}
-                <span className="bg-[#eb0b0b] px-1">{review.highlight}</span>
-                {review.tail}
-              </p>
-              <button
-                type="button"
-                onClick={() => setActive(review)}
-                className="mt-3 text-sm text-white/70 underline transition hover:text-white"
-              >
-                Читать больше...
-              </button>
-            </article>
-          ))}
-        </div>
+      {/* carousel arrows (…,14023) */}
+      <div className="absolute left-[1560px] top-[14023px] flex gap-[10px]">
+        <span className="grid size-[50px] place-items-center rounded-full bg-light-gray text-text">
+          ←
+        </span>
+        <span className="grid size-[50px] place-items-center rounded-full bg-[image:var(--brand-gradient)] text-white">
+          →
+        </span>
       </div>
 
-      {active && (
-        <ReviewModal review={active} onClose={() => setActive(null)} />
-      )}
-    </section>
+      {/* review cards (…,14113,467x614) */}
+      {reviews.map((review, i) => {
+        const isExpanded = expanded[i];
+        const text = isExpanded ? review.fullQuote : review.quote;
+        return (
+          <article
+            key={review.name}
+            className="absolute h-[614px] w-[467px] rounded-[30px] bg-light-gray"
+            style={{ left: cardX[i], top: 14113 }}
+          >
+            <img
+              src={review.photo}
+              alt={review.name}
+              className="absolute left-[30px] top-[30px] size-[206px] rounded-full object-cover"
+            />
+            <div className="absolute left-[30px] top-[266px] w-[407px]">
+              <h3 className="text-[24px] font-semibold leading-[29px] text-text-dark">
+                {review.name}
+              </h3>
+              <p className="mt-[10px] text-[14px] leading-[21px] text-text opacity-60">
+                {review.role}
+              </p>
+            </div>
+            <div
+              className="absolute left-[30px] w-[407px]"
+              style={{ top: i === 0 ? 398 : 356 }}
+            >
+              <blockquote className="text-[16px] leading-[24px] text-text">
+                “{text}
+              </blockquote>
+              <button
+                type="button"
+                className="mt-[10px] text-[16px] font-medium text-accent-orange underline"
+                onClick={() =>
+                  setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
+                }
+              >
+                {isExpanded ? "Свернуть" : "Читать далее"}
+              </button>
+            </div>
+          </article>
+        );
+      })}
+    </>
   );
 }

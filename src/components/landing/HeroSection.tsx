@@ -1,622 +1,143 @@
-"use client";
+import { landingAssets } from "@/lib/landing-assets";
+import { heroDirections } from "@/lib/landing-data";
 
-import Image from "next/image";
-import Link from "next/link";
-import { createPortal } from "react-dom";
-import { useEffect, useRef, useState } from "react";
-import { assets } from "@/lib/assets";
-import { heroAchievements, heroFeatures, navLinks } from "@/lib/site-data";
+const nav = {
+  left: [
+    { label: "О клубе", href: "#about" },
+    { label: "Программа", href: "#program" },
+  ],
+  right: [
+    { label: "Тарифы", href: "#tariffs" },
+    { label: "Контакты", href: "#contacts" },
+  ],
+};
 
-function HeroStar() {
-  return (
-    <svg
-      aria-hidden
-      width={27}
-      height={27}
-      viewBox="0 0 42 42"
-      fill="none"
-      className="shrink-0 animate-[spin_10s_linear_infinite]"
-    >
-      <path
-        d="M21 1.44077L26.203 15.5016L26.2828 15.7172L26.4984 15.797L40.5592 21L26.4984 26.203L26.2828 26.2828L26.203 26.4984L21 40.5592L15.797 26.4984L15.7172 26.2828L15.5016 26.203L1.44077 21L15.5016 15.797L15.7172 15.7172L15.797 15.5016L21 1.44077Z"
-        stroke="#EB0B0B"
-        strokeWidth={1.5}
-      />
-    </svg>
-  );
-}
-
-const ACHIEVEMENTS_TRANSITION_MS = 500;
-/** Portrait lift in px (photo + aligned left blocks 2–3; block 1 top stays fixed). */
-const HERO_PHOTO_LIFT_PX = 31;
-/** Shared fade line for hero background + portrait (percent of portrait height). */
-const HERO_FADE_START = 0.66;
-const HERO_FADE_END = 0.99;
-
-function buildHeroFadeMask(
-  start: number,
-  span: number,
-  unit: "px" | "%",
-) {
-  const fmt = (value: number) => (unit === "%" ? `${value}%` : `${value}px`);
-  const end = start + span;
-  const at = (ratio: number) => start + span * ratio;
-
-  return `linear-gradient(to bottom, #000 ${fmt(0)}, #000 ${fmt(start)}, rgba(0,0,0,0.96) ${fmt(at(0.16))}, rgba(0,0,0,0.78) ${fmt(at(0.42))}, rgba(0,0,0,0.58) ${fmt(at(0.72))}, rgba(0,0,0,0.14) ${fmt(at(0.9))}, transparent ${fmt(end)})`;
-}
-
-const heroBottomFadeMask = buildHeroFadeMask(
-  HERO_FADE_START * 100,
-  (HERO_FADE_END - HERO_FADE_START) * 100,
-  "%",
-);
-
-function HeroNav() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <>
-      <nav className="relative z-20 flex items-center justify-between pt-3 md:justify-start md:gap-8 md:pt-4">
-        <div className="hidden items-center gap-6 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-base text-white transition hover:text-[#eb0b0b]"
-            >
-              {link.label}
-            </Link>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          className="ml-auto flex h-7 w-7 flex-col justify-between md:hidden"
-          onClick={() => setMenuOpen(true)}
-          aria-label="Открыть меню"
-          aria-expanded={menuOpen}
-        >
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className="block h-[3px] w-full bg-[#eb0b0b]"
-              style={
-                i === 1 || i === 2
-                  ? { width: "80%", marginLeft: "20%" }
-                  : undefined
-              }
-            />
-          ))}
-        </button>
-      </nav>
-
-      {menuOpen && (
-        <div className="fixed inset-0 z-50 flex">
-          <button
-            type="button"
-            className="absolute inset-0 bg-[#090808]/70"
-            onClick={() => setMenuOpen(false)}
-            aria-label="Закрыть меню"
-          />
-          <aside className="relative ml-auto flex h-full w-full max-w-xs flex-col bg-[#090808] p-8">
-            <button
-              type="button"
-              onClick={() => setMenuOpen(false)}
-              className="mb-10 self-end text-white"
-              aria-label="Закрыть"
-            >
-              ✕
-            </button>
-            <ul className="flex flex-col gap-6">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-lg text-white"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </aside>
-        </div>
-      )}
-    </>
-  );
-}
-
-function HeroStickyTitle() {
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const flowTitleRef = useRef<HTMLHeadingElement>(null);
-  const overlayTitleRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
-  const posRef = useRef({ x: 0, y: 0 });
-  const phaseRef = useRef<"idle" | "to-center" | "centered" | "to-flow">("idle");
-  const animRef = useRef({ start: 0, fromX: 0, fromY: 0 });
-  const blurRef = useRef(false);
-  const isActiveRef = useRef(false);
-  const isElevatedRef = useRef(false);
-  const [mounted, setMounted] = useState(false);
-  const [isActive, setIsActive] = useState(false);
-  const [isElevated, setIsElevated] = useState(false);
-  const [showBlur, setShowBlur] = useState(false);
-  const [titleSize, setTitleSize] = useState({ width: 0, height: 0 });
-
-  const titleClassName =
-    "w-fit max-w-none whitespace-nowrap bg-[#eb0b0b] px-2 py-1 text-[clamp(1rem,2.4vw,2.5rem)] font-black uppercase leading-none text-white";
-
-  const PINNED_TOP = 12;
-  const ANIM_MS = 380;
-  const UNPIN_AT = 10;
-
-  const blurHeight =
-    titleSize.height > 0 ? PINNED_TOP + titleSize.height + 8 : 0;
-
-  const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
-  const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
-
-  const getCenterPos = (width: number) => ({
-    x: window.innerWidth / 2 - width / 2,
-    y: PINNED_TOP,
-  });
-
-  const applyOverlayPos = (x: number, y: number) => {
-    posRef.current = { x, y };
-    const el = overlayTitleRef.current;
-    if (el) {
-      el.style.left = `${x}px`;
-      el.style.top = `${y}px`;
-    }
-  };
-
-  const setBlur = (next: boolean) => {
-    if (blurRef.current === next) return;
-    blurRef.current = next;
-    setShowBlur(next);
-  };
-
-  const setActive = (next: boolean) => {
-    if (isActiveRef.current === next) return;
-    isActiveRef.current = next;
-    setIsActive(next);
-  };
-
-  const setElevated = (next: boolean) => {
-    if (isElevatedRef.current === next) return;
-    isElevatedRef.current = next;
-    setIsElevated(next);
-  };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    const title = flowTitleRef.current;
-    if (!title) return;
-
-    const updateSize = () => {
-      setTitleSize({ width: title.offsetWidth, height: title.offsetHeight });
-    };
-
-    updateSize();
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(title);
-
-    return () => resizeObserver.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const sentinel = sentinelRef.current;
-    const title = flowTitleRef.current;
-    if (!sentinel || !title) return;
-
-    const getFlowPos = () => {
-      const rect = title.getBoundingClientRect();
-      return { x: rect.left, y: rect.top, width: rect.width };
-    };
-
-    const startToCenter = (now: number) => {
-      const flow = getFlowPos();
-      phaseRef.current = "to-center";
-      animRef.current = { start: now, fromX: flow.x, fromY: flow.y };
-      applyOverlayPos(flow.x, flow.y);
-      setActive(true);
-      setElevated(false);
-      setBlur(true);
-    };
-
-    const startToFlow = (now: number) => {
-      phaseRef.current = "to-flow";
-      animRef.current = {
-        start: now,
-        fromX: posRef.current.x,
-        fromY: posRef.current.y,
-      };
-      setActive(true);
-      setElevated(false);
-      setBlur(false);
-    };
-
-    const finishIdle = () => {
-      phaseRef.current = "idle";
-      setActive(false);
-      setElevated(false);
-      setBlur(false);
-    };
-
-    const shouldPin = () => sentinel.getBoundingClientRect().top <= 0;
-
-    const tick = (now: number) => {
-      const sentinelTop = sentinel.getBoundingClientRect().top;
-      const flow = getFlowPos();
-      const center = getCenterPos(flow.width);
-      let phase = phaseRef.current;
-
-      if (phase === "idle" && shouldPin()) {
-        startToCenter(now);
-        phase = "to-center";
-      } else if (
-        (phase === "centered" || phase === "to-center") &&
-        sentinelTop > UNPIN_AT
-      ) {
-        startToFlow(now);
-        phase = "to-flow";
-      } else if (phase === "to-flow" && shouldPin()) {
-        startToCenter(now);
-        phase = "to-center";
-      }
-
-      if (phase === "to-center") {
-        const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
-        const eased = easeOutCubic(t);
-        applyOverlayPos(
-          lerp(animRef.current.fromX, center.x, eased),
-          lerp(animRef.current.fromY, center.y, eased),
-        );
-        setElevated(t >= 1);
-        if (t >= 1) {
-          phaseRef.current = "centered";
-          applyOverlayPos(center.x, center.y);
-          setElevated(true);
-        }
-      } else if (phase === "centered") {
-        applyOverlayPos(center.x, center.y);
-        setElevated(true);
-      } else if (phase === "to-flow") {
-        const t = Math.min(1, (now - animRef.current.start) / ANIM_MS);
-        const eased = easeOutCubic(t);
-        applyOverlayPos(
-          lerp(animRef.current.fromX, flow.x, eased),
-          lerp(animRef.current.fromY, flow.y, eased),
-        );
-        if (t >= 1) {
-          if (shouldPin()) {
-            startToCenter(now);
-          } else {
-            applyOverlayPos(flow.x, flow.y);
-            finishIdle();
-          }
-        }
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  const pinnedOverlay = mounted ? (
-    <>
-      <div
-        aria-hidden
-        className={`pointer-events-none fixed inset-x-0 top-0 z-[100] ${
-          showBlur ? "opacity-100" : "opacity-0"
-        }`}
-        style={{
-          height: blurHeight > 0 ? blurHeight : PINNED_TOP + 48,
-        }}
-      >
-        <div className="absolute inset-0 bg-[#090808]/45 backdrop-blur-sm" />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#090808]/80 to-transparent" />
-      </div>
-      <div
-        ref={overlayTitleRef}
-        className={`pointer-events-none fixed ${isActive ? "z-[101]" : "z-20"}`}
-        style={{
-          left: posRef.current.x,
-          top: posRef.current.y,
-          opacity: isActive ? 1 : 0,
-          visibility: isActive ? "visible" : "hidden",
-        }}
-      >
-        <h1 className={titleClassName} aria-hidden>
-          СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
-        </h1>
-      </div>
-    </>
-  ) : null;
-
-  return (
-    <div className="relative py-2">
-      <div
-        ref={sentinelRef}
-        className="pointer-events-none absolute top-0 h-px w-full"
-        aria-hidden
-      />
-
-      <div style={{ minHeight: titleSize.height || undefined }}>
-        <h1
-          ref={flowTitleRef}
-          className={`${titleClassName} relative z-20 ${
-            isActive ? "invisible" : ""
-          }`}
-        >
-          СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!
-        </h1>
-      </div>
-
-      {pinnedOverlay ? createPortal(pinnedOverlay, document.body) : null}
-    </div>
-  );
-}
-
+/* Figma: nav Rect24 (240,20,1440x66); hero Rect26 (242,113,1440x684) */
 export function HeroSection() {
-  const [showAchievements, setShowAchievements] = useState(false);
-  const [isOverlayElevated, setIsOverlayElevated] = useState(false);
-  const [bgFadeMask, setBgFadeMask] = useState<string | null>(null);
-  const sectionRef = useRef<HTMLElement>(null);
-  const photoColumnRef = useRef<HTMLDivElement>(null);
-  const elevateTimeoutRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    const section = sectionRef.current;
-    const photoColumn = photoColumnRef.current;
-    if (!section || !photoColumn) return;
-
-    const syncBgFade = () => {
-      const portrait = photoColumn.firstElementChild as HTMLElement | null;
-      if (!portrait) return;
-
-      const sectionRect = section.getBoundingClientRect();
-      const { top, height } = portrait.getBoundingClientRect();
-      const fadeStart = top + height * HERO_FADE_START - sectionRect.top;
-      const fadeSpan = height * (HERO_FADE_END - HERO_FADE_START);
-      setBgFadeMask(buildHeroFadeMask(fadeStart, fadeSpan, "px"));
-    };
-
-    syncBgFade();
-
-    const portrait = photoColumn.firstElementChild;
-    const resizeObserver = new ResizeObserver(syncBgFade);
-    resizeObserver.observe(section);
-    resizeObserver.observe(photoColumn);
-    if (portrait instanceof HTMLElement) {
-      resizeObserver.observe(portrait);
-    }
-
-    window.addEventListener("resize", syncBgFade);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", syncBgFade);
-    };
-  }, []);
-
-  const openAchievements = () => {
-    if (elevateTimeoutRef.current !== null) {
-      window.clearTimeout(elevateTimeoutRef.current);
-      elevateTimeoutRef.current = null;
-    }
-
-    setIsOverlayElevated(true);
-    setShowAchievements(true);
-  };
-
-  const closeAchievements = () => {
-    setShowAchievements(false);
-    elevateTimeoutRef.current = window.setTimeout(() => {
-      setIsOverlayElevated(false);
-      elevateTimeoutRef.current = null;
-    }, ACHIEVEMENTS_TRANSITION_MS);
-  };
-
-  const toggleAchievements = () => {
-    if (showAchievements) {
-      closeAchievements();
-      return;
-    }
-
-    openAchievements();
-  };
-
   return (
-    <section ref={sectionRef} className="relative bg-[#090808] pb-16 pt-0 md:pb-20">
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-full md:w-[58%] lg:w-[54%]">
+    <section className="absolute left-0 top-0 h-[900px] w-[1920px]">
+      {/* decorative swirl behind everything */}
+      <img
+        src={landingAssets.hero.swirl}
+        alt=""
+        className="pointer-events-none absolute left-[86px] top-[98px] h-[788px] w-[1517px]"
+      />
+
+      {/* gradient card */}
+      <div className="absolute left-[242px] top-[113px] h-[684px] w-[1440px] overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]">
+        {/* white arc on the right */}
+        <img
+          src={landingAssets.hero.arcShape}
+          alt=""
+          className="absolute right-0 top-0 h-[684px] w-auto"
+        />
+      </div>
+
+      {/* Dmitry photo (788,86,760x711) */}
+      <img
+        src={landingAssets.hero.dmitry}
+        alt="Дмитрий Васин"
+        className="absolute left-[788px] top-[86px] h-[711px] w-[760px] object-contain object-bottom"
+      />
+
+      {/* arc line with dots (1312,112,138x686) */}
+      <img
+        src={landingAssets.hero.arcLine}
+        alt=""
+        className="pointer-events-none absolute left-[1312px] top-[112px] h-[686px] w-[138px]"
+      />
+
+      {/* headline */}
+      <div className="absolute left-[296px] top-[179px] flex items-center gap-[15px]">
+        <span className="grid size-[58px] place-items-center rounded-full bg-white">
+          <img src={landingAssets.icons.calendar} alt="" className="size-6" />
+        </span>
+        <span className="hero-display">90 дней</span>
+      </div>
+      <p className="hero-display absolute left-[296px] top-[244px]">
+        Исследования
+      </p>
+      <p className="hero-display absolute left-[296px] top-[327px]">танго</p>
+
+      <p className="absolute left-[553px] top-[344px] w-[427px] text-[24px] font-semibold leading-[32px] text-white">
+        Готовы по-новому прочувствовать и понять свой танец?
+      </p>
+
+      {/* promo white card (302,464,532x273) */}
+      <div className="absolute left-[302px] top-[464px] h-[273px] w-[532px] overflow-hidden rounded-[30px] bg-white">
+        <img
+          src={landingAssets.hero.promoDecor}
+          alt=""
+          className="pointer-events-none absolute -right-0 top-0 h-full"
+        />
+      </div>
+      <p className="absolute left-[332px] top-[488px] w-[479px] text-[24px] font-semibold leading-[32px] text-text-dark">
+        Приглашаю вас провести следующие 3 месяца вместе со мной.
+      </p>
+      <p className="absolute left-[332px] top-[562px] w-[387px] text-[14px] leading-[21px] text-text opacity-70">
+        Настало время поделиться тем, что обычно остаётся между преподавателем
+        и учеником.
+      </p>
+      <a
+        href="#tariffs"
+        className="absolute left-[332px] top-[647px] flex h-[60px] w-[259px] items-center justify-center rounded-[60px] bg-gradient-to-r from-[#9e151e] to-[#4c0d32] text-[16px] font-semibold text-white"
+      >
+        Присоединиться
+      </a>
+      <a
+        href="#tariffs"
+        className="absolute left-[601px] top-[647px] grid size-[60px] place-items-center rounded-full bg-gradient-to-r from-[#9e151e] to-[#4c0d32]"
+      >
+        <img src={landingAssets.hero.arrowButton} alt="" className="size-[10px]" />
+      </a>
+
+      {/* five directions along the arc */}
+      {heroArcItems.map((item) => (
         <div
-          className="absolute inset-0"
-          style={
-            bgFadeMask
-              ? {
-                  WebkitMaskImage: bgFadeMask,
-                  maskImage: bgFadeMask,
-                }
-              : undefined
-          }
+          key={item.label}
+          className="absolute flex flex-col items-center gap-[10px]"
+          style={{ left: item.x, top: item.y, width: item.w }}
         >
-          <Image
-            src={assets.heroPortrait}
-            alt=""
-            fill
-            className="object-cover object-top"
-            sizes="(max-width: 768px) 100vw, 58vw"
-            priority
-          />
-          <div className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-[#090808] via-[#090808]/70 to-transparent" />
+          <span className="grid size-[60px] place-items-center rounded-full bg-white/15 backdrop-blur-sm">
+            <img src={item.icon} alt="" className="size-[28px]" />
+          </span>
+          <span className="text-center text-[14px] leading-[19px] text-white">
+            {item.label}
+          </span>
         </div>
-      </div>
+      ))}
 
-      <div className="relative z-10 mx-auto max-w-[1200px] px-4 md:px-6">
-        <HeroNav />
-
-        <div className="grid items-stretch gap-10 md:grid-cols-2 md:gap-6">
-          <div className="relative z-20 flex flex-col gap-8 pt-4 md:h-full md:-translate-y-16 md:pt-0">
-            <div className="md:absolute md:inset-x-0 md:top-[16%]">
-              <HeroStickyTitle />
-            </div>
-
-            <div className="md:absolute md:inset-x-0 md:top-[46%] md:-translate-y-[calc(50%+31px)]">
-              <p className="whitespace-nowrap text-[clamp(0.65rem,1.5vw,1.25rem)] font-black uppercase leading-none tracking-tight text-white">
-                Аргентинское танго простым и доступным языком
-              </p>
-
-              <ul className="mt-6 space-y-3 md:space-y-4">
-                {heroFeatures.map((text) => (
-                  <li key={text} className="flex items-center gap-3">
-                    <HeroStar />
-                    <span className="text-lg leading-snug text-white">
-                      {text}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div
-              className="max-md:relative md:absolute md:inset-x-0 md:bottom-[20%] md:-translate-y-[31px]"
-            >
-              <div className="relative mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5 sm:pt-6 md:mt-0 md:pt-0">
-                <Link
-                  href="#laifhack"
-                  className="btn-primary relative z-10 inline-flex h-[75px] w-full shrink-0 items-center justify-center rounded-full px-10 text-lg font-medium uppercase sm:w-auto sm:min-w-[220px]"
-                >
-                  лайфхаки
-                </Link>
-
-                <svg
-                  aria-hidden
-                  viewBox="0 0 136 76"
-                  className="pointer-events-none absolute left-[170px] top-[-20px] z-20 hidden h-[58px] w-[116px] text-white opacity-50 sm:block"
-                  fill="none"
-                >
-                  <defs>
-                    <marker
-                      id="hero-cta-arrowhead"
-                      viewBox="0 0 10 10"
-                      refX="9"
-                      refY="5"
-                      markerWidth="10"
-                      markerHeight="10"
-                      orient="auto"
-                      markerUnits="userSpaceOnUse"
-                    >
-                      <path d="M0 1 L9 5 L0 9 Z" fill="currentColor" />
-                    </marker>
-                  </defs>
-                  <path
-                    d="M128 28C98 -6 49 2 38 52"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    markerEnd="url(#hero-cta-arrowhead)"
-                  />
-                </svg>
-
-                <div className="relative z-0 min-w-0 max-w-md sm:flex-1 sm:max-w-lg">
-                  <p className="text-sm leading-relaxed text-white sm:text-base">
-                    Открывай и{" "}
-                    <span className="bg-[#da0d0d] px-1">смотри прямо сейчас</span>{" "}
-                    бесплатные видеоуроки, чтобы еще больше прокачать в танго
-                    технику, музыкальность, вариативность и взаимодействие
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            ref={photoColumnRef}
-            className={`relative mx-auto -mb-[31px] flex h-full w-full max-w-[540px] -translate-y-[71px] flex-col overflow-visible md:max-w-[580px] md:-translate-y-[95px] lg:max-w-[620px] ${
-              isOverlayElevated ? "z-50" : "z-10"
-            }`}
-          >
-            <div
-              className="relative aspect-[1680/2518] w-full overflow-visible"
-              onMouseEnter={openAchievements}
-              onMouseLeave={closeAchievements}
-              onClick={toggleAchievements}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  toggleAchievements();
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              aria-expanded={showAchievements}
-              aria-label="Дмитрий Васин — показать достижения"
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  WebkitMaskImage: heroBottomFadeMask,
-                  maskImage: heroBottomFadeMask,
-                }}
-              >
-                <Image
-                  src={assets.heroBadge}
-                  alt="Дмитрий Васин"
-                  fill
-                  className="object-cover"
-                  priority
-                  sizes="(max-width: 768px) 540px, 620px"
-                />
-              </div>
-
-              <div className="pointer-events-auto absolute bottom-[19%] left-1/2 z-10 w-[calc(100%-6.5rem)] max-w-[280px] -translate-x-1/2 select-text rounded-[15px] bg-gradient-to-b from-[#181616]/55 from-[54%] to-[#eb0b0b]/45 p-4 text-center shadow-[0_4px_8px_rgba(9,8,8,0.35)] backdrop-blur-[2px] md:bottom-[20%] md:max-w-[290px] md:p-5">
-                <p className="text-lg font-semibold uppercase text-white">
-                  Дмитрий Васин
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-white/90">
-                  Чемпион Мира, Учитель Чемпионов России и Европы, Финалист
-                  проекта «Новые танцы» на ТНТ, Хореограф: «Танцы» на ТНТ»
-                </p>
-              </div>
-            </div>
-
-            <div
-              className={`absolute bottom-[28%] right-[68%] z-50 w-[min(420px,calc(100%+18rem))] max-w-[420px] rounded-[15px] bg-white p-5 text-[#090808] shadow-[0_12px_40px_rgba(0,0,0,0.55)] transition-opacity duration-500 ease-in-out ${
-                showAchievements
-                  ? "pointer-events-auto opacity-100"
-                  : "pointer-events-none opacity-0"
-              }`}
-            >
-              <ul className="space-y-2 text-sm leading-snug md:text-base">
-                {heroAchievements.map((item) => (
-                  <li key={item.parts.map((part) => part.bold ?? part.text).join("")}>
-                    {item.parts.map((part) =>
-                      "bold" in part && part.bold ? (
-                        <strong key={part.bold} className="font-bold">
-                          {part.bold}
-                        </strong>
-                      ) : (
-                        <span key={part.text}>{part.text}</span>
-                      ),
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-base font-bold">В танго с 2006 года</p>
-            </div>
-          </div>
+      {/* nav (240,20,1440x66) */}
+      <header className="absolute left-[240px] top-[20px] flex h-[66px] w-[1440px] items-center rounded-[60px] bg-white px-[23px]">
+        <nav className="flex gap-[28px] text-[16px] leading-[21px] text-text">
+          {nav.left.map((l) => (
+            <a key={l.label} href={l.href} className="hover:text-accent-red">
+              {l.label}
+            </a>
+          ))}
+        </nav>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap text-[24px] leading-none tracking-tight text-text-dark">
+          <span className="font-medium">Смотри.</span>{" "}
+          <span className="font-bold italic text-accent-red">Повторяй.</span>{" "}
+          <span className="font-semibold">Танцуй!</span>
         </div>
-      </div>
+        <nav className="ml-auto flex gap-[40px] text-[16px] leading-[21px] text-text">
+          {nav.right.map((l) => (
+            <a key={l.label} href={l.href} className="hover:text-accent-red">
+              {l.label}
+            </a>
+          ))}
+        </nav>
+      </header>
     </section>
   );
 }
+
+/* Figma frames 2373–2377 */
+const heroArcItems = [
+  { label: "Осознавание", icon: heroDirections[0].icon, x: 1450, y: 166, w: 98 },
+  { label: "Техника", icon: heroDirections[1].icon, x: 1508, y: 288, w: 60 },
+  { label: "Вариативность", icon: heroDirections[2].icon, x: 1496, y: 410, w: 107 },
+  { label: "Взаимодействие", icon: heroDirections[3].icon, x: 1478, y: 532, w: 120 },
+  { label: "Музыкальность", icon: heroDirections[4].icon, x: 1444, y: 654, w: 110 },
+];

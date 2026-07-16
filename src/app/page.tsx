@@ -1,23 +1,34 @@
-import { ContactSection } from "@/components/landing/ContactSection";
-import { CourseSection } from "@/components/landing/CourseSection";
+import { CountdownSection } from "@/components/landing/CountdownSection";
+import { DirectionsSection } from "@/components/landing/DirectionsSection";
+import { FigCanvas } from "@/components/landing/FigCanvas";
 import { Footer } from "@/components/landing/Footer";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { LifehacksSection } from "@/components/landing/LifehacksSection";
+import { LessonsSection } from "@/components/landing/LessonsSection";
+import { MyViewSection } from "@/components/landing/MyViewSection";
+import { NoticedSection } from "@/components/landing/NoticedSection";
+import { PaymentSection } from "@/components/landing/PaymentSection";
+import { ProgramSection } from "@/components/landing/ProgramSection";
+import { QuoteVideoSection } from "@/components/landing/QuoteVideoSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
-import { ServicesSection } from "@/components/landing/ServicesSection";
+import { TariffsSection } from "@/components/landing/TariffsSection";
+import { TelegramSection } from "@/components/landing/TelegramSection";
 
 export default function Home() {
   return (
-    <div className="page-enter min-h-full bg-[#090808]">
-      <main>
-        <HeroSection />
-        <LifehacksSection />
-        <CourseSection />
-        <ServicesSection />
-        <ReviewsSection />
-        <ContactSection />
-      </main>
+    <FigCanvas>
+      <HeroSection />
+      <NoticedSection />
+      <QuoteVideoSection />
+      <MyViewSection />
+      <DirectionsSection />
+      <ProgramSection />
+      <LessonsSection />
+      <TelegramSection />
+      <TariffsSection />
+      <CountdownSection />
+      <PaymentSection />
+      <ReviewsSection />
       <Footer />
-    </div>
+    </FigCanvas>
   );
 }
