@@ -61,7 +61,8 @@ export function MyViewSection() {
 вещей. Внимание «распыляется» и\u00a0важные детали ускользают.`}
       </p>
 
-      <div className="absolute left-0 top-[3822px] z-[2] flex h-[75px] w-[1920px] items-center overflow-hidden bg-[image:var(--brand-gradient)]">
+      {/* 249:1391 — сплошной #db0c25, не градиент */}
+      <div className="absolute left-0 top-[3822px] z-[2] flex h-[75px] w-[1920px] items-center overflow-hidden bg-accent-red">
         <div className="marquee-track">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex shrink-0 items-center">
