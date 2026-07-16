@@ -8,22 +8,23 @@ export function MyViewSection() {
       {/* gradient card (242,2953,1440×553) — без overflow-hidden, чтобы голова выходила сверху */}
       <div className="absolute left-[242px] top-[2953px] h-[553px] w-[1440px] rounded-[40px] bg-[image:var(--brand-gradient)]" />
 
+      {/* 249:1431 — Involve Medium 50 / leading 1.1 / tracking -1.5 */}
       <h2 className="h-section absolute left-[284px] top-[3009px] z-[2] w-[1007px] !text-white">
         Мой взгляд на обучение
       </h2>
-      {/* Переносы как в дизайне; whitespace-pre чтобы строки не ломались повторно */}
-      <p className="absolute left-[284px] top-[3081px] z-[2] whitespace-pre text-[24px] font-medium leading-[1.2] text-white">
-        {`Этот исследовательский метод появился благодаря тысячам часов,
-проведённых в студиях, на уроках, репетициях, выступлениях и
-соревнованиях.`}
+      {/* 249:1502 — Medium 24 / leading 1.2 / w644 → 3 строки */}
+      <p className="absolute left-[284px] top-[3081px] z-[2] w-[644px] whitespace-pre text-[24px] font-medium leading-[1.2] text-white">
+        {`Этот исследовательский метод появился благодаря
+тысячам часов, проведённых в студиях, на уроках,
+репетициях, выступлениях и соревнованиях.`}
       </p>
-      {/* Figma 249:1500 — Regular 16 / leading 1.5, два абзаца */}
-      <p className="absolute left-[284px] top-[3206px] z-[2] w-[521px] whitespace-pre-wrap text-[16px] font-normal leading-[1.5] text-white">
-        {`Но больше всего на него повлияли люди.
-Их вопросы. Открытия. Трудности. Неожиданные инсайты.`}
-      </p>
+      {/* 249:1500 — Regular 16 / leading 1.5 / два абзаца */}
+      <div className="absolute left-[284px] top-[3206px] z-[2] w-[521px] text-[16px] font-normal leading-[1.5] text-white">
+        <p>Но больше всего на него повлияли люди.</p>
+        <p>Их вопросы. Открытия. Трудности. Неожиданные инсайты.</p>
+      </div>
 
-      {/* Frame 2422: текст с pl 100 как в Figma; лампочка 83×112 */}
+      {/* Frame 2422 + 249:1955 — Regular 16 / #252525 / 3 строки в 368 */}
       <div className="absolute left-[284px] top-[3353px] z-[3] flex h-[112px] w-[488px] items-center overflow-hidden rounded-[20px] bg-white py-[20px] pl-[100px] pr-[20px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
         <img
           src={landingAssets.misc.lightbulb}
