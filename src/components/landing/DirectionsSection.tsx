@@ -90,11 +90,14 @@ export function DirectionsSection() {
         alt=""
         className="pointer-events-none absolute left-[683px] top-[4550px] z-[1] h-[972px] w-[460px] object-fill"
       />
-      <img
-        src={`${landingAssets.photos.dmitryDirectionsFull}?v=2`}
-        alt="Дмитрий Васин"
-        className="pointer-events-none absolute left-[481px] top-[4277px] z-[2] h-[1246px] w-[915px] object-contain object-top"
-      />
+      {/* 255:2415 — кадр 915×1246; фото h 108.75% → низ (ноги) обрезается как в Figma */}
+      <div className="pointer-events-none absolute left-[481px] top-[4277px] z-[2] h-[1246px] w-[915px] overflow-hidden">
+        <img
+          src={landingAssets.photos.dmitryDirectionsFull}
+          alt="Дмитрий Васин"
+          className="absolute left-[0.59%] top-0 h-[108.75%] w-[98.81%] max-w-none"
+        />
+      </div>
 
       <h2 className="h-section absolute left-[242px] top-[4448px] z-[3] w-[395px] whitespace-pre">
         {`5 направлений
