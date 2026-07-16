@@ -41,11 +41,12 @@
   --accent-red: #db0c25;
   --accent-orange: #c2461e;
   --plum: #4c0d32;
+  /* Figma 249:1399 — Оранжевый градиент */
   --brand-gradient: linear-gradient(
-    135deg,
+    129.34deg,
     #db0c25 2.6%,
-    #e04c29 36.6%,
-    #efb991 105.7%
+    #e04c29 36.63%,
+    #efb991 105.73%
   );
   --cta-gradient: linear-gradient(90deg, #9e151e, #4c0d32);
 }
@@ -67,13 +68,15 @@ html {
 }
 
 /* Figma hero display lines: 106px line boxes */
+/* Figma 249:1428–1430 — Involve Bold 80 / tracking -2.4 / uppercase */
 .hero-display {
   font-size: 80px;
-  line-height: 106px;
+  line-height: 1;
   font-weight: 700;
   letter-spacing: -2.4px;
   color: #ffffff;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* Section heading, Figma 55px line box */

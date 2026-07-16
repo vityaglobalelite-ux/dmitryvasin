@@ -20,20 +20,31 @@ export function HeroSection() {
   return (
     <section className="absolute left-0 top-0 h-[900px] w-[1920px]">
       <div className="absolute left-[242px] top-[113px] z-0 h-[684px] w-[1440px] overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]">
-        {/* дуги слева/центре */}
+        {/* 249:1407 — мягкие белые дуги */}
         <img
           src={landingAssets.hero.swirl}
           alt=""
-          className="pointer-events-none absolute left-[-156px] top-[-15px] h-[788px] w-[1100px] max-w-none object-cover object-left"
+          className="pointer-events-none absolute left-[-156px] top-[-15px] h-[788px] w-[1517px] max-w-none"
         />
-        {/* справа персик со мягким горизонтальным fade — без жёсткой вертикали */}
-        <div
-          className="pointer-events-none absolute right-0 top-0 h-full w-[520px]"
-          style={{
-            background:
-              "linear-gradient(90deg, rgba(239,185,145,0) 0%, rgba(239,185,145,0.55) 38%, #efb991 72%)",
-          }}
+        {/* 249:1404 — тёплое свечение за человеком */}
+        <img
+          src={landingAssets.hero.glow}
+          alt=""
+          className="pointer-events-none absolute left-[658px] top-[-15px] h-[899px] w-[522px] max-w-none"
         />
+        {/* 249:1458 — Subtract fill #E04C29 / 40% (inline: img не даёт opacity надёжно) */}
+        <svg
+          className="pointer-events-none absolute left-[1071px] top-0 h-[684px] w-[369px]"
+          viewBox="0 0 368.629 684"
+          fill="none"
+          aria-hidden
+        >
+          <path
+            d="M328.629 0C350.72 5.37957e-06 368.629 17.9086 368.629 40V644C368.629 666.091 350.72 684 328.629 684H0C81.2328 593.24 130.629 473.389 130.629 342C130.629 210.611 81.2328 90.7596 0 0H328.629Z"
+            fill="#E04C29"
+            fillOpacity={0.4}
+          />
+        </svg>
       </div>
 
       {/* белая дуга с точками — ЗА человеком */}
@@ -43,7 +54,7 @@ export function HeroSection() {
         className="pointer-events-none absolute left-[1312px] top-[112px] z-[1] h-[686px] w-[138px]"
       />
 
-      {/* Дмитрий: без fade/mask, поверх фона и дуги */}
+      {/* Дмитрий: без fade/mask, поверх фона и Subtract */}
       <div
         className="pointer-events-none absolute left-[788px] z-[2] w-[760px] overflow-hidden"
         style={{ top: DMITRY_TOP, height: DMITRY_H }}
@@ -62,6 +73,7 @@ export function HeroSection() {
         width={58}
         height={58}
       />
+      {/* Involve Bold 80 / tracking -2.4 / uppercase */}
       <p className="hero-display absolute left-[369px] top-[160px] z-[3]">
         90 дней
       </p>
@@ -72,8 +84,13 @@ export function HeroSection() {
         танго
       </p>
 
-      <p className="absolute left-[553px] top-[344px] z-[3] w-[427px] text-[24px] font-semibold leading-[32px] text-white">
-        Готовы по-новому прочувствовать и понять свой танец?
+      {/* 249:1442 — Regular + Bold на отдельных словах, переносы как в макете */}
+      <p className="absolute left-[553px] top-[344px] z-[3] w-[427px] whitespace-pre-line text-[24px] font-normal leading-[32px] text-white">
+        {`Готовы `}
+        <span className="font-bold">по-новому</span>
+        {` прочувствовать\nи `}
+        <span className="font-bold">понять</span>
+        {` свой танец?`}
       </p>
 
       <div className="absolute left-[302px] top-[464px] z-[1] h-[273px] w-[532px] overflow-hidden rounded-[30px] bg-white shadow-[0px_4px_24px_rgba(0,0,0,0.08)]">
@@ -83,12 +100,17 @@ export function HeroSection() {
           className="pointer-events-none absolute right-0 top-0 h-full"
         />
       </div>
-      <p className="absolute left-[332px] top-[488px] z-[4] w-[479px] text-[24px] font-semibold leading-[32px] text-text-dark">
-        Приглашаю вас провести следующие 3 месяца вместе со мной.
+      {/* 249:1448 — Medium 24 / h64 = ровно 2 строки, без наезда на 249:1447 */}
+      <p className="absolute left-[332px] top-[488px] z-[4] w-[479px] text-[24px] font-medium leading-[32px] text-text-dark">
+        Приглашаю вас&nbsp;провести следующие
+        <br />
+        <span className="font-bold">3 месяца вместе со&nbsp;мной.</span>
       </p>
-      <p className="absolute left-[332px] top-[562px] z-[4] w-[387px] text-[14px] leading-[21px] text-text opacity-70">
-        Настало время поделиться тем, что обычно остаётся между преподавателем
-        и учеником.
+      {/* 249:1447 — Regular 16 */}
+      <p className="absolute left-[332px] top-[562px] z-[4] w-[387px] text-[16px] font-normal leading-[21px] text-text opacity-70">
+        Настало время поделиться тем, что&nbsp;обычно
+        <br />
+        остаётся между преподавателем и&nbsp;учеником.
       </p>
       <a
         href="#tariffs"

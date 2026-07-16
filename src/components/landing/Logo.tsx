@@ -51,7 +51,7 @@ export function Logo() {
         className="absolute left-[313px] top-1/2 -translate-y-1/2 bg-clip-text text-[24px] font-bold uppercase leading-none text-transparent"
         style={{
           backgroundImage:
-            "linear-gradient(141deg, #db0c25 2.6%, #e04c29 36.6%, #efb991 105.7%)",
+            "linear-gradient(129.34deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
         }}
       >
         Танцуй!
