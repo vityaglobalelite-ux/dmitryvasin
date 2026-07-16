@@ -144,7 +144,7 @@ export const programMonths = [
       { id: 7, number: "Урок 7", title: "Открывая пространство", direction: "Взаимодействие", directionIcon: landingAssets.icons.couple, body: "", explore: [] },
       { id: 8, number: "Урок 8", title: "Сила слабой доли", direction: "Музыкальность", directionIcon: landingAssets.icons.shoeProgress, body: "", explore: [] },
     ] satisfies LessonDetail[],
-    progress: { awareness: 20, technique: 20, variability: 20, interaction: 20, musicality: 20 },
+    progress: { awareness: 10, technique: 8, variability: 6, interaction: 12, musicality: 5 },
   },
   {
     id: 2,

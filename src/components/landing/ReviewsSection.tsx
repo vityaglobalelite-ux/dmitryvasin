@@ -4,7 +4,7 @@ import { useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { reviews } from "@/lib/landing-data";
 
-/* Figma: Rectangle 40 (0,12784,1920x1020 тёмный) + коллаж + карточки отзывов */
+/* Figma: Rectangle 40 (0,12784,1920x1020) + коллаж + карточки отзывов */
 
 const a = landingAssets;
 const collage = [
@@ -28,7 +28,6 @@ export function ReviewsSection() {
 
   return (
     <>
-      {/* dark background */}
       <div className="absolute left-0 top-[12784px] h-[1020px] w-[1920px] bg-[#1a1a1a]" />
 
       <h2 className="h-section absolute left-[730px] top-[12874px] w-[459px] text-center !text-white">
@@ -45,33 +44,47 @@ export function ReviewsSection() {
         />
       ))}
 
-      {/* CTA внутри тёмного блока (831,13634) */}
-      <a href="#tariffs" className="btn-primary absolute left-[831px] top-[13634px]">
+      <a
+        href="#tariffs"
+        className="btn-primary absolute left-[831px] top-[13634px]"
+      >
         Присоединиться сейчас
       </a>
 
-      {/* subheading (240,13914,1057x159) */}
       <div className="absolute left-[240px] top-[13914px] w-[1057px]">
         <p className="h-section">
-          А вот такие результаты получают ученики, работая со мной в онлайн
-          и оффлайн.
+          А вот такие результаты получают ученики, работая со мной в онлайн и
+          оффлайн.
         </p>
         <p className="mt-[20px] text-[20px] leading-[29px] text-text">
           Листайте и читайте →
         </p>
       </div>
 
-      {/* carousel arrows (…,14023) */}
-      <div className="absolute left-[1560px] top-[14023px] flex gap-[10px]">
-        <span className="grid size-[50px] place-items-center rounded-full bg-light-gray text-text">
-          ←
-        </span>
-        <span className="grid size-[50px] place-items-center rounded-full bg-[image:var(--brand-gradient)] text-white">
-          →
-        </span>
-      </div>
+      {/* Figma Group 2334 (prev, mirrored) / 2333 (next) */}
+      <button
+        type="button"
+        aria-label="Предыдущий отзыв"
+        className="absolute left-[1620px] top-[14023px] size-[50px]"
+      >
+        <img
+          src={landingAssets.reviews.arrowNext}
+          alt=""
+          className="size-full -scale-x-100"
+        />
+      </button>
+      <button
+        type="button"
+        aria-label="Следующий отзыв"
+        className="absolute left-[1680px] top-[14023px] size-[50px]"
+      >
+        <img
+          src={landingAssets.reviews.arrowNext}
+          alt=""
+          className="size-full"
+        />
+      </button>
 
-      {/* review cards (…,14113,467x614) */}
       {reviews.map((review, i) => {
         const isExpanded = expanded[i];
         const text = isExpanded ? review.fullQuote : review.quote;
@@ -87,7 +100,7 @@ export function ReviewsSection() {
               className="absolute left-[30px] top-[30px] size-[206px] rounded-full object-cover"
             />
             <div className="absolute left-[30px] top-[266px] w-[407px]">
-              <h3 className="text-[24px] font-semibold leading-[29px] text-text-dark">
+              <h3 className="text-[24px] font-medium leading-[29px] text-text-dark">
                 {review.name}
               </h3>
               <p className="mt-[10px] text-[14px] leading-[21px] text-text opacity-60">

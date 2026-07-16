@@ -5,7 +5,6 @@ import { outcomesChecklist } from "@/lib/landing-data";
 export function LessonsSection() {
   return (
     <>
-      {/* dark background (0,7803,1920x925) */}
       <div className="absolute left-0 top-[7803px] h-[925px] w-[1920px] overflow-hidden bg-[#1a1a1a]">
         <img
           src={landingAssets.backgrounds.lessonsFull}
@@ -18,14 +17,12 @@ export function LessonsSection() {
         Как будут выглядеть уроки
       </h2>
 
-      {/* tall photo (386,7750,706x978) */}
       <img
         src={landingAssets.photos.lessonsTall}
         alt=""
         className="absolute left-[386px] top-[7750px] h-[978px] w-[706px] object-contain object-bottom"
       />
 
-      {/* note with avatar (240,7997,386x100) */}
       <div className="absolute left-[240px] top-[7997px] flex w-[386px] items-start">
         <img
           src={landingAssets.photos.avatarDmitryQuote}
@@ -33,25 +30,23 @@ export function LessonsSection() {
           className="size-[100px] rounded-full object-cover"
         />
         <p className="ml-[22px] mt-[4px] w-[264px] text-[14px] leading-[21px] text-white/90">
-          Я совсем не шутил, когда говорил, что вы будете подсматривать
-          за реальными индивидуальными уроками.
+          Я совсем не шутил, когда говорил, что вы будете подсматривать за
+          реальными индивидуальными уроками.
         </p>
       </div>
 
-      {/* video thumb (240,8154,345x203) */}
       <img
         src={landingAssets.misc.videoLessonThumb}
         alt=""
         className="absolute left-[240px] top-[8154px] h-[203px] w-[345px] rounded-[20px] object-cover"
       />
 
-      {/* right column */}
       <p className="absolute left-[1092px] top-[7955px] w-[386px] text-[20px] font-medium leading-[29px] text-white">
         На протяжении исследования рядом со мной будет Лиза.
       </p>
       <p className="absolute left-[1092px] top-[8041px] w-[588px] text-[16px] leading-[24px] text-white/80">
-        С ней мы будем исследовать темы, задавать вопросы, проверять идеи
-        и искать ответы. Это живой процесс исследования. С вопросами,
+        С ней мы будем исследовать темы, задавать вопросы, проверять идеи и
+        искать ответы. Это живой процесс исследования. С вопросами,
         наблюдениями, экспериментами и неожиданными открытиями. Многие из вас,
         практикующих танго на разном уровне, узнают себя в вопросах, сомнениях
         и открытиях Лизы. А преподаватели смогут заглянуть внутрь процесса
@@ -59,28 +54,23 @@ export function LessonsSection() {
         урока и развивается тема шаг за шагом.
       </p>
 
-      {/* invite card (1092,8369,588x269) */}
-      <div className="absolute left-[1092px] top-[8369px] h-[269px] w-[588px] rounded-[30px] bg-white/10 backdrop-blur-sm">
-        <p className="absolute left-[30px] top-[30px] w-[456px] text-[20px] font-medium leading-[29px] text-white">
-          Обычно такие процессы остаются между преподавателем и учеником.
-          Но в этот раз я решил открыть эту дверь и приглашаю вас внутрь
+      {/* invite card Frame 2389 */}
+      <div className="absolute left-[1092px] top-[8369px] flex h-[269px] w-[588px] flex-col items-start gap-[33px] rounded-[20px] bg-white p-[30px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
+        <p className="w-[456px] text-[24px] font-medium leading-[1.2] text-text">
+          Обычно такие процессы остаются между преподавателем и учеником. Но в
+          этот раз я решил открыть эту дверь и приглашаю вас внутрь
         </p>
-        <a
-          href="#tariffs"
-          className="btn-primary absolute left-[30px] top-[179px]"
-        >
+        <a href="#tariffs" className="btn-primary">
           Присоединиться
         </a>
       </div>
 
-      {/* Liza illustration (1470,8408,210x230) */}
       <img
-        src={landingAssets.misc.lizaSide}
+        src={landingAssets.misc.padlock}
         alt=""
         className="pointer-events-none absolute left-[1470px] top-[8408px] h-[230px] w-[210px] object-contain"
       />
 
-      {/* ===== Что изменится за эти 90 дней (белый блок) ===== */}
       <div className="absolute left-[240px] top-[8853px] w-[442px]">
         <h2 className="h-section">Что изменится за эти 90 дней?</h2>
         <p className="mt-[20px] w-[410px] text-[24px] font-medium leading-[29px] text-text-dark">
@@ -94,7 +84,6 @@ export function LessonsSection() {
         естественнее.
       </p>
 
-      {/* checklist card (727,8853,466x563) */}
       <div className="absolute left-[727px] top-[8853px] h-[563px] w-[466px] rounded-[30px] bg-light-gray">
         <p className="absolute left-[30px] top-[30px] w-[406px] text-[20px] font-semibold leading-[29px] text-text-dark">
           Вы наверняка обнаружите, что:
@@ -115,7 +104,6 @@ export function LessonsSection() {
         </ul>
       </div>
 
-      {/* right card (1214,8853,468x563) */}
       <div className="absolute left-[1214px] top-[8853px] h-[563px] w-[468px] rounded-[30px] bg-light-gray">
         <p className="absolute left-[30px] top-[30px] w-[408px] text-[20px] font-semibold leading-[29px] text-text-dark">
           Но главное изменение может оказаться совсем не там, где вы его
@@ -131,7 +119,6 @@ export function LessonsSection() {
         </a>
       </div>
 
-      {/* photo overlapping right card (1395,9130,285x365) */}
       <img
         src={landingAssets.photos.whatChanges}
         alt=""

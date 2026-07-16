@@ -4,22 +4,25 @@ import { landingAssets } from "@/lib/landing-assets";
 export function TelegramSection() {
   return (
     <>
-      <div className="absolute left-[242px] top-[9596px] h-[584px] w-[1440px] rounded-[40px] bg-light-gray" />
+      <div className="absolute left-[242px] top-[9596px] h-[584px] w-[1440px] rounded-[40px] bg-[image:var(--brand-gradient)]" />
 
-      <h2 className="h-section absolute left-[302px] top-[9656px] w-[593px]">
+      <h2 className="h-section absolute left-[302px] top-[9656px] w-[593px] !text-white">
         Исследование проходит в закрытом Telegram-чате
       </h2>
 
-      <p className="absolute left-[302px] top-[9851px] w-[524px] text-[20px] leading-[29px] text-text">
-        Все уроки и материалы собраны в одном чате и сформированы по темам.
-        Смотрите наши уроки по расписанию и «подсматривайте» в удобное для себя
-        время, задавайте вопросы.
+      <p className="absolute left-[302px] top-[9851px] w-[524px] whitespace-pre-wrap text-[16px] leading-[24px] text-white">
+        {`Все уроки и материалы собраны в одном чате и сформированы по темам.
+
+Смотрите наши уроки по расписанию и «подсматривайте» в удобное для себя время, задавайте вопросы.`}
       </p>
 
-      {/* info row (302,10030,559x90) */}
-      <div className="absolute left-[302px] top-[10030px] flex h-[90px] w-[559px] items-center">
+      <div className="absolute left-[302px] top-[10030px] flex h-[90px] w-[559px] items-center rounded-[20px] bg-white p-[20px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
         <span className="grid size-[50px] shrink-0 place-items-center rounded-full bg-[image:var(--brand-gradient)]">
-          <img src={landingAssets.icons.calendar} alt="" className="size-[24px]" />
+          <img
+            src={landingAssets.icons.calendar}
+            alt=""
+            className="size-[24px]"
+          />
         </span>
         <p className="ml-[10px] w-[446px] text-[16px] leading-[24px] text-text">
           Доступ к материалам после 90 дней исследования — 30 дней, чтобы
@@ -27,7 +30,6 @@ export function TelegramSection() {
         </p>
       </div>
 
-      {/* phone photo (1054,9498,626x682) */}
       <img
         src={landingAssets.photos.telegramTall}
         alt="Telegram-чат исследования"

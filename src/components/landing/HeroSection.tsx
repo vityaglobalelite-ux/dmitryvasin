@@ -1,3 +1,4 @@
+import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
 import { heroDirections } from "@/lib/landing-data";
 
@@ -16,16 +17,13 @@ const nav = {
 export function HeroSection() {
   return (
     <section className="absolute left-0 top-0 h-[900px] w-[1920px]">
-      {/* decorative swirl behind everything */}
       <img
         src={landingAssets.hero.swirl}
         alt=""
         className="pointer-events-none absolute left-[86px] top-[98px] h-[788px] w-[1517px]"
       />
 
-      {/* gradient card */}
       <div className="absolute left-[242px] top-[113px] h-[684px] w-[1440px] overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]">
-        {/* white arc on the right */}
         <img
           src={landingAssets.hero.arcShape}
           alt=""
@@ -33,27 +31,23 @@ export function HeroSection() {
         />
       </div>
 
-      {/* Dmitry photo (788,86,760x711) */}
       <img
         src={landingAssets.hero.dmitry}
         alt="Дмитрий Васин"
         className="absolute left-[788px] top-[86px] h-[711px] w-[760px] object-contain object-bottom"
       />
 
-      {/* arc line with dots (1312,112,138x686) */}
       <img
         src={landingAssets.hero.arcLine}
         alt=""
         className="pointer-events-none absolute left-[1312px] top-[112px] h-[686px] w-[138px]"
       />
 
-      {/* headline */}
-      <div className="absolute left-[296px] top-[179px] flex items-center gap-[15px]">
-        <span className="grid size-[58px] place-items-center rounded-full bg-white">
-          <img src={landingAssets.icons.calendar} alt="" className="size-6" />
-        </span>
-        <span className="hero-display">90 дней</span>
-      </div>
+      {/* calendar chip (296,179) + «90 дней» (369,160) */}
+      <span className="absolute left-[296px] top-[179px] grid size-[58px] place-items-center rounded-full bg-white">
+        <img src={landingAssets.icons.calendar} alt="" className="size-6" />
+      </span>
+      <p className="hero-display absolute left-[369px] top-[160px]">90 дней</p>
       <p className="hero-display absolute left-[296px] top-[244px]">
         Исследования
       </p>
@@ -63,12 +57,11 @@ export function HeroSection() {
         Готовы по-новому прочувствовать и понять свой танец?
       </p>
 
-      {/* promo white card (302,464,532x273) */}
       <div className="absolute left-[302px] top-[464px] h-[273px] w-[532px] overflow-hidden rounded-[30px] bg-white">
         <img
           src={landingAssets.hero.promoDecor}
           alt=""
-          className="pointer-events-none absolute -right-0 top-0 h-full"
+          className="pointer-events-none absolute right-0 top-0 h-full"
         />
       </div>
       <p className="absolute left-[332px] top-[488px] w-[479px] text-[24px] font-semibold leading-[32px] text-text-dark">
@@ -80,7 +73,7 @@ export function HeroSection() {
       </p>
       <a
         href="#tariffs"
-        className="absolute left-[332px] top-[647px] flex h-[60px] w-[259px] items-center justify-center rounded-[60px] bg-gradient-to-r from-[#9e151e] to-[#4c0d32] text-[16px] font-semibold text-white"
+        className="btn-primary absolute left-[332px] top-[647px]"
       >
         Присоединиться
       </a>
@@ -88,10 +81,13 @@ export function HeroSection() {
         href="#tariffs"
         className="absolute left-[601px] top-[647px] grid size-[60px] place-items-center rounded-full bg-gradient-to-r from-[#9e151e] to-[#4c0d32]"
       >
-        <img src={landingAssets.hero.arrowButton} alt="" className="size-[10px]" />
+        <img
+          src={landingAssets.hero.arrowButton}
+          alt=""
+          className="size-[10px]"
+        />
       </a>
 
-      {/* five directions along the arc */}
       {heroArcItems.map((item) => (
         <div
           key={item.label}
@@ -107,21 +103,19 @@ export function HeroSection() {
         </div>
       ))}
 
-      {/* nav (240,20,1440x66) */}
-      <header className="absolute left-[240px] top-[20px] flex h-[66px] w-[1440px] items-center rounded-[60px] bg-white px-[23px]">
-        <nav className="flex gap-[28px] text-[16px] leading-[21px] text-text">
+      {/* nav Rect24: rounded 20px + shadow */}
+      <header className="absolute left-[240px] top-[20px] flex h-[66px] w-[1440px] items-center rounded-[20px] bg-white px-[23px] shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]">
+        <nav className="absolute left-[23px] top-[23px] flex gap-[28px] text-[16px] leading-[21px] text-text">
           {nav.left.map((l) => (
             <a key={l.label} href={l.href} className="hover:text-accent-red">
               {l.label}
             </a>
           ))}
         </nav>
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap text-[24px] leading-none tracking-tight text-text-dark">
-          <span className="font-medium">Смотри.</span>{" "}
-          <span className="font-bold italic text-accent-red">Повторяй.</span>{" "}
-          <span className="font-semibold">Танцуй!</span>
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <Logo />
         </div>
-        <nav className="ml-auto flex gap-[40px] text-[16px] leading-[21px] text-text">
+        <nav className="absolute right-[32px] top-[22px] flex gap-[40px] text-[16px] leading-[21px] text-text">
           {nav.right.map((l) => (
             <a key={l.label} href={l.href} className="hover:text-accent-red">
               {l.label}
@@ -133,11 +127,40 @@ export function HeroSection() {
   );
 }
 
-/* Figma frames 2373–2377 */
 const heroArcItems = [
-  { label: "Осознавание", icon: heroDirections[0].icon, x: 1450, y: 166, w: 98 },
-  { label: "Техника", icon: heroDirections[1].icon, x: 1508, y: 288, w: 60 },
-  { label: "Вариативность", icon: heroDirections[2].icon, x: 1496, y: 410, w: 107 },
-  { label: "Взаимодействие", icon: heroDirections[3].icon, x: 1478, y: 532, w: 120 },
-  { label: "Музыкальность", icon: heroDirections[4].icon, x: 1444, y: 654, w: 110 },
+  {
+    label: "Осознавание",
+    icon: heroDirections[0].icon,
+    x: 1450,
+    y: 166,
+    w: 98,
+  },
+  {
+    label: "Техника",
+    icon: heroDirections[1].icon,
+    x: 1508,
+    y: 288,
+    w: 60,
+  },
+  {
+    label: "Вариативность",
+    icon: heroDirections[2].icon,
+    x: 1496,
+    y: 410,
+    w: 107,
+  },
+  {
+    label: "Взаимодействие",
+    icon: heroDirections[3].icon,
+    x: 1478,
+    y: 532,
+    w: 120,
+  },
+  {
+    label: "Музыкальность",
+    icon: heroDirections[4].icon,
+    x: 1444,
+    y: 654,
+    w: 110,
+  },
 ];

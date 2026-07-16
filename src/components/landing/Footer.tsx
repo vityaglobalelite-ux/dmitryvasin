@@ -1,7 +1,6 @@
-import { landingAssets } from "@/lib/landing-assets";
 import { footerLinks, socialLinks } from "@/lib/landing-data";
 
-/* Figma: Rectangle 41 (0,14807,1920x324) */
+/* Figma: Group 2332 / Rectangle 41 (0,14807,1920x324) — light footer */
 
 const socialRow1 = socialLinks.slice(0, 4);
 const socialRow2 = socialLinks.slice(4, 7);
@@ -10,14 +9,14 @@ export function Footer() {
   return (
     <footer
       id="contacts"
-      className="absolute left-0 top-[14807px] h-[324px] w-[1920px] bg-[#1a1a1a]"
+      className="absolute left-0 top-[14807px] h-[324px] w-[1920px] bg-light-gray"
     >
-      <p className="absolute left-[241px] top-[100px] w-[520px] text-[16px] leading-[24px] text-white/60">
-        Все права защищены, контент сайта принадлежит BeTango Global LLC
-        Address: Florida, U.S.A. limited liability company with a registered
-        agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702
+      <p className="absolute left-[241px] top-[100px] w-[520px] whitespace-pre-wrap text-[16px] leading-[1.5] text-text">
+        {`Все права защищены, контент сайта принадлежит  
+BeTango Global LLC 
+Address: Florida, U.S.A. limited liability company with a registered agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702 `}
       </p>
-      <p className="absolute left-[241px] top-[212px] text-[16px] leading-[24px] text-white/60">
+      <p className="absolute left-[241px] top-[212px] text-[16px] leading-[1.5] text-text">
         © 2026
       </p>
 
@@ -26,21 +25,21 @@ export function Footer() {
           <a
             key={link}
             href="#"
-            className="w-[297px] text-[16px] leading-[24px] text-white hover:text-white/70"
+            className="text-[16px] leading-[1.5] text-text hover:text-accent-red"
+            style={{ width: link.length > 40 ? 297 : undefined }}
           >
             {link}
           </a>
         ))}
       </nav>
 
-      {/* socials: row 1 at x1450..1680, row 2 at x1510..1680 */}
       <div className="absolute left-[1450px] top-[100px] flex gap-[10px]">
         {socialRow1.map((s) => (
           <a
             key={s.label}
             href={s.href}
             aria-label={s.label}
-            className="grid size-[50px] place-items-center rounded-full bg-white/10 transition hover:bg-white/20"
+            className="grid size-[50px] place-items-center rounded-[30px] bg-[image:var(--brand-gradient)] transition hover:brightness-110"
           >
             <img src={s.icon} alt="" className="size-[30px]" />
           </a>
@@ -52,13 +51,13 @@ export function Footer() {
             key={s.label}
             href={s.href}
             aria-label={s.label}
-            className="grid size-[50px] place-items-center rounded-full bg-white/10 transition hover:bg-white/20"
+            className="grid size-[50px] place-items-center rounded-[30px] bg-[image:var(--brand-gradient)] transition hover:brightness-110"
           >
             <img src={s.icon} alt="" className="size-[30px]" />
           </a>
         ))}
       </div>
-      <p className="absolute left-[1456px] top-[221px] w-[224px] text-[12px] leading-[18px] text-white/40">
+      <p className="absolute left-[1456px] top-[221px] text-[12px] leading-[1.5] text-text">
         *Meta запрещена на территории РФ
       </p>
     </footer>

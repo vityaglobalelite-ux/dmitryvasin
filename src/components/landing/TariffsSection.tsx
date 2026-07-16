@@ -5,6 +5,24 @@ import { tariffs } from "@/lib/landing-data";
 
 const cardX = [240, 727, 1213];
 
+function DurationLabel({ duration }: { duration: string }) {
+  // Bold the leading duration chunk before «участия»
+  const match = duration.match(/^(.*?)(\s+участия.*)$/u);
+  if (!match) {
+    return (
+      <span className="ml-[10px] w-[314px] text-[16px] leading-[21px] text-text-dark">
+        {duration}
+      </span>
+    );
+  }
+  return (
+    <span className="ml-[10px] w-[314px] text-[16px] leading-[21px] text-text-dark">
+      <span className="font-bold">{match[1]}</span>
+      <span className="font-normal">{match[2]}</span>
+    </span>
+  );
+}
+
 export function TariffsSection() {
   return (
     <section id="tariffs" className="absolute left-0 top-0 h-0 w-full">
@@ -12,10 +30,13 @@ export function TariffsSection() {
         Выбирайте тариф участия
       </h2>
 
-      {/* start badge (1417,10354,263x62) */}
       <div className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center rounded-full bg-light-gray">
         <span className="ml-[20px] grid size-[34px] place-items-center rounded-full bg-[image:var(--brand-gradient)]">
-          <img src={landingAssets.icons.stopwatch} alt="" className="size-[24px]" />
+          <img
+            src={landingAssets.icons.stopwatch}
+            alt=""
+            className="size-[24px]"
+          />
         </span>
         <span className="ml-[10px] text-[20px] font-medium leading-[29px] text-text-dark">
           Старт: 25 июля
@@ -25,20 +46,19 @@ export function TariffsSection() {
       {tariffs.map((t, i) => (
         <article
           key={t.id}
-          className="absolute h-[636px] w-[467px] rounded-[30px] bg-light-gray"
+          className="absolute h-[636px] w-[467px] rounded-[20px] bg-light-gray"
           style={{ left: cardX[i], top: 10458 }}
         >
           <div className="absolute left-[30px] top-[30px]">
-            <p className="text-[10px] font-semibold uppercase tracking-[1px] text-text/50">
+            <p className="text-[14px] font-semibold uppercase tracking-[0.5px] text-accent-red">
               {t.badge}
             </p>
-            <p className="mt-[6px] text-[28px] font-semibold leading-[36px] text-text-dark">
+            <p className="mt-[6px] text-[30px] font-semibold leading-[36px] text-text-dark">
               {t.title}
             </p>
           </div>
 
-          {/* duration row */}
-          <div className="absolute left-[30px] top-[110px] flex h-[62px] w-[407px] items-center rounded-full bg-white">
+          <div className="absolute left-[30px] top-[110px] flex h-[62px] w-[407px] items-center rounded-[20px] bg-white">
             <span className="ml-[20px] grid size-[34px] shrink-0 place-items-center rounded-full bg-[image:var(--brand-gradient)]">
               <img
                 src={landingAssets.icons.calendarTariff}
@@ -46,9 +66,7 @@ export function TariffsSection() {
                 className="size-[20px]"
               />
             </span>
-            <span className="ml-[10px] w-[314px] text-[16px] font-medium leading-[21px] text-text-dark">
-              {t.duration}
-            </span>
+            <DurationLabel duration={t.duration} />
           </div>
 
           <ul className="absolute left-[30px] top-[202px] w-[407px]">
@@ -66,10 +84,13 @@ export function TariffsSection() {
 
           <div className="absolute bottom-[30px] left-[30px]">
             <p className="flex items-end gap-[30px]">
-              <span className="text-[28px] font-bold leading-[36px] text-text-dark">
+              <span
+                className="bg-clip-text text-[30px] font-bold leading-[36px] text-transparent"
+                style={{ backgroundImage: "var(--brand-gradient)" }}
+              >
                 {t.price}
               </span>
-              <span className="text-[16px] leading-[24px] text-text/50 line-through">
+              <span className="text-[20px] font-semibold leading-[24px] text-text line-through">
                 {t.oldPrice}
               </span>
             </p>
