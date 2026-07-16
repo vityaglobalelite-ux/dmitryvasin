@@ -21,9 +21,13 @@ export function PaymentSection() {
           className="absolute h-[320px] w-[345px] rounded-[30px] bg-light-gray"
           style={{ left: stepX[i], top: 11794 }}
         >
-          <span className="absolute left-[30px] top-[30px] grid size-[50px] place-items-center rounded-full bg-[image:var(--brand-gradient)] text-[24px] font-medium text-white">
-            {s.step}
-          </span>
+          <img
+            src={landingAssets.icons.stepChips[i]}
+            alt={`${s.step}`}
+            className="absolute left-[30px] top-[30px] size-[50px]"
+            width={50}
+            height={50}
+          />
           <div className="absolute left-[30px] top-[110px] h-[72px] w-[286px] rounded-[10px] bg-[#d9d9d9]" />
           <p className="absolute left-[30px] top-[212px] w-[286px] text-[16px] leading-[24px] text-text">
             {s.title}

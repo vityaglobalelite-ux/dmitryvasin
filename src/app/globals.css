@@ -68,11 +68,12 @@ html {
 
 /* Figma hero display lines: 106px line boxes */
 .hero-display {
-  font-size: 88px;
+  font-size: 80px;
   line-height: 106px;
-  font-weight: 600;
-  letter-spacing: -2.5px;
+  font-weight: 700;
+  letter-spacing: -2.4px;
   color: #ffffff;
+  text-transform: uppercase;
 }
 
 /* Section heading, Figma 55px line box */

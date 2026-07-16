@@ -1,6 +1,7 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 368.629 684" fill="none" xmlns="http://www.w3.org/2000/svg">
-<foreignObject x="-44" y="-44" width="456.629" height="772"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(22px);clip-path:url(#bgblur_0_0_4_clip_path);height:100%;width:100%"></div></foreignObject><path id="Subtract" data-figma-bg-blur-radius="44" d="M328.629 0C350.72 5.37957e-06 368.629 17.9086 368.629 40V644C368.629 666.091 350.72 684 328.629 684H0C81.2328 593.24 130.629 473.389 130.629 342C130.629 210.611 81.2328 90.7596 0 0H328.629Z" fill="var(--fill-0, #E04C29)" fill-opacity="0.4"/>
-<defs>
-<clipPath id="bgblur_0_0_4_clip_path" transform="translate(44 44)"><path d="M328.629 0C350.72 5.37957e-06 368.629 17.9086 368.629 40V644C368.629 666.091 350.72 684 328.629 684H0C81.2328 593.24 130.629 473.389 130.629 342C130.629 210.611 81.2328 90.7596 0 0H328.629Z"/>
-</clipPath></defs>
+<svg preserveAspectRatio="none" width="100%" height="100%" viewBox="0 0 368.629 684" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M328.629 0C350.72 5.37957e-06 368.629 17.9086 368.629 40V644C368.629 666.091 350.72 684 328.629 684H0C81.2328 593.24 130.629 473.389 130.629 342C130.629 210.611 81.2328 90.7596 0 0H328.629Z"
+    fill="#E04C29"
+    fill-opacity="0.4"
+  />
 </svg>

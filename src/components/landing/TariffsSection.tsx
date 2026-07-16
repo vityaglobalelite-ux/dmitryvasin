@@ -31,13 +31,13 @@ export function TariffsSection() {
       </h2>
 
       <div className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center rounded-full bg-light-gray">
-        <span className="ml-[20px] grid size-[34px] place-items-center rounded-full bg-[image:var(--brand-gradient)]">
-          <img
-            src={landingAssets.icons.stopwatch}
-            alt=""
-            className="size-[24px]"
-          />
-        </span>
+        <img
+          src={landingAssets.icons.stopwatchChip}
+          alt=""
+          className="ml-[20px] size-[34px]"
+          width={34}
+          height={34}
+        />
         <span className="ml-[10px] text-[20px] font-medium leading-[29px] text-text-dark">
           Старт: 25 июля
         </span>
@@ -59,13 +59,13 @@ export function TariffsSection() {
           </div>
 
           <div className="absolute left-[30px] top-[110px] flex h-[62px] w-[407px] items-center rounded-[20px] bg-white">
-            <span className="ml-[20px] grid size-[34px] shrink-0 place-items-center rounded-full bg-[image:var(--brand-gradient)]">
-              <img
-                src={landingAssets.icons.calendarTariff}
-                alt=""
-                className="size-[20px]"
-              />
-            </span>
+            <img
+              src={landingAssets.icons.calendarTariffChip}
+              alt=""
+              className="ml-[20px] size-[34px] shrink-0"
+              width={34}
+              height={34}
+            />
             <DurationLabel duration={t.duration} />
           </div>
 

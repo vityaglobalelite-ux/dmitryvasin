@@ -1,6 +1,6 @@
 import { landingAssets } from "@/lib/landing-assets";
 
-/* Figma: y 4277..5523 — тёмный блок «5 направлений исследования» */
+/* Figma: y 4277..5523 — светлая секция «5 направлений исследования» */
 
 const cards = [
   {
@@ -10,7 +10,9 @@ const cards = [
     w: 392,
     h: 171,
     textW: 210,
-    text: "Учимся замечать не только результат, но и то, как он возникает.",
+    text: `Учимся замечать не\u00a0только
+результат, но\u00a0и\u00a0то, как\u00a0он
+возникает.`,
   },
   {
     title: "Техника",
@@ -19,7 +21,10 @@ const cards = [
     w: 392,
     h: 195,
     textW: 234,
-    text: "Разбираемся, почему одни движения получаются легко, а другие требуют лишних усилий",
+    text: `Разбираемся, почему одни
+движения получаются легко,
+а\u00a0другие требуют лишних
+усилий`,
   },
   {
     title: "Музыкальность",
@@ -28,7 +33,10 @@ const cards = [
     w: 392,
     h: 195,
     textW: 228,
-    text: "Уходим от привычных музыкальных решений и ищем новые способы взаимодействия с музыкой.",
+    text: `Уходим от\u00a0привычных
+музыкальных решений и
+ищем новые способы
+взаимодействия с\u00a0музыкой.`,
   },
   {
     title: "Взаимодействие",
@@ -37,7 +45,10 @@ const cards = [
     w: 392,
     h: 195,
     textW: 231,
-    text: "Ищем более понятные, точные и комфортные способы взаимодействия в паре.",
+    text: `Ищем более понятные,
+точные и\u00a0комфортные
+способы взаимодействия в
+паре.`,
   },
   {
     title: "Вариативность",
@@ -46,7 +57,10 @@ const cards = [
     w: 392,
     h: 195,
     textW: 253,
-    text: "Постепенно обнаруживаем, что вариантов продолжения движения гораздо больше, чем кажется на первый взгляд.",
+    text: `Постепенно обнаруживаем,
+что\u00a0вариантов продолжения
+движения гораздо больше,
+чем\u00a0кажется на\u00a0первый взгляд.`,
   },
 ];
 
@@ -61,35 +75,43 @@ const illustrations = [
 export function DirectionsSection() {
   return (
     <>
-      <div className="absolute left-0 top-[4403px] h-[1120px] w-[1920px] overflow-hidden bg-[#1a1a1a]">
+      {/* image 34 — fade только сверху фона; человек без mask, выше по z */}
+      <div className="absolute left-0 top-[4403px] z-0 h-[1120px] w-[1920px] overflow-hidden bg-white">
         <img
           src={landingAssets.backgrounds.directionsFull}
           alt=""
           className="absolute inset-0 size-full object-cover"
         />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white from-0% to-transparent to-[17.6%]" />
       </div>
 
       <img
-        src={landingAssets.photos.dmitryDirectionsFull}
+        src={landingAssets.masks.directionsGlow}
+        alt=""
+        className="pointer-events-none absolute left-[683px] top-[4550px] z-[1] h-[972px] w-[460px] object-fill"
+      />
+      <img
+        src={`${landingAssets.photos.dmitryDirectionsFull}?v=2`}
         alt="Дмитрий Васин"
-        className="absolute left-[481px] top-[4277px] h-[1246px] w-[915px] object-contain object-bottom"
+        className="pointer-events-none absolute left-[481px] top-[4277px] z-[2] h-[1246px] w-[915px] object-contain object-top"
       />
 
-      <h2 className="h-section absolute left-[242px] top-[4448px] w-[395px] !text-white">
-        5 направлений исследования
+      <h2 className="h-section absolute left-[242px] top-[4448px] z-[3] w-[395px] whitespace-pre">
+        {`5 направлений
+исследования`}
       </h2>
 
       {cards.map((c) => (
         <div
           key={c.title}
-          className="absolute rounded-[20px] bg-light-gray p-[30px]"
+          className="absolute z-[3] flex flex-col gap-[10px] rounded-[20px] bg-light-gray p-[30px]"
           style={{ left: c.x, top: c.y, width: c.w, height: c.h }}
         >
-          <h3 className="w-[332px] text-[24px] font-medium leading-[29px] text-text-dark">
+          <h3 className="text-[24px] font-medium leading-[1.2] text-text">
             {c.title}
           </h3>
           <p
-            className="mt-[10px] text-[16px] leading-[24px] text-text"
+            className="whitespace-pre text-[16px] font-normal leading-[1.5] text-text"
             style={{ width: c.textW }}
           >
             {c.text}
@@ -102,7 +124,7 @@ export function DirectionsSection() {
           key={il.src}
           src={il.src}
           alt=""
-          className="pointer-events-none absolute object-contain"
+          className="pointer-events-none absolute z-[4] object-contain"
           style={{ left: il.x, top: il.y, width: il.w, height: il.h }}
         />
       ))}

@@ -17,13 +17,13 @@ export function TelegramSection() {
       </p>
 
       <div className="absolute left-[302px] top-[10030px] flex h-[90px] w-[559px] items-center rounded-[20px] bg-white p-[20px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
-        <span className="grid size-[50px] shrink-0 place-items-center rounded-full bg-[image:var(--brand-gradient)]">
-          <img
-            src={landingAssets.icons.calendar}
-            alt=""
-            className="size-[24px]"
-          />
-        </span>
+        <img
+          src={landingAssets.icons.calendarGradientChip}
+          alt=""
+          className="size-[50px] shrink-0"
+          width={50}
+          height={50}
+        />
         <p className="ml-[10px] w-[446px] text-[16px] leading-[24px] text-text">
           Доступ к материалам после 90 дней исследования — 30 дней, чтобы
           пересмотреть важное.
