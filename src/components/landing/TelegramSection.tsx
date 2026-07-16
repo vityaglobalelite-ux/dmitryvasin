@@ -46,11 +46,14 @@ Telegram-чате`}
         </p>
       </div>
 
-      <img
-        src={landingAssets.photos.telegramTall}
-        alt="Telegram-чат исследования"
-        className="pointer-events-none absolute left-[1054px] top-[9498px] z-[2] h-[682px] w-[626px] object-contain object-bottom"
-      />
+      {/* 299:37 — кадр 626×682; фото увеличено как в Figma (zoom + crop) */}
+      <div className="pointer-events-none absolute left-[1054px] top-[9498px] z-[2] h-[682px] w-[626px] overflow-hidden">
+        <img
+          src={landingAssets.photos.telegramTall}
+          alt="Telegram-чат исследования"
+          className="absolute left-[-78.81%] top-[-55.72%] h-[207.33%] w-[258.15%] max-w-none"
+        />
+      </div>
     </>
   );
 }

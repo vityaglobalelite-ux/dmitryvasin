@@ -72,7 +72,7 @@ export const landingAssets = {
     danceCutout: `${landingAsset("photo-dance-cutout.png")}?v=1`,
     myView: `${landingAsset("photo-myview.png")}?v=2`,
     lessonsTall: `${landingAsset("photo-lessons.png")}?v=3`,
-    telegramTall: landingAsset("photo-telegram.png"),
+    telegramTall: `${landingAsset("photo-telegram.png")}?v=2`,
     whatChanges: `${landingAsset("photo-whatchanges.png")}?v=2`,
     videoPreview: landingAsset("video-preview.png"),
   },
