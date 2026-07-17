@@ -1,6 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import {
   programMonths,
@@ -10,6 +16,71 @@ import {
 import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 5613..7649 — «Ваш маршрут на 90 дней» */
+
+const TAB_EASE =
+  "transition-[background,color,border-color,box-shadow,transform] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]";
+const MONTH_FADE_MS = 280;
+
+function staggerStyle(i: number): CSSProperties {
+  return { "--i": i } as CSSProperties;
+}
+
+const MONTH_EASE_OUT = "cubic-bezier(0.4, 0, 1, 1)";
+const MONTH_EASE_IN = "cubic-bezier(0.22, 1, 0.36, 1)";
+
+/** Fade-out → swap month → fade-in. Tabs update immediately. */
+function useProgramMonth() {
+  const [tabIdx, setTabIdx] = useState(0);
+  const [viewIdx, setViewIdx] = useState(0);
+  const [openLesson, setOpenLesson] = useState<number | null>(0);
+  const [panelShown, setPanelShown] = useState(true);
+  const timers = useRef<number[]>([]);
+
+  const clearTimers = useCallback(() => {
+    for (const id of timers.current) window.clearTimeout(id);
+    timers.current = [];
+  }, []);
+
+  useEffect(() => clearTimers, [clearTimers]);
+
+  const selectMonth = useCallback(
+    (i: number) => {
+      if (i === tabIdx) return;
+      clearTimers();
+      setTabIdx(i);
+      setPanelShown(false);
+
+      const swapId = window.setTimeout(() => {
+        setViewIdx(i);
+        setOpenLesson(0);
+        const showId = window.setTimeout(() => setPanelShown(true), 32);
+        timers.current.push(showId);
+      }, MONTH_FADE_MS);
+      timers.current.push(swapId);
+    },
+    [tabIdx, clearTimers],
+  );
+
+  /* Inline styles: reliable under FigCanvas CSS zoom (class-only was too easy to miss). */
+  const panelStyle: CSSProperties = {
+    opacity: panelShown ? 1 : 0,
+    transform: panelShown ? "translate3d(0, 0, 0)" : "translate3d(0, 28px, 0)",
+    transition: panelShown
+      ? `opacity 0.48s ${MONTH_EASE_IN}, transform 0.48s ${MONTH_EASE_IN}`
+      : `opacity 0.28s ${MONTH_EASE_OUT}, transform 0.28s ${MONTH_EASE_OUT}`,
+    pointerEvents: panelShown ? "auto" : "none",
+    willChange: "opacity, transform",
+  };
+
+  return {
+    tabIdx,
+    viewIdx,
+    openLesson,
+    setOpenLesson,
+    selectMonth,
+    panelStyle,
+  };
+}
 
 const TOP = 5613;
 const y = (abs: number) => abs - TOP;
@@ -129,11 +200,18 @@ function routeSticker(monthIdx: number, which: "start" | "end") {
 }
 
 function ProgramMobile() {
-  const [monthIdx, setMonthIdx] = useState(0);
-  const [openLesson, setOpenLesson] = useState<number | null>(0);
-  const month = programMonths[monthIdx];
+  const {
+    tabIdx,
+    viewIdx,
+    openLesson,
+    setOpenLesson,
+    selectMonth,
+    panelStyle,
+  } = useProgramMonth();
+  const month = programMonths[viewIdx];
+  const progressMonth = programMonths[tabIdx];
   const nodeIcons =
-    monthIdx === 1
+    viewIdx === 1
       ? landingAssets.programNodesMonth2
       : landingAssets.programNodesMobile;
 
@@ -151,7 +229,7 @@ function ProgramMobile() {
   return (
     <section
       id="program"
-      className="absolute left-0 w-[360px]"
+      className="program-layout-ease absolute left-0 w-[360px]"
       style={{ top: MOBILE_TOP, height: sectionAbsBottom - MOBILE_TOP }}
     >
       {/* Gray only behind title → result card; not under empty accordion space */}
@@ -170,18 +248,15 @@ function ProgramMobile() {
         style={{ top: my(5813) }}
       >
         {programMonths.map((m, i) => {
-          const active = i === monthIdx;
+          const active = i === tabIdx;
           return (
             <button
               key={m.id}
               type="button"
-              onClick={() => {
-                setMonthIdx(i);
-                setOpenLesson(0);
-              }}
-              className={`flex h-[35px] w-[97px] shrink-0 items-center justify-center rounded-[40px] text-[13px] font-normal leading-[1.5] transition ${
+              onClick={() => selectMonth(i)}
+              className={`flex h-[35px] w-[97px] shrink-0 items-center justify-center rounded-[40px] text-[13px] font-normal leading-[1.5] ${TAB_EASE} ${
                 active
-                  ? "bg-[image:var(--brand-gradient)] text-white"
+                  ? "border border-transparent bg-[image:var(--brand-gradient)] text-white"
                   : "border border-accent-orange bg-white text-accent-orange"
               }`}
             >
@@ -193,13 +268,9 @@ function ProgramMobile() {
 
       {/* Group 2338 — 20,5888 */}
       <div
-        className="absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
+        className="program-layout-ease absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ top: my(5888), width: 320, height: boardH }}
       >
-        <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-[#1a1a1a]">
-          {month.programTitle}
-        </h3>
-
         <div className="absolute left-[15px] top-[48px] flex w-[298px] items-center gap-[10px]">
           <img
             src={landingAssets.misc.hintCursorBgMobile}
@@ -211,12 +282,6 @@ function ProgramMobile() {
           </p>
         </div>
 
-        <img
-          src={routeSticker(monthIdx, "start")}
-          alt=""
-          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-contain"
-        />
-
         {/* Vector 498 — dashed path under nodes */}
         <img
           src={landingAssets.misc.routeCurveMobile}
@@ -224,57 +289,69 @@ function ProgramMobile() {
           className="pointer-events-none absolute left-[72px] top-[174px] z-0 h-[636px] w-[162px]"
         />
 
-        {month.nodes.map((node, i) => {
-          const pos = mobileNodePositions[i];
-          if (!pos) return null;
-          const icon =
-            ("icon" in node && node.icon) ||
-            nodeIcons[i % nodeIcons.length];
-          const label = node.routeTitle ?? node.title;
-          const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 8);
-          return (
-            <button
-              key={node.id}
-              type="button"
-              onClick={() => setOpenLesson(i)}
-              className="absolute z-[1] flex flex-col items-center text-center"
-              style={{ left: pos.left, top: pos.top, width: pos.w }}
-            >
-              <img
-                src={icon}
-                alt=""
-                className="size-[45px] shrink-0 object-contain"
-              />
-              <span className="mt-[12px] flex flex-col items-center gap-[8px]">
-                <span
-                  className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
-                  style={{ width: titleW }}
-                >
-                  {label}
-                </span>
-                {node.skills.map((s) => (
-                  <span
-                    key={s.label}
-                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
-                  >
-                    {s.label}: +{s.delta}
-                  </span>
-                ))}
-              </span>
-            </button>
-          );
-        })}
+        <div className="absolute inset-0" style={panelStyle}>
+          <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-[#1a1a1a]">
+            {month.programTitle}
+          </h3>
 
-        <img
-          src={routeSticker(monthIdx, "end")}
-          alt=""
-          className="pointer-events-none absolute bottom-[24px] left-[209px] z-0 h-[46px] w-[47px] object-contain"
-        />
+          <img
+            src={routeSticker(viewIdx, "start")}
+            alt=""
+            className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-contain"
+          />
+
+          {month.nodes.map((node, i) => {
+            const pos = mobileNodePositions[i];
+            if (!pos) return null;
+            const icon =
+              ("icon" in node && node.icon) ||
+              nodeIcons[i % nodeIcons.length];
+            const label = node.routeTitle ?? node.title;
+            const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 8);
+            return (
+              <button
+                key={node.id}
+                type="button"
+                onClick={() => setOpenLesson(i)}
+                className="absolute z-[1] flex flex-col items-center text-center"
+                style={{ left: pos.left, top: pos.top, width: pos.w }}
+              >
+                <img
+                  src={icon}
+                  alt=""
+                  className="size-[45px] shrink-0 object-contain"
+                />
+                <span className="mt-[12px] flex flex-col items-center gap-[8px]">
+                  <span
+                    className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
+                    style={{ width: titleW }}
+                  >
+                    {label}
+                  </span>
+                  {node.skills.map((s) => (
+                    <span
+                      key={s.label}
+                      className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
+                    >
+                      {s.label}: +{s.delta}
+                    </span>
+                  ))}
+                </span>
+              </button>
+            );
+          })}
+
+          <img
+            src={routeSticker(viewIdx, "end")}
+            alt=""
+            className="pointer-events-none absolute bottom-[24px] left-[209px] z-0 h-[46px] w-[47px] object-contain"
+          />
+        </div>
       </div>
 
       {/* 286:308 — result card */}
       <div
-        className="absolute left-[20px] rounded-[20px] bg-white p-[15px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
+        className="program-layout-ease absolute left-[20px] rounded-[20px] bg-white p-[15px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
         style={{ top: my(resultAbsTop), width: 320, height: 425 }}
       >
         <p className="text-[16px] font-medium leading-[1.2] text-text-dark">
@@ -285,7 +362,7 @@ function ProgramMobile() {
         </p>
         <div className="mt-[19px] flex flex-col gap-[18px]">
           {skills.map((s) => {
-            const filled = month.progress[s.key];
+            const filled = progressMonth.progress[s.key];
             return (
               <div key={s.key}>
                 <div className="flex items-center gap-[10px]">
@@ -298,12 +375,17 @@ function ProgramMobile() {
                   {Array.from({ length: 20 }).map((_, i) => (
                     <span
                       key={i}
-                      className="h-[22px] w-[9.75px] rounded-[3px]"
-                      style={{
-                        background:
-                          i < filled ? "var(--brand-gradient)" : "#eeeeee",
-                      }}
-                    />
+                      className="relative h-[22px] w-[9.75px] overflow-hidden rounded-[3px] bg-[#eeeeee]"
+                    >
+                      <span
+                        className="program-progress-fill absolute inset-0 rounded-[3px]"
+                        style={{
+                          ...staggerStyle(i),
+                          background: "var(--brand-gradient)",
+                          opacity: i < filled ? 1 : 0,
+                        }}
+                      />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -316,8 +398,10 @@ function ProgramMobile() {
       <div
         className="absolute left-[20px] z-[1] flex w-[320px] flex-col gap-[10px]"
         style={{
+          ...panelStyle,
           top: my(accordionAbsTop),
           minHeight: sectionAbsBottom - accordionAbsTop,
+          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}, min-height 0.5s ${MONTH_EASE_IN}`,
         }}
       >
         {month.lessons.map((lesson, i) => {
@@ -400,9 +484,16 @@ function ProgramMobile() {
 }
 
 function ProgramDesktop() {
-  const [monthIdx, setMonthIdx] = useState(0);
-  const [openLesson, setOpenLesson] = useState<number | null>(0);
-  const month = programMonths[monthIdx];
+  const {
+    tabIdx,
+    viewIdx,
+    openLesson,
+    setOpenLesson,
+    selectMonth,
+    panelStyle,
+  } = useProgramMonth();
+  const month = programMonths[viewIdx];
+  const progressMonth = programMonths[tabIdx];
   const boardH = boardHeightFor(month.nodes);
   const accordionTop = BOARD_TOP + boardH + 20;
   const sectionBottom = 7649 + Math.max(0, boardH - BOARD_H_MIN);
@@ -410,7 +501,7 @@ function ProgramDesktop() {
   return (
     <section
       id="program"
-      className="absolute left-0 w-[1920px]"
+      className="program-layout-ease absolute left-0 w-[1920px]"
       style={{ top: TOP, height: sectionBottom - TOP }}
     >
       <h2 className="h-section absolute left-[660px] top-0 w-[601px] text-center">
@@ -418,18 +509,15 @@ function ProgramDesktop() {
       </h2>
 
       {programMonths.map((m, i) => {
-        const active = i === monthIdx;
+        const active = i === tabIdx;
         return (
           <button
             key={m.id}
             type="button"
-            onClick={() => {
-              setMonthIdx(i);
-              setOpenLesson(0);
-            }}
-            className={`absolute h-[69px] w-[467px] rounded-[40px] text-[24px] font-medium leading-[29px] transition ${
+            onClick={() => selectMonth(i)}
+            className={`absolute h-[69px] w-[467px] rounded-[40px] text-[24px] font-medium leading-[29px] ${TAB_EASE} ${
               active
-                ? "bg-[image:var(--brand-gradient)] text-white"
+                ? "border border-transparent bg-[image:var(--brand-gradient)] text-white"
                 : "border border-accent-orange bg-white text-accent-orange hover:bg-accent-orange/5"
             }`}
             style={{ left: tabX[i], top: y(5708) }}
@@ -441,16 +529,11 @@ function ProgramDesktop() {
 
       {/* route board — height follows node stack; result card matches */}
       <div
-        className="absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
+        className="program-layout-ease absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ left: 240, top: y(BOARD_TOP), width: 1075, height: boardH }}
       >
-        {/* Figma 333:403 — Bold 30 / #1a1a1a */}
-        <h3 className="absolute left-[30px] top-[30px] text-[30px] font-bold leading-normal text-[#1a1a1a]">
-          {month.programTitle}
-        </h3>
-
-        {/* Figma 333:602 */}
-        <div className="absolute left-[30px] top-[78px] flex w-[317px] items-center gap-[10px]">
+        {/* Figma 333:602 — hint stays static */}
+        <div className="absolute left-[30px] top-[78px] z-[2] flex w-[317px] items-center gap-[10px]">
           <img
             src={landingAssets.misc.hintCursorBg}
             alt=""
@@ -483,69 +566,76 @@ function ProgramDesktop() {
           />
         </svg>
 
-        <img
-          src={routeSticker(monthIdx, "start")}
-          alt=""
-          className="pointer-events-none absolute left-[48px] top-[212px] h-[81px] w-[83px] object-contain"
-        />
-        <img
-          src={routeSticker(monthIdx, "end")}
-          alt=""
-          className="pointer-events-none absolute left-[932px] top-[7px] h-[81px] w-[83px] object-contain"
-        />
+        <div className="absolute inset-0" style={panelStyle}>
+          {/* Figma 333:403 — Bold 30 / #1a1a1a */}
+          <h3 className="absolute left-[30px] top-[30px] text-[30px] font-bold leading-normal text-[#1a1a1a]">
+            {month.programTitle}
+          </h3>
 
-        {month.nodes.map((node, i) => {
-          const pos = desktopNodes[i];
-          if (!pos) return null;
-          const customIcon = "icon" in node ? node.icon : undefined;
-          const icon =
-            customIcon ||
-            landingAssets.programNodesMobile[
-              i % landingAssets.programNodesMobile.length
-            ];
-          const label = node.routeTitle ?? node.title;
-          /* Slightly tighter than Figma box — Involve metrics + zoom stay clear of stroke */
-          const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 10);
-          return (
-            <button
-              key={node.id}
-              type="button"
-              onClick={() => setOpenLesson(i)}
-              className="group absolute z-[1] flex flex-col items-center text-center"
-              style={{ left: pos.left, top: pos.top, width: pos.w }}
-            >
-              <img
-                src={icon}
-                alt=""
-                className="size-[60px] shrink-0 object-contain transition group-hover:scale-105"
-              />
-              <span
-                className="flex flex-col items-center gap-[10px]"
-                style={{ marginTop: ROUTE.labelOffset }}
+          <img
+            src={routeSticker(viewIdx, "start")}
+            alt=""
+            className="pointer-events-none absolute left-[48px] top-[212px] h-[81px] w-[83px] object-contain"
+          />
+          <img
+            src={routeSticker(viewIdx, "end")}
+            alt=""
+            className="pointer-events-none absolute left-[932px] top-[7px] h-[81px] w-[83px] object-contain"
+          />
+
+          {month.nodes.map((node, i) => {
+            const pos = desktopNodes[i];
+            if (!pos) return null;
+            const customIcon = "icon" in node ? node.icon : undefined;
+            const icon =
+              customIcon ||
+              landingAssets.programNodesMobile[
+                i % landingAssets.programNodesMobile.length
+              ];
+            const label = node.routeTitle ?? node.title;
+            /* Slightly tighter than Figma box — Involve metrics + zoom stay clear of stroke */
+            const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 10);
+            return (
+              <button
+                key={node.id}
+                type="button"
+                onClick={() => setOpenLesson(i)}
+                className="group absolute z-[1] flex flex-col items-center text-center"
+                style={{ left: pos.left, top: pos.top, width: pos.w }}
               >
+                <img
+                  src={icon}
+                  alt=""
+                  className="size-[60px] shrink-0 object-contain transition group-hover:scale-105"
+                />
                 <span
-                  className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
-                  style={{ width: titleW }}
+                  className="flex flex-col items-center gap-[10px]"
+                  style={{ marginTop: ROUTE.labelOffset }}
                 >
-                  {label}
-                </span>
-                {node.skills.map((s) => (
                   <span
-                    key={s.label}
-                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
+                    className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
+                    style={{ width: titleW }}
                   >
-                    {s.label}: +{s.delta}
+                    {label}
                   </span>
-                ))}
-              </span>
-            </button>
-          );
-        })}
+                  {node.skills.map((s) => (
+                    <span
+                      key={s.label}
+                      className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
+                    >
+                      {s.label}: +{s.delta}
+                    </span>
+                  ))}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* result card — same height as route board */}
       <div
-        className="absolute rounded-[20px] bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
+        className="program-layout-ease absolute rounded-[20px] bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
         style={{
           left: 1334,
           top: y(BOARD_TOP),
@@ -561,7 +651,7 @@ function ProgramDesktop() {
         </p>
         <div className="absolute left-[22px] top-[101px] flex w-[301px] flex-col gap-[18px]">
           {skills.map((s) => {
-            const filled = month.progress[s.key];
+            const filled = progressMonth.progress[s.key];
             return (
               <div key={s.key}>
                 <div className="flex items-center gap-[10px]">
@@ -574,12 +664,17 @@ function ProgramDesktop() {
                   {Array.from({ length: 20 }).map((_, i) => (
                     <span
                       key={i}
-                      className="h-[22px] w-[10.3px] rounded-[3px]"
-                      style={{
-                        background:
-                          i < filled ? "var(--brand-gradient)" : "#eeeeee",
-                      }}
-                    />
+                      className="relative h-[22px] w-[10.3px] overflow-hidden rounded-[3px] bg-[#eeeeee]"
+                    >
+                      <span
+                        className="program-progress-fill absolute inset-0 rounded-[3px]"
+                        style={{
+                          ...staggerStyle(i),
+                          background: "var(--brand-gradient)",
+                          opacity: i < filled ? 1 : 0,
+                        }}
+                      />
+                    </span>
                   ))}
                 </div>
               </div>
@@ -592,9 +687,11 @@ function ProgramDesktop() {
       <div
         className="absolute flex w-[1440px] flex-col gap-[10px]"
         style={{
+          ...panelStyle,
           left: 240,
           top: y(accordionTop),
           minHeight: sectionBottom - accordionTop,
+          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}, min-height 0.5s ${MONTH_EASE_IN}`,
         }}
       >
         {month.lessons.map((lesson, i) => {

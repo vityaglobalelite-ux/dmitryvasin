@@ -377,3 +377,48 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+.program-layout-ease {
+  transition:
+    height 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    top 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+    min-height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.program-month-panel {
+  will-change: opacity, transform;
+}
+
+.program-month-panel.is-hidden {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  pointer-events: none;
+  transition:
+    opacity 0.28s cubic-bezier(0.4, 0, 1, 1),
+    transform 0.28s cubic-bezier(0.4, 0, 1, 1);
+}
+
+.program-month-panel.is-shown {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.program-progress-fill {
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--i, 0) * 0.02s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .program-month-panel,
+  .program-progress-fill,
+  .program-layout-ease {
+    transition: none !important;
+  }
+
+  .program-month-panel.is-hidden {
+    transform: none;
+  }
+}
