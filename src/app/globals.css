@@ -197,6 +197,88 @@ body {
   }
 }
 
+@keyframes review-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes review-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes review-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes review-sheet-out {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(105%);
+  }
+}
+
+@keyframes review-modal-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -46%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes review-modal-out {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -44%) scale(0.97);
+  }
+}
+
+.review-backdrop-in {
+  animation: review-backdrop-in 0.28s ease-out both;
+}
+
+.review-backdrop-out {
+  animation: review-backdrop-out 0.3s ease-in both;
+}
+
+.review-sheet-in {
+  animation: review-sheet-in 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.review-sheet-out {
+  animation: review-sheet-out 0.34s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.review-modal-in {
+  animation: review-modal-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.review-modal-out {
+  animation: review-modal-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

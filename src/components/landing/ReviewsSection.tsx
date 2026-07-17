@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { landingAssets } from "@/lib/landing-assets";
 import { reviews } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+
+type Review = (typeof reviews)[number];
 
 /* Figma: Rectangle 40 (0,12784,1920x1020) light-gray + collage + CTA */
 
@@ -202,9 +205,171 @@ function SwipeHint({
   );
 }
 
-function ReviewsMobile() {
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+function ReviewReader({
+  review,
+  isMobile,
+  onClose,
+}: {
+  review: Review;
+  isMobile: boolean;
+  onClose: () => void;
+}) {
+  const [mounted, setMounted] = useState(false);
+  const [closing, setClosing] = useState(false);
 
+  const requestClose = () => {
+    if (closing) return;
+    setClosing(true);
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setClosing(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!closing) return;
+    const ms = isMobile ? 340 : 290;
+    const t = window.setTimeout(onClose, ms);
+    return () => window.clearTimeout(t);
+  }, [closing, isMobile, onClose]);
+
+  if (!mounted) return null;
+
+  const backdropClass = closing ? "review-backdrop-out" : "review-backdrop-in";
+  const panelClass = closing
+    ? isMobile
+      ? "review-sheet-out"
+      : "review-modal-out"
+    : isMobile
+      ? "review-sheet-in"
+      : "review-modal-in";
+
+  return createPortal(
+    <div
+      className={`fixed inset-0 z-[200] flex justify-center ${
+        isMobile ? "items-end" : "items-center"
+      }`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="review-reader-title"
+    >
+      <button
+        type="button"
+        aria-label="Закрыть"
+        className={`${backdropClass} absolute inset-0 bg-[rgba(26,26,26,0.55)] backdrop-blur-[6px]`}
+        onClick={requestClose}
+      />
+
+      <div
+        className={
+          isMobile
+            ? `${panelClass} relative z-[1] flex max-h-[min(86vh,720px)] w-full flex-col rounded-t-[24px] bg-white shadow-[0_-12px_48px_rgba(0,0,0,0.18)]`
+            : `${panelClass} absolute left-1/2 top-1/2 z-[1] flex max-h-[min(80vh,720px)] w-[min(560px,calc(100vw-48px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)]`
+        }
+      >
+        {isMobile && (
+          <div className="flex justify-center pt-[10px]">
+            <span className="h-[4px] w-[40px] rounded-full bg-[#e5e5e8]" />
+          </div>
+        )}
+
+        <div
+          className={`flex items-start justify-between gap-[16px] ${
+            isMobile ? "px-[20px] pt-[18px]" : "px-[32px] pt-[28px]"
+          }`}
+        >
+          <div className="flex min-w-0 items-center gap-[14px]">
+            <img
+              src={review.photo}
+              alt=""
+              className={`shrink-0 rounded-full object-cover ${
+                isMobile ? "size-[56px]" : "size-[72px]"
+              }`}
+              width={72}
+              height={72}
+            />
+            <div className="min-w-0">
+              <h3
+                id="review-reader-title"
+                className={`font-medium leading-[1.2] text-text ${
+                  isMobile ? "text-[16px]" : "text-[22px]"
+                }`}
+              >
+                {review.name}
+              </h3>
+              <p
+                className={`mt-[6px] font-normal leading-[1.4] text-text/60 ${
+                  isMobile ? "text-[12px]" : "text-[14px]"
+                }`}
+              >
+                {review.role}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={requestClose}
+            aria-label="Закрыть отзыв"
+            className="grid size-[36px] shrink-0 place-items-center rounded-full bg-light-gray text-[18px] leading-none text-text transition hover:bg-[#e8e8ec]"
+          >
+            ×
+          </button>
+        </div>
+
+        <div
+          className={`min-h-0 flex-1 overflow-y-auto ${
+            isMobile ? "px-[20px] py-[18px]" : "px-[32px] py-[24px]"
+          }`}
+        >
+          <div
+            className="mb-[14px] h-[3px] w-[48px] rounded-full"
+            style={{ backgroundImage: "var(--brand-gradient)" }}
+          />
+          <blockquote
+            className={`font-normal text-text ${
+              isMobile
+                ? "text-[15px] leading-[1.55]"
+                : "text-[18px] leading-[1.5]"
+            }`}
+          >
+            „{review.fullQuote}”
+          </blockquote>
+        </div>
+
+        <div
+          className={`border-t border-[#ececef] ${
+            isMobile ? "px-[20px] py-[14px]" : "px-[32px] py-[18px]"
+          }`}
+        >
+          <button
+            type="button"
+            onClick={requestClose}
+            className={
+              isMobile
+                ? "btn-primary-mobile mx-auto w-full max-w-[320px]"
+                : "btn-primary"
+            }
+          >
+            Закрыть
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void }) {
   return (
     <>
       {/* Rectangle 40 — 0,15473,360×817 */}
@@ -273,55 +438,47 @@ function ReviewsMobile() {
       {/* Review cards horizontal scroll */}
       <div className="absolute left-0 top-[16534px] z-[2] w-[360px] overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <div className="flex w-max snap-x snap-mandatory gap-[20px] px-[20px]">
-          {reviews.map((review, i) => {
-            const isExpanded = expanded[i];
-            const text = isExpanded ? review.fullQuote : review.quote;
-            return (
-              <article
-                key={review.name}
-                className="flex h-[488px] w-[290px] shrink-0 snap-start flex-col gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
-              >
-                <img
-                  src={review.photo}
-                  alt={review.name}
-                  className="size-[60px] shrink-0 rounded-full object-cover"
-                  width={60}
-                  height={60}
-                />
-                <div className="flex w-full flex-col gap-[10px] text-text">
-                  <h3 className="text-[16px] font-medium leading-[1.2]">
-                    {review.name}
-                  </h3>
-                  <p className="text-[13px] font-normal leading-[1.5] opacity-60">
-                    {review.role}
-                  </p>
-                </div>
-                <div className="flex w-full flex-col gap-[10px]">
-                  <blockquote className="text-[13px] font-normal leading-[1.5] text-text">
-                    „{text}
-                  </blockquote>
-                  <button
-                    type="button"
-                    className="h-[20px] self-start text-[13px] font-normal leading-[1.5] text-accent-orange"
-                    onClick={() =>
-                      setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
-                    }
-                  >
-                    {isExpanded ? "Свернуть" : "Читать далее"}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+          {reviews.map((review) => (
+            <article
+              key={review.name}
+              className="flex h-[488px] w-[290px] shrink-0 snap-start flex-col gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
+            >
+              <img
+                src={review.photo}
+                alt={review.name}
+                className="size-[60px] shrink-0 rounded-full object-cover"
+                width={60}
+                height={60}
+              />
+              <div className="flex w-full flex-col gap-[10px] text-text">
+                <h3 className="text-[16px] font-medium leading-[1.2]">
+                  {review.name}
+                </h3>
+                <p className="text-[13px] font-normal leading-[1.5] opacity-60">
+                  {review.role}
+                </p>
+              </div>
+              <div className="flex min-h-0 w-full flex-1 flex-col gap-[10px]">
+                <blockquote className="line-clamp-8 text-[13px] font-normal leading-[1.5] text-text">
+                  „{review.quote}
+                </blockquote>
+                <button
+                  type="button"
+                  className="h-[20px] shrink-0 self-start text-[13px] font-normal leading-[1.5] text-accent-orange"
+                  onClick={() => onReadMore(review)}
+                >
+                  Читать далее
+                </button>
+              </div>
+            </article>
+          ))}
         </div>
       </div>
     </>
   );
 }
 
-function ReviewsDesktop() {
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-
+function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }) {
   return (
     <>
       {/* Figma 249:1377 — светло-серый фон секции */}
@@ -395,50 +552,61 @@ function ReviewsDesktop() {
         />
       </button>
 
-      {reviews.map((review, i) => {
-        const isExpanded = expanded[i];
-        const text = isExpanded ? review.fullQuote : review.quote;
-        return (
-          <article
-            key={review.name}
-            className="absolute flex h-[614px] w-[467px] flex-col gap-[30px] rounded-[30px] bg-light-gray px-[30px] pt-[30px]"
-            style={{ left: cardX[i], top: 14113 }}
-          >
-            <img
-              src={review.photo}
-              alt={review.name}
-              className="size-[206px] shrink-0 rounded-full object-cover"
-              width={206}
-              height={206}
-            />
-            <div className="flex w-full flex-col gap-[10px] text-text">
-              <h3 className="text-[24px] font-medium leading-[1.2]">
-                {review.name}
-              </h3>
-              <p className="text-[14px] leading-[1.5] opacity-60">{review.role}</p>
-            </div>
-            <div className="flex w-full flex-col gap-[10px]">
-              <blockquote className="text-[16px] leading-[1.5] text-text">
-                “{text}
-              </blockquote>
-              <button
-                type="button"
-                className="h-[24px] self-start text-[16px] font-medium leading-[1.5] text-accent-orange underline"
-                onClick={() =>
-                  setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
-                }
-              >
-                {isExpanded ? "Свернуть" : "Читать далее"}
-              </button>
-            </div>
-          </article>
-        );
-      })}
+      {reviews.map((review, i) => (
+        <article
+          key={review.name}
+          className="absolute flex h-[614px] w-[467px] flex-col gap-[30px] rounded-[30px] bg-light-gray px-[30px] pb-[30px] pt-[30px]"
+          style={{ left: cardX[i], top: 14113 }}
+        >
+          <img
+            src={review.photo}
+            alt={review.name}
+            className="size-[206px] shrink-0 rounded-full object-cover"
+            width={206}
+            height={206}
+          />
+          <div className="flex w-full flex-col gap-[10px] text-text">
+            <h3 className="text-[24px] font-medium leading-[1.2]">
+              {review.name}
+            </h3>
+            <p className="text-[14px] leading-[1.5] opacity-60">{review.role}</p>
+          </div>
+          <div className="flex min-h-0 w-full flex-1 flex-col gap-[10px]">
+            <blockquote className="line-clamp-6 text-[16px] leading-[1.5] text-text">
+              “{review.quote}
+            </blockquote>
+            <button
+              type="button"
+              className="h-[24px] shrink-0 self-start text-[16px] font-medium leading-[1.5] text-accent-orange underline"
+              onClick={() => onReadMore(review)}
+            >
+              Читать далее
+            </button>
+          </div>
+        </article>
+      ))}
     </>
   );
 }
 
 export function ReviewsSection() {
   const isMobile = useIsMobile();
-  return isMobile ? <ReviewsMobile /> : <ReviewsDesktop />;
+  const [activeReview, setActiveReview] = useState<Review | null>(null);
+
+  return (
+    <>
+      {isMobile ? (
+        <ReviewsMobile onReadMore={setActiveReview} />
+      ) : (
+        <ReviewsDesktop onReadMore={setActiveReview} />
+      )}
+      {activeReview && (
+        <ReviewReader
+          review={activeReview}
+          isMobile={isMobile}
+          onClose={() => setActiveReview(null)}
+        />
+      )}
+    </>
+  );
 }
