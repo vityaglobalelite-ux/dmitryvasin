@@ -96,25 +96,28 @@ type MobileCollageTile = {
   imgClass?: string;
 };
 
-/** Mobile collage columns matching Figma image 37 + side stack at x=330 */
+/**
+ * Mobile reviews collage — horizontal scroll (4 cols).
+ * 1) Instagram DM (Figma image 37)
+ * 2) peek / first scroll: Светлана + Artem stack (Figma 290:* + collage)
+ * 3–4) further chats on scroll (Галина, Александр, …)
+ */
 const mobileCollageColumns: { tiles: MobileCollageTile[]; gap: number }[] = [
   {
     gap: 0,
     tiles: [
       {
-        src: a.collage[0],
+        src: a.collageMobile.image37,
         w: 290,
         h: 531,
-        imgClass:
-          "absolute left-[-0.02%] top-[-7.21%] h-[118.36%] w-[100.03%] max-w-none",
       },
     ],
   },
   {
     gap: 10,
     tiles: [
-      { src: a.collageExtra[0], w: 290, h: 61 },
-      { src: a.collageExtra[1], w: 290, h: 131 },
+      { src: a.collageMobile.image35, w: 290, h: 61 },
+      { src: a.collageMobile.image36, w: 290, h: 131 },
       {
         src: a.collage[2],
         w: 290,
@@ -249,10 +252,11 @@ function ReviewsMobile() {
         </div>
       </div>
 
-      {/* CTA Frame 2386 — 51,16180,259×50 */}
+      {/* 325:9 Frame 2386 — 51,16180,259×50 */}
       <a
         href="#tariffs"
-        className="btn-primary-mobile absolute left-[51px] top-[16180px] z-[2] !w-[259px]"
+        className="btn-primary-mobile absolute left-[51px] top-[16180px] z-[2]"
+        style={{ width: 259 }}
       >
         Присоединиться сейчас
       </a>

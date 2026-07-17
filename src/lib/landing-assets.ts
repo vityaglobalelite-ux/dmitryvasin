@@ -60,7 +60,7 @@ export const landingAssets = {
     stopwatchStart: `${landingAsset("icon-stopwatch-start.svg")}?v=2`,
     calendarBoldWhite: `${landingAsset("icon-calendar-bold-white.svg")}?v=2`,
     calendarTariffChip: landingAsset("chip-calendar-tariff.png"),
-    fingerSwipe: `${landingAsset("icon-finger-swipe.svg")}?v=1`,
+    fingerSwipe: `${landingAsset("icon-finger-swipe.svg")}?v=2`,
     stepChips: [
       landingAsset("chip-step-1.png"),
       landingAsset("chip-step-2.png"),
@@ -214,4 +214,12 @@ export const landingAssets = {
     `${landingAsset("collage-10.png")}?v=3`,
     `${landingAsset("collage-11.png")}?v=3`,
   ],
+  /** Главная_360 reviews collage */
+  collageMobile: {
+    image37: `${landingAsset("collage-m-37.png")}?v=1`,
+    image35: `${landingAsset("collage-m-35.png")}?v=1`,
+    image36: `${landingAsset("collage-m-36.png")}?v=1`,
+    image39: `${landingAsset("collage-m-39.png")}?v=1`,
+    image41: `${landingAsset("collage-m-41.png")}?v=1`,
+  },
 } as const;
