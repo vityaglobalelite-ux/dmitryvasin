@@ -178,13 +178,15 @@ function DirectionsMobile() {
         </div>
       ))}
 
-      {/* Group 2335 — 0,5271,360×436 — under the cards */}
+      {/* Group 2335 — 0,5271,360×436; photo 284:33 at -42,5271,465×571 */}
       <div className="pointer-events-none absolute left-0 top-[5271px] z-[2] h-[436px] w-[360px] overflow-hidden">
-        <img
-          src={landingAssets.photos.dmitryDirectionsMobile}
-          alt="Дмитрий Васин"
-          className="absolute left-[-42px] top-0 h-[571px] w-[465px] max-w-none object-cover object-top"
-        />
+        <div className="absolute left-[-42px] top-0 h-[571px] w-[465px] overflow-hidden">
+          <img
+            src={landingAssets.photos.dmitryDirectionsMobile}
+            alt="Дмитрий Васин"
+            className="absolute left-[0.59%] top-0 h-[120.63%] w-[98.84%] max-w-none object-cover object-top"
+          />
+        </div>
       </div>
     </>
   );

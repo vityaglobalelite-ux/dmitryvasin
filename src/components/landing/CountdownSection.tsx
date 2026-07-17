@@ -33,39 +33,44 @@ function useCountdownDisplay() {
     : "00:00:00:00";
 }
 
-/* Figma Главная_360: Rect41 13949 + timer + CTA 14101 + mockup 14161 */
+/* Figma Главная_360: 287:736 Rect41 + 287:738/739 + 287:795 + 287:824 */
 function CountdownMobile({ display }: { display: string }) {
   return (
-    <>
-      <div
-        className="absolute left-[20px] top-[13949px] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
-        }}
-      />
-
-      <h2 className="absolute left-[35px] top-[13969px] z-[2] w-[333px] text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white">
+    <div
+      className="absolute left-[20px] top-[13949px] z-[2] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
+      style={{
+        backgroundImage:
+          "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+      }}
+    >
+      {/* 287:738 — Medium 24 / lh 1.2 */}
+      <h2 className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
         Повышение цен через:
       </h2>
 
-      <p className="absolute left-[35px] top-[14008px] z-[2] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
+      {/* 287:739 — Medium 57 / lh 1.1 / tracking -3% */}
+      <p className="absolute left-[15px] top-[59px] z-[1] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
         {display}
       </p>
 
-      <a href="#tariffs" className="btn-primary absolute left-[35px] top-[14101px] z-[2]">
+      {/* 287:795 — 259×60 */}
+      <a
+        href="#tariffs"
+        className="btn-primary absolute left-[15px] top-[152px] z-[1]"
+      >
         Выбрать тариф и оплатить
       </a>
 
-      {/* 287:824 — 162,14161,178×139 */}
-      <div className="pointer-events-none absolute left-[162px] top-[14161px] z-[2] h-[139px] w-[178px] overflow-hidden">
+      {/* 287:824 — Untitled-10 2, 178×139 @ 142,212; CROP as in Figma */}
+      <div className="pointer-events-none absolute left-[142px] top-[212px] z-0 h-[139px] w-[178px] overflow-hidden">
         <img
-          src={landingAssets.countdown.mockup}
+          src={landingAssets.countdown.clockMobile}
           alt=""
-          className="absolute left-[-9.65%] top-[-11.79%] h-[131.94%] w-[136.61%] max-w-none"
+          draggable={false}
+          className="pointer-events-none absolute left-[-16.29%] top-[-11.79%] h-[183.62%] w-[142.06%] max-w-none select-none [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
         />
       </div>
-    </>
+    </div>
   );
 }
 

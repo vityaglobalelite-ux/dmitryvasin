@@ -1,3 +1,9 @@
-<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 166.101 637.756" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path id="Vector 498" d="M1.95112 0.937749L163.951 60.9377L1.95112 172.938L163.951 254.938L8.95112 350.938L163.951 457.938L8.95112 527.938L163.951 636.938" stroke="var(--stroke-0, #EFB991)" stroke-width="2" stroke-dasharray="4 4"/>
+<svg width="162" height="636" viewBox="0 0 164 638" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path
+    d="M1.95117 0.937988L163.951 60.938L1.95117 172.938L163.951 254.938L8.95117 350.938L163.951 457.938L8.95117 527.938L163.951 636.938"
+    stroke="#EFB991"
+    stroke-width="2"
+    stroke-dasharray="4 4"
+    fill="none"
+  />
 </svg>

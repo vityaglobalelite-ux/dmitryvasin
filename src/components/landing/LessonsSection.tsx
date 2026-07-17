@@ -38,21 +38,28 @@ function LessonsMobile() {
         </p>
       </div>
 
-      {/* 286:100 */}
-      <div className="absolute left-[20px] top-[8878px] z-[2] w-[320px]">
-        <p className="text-[16px] font-medium leading-[1.2] text-text">
-          На протяжении исследования рядом со мной будет Лиза.
+      {/* 286:100 — Medium 16 + Regular 13, абзацы через пустую строку */}
+      <div className="absolute left-[20px] top-[8878px] z-[2] flex h-[358px] w-[320px] flex-col gap-[20px] text-text">
+        <p className="w-full text-[16px] font-medium leading-[1.2]">
+          На&nbsp;протяжении исследования рядом со&nbsp;мной будет Лиза.
         </p>
-        <div className="mt-[20px] space-y-0 text-[13px] font-normal leading-[1.5] text-text">
+        <div className="w-full space-y-[20px] text-[13px] font-normal leading-[1.5]">
           <p>
             С&nbsp;ней&nbsp;мы будем исследовать темы, задавать вопросы,
-            проверять идеи и&nbsp;искать ответы. Это&nbsp;живой процесс
-            исследования. С&nbsp;вопросами, наблюдениями, экспериментами
-            и&nbsp;неожиданными открытиями. Многие из&nbsp;вас, практикующих
-            танго на&nbsp;разном уровне, узнают себя в&nbsp;вопросах, сомнениях
-            и&nbsp;открытиях Лизы. А&nbsp;преподаватели смогут заглянуть внутрь
-            процесса обучения и&nbsp;увидеть, как&nbsp;рождаются объяснения,
-            выстраивается логика урока и&nbsp;развивается тема шаг&nbsp;за&nbsp;шагом.
+            проверять идеи и&nbsp;искать ответы.
+          </p>
+          <p>
+            Это&nbsp;живой процесс исследования. С&nbsp;вопросами,
+            наблюдениями, экспериментами и&nbsp;неожиданными открытиями.
+          </p>
+          <p>
+            Многие из&nbsp;вас, практикующих танго на&nbsp;разном уровне,
+            узнают себя в&nbsp;вопросах, сомнениях и&nbsp;открытиях Лизы.
+          </p>
+          <p>
+            А&nbsp;преподаватели смогут заглянуть внутрь процесса обучения
+            и&nbsp;увидеть, как&nbsp;рождаются объяснения, выстраивается логика
+            урока и&nbsp;развивается тема шаг&nbsp;за&nbsp;шагом.
           </p>
         </div>
       </div>
@@ -76,8 +83,8 @@ function LessonsMobile() {
         </a>
       </div>
 
-      {/* 286:102 — Что изменится */}
-      <div className="absolute left-[20px] top-[9963px] z-[2] flex w-[320px] flex-col gap-[20px]">
+      {/* 286:102 — Заголовок мобильная 24 + Подзаголовок 16 */}
+      <div className="absolute left-[20px] top-[9963px] z-[2] flex h-[110px] w-[320px] flex-col gap-[20px]">
         <h2 className="h-section-mobile w-[320px]">
           Что&nbsp;изменится за&nbsp;эти&nbsp;90&nbsp;дней?
         </h2>
@@ -87,31 +94,31 @@ function LessonsMobile() {
         </p>
       </div>
 
-      {/* 286:101 */}
-      <div className="absolute left-[20px] top-[10113px] z-[2] w-[320px] text-[13px] font-normal leading-[1.5] text-text">
+      {/* 286:101 — Regular 13, два абзаца */}
+      <div className="absolute left-[20px] top-[10113px] z-[2] h-[100px] w-[320px] text-[13px] font-normal leading-[1.5] text-text">
+        <p>То, что&nbsp;казалось случайным, станет в&nbsp;разы понятнее.</p>
         <p>
-          То, что&nbsp;казалось случайным, станет в&nbsp;разы понятнее. То,
-          что&nbsp;раньше требовало постоянного контроля и&nbsp;усилий,
+          То, что&nbsp;раньше требовало постоянного контроля и&nbsp;усилий,
           постепенно начнёт происходить естественнее.
         </p>
       </div>
 
-      {/* Frame 2454 — checklist */}
+      {/* 286:110 Frame 2454 — checklist */}
       <div className="absolute left-[20px] top-[10253px] z-[2] flex h-[509px] w-[320px] flex-col gap-[10px] rounded-[10px] bg-white p-[15px] shadow-[0px_4px_21.5px_0px_rgba(0,0,0,0.09)]">
         <p className="text-[16px] font-medium leading-[1.2] text-text">
           Вы&nbsp;наверняка обнаружите, что:
         </p>
-        <ul className="flex flex-col gap-[10px]">
+        <ul className="flex w-full flex-col gap-[10px]">
           {outcomesChecklist.map((item, i) => (
-            <li key={i} className="flex items-start gap-[10px]">
+            <li key={i} className="flex w-full items-center gap-[10px]">
               <img
                 src={landingAssets.icons.check}
                 alt=""
-                className="mt-[11px] size-[18px] shrink-0"
+                className="size-[18px] shrink-0"
                 width={18}
                 height={18}
               />
-              <p className="flex-1 text-[13px] font-normal leading-[1.5] text-text">
+              <p className="min-w-0 flex-1 text-[13px] font-normal leading-[1.5] text-text">
                 {item.parts.map((p, j) =>
                   p.bold ? (
                     <span key={j} className="font-semibold">
@@ -127,7 +134,7 @@ function LessonsMobile() {
         </ul>
       </div>
 
-      {/* Frame 2455 — gradient CTA */}
+      {/* 286:105 Frame 2455 — gradient CTA + 286:161 eye */}
       <div
         className="absolute left-[20px] top-[10782px] z-[2] flex h-[447px] w-[320px] flex-col items-start gap-[20px] overflow-hidden rounded-[10px] p-[15px]"
         style={{
@@ -135,7 +142,7 @@ function LessonsMobile() {
             "linear-gradient(105.58deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
         }}
       >
-        <div className="flex w-[290px] flex-col gap-[10px] text-white">
+        <div className="relative z-[1] flex w-[290px] flex-col gap-[10px] text-white">
           <p className="text-[16px] font-medium leading-[1.2]">
             Но&nbsp;главное изменение может оказаться совсем не&nbsp;там,
             где&nbsp;вы&nbsp;его ожидаете.
@@ -151,14 +158,22 @@ function LessonsMobile() {
             </p>
           </div>
         </div>
-        <a href="#tariffs" className="btn-primary-mobile relative z-[2]">
+        <a
+          href="#tariffs"
+          className="btn-primary-mobile relative z-[2]"
+          style={{ width: 259 }}
+        >
           Присоединиться
         </a>
-        {/* 286:161 photo crop */}
+        {/* 286:161 — Untitled-14 1; native transparent PNG + cover/bottom as in Figma */}
         <img
-          src={landingAssets.photos.whatChanges}
+          src={landingAssets.photos.whatChangesMobile}
           alt=""
-          className="pointer-events-none absolute left-[102px] top-[272px] h-[185px] w-[218px] max-w-none object-contain"
+          width={218}
+          height={185}
+          draggable={false}
+          decoding="async"
+          className="pointer-events-none absolute left-[102px] top-[272px] z-0 h-[185px] w-[218px] max-w-none select-none object-cover object-bottom [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
         />
       </div>
     </>

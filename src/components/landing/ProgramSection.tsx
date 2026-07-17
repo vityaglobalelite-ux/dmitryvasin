@@ -23,16 +23,19 @@ const nodePositions = [
 
 const tabX = [240, 726, 1212];
 
-/* Figma Главная_360: Group 2338 nodes — board-relative (board @ 20,5888) */
+/**
+ * Figma Group 2338 — board @ 20,5888.
+ * Node frames 286:597–645 absolute → board-relative.
+ */
 const mobileNodePositions = [
-  { left: 15, top: 153, w: 116 },
-  { left: 172, top: 212, w: 121 },
-  { left: 15, top: 321, w: 112 },
-  { left: 168, top: 405, w: 130 },
-  { left: 15, top: 499, w: 130 },
-  { left: 160, top: 608, w: 145 },
-  { left: 15, top: 677, w: 130 },
-  { left: 169, top: 786, w: 127 },
+  { left: 15, top: 153, w: 116 }, // 35,6041
+  { left: 172, top: 212, w: 121 }, // 192,6100
+  { left: 15, top: 321, w: 112 }, // 35,6209
+  { left: 168, top: 405, w: 130 }, // 188,6293
+  { left: 15, top: 499, w: 130 }, // 35,6387
+  { left: 160, top: 608, w: 145 }, // 180,6496
+  { left: 15, top: 677, w: 130 }, // 35,6565
+  { left: 169, top: 786, w: 127 }, // 189,6674
 ];
 
 const MOBILE_TOP = 5767;
@@ -42,6 +45,7 @@ function ProgramMobile() {
   const [monthIdx, setMonthIdx] = useState(0);
   const [openLesson, setOpenLesson] = useState<number | null>(0);
   const month = programMonths[monthIdx];
+  const nodeIcons = landingAssets.programNodesMobile;
 
   return (
     <section
@@ -49,13 +53,19 @@ function ProgramMobile() {
       className="absolute left-0 w-[360px]"
       style={{ top: MOBILE_TOP, height: 8592 - MOBILE_TOP }}
     >
-      <h2 className="h-section-mobile absolute left-[20px] top-0 w-[289px]">
+      {/* Gray only behind title → result card; not under empty accordion space */}
+      <div
+        className="pointer-events-none absolute left-0 top-0 z-0 w-[360px] bg-light-gray"
+        style={{ height: my(7337) }}
+      />
+
+      <h2 className="h-section-mobile absolute left-[20px] top-0 z-[1] w-[289px]">
         Ваш маршрут на 90 дней
       </h2>
 
-      {/* Frame 286:169 — month tabs */}
+      {/* Month tabs — 20,5813 */}
       <div
-        className="absolute left-[20px] flex h-[35px] w-[319px] items-center gap-[14px]"
+        className="absolute left-[20px] z-[1] flex h-[35px] w-[319px] items-center gap-[14px]"
         style={{ top: my(5813) }}
       >
         {programMonths.map((m, i) => {
@@ -80,36 +90,38 @@ function ProgramMobile() {
         })}
       </div>
 
-      {/* Group 2338 — route board */}
+      {/* Group 2338 — 20,5888,320×984 */}
       <div
-        className="absolute left-[20px] overflow-hidden rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
+        className="absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ top: my(5888), width: 320, height: 984 }}
       >
-        <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-text-dark">
+        <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-[#1a1a1a]">
           {month.programTitle}
         </h3>
 
         <div className="absolute left-[15px] top-[48px] flex w-[298px] items-center gap-[10px]">
           <img
-            src={landingAssets.misc.hintCursorBg}
+            src={landingAssets.misc.hintCursorBgMobile}
             alt=""
-            className="size-[34px] shrink-0"
+            className="size-[34px] shrink-0 object-contain"
           />
-          <p className="w-[254px] text-[13px] font-normal leading-[1.5] text-text-dark">
+          <p className="w-[254px] text-[13px] font-normal leading-[1.5] text-[#1a1a1a]">
             Кликайте на&nbsp;уроки, чтобы&nbsp;посмотреть подробную программу
           </p>
         </div>
 
+        {/* image 29 — start couple */}
         <img
-          src={landingAssets.misc.cursorIcon}
+          src={landingAssets.misc.programStartCouple}
           alt=""
-          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-contain"
+          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-cover"
         />
 
+        {/* Vector 498 — dashed path under nodes */}
         <img
           src={landingAssets.misc.routeCurveMobile}
           alt=""
-          className="pointer-events-none absolute left-[72px] top-[174px] h-[636px] w-[162px]"
+          className="pointer-events-none absolute left-[72px] top-[174px] z-0 h-[636px] w-[162px]"
         />
 
         {month.nodes.map((node, i) => {
@@ -120,26 +132,22 @@ function ProgramMobile() {
               key={node.id}
               type="button"
               onClick={() => setOpenLesson(i)}
-              className="group absolute flex flex-col items-center gap-[10px] text-center"
+              className="absolute z-[1] flex flex-col items-center gap-[10px] text-center"
               style={{ left: pos.left, top: pos.top, width: pos.w }}
             >
               <img
-                src={
-                  landingAssets.lessonThumbs[
-                    i % landingAssets.lessonThumbs.length
-                  ]
-                }
+                src={nodeIcons[i % nodeIcons.length]}
                 alt=""
-                className="size-[45px] rounded-full object-cover shadow-md transition group-hover:scale-105"
+                className="size-[45px] shrink-0 object-contain"
               />
-              <span className="text-[13px] font-semibold leading-[1.3] text-text">
+              <span className="text-[12px] font-semibold leading-[1.3] text-text">
                 {node.title}
               </span>
-              <span className="flex flex-col items-center gap-[4px]">
+              <span className="flex w-full flex-col items-center gap-[4px]">
                 {node.skills.map((s) => (
                   <span
                     key={s.label}
-                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-accent-orange"
+                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                   >
                     {s.label}: +{s.delta}
                   </span>
@@ -149,10 +157,11 @@ function ProgramMobile() {
           );
         })}
 
+        {/* Group 2341 — bottom sticker 229,6806 → 209,918 */}
         <img
-          src={landingAssets.misc.stickerGroup}
+          src={landingAssets.misc.programStickerMobile}
           alt=""
-          className="pointer-events-none absolute left-[209px] top-[918px] h-[46px] w-[47px] object-contain"
+          className="pointer-events-none absolute left-[209px] top-[918px] z-[1] h-[46px] w-[47px] object-contain"
         />
       </div>
 
@@ -196,10 +205,11 @@ function ProgramMobile() {
         </div>
       </div>
 
-      {/* 286:525 — accordion */}
+      {/* 286:525 — accordion; pack to bottom of Figma band when collapsed
+          so there’s no huge empty gap after the last lesson */}
       <div
-        className="absolute left-[20px] flex w-[320px] flex-col gap-[10px]"
-        style={{ top: my(7337) }}
+        className="absolute left-[20px] z-[1] flex w-[320px] flex-col justify-end gap-[10px]"
+        style={{ top: my(7337), minHeight: 8592 - 7337 }}
       >
         {month.lessons.map((lesson, i) => {
           const isOpen = openLesson === i;

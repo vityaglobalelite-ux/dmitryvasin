@@ -82,34 +82,37 @@ function PaymentMobile() {
         </p>
       </div>
 
-      {/* 303:66 — Rectangle 42 support banner */}
+      {/* 303:66 + 303:67 + 303:68 + 298:32 — support banner */}
       <div
-        className="absolute left-[20px] top-[15062px] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
+        className="absolute left-[20px] top-[15062px] z-[2] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
         style={{
           backgroundImage:
             "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
         }}
-      />
-
-      <p className="absolute left-[35px] top-[15082px] z-[2] w-[290px] text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-light-gray">
-        Если&nbsp;у&nbsp;вас есть&nbsp;вопросы&nbsp;— напишите
-        в&nbsp;поддержку, и&nbsp;вам&nbsp;помогут
-      </p>
-
-      <a
-        href="#contacts"
-        className="btn-primary absolute left-[35px] top-[15200px] z-[2]"
       >
-        Написать в поддержку
-      </a>
+        {/* 303:67 — Medium 24 / lh 1.2 / white */}
+        <p className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
+          Если&nbsp;у&nbsp;вас есть&nbsp;вопросы&nbsp;— напишите
+          в&nbsp;поддержку, и&nbsp;вам&nbsp;помогут
+        </p>
 
-      {/* Untitled-10 1 — 132,15267,209×146 */}
-      <div className="pointer-events-none absolute left-[132px] top-[15267px] z-[2] h-[146px] w-[209px] overflow-hidden">
-        <img
-          src={landingAssets.misc.mockupPayment}
-          alt=""
-          className="absolute left-0 top-[-6.97%] h-[125.15%] w-[129.87%] max-w-none"
-        />
+        {/* 303:68 — 259×60 @ 15,140 */}
+        <a
+          href="#contacts"
+          className="btn-primary absolute left-[15px] top-[138px] z-[1]"
+        >
+          Написать в поддержку
+        </a>
+
+        {/* 298:32 — Untitled-10 1, 209×146 @ 112,205; CROP as in Figma */}
+        <div className="pointer-events-none absolute left-[112px] top-[205px] z-0 h-[146px] w-[209px] overflow-hidden">
+          <img
+            src={landingAssets.misc.supportQuestionMobile}
+            alt=""
+            draggable={false}
+            className="pointer-events-none absolute left-0 top-[-10.31%] h-[185.16%] w-[129.87%] max-w-none select-none [backface-visibility:hidden] [transform:translate3d(0,0,0)]"
+          />
+        </div>
       </div>
     </section>
   );
