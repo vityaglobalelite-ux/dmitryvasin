@@ -274,7 +274,7 @@ function ReviewReader({
         className={
           isMobile
             ? `${panelClass} relative z-[1] flex max-h-[min(86vh,720px)] w-full flex-col rounded-t-[24px] bg-white shadow-[0_-12px_48px_rgba(0,0,0,0.18)]`
-            : `${panelClass} absolute left-1/2 top-1/2 z-[1] flex max-h-[min(80vh,720px)] w-[min(560px,calc(100vw-48px))] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)]`
+            : `${panelClass} relative z-[1] flex max-h-[min(80vh,720px)] w-[min(560px,calc(100vw-48px))] flex-col overflow-hidden rounded-[28px] bg-white shadow-[0_24px_80px_rgba(0,0,0,0.22)]`
         }
       >
         {isMobile && (
@@ -373,7 +373,10 @@ function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void })
   return (
     <>
       {/* Rectangle 40 — 0,15473,360×817 */}
-      <div className="absolute left-0 top-[15473px] h-[817px] w-[360px] bg-light-gray" />
+      <div
+        id="reviews"
+        className="absolute left-0 top-[15473px] h-[817px] w-[360px] bg-light-gray"
+      />
 
       <h2 className="h-section-mobile absolute left-[20px] top-[15533px] z-[2] w-[221px]">
         Отзывы участников
@@ -482,7 +485,10 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
   return (
     <>
       {/* Figma 249:1377 — светло-серый фон секции */}
-      <div className="absolute left-0 top-[12784px] h-[1020px] w-[1920px] bg-light-gray" />
+      <div
+        id="reviews"
+        className="absolute left-0 top-[12784px] h-[1020px] w-[1920px] bg-light-gray"
+      />
 
       <h2 className="h-section absolute left-[730px] top-[12874px] w-[459px] text-center">
         Отзывы участников

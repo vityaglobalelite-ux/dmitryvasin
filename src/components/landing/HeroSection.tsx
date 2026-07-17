@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
 import { useIsMobile } from "@/lib/landing-mode";
@@ -16,7 +16,17 @@ const nav = {
   ],
 };
 
-const allNav = [...nav.left, ...nav.right];
+/* Figma 343:1854 — mobile menu open */
+const mobileMenuLinks = [
+  { label: "О клубе", href: "#about" },
+  { label: "Маршрут исследования", href: "#program" },
+  { label: "Тарифы", href: "#tariffs" },
+  { label: "Отзывы", href: "#reviews" },
+  { label: "Тех. поддержка", href: "#payment" },
+  { label: "Контакты", href: "#contacts" },
+] as const;
+
+const MENU_CLOSE_MS = 260;
 
 /* Figma: Rect26 (242,113,1440×684); Dmitry (788,86,760×711) */
 const DMITRY_TOP = 86;
@@ -24,11 +34,62 @@ const DMITRY_H = 711;
 
 function HeroMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const menuVisible = menuOpen || closing;
+
+  const openMenu = () => {
+    setClosing(false);
+    setMenuOpen(true);
+  };
+
+  const closeMenu = () => {
+    if (!menuOpen || closing) return;
+    setClosing(true);
+  };
+
+  const toggleMenu = () => {
+    if (menuOpen) closeMenu();
+    else openMenu();
+  };
+
+  useEffect(() => {
+    if (!closing) return;
+    const t = window.setTimeout(() => {
+      setMenuOpen(false);
+      setClosing(false);
+    }, MENU_CLOSE_MS);
+    return () => window.clearTimeout(t);
+  }, [closing]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setClosing(true);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
 
   return (
     <section className="absolute left-0 top-0 h-[980px] w-[360px]">
-      {/* Nav 257:2466 — 20,10,320×46 */}
-      <header className="absolute left-[20px] top-[10px] z-20 flex h-[46px] w-[320px] items-center rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]">
+      {menuVisible ? (
+        <button
+          type="button"
+          aria-label="Закрыть меню"
+          className={`absolute inset-0 z-30 bg-[rgba(0,0,0,0.2)] ${
+            closing ? "mobile-menu-backdrop-out" : "mobile-menu-backdrop-in"
+          }`}
+          onClick={closeMenu}
+        />
+      ) : null}
+
+      {/* Nav 257:2466 — 20,10,320×46; open state Figma 343:1110 */}
+      <header className="absolute left-[20px] top-[10px] z-40 flex h-[46px] w-[320px] items-center rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]">
         <div className="absolute left-[10px] top-[12px]">
           <Logo size="mobile" />
         </div>
@@ -36,33 +97,73 @@ function HeroMobile() {
           type="button"
           aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
           aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((v) => !v)}
+          onClick={toggleMenu}
           className="absolute right-[10px] top-[7px] flex size-[32px] items-center justify-center rounded-full"
           style={{
             backgroundImage:
               "linear-gradient(98.43deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
           }}
         >
-          <span className="flex w-[16px] flex-col gap-[2px]">
-            <span className="h-[2px] w-full rounded-full bg-white" />
-            <span className="h-[2px] w-full rounded-full bg-white" />
-            <span className="h-[2px] w-full rounded-full bg-white" />
+          <span className="relative size-[16px]">
+            <span
+              className={`absolute left-0 top-[3px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                menuOpen && !closing
+                  ? "translate-y-[4px] rotate-45"
+                  : ""
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[7px] h-[2px] w-full rounded-full bg-white transition-opacity duration-200 ${
+                menuOpen && !closing ? "opacity-0" : "opacity-100"
+              }`}
+            />
+            <span
+              className={`absolute left-0 top-[11px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                menuOpen && !closing
+                  ? "-translate-y-[4px] -rotate-45"
+                  : ""
+              }`}
+            />
           </span>
         </button>
       </header>
 
-      {menuOpen ? (
-        <nav className="absolute left-[20px] top-[64px] z-30 flex w-[320px] flex-col gap-[16px] rounded-[20px] bg-white p-[20px] shadow-[0px_4px_24px_rgba(0,0,0,0.08)]">
-          {allNav.map((l) => (
-            <a
-              key={l.label}
-              href={l.href}
-              className="text-[16px] leading-[21px] text-text hover:text-accent-red"
-              onClick={() => setMenuOpen(false)}
-            >
-              {l.label}
-            </a>
-          ))}
+      {menuVisible ? (
+        <nav
+          className={`absolute left-[20px] top-[66px] z-40 flex w-[320px] flex-col items-stretch gap-[30px] rounded-[10px] bg-white p-[20px] shadow-[0px_4px_14px_0px_rgba(0,0,0,0.15)] ${
+            closing ? "mobile-menu-panel-out" : "mobile-menu-panel-in"
+          }`}
+          aria-label="Мобильное меню"
+        >
+          <div className="flex w-full flex-col items-stretch gap-[10px]">
+            {mobileMenuLinks.map((l, i) => (
+              <div key={l.label} className="contents">
+                <a
+                  href={l.href}
+                  className="text-right text-[16px] font-normal leading-[normal] text-text"
+                  onClick={closeMenu}
+                >
+                  {l.label}
+                </a>
+                {i < mobileMenuLinks.length - 1 ? (
+                  <div className="relative h-0 w-full shrink-0" aria-hidden>
+                    <img
+                      src={landingAssets.dividers.line}
+                      alt=""
+                      className="absolute inset-x-0 -top-px h-px w-full max-w-none"
+                    />
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+          <a
+            href="#contacts"
+            className="btn-primary-mobile !w-full"
+            onClick={closeMenu}
+          >
+            Написать в поддержку
+          </a>
         </nav>
       ) : null}
 

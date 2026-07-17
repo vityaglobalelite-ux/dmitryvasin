@@ -443,10 +443,11 @@ function ProgramDesktop() {
         </div>
       </div>
 
-      {/* accordion */}
+      {/* Figma 249:1786 — accordion band 6303..7649 (h 1346).
+          Pack to bottom when collapsed so there’s no empty gap before «Как будут…» */}
       <div
-        className="absolute flex w-[1440px] flex-col gap-[10px]"
-        style={{ left: 240, top: y(6303) }}
+        className="absolute flex w-[1440px] flex-col justify-end gap-[10px]"
+        style={{ left: 240, top: y(6303), minHeight: 7649 - 6303 }}
       >
         {month.lessons.map((lesson, i) => {
           const isOpen = openLesson === i;

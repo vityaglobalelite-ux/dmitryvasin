@@ -236,22 +236,22 @@ body {
 @keyframes review-modal-in {
   from {
     opacity: 0;
-    transform: translate(-50%, -46%) scale(0.96);
+    transform: translateY(12px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 @keyframes review-modal-out {
   from {
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    transform: translateY(0) scale(1);
   }
   to {
     opacity: 0;
-    transform: translate(-50%, -44%) scale(0.97);
+    transform: translateY(10px) scale(0.97);
   }
 }
 
@@ -277,6 +277,63 @@ body {
 
 .review-modal-out {
   animation: review-modal-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Mobile nav menu — Figma 343:1098 */
+@keyframes mobile-menu-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mobile-menu-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mobile-menu-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes mobile-menu-panel-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.mobile-menu-backdrop-in {
+  animation: mobile-menu-backdrop-in 0.28s ease-out both;
+}
+
+.mobile-menu-backdrop-out {
+  animation: mobile-menu-backdrop-out 0.24s ease-in both;
+}
+
+.mobile-menu-panel-in {
+  animation: mobile-menu-panel-in 0.36s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.mobile-menu-panel-out {
+  animation: mobile-menu-panel-out 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 .scrollbar-hide {
