@@ -10,13 +10,11 @@ function DurationLabel({ duration }: { duration: string }) {
   const match = duration.match(/^(.*?)(\s+участия.*)$/u);
   if (!match) {
     return (
-      <span className="ml-[10px] w-[314px] text-[16px] leading-[21px] text-text-dark">
-        {duration}
-      </span>
+      <span className="text-[16px] leading-[1.5] text-[#1a1a1a]">{duration}</span>
     );
   }
   return (
-    <span className="ml-[10px] w-[314px] text-[16px] leading-[21px] text-text-dark">
+    <span className="text-[16px] leading-[1.5] text-[#1a1a1a]">
       <span className="font-bold">{match[1]}</span>
       <span className="font-normal">{match[2]}</span>
     </span>
@@ -30,71 +28,96 @@ export function TariffsSection() {
         Выбирайте тариф участия
       </h2>
 
-      <div className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center rounded-full bg-light-gray">
-        <img
-          src={landingAssets.icons.stopwatchChip}
-          alt=""
-          className="ml-[20px] size-[34px]"
-          width={34}
-          height={34}
-        />
-        <span className="ml-[10px] text-[20px] font-medium leading-[29px] text-text-dark">
-          Старт: 25 июля
+      {/* Figma 287:657 — градиентный чип «Старт» */}
+      <div
+        className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center gap-[10px] rounded-[20px] px-[20px] py-[10px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(148.81deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+        }}
+      >
+        <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
+          <img
+            src={landingAssets.icons.stopwatchStart}
+            alt=""
+            className="size-[24px]"
+            width={24}
+            height={24}
+          />
+        </div>
+        <span className="whitespace-nowrap text-[24px] leading-[1.2] text-white">
+          <span className="font-bold">Старт:</span>
+          <span className="font-medium"> 25 июля</span>
         </span>
       </div>
 
       {tariffs.map((t, i) => (
         <article
           key={t.id}
-          className="absolute h-[636px] w-[467px] rounded-[20px] bg-light-gray"
+          className="absolute flex h-[636px] w-[467px] flex-col justify-between rounded-[20px] bg-light-gray p-[30px]"
           style={{ left: cardX[i], top: 10458 }}
         >
-          <div className="absolute left-[30px] top-[30px]">
-            <p className="text-[14px] font-semibold uppercase tracking-[0.5px] text-accent-red">
-              {t.badge}
-            </p>
-            <p className="mt-[6px] text-[30px] font-semibold leading-[36px] text-text-dark">
-              {t.title}
-            </p>
-          </div>
+          <div className="flex w-full flex-col gap-[30px]">
+            <div className="flex h-[50px] flex-col gap-[6px]">
+              <p className="text-[14px] font-semibold uppercase leading-[1.1] text-accent-red">
+                {t.badge}
+              </p>
+              <p className="text-[30px] font-semibold leading-[1.2] text-[#1a1a1a]">
+                {t.title}
+              </p>
+            </div>
 
-          <div className="absolute left-[30px] top-[110px] flex h-[62px] w-[407px] items-center rounded-[20px] bg-white">
-            <img
-              src={landingAssets.icons.calendarTariffChip}
-              alt=""
-              className="ml-[20px] size-[34px] shrink-0"
-              width={34}
-              height={34}
-            />
-            <DurationLabel duration={t.duration} />
-          </div>
-
-          <ul className="absolute left-[30px] top-[202px] w-[407px]">
-            {t.features.map((f, fi) => (
-              <li
-                key={f}
-                className={`py-[10px] text-[16px] leading-[24px] text-text ${
-                  fi > 0 ? "border-t border-[#e3e3e6]" : "pt-0"
-                }`}
+            {/* Figma 249:1859 — белый duration pill */}
+            <div className="flex h-[62px] w-full items-center gap-[10px] rounded-[20px] bg-white px-[20px] py-[10px]">
+              <div
+                className="grid size-[34px] shrink-0 place-items-center rounded-[17px]"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(111.28deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+                }}
               >
-                {f}
-              </li>
-            ))}
-          </ul>
+                <img
+                  src={landingAssets.icons.calendarBoldWhite}
+                  alt=""
+                  className="size-[20px]"
+                  width={20}
+                  height={20}
+                />
+              </div>
+              <DurationLabel duration={t.duration} />
+            </div>
 
-          <div className="absolute bottom-[30px] left-[30px]">
-            <p className="flex items-end gap-[30px]">
+            <ul className="flex w-full flex-col gap-[10px]">
+              {t.features.map((f, fi) => (
+                <li key={f} className="contents">
+                  {fi > 0 ? (
+                    <div
+                      className="h-px w-full bg-white"
+                      aria-hidden
+                    />
+                  ) : null}
+                  <p className="text-[16px] leading-[1.5] text-[#1a1a1a]">{f}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="flex flex-col gap-[30px]">
+            <p className="flex items-center gap-[30px] whitespace-nowrap">
               <span
-                className="bg-clip-text text-[30px] font-bold leading-[36px] text-transparent"
-                style={{ backgroundImage: "var(--brand-gradient)" }}
+                className="bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(137.53deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+                }}
               >
                 {t.price}
               </span>
-              <span className="text-[20px] font-semibold leading-[24px] text-text line-through">
+              <span className="text-[20px] font-semibold leading-[1.2] text-text line-through">
                 {t.oldPrice}
               </span>
             </p>
-            <a href="#payment" className="btn-primary mt-[30px]">
+            <a href="#payment" className="btn-primary">
               Оплатить
             </a>
           </div>
