@@ -268,7 +268,7 @@ function ProgramMobile() {
         <img
           src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute bottom-[24px] left-[205px] z-0 h-[46px] w-[52px] object-contain"
+          className="pointer-events-none absolute bottom-[24px] left-[209px] z-0 h-[46px] w-[47px] object-contain"
         />
       </div>
 
@@ -491,7 +491,7 @@ function ProgramDesktop() {
         <img
           src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute left-[926px] top-[7px] h-[81px] w-[91px] object-contain"
+          className="pointer-events-none absolute left-[932px] top-[7px] h-[81px] w-[83px] object-contain"
         />
 
         {month.nodes.map((node, i) => {

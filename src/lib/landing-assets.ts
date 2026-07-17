@@ -211,7 +211,7 @@ export const landingAssets = {
     end: `${landingAsset("program-m2-sticker-end.png")}?v=1`,
   },
   /** Couple + 3 filled bars (month 3) */
-  programStickerMonth3: `${landingAsset("program-m3-sticker.png")}?v=9`,
+  programStickerMonth3: `${landingAsset("program-m3-sticker.png")}?v=11`,
   direction3d: [
     `${landingAsset("direction-3d-01.png")}?v=3`,
     `${landingAsset("direction-3d-02.png")}?v=3`,
