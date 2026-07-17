@@ -31,8 +31,11 @@ function DurationLabel({
 
 function TariffsMobile() {
   return (
-    <section id="tariffs" className="absolute left-0 top-0 h-0 w-full">
-      <h2 className="h-section-mobile absolute left-[20px] top-[12279px] w-[301px]">
+    <section className="absolute left-0 top-0 h-0 w-full">
+      <h2
+        id="tariffs"
+        className="h-section-mobile absolute left-[20px] top-[12279px] w-[301px]"
+      >
         Выбирайте тариф участия
       </h2>
 
@@ -138,8 +141,11 @@ function TariffsMobile() {
 
 function TariffsDesktop() {
   return (
-    <section id="tariffs" className="absolute left-0 top-0 h-0 w-full">
-      <h2 className="h-section absolute left-[240px] top-[10358px] w-[626px]">
+    <section className="absolute left-0 top-0 h-0 w-full">
+      <h2
+        id="tariffs"
+        className="h-section absolute left-[240px] top-[10358px] w-[626px]"
+      >
         Выбирайте тариф участия
       </h2>
 

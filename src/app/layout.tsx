@@ -32,7 +32,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="h-full scroll-smooth">
+    <html lang="ru" className="h-full">
       <body className="min-h-full flex flex-col bg-white antialiased">
         {children}
       </body>

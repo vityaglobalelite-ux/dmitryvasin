@@ -7,6 +7,7 @@ import {
   MOBILE_CANVAS,
   useLandingMode,
 } from "@/lib/landing-mode";
+import { bindSectionScroll } from "@/lib/smooth-scroll";
 
 /**
  * Fixed design canvas scaled to the viewport width via CSS zoom.
@@ -27,6 +28,8 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", apply);
     return () => window.removeEventListener("resize", apply);
   }, [canvas.w]);
+
+  useEffect(() => bindSectionScroll(document), []);
 
   return (
     <div

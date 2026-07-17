@@ -64,7 +64,8 @@
 }
 
 html {
-  scroll-behavior: smooth;
+  /* Anchor navigation uses cinematic RAF scroll (see smooth-scroll.ts) */
+  scroll-behavior: auto;
 }
 
 /* Figma hero display lines: 106px line boxes */

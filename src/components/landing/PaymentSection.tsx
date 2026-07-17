@@ -29,9 +29,12 @@ function SwipeHint({ text }: { text: string }) {
 
 function PaymentMobile() {
   return (
-    <section id="payment" className="absolute left-0 top-0 h-0 w-full">
+    <section className="absolute left-0 top-0 h-0 w-full">
       {/* 303:64 — title block */}
-      <div className="absolute left-[20px] top-[14420px] flex w-[297px] flex-col gap-[10px]">
+      <div
+        id="payment"
+        className="absolute left-[20px] top-[14420px] flex w-[297px] flex-col gap-[10px]"
+      >
         <h2 className="h-section-mobile w-[297px]">Стоимость и оплата</h2>
         <p className="w-[297px] text-[16px] font-medium leading-[1.2] text-text">
           Присоединиться к закрытому исследованию можно из любой точки мира.
@@ -120,8 +123,11 @@ function PaymentMobile() {
 
 function PaymentDesktop() {
   return (
-    <section id="payment" className="absolute left-0 top-0 h-0 w-full">
-      <h2 className="h-section absolute left-[241px] top-[11624px] w-[1400px]">
+    <section className="absolute left-0 top-0 h-0 w-full">
+      <h2
+        id="payment"
+        className="h-section absolute left-[241px] top-[11624px] w-[1400px]"
+      >
         Стоимость и оплата
       </h2>
       <p className="absolute left-[241px] top-[11696px] w-[588px] text-[20px] leading-[29px] text-text">
