@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
-import { useIsMobile } from "@/lib/landing-mode";
+import { MOBILE_CANVAS, useIsMobile } from "@/lib/landing-mode";
 
 const nav = {
   left: [
@@ -35,6 +36,9 @@ const DMITRY_H = 711;
 function HeroMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [scrolled, setScrolled] = useState(false);
   const menuVisible = menuOpen || closing;
 
   const openMenu = () => {
@@ -51,6 +55,23 @@ function HeroMobile() {
     if (menuOpen) closeMenu();
     else openMenu();
   };
+
+  useEffect(() => {
+    setMounted(true);
+    const applyZoom = () => {
+      setZoom(document.documentElement.clientWidth / MOBILE_CANVAS.w);
+    };
+    applyZoom();
+    window.addEventListener("resize", applyZoom);
+    return () => window.removeEventListener("resize", applyZoom);
+  }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!closing) return;
@@ -75,97 +96,150 @@ function HeroMobile() {
     };
   }, [menuOpen]);
 
-  return (
-    <section className="absolute left-0 top-0 h-[980px] w-[360px]">
-      {menuVisible ? (
-        <button
-          type="button"
-          aria-label="Закрыть меню"
-          className={`absolute inset-0 z-30 bg-[rgba(0,0,0,0.2)] ${
-            closing ? "mobile-menu-backdrop-out" : "mobile-menu-backdrop-in"
-          }`}
-          onClick={closeMenu}
-        />
-      ) : null}
+  const stickyNav =
+    mounted &&
+    createPortal(
+      <>
+        {menuVisible ? (
+          <button
+            type="button"
+            aria-label="Закрыть меню"
+            className={`fixed inset-0 z-[99] bg-[rgba(0,0,0,0.2)] ${
+              closing ? "mobile-menu-backdrop-out" : "mobile-menu-backdrop-in"
+            }`}
+            onClick={closeMenu}
+          />
+        ) : null}
 
-      {/* Nav 257:2466 — 20,10,320×46; open state Figma 343:1110 */}
-      <header className="absolute left-[20px] top-[10px] z-40 flex h-[46px] w-[320px] items-center rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]">
-        <div className="absolute left-[10px] top-[12px]">
-          <Logo size="mobile" />
-        </div>
-        <button
-          type="button"
-          aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
-          aria-expanded={menuOpen}
-          onClick={toggleMenu}
-          className="absolute right-[10px] top-[7px] flex size-[32px] items-center justify-center rounded-full"
+        {/*
+          Outside FigCanvas zoom — full-bleed dock.
+          At rest: floating pill. On scroll: morphs to edge-to-edge top bar
+          so nothing peeks above/beside — only content below.
+        */}
+        <div
+          className="fixed z-[100] origin-top-left"
           style={{
-            backgroundImage:
-              "linear-gradient(98.43deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+            left: 0,
+            top: 0,
+            width: MOBILE_CANVAS.w,
+            transform: `scale(${zoom})`,
           }}
         >
-          <span className="relative size-[16px]">
-            <span
-              className={`absolute left-0 top-[3px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                menuOpen && !closing
-                  ? "translate-y-[4px] rotate-45"
-                  : ""
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[7px] h-[2px] w-full rounded-full bg-white transition-opacity duration-200 ${
-                menuOpen && !closing ? "opacity-0" : "opacity-100"
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[11px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                menuOpen && !closing
-                  ? "-translate-y-[4px] -rotate-45"
-                  : ""
-              }`}
-            />
-          </span>
-        </button>
-      </header>
+          {scrolled ? (
+            <div
+              aria-hidden
+              className="mobile-nav-veil-in pointer-events-none absolute inset-x-0 top-0"
+            >
+              {/* Solid seal — nothing peeks above/beside the docked bar */}
+              <div className="h-[56px] w-full bg-white" />
+              <div
+                className="h-[20px] w-full"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 100%)",
+                }}
+              />
+            </div>
+          ) : null}
 
-      {menuVisible ? (
-        <nav
-          className={`absolute left-[20px] top-[66px] z-40 flex w-[320px] flex-col items-stretch gap-[30px] rounded-[10px] bg-white p-[20px] shadow-[0px_4px_14px_0px_rgba(0,0,0,0.15)] ${
-            closing ? "mobile-menu-panel-out" : "mobile-menu-panel-in"
-          }`}
-          aria-label="Мобильное меню"
-        >
-          <div className="flex w-full flex-col items-stretch gap-[10px]">
-            {mobileMenuLinks.map((l, i) => (
-              <div key={l.label} className="contents">
-                <a
-                  href={l.href}
-                  className="text-right text-[16px] font-normal leading-[normal] text-text"
-                  onClick={closeMenu}
-                >
-                  {l.label}
-                </a>
-                {i < mobileMenuLinks.length - 1 ? (
-                  <div className="relative h-0 w-full shrink-0" aria-hidden>
-                    <img
-                      src={landingAssets.dividers.line}
-                      alt=""
-                      className="absolute inset-x-0 -top-px h-px w-full max-w-none"
-                    />
-                  </div>
-                ) : null}
-              </div>
-            ))}
-          </div>
-          <a
-            href="#contacts"
-            className="btn-primary-mobile !w-full"
-            onClick={closeMenu}
+          {/* Nav 257:2466 — 20,10,320×46; open state Figma 343:1110 */}
+          <header
+            className={`absolute flex items-center bg-white transition-[left,top,width,height,border-radius,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              scrolled
+                ? "mobile-nav-docked left-0 top-0 h-[56px] w-[360px] rounded-b-[22px] shadow-[0_6px_18px_rgba(0,0,0,0.04)]"
+                : "left-[20px] top-[10px] h-[46px] w-[320px] rounded-[20px] shadow-[0px_4px_24px_0px_rgba(0,0,0,0.15)]"
+            }`}
           >
-            Написать в поддержку
-          </a>
-        </nav>
-      ) : null}
+            <div
+              className={`absolute transition-[left,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                scrolled ? "left-[20px] top-[17px]" : "left-[10px] top-[12px]"
+              }`}
+            >
+              <Logo size="mobile" />
+            </div>
+            <button
+              type="button"
+              aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
+              aria-expanded={menuOpen}
+              onClick={toggleMenu}
+              className={`absolute flex size-[32px] items-center justify-center rounded-full transition-[right,top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                scrolled ? "right-[20px] top-[12px]" : "right-[10px] top-[7px]"
+              }`}
+              style={{
+                backgroundImage:
+                  "linear-gradient(98.43deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+              }}
+            >
+              <span className="relative size-[16px]">
+                <span
+                  className={`absolute left-0 top-[3px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    menuOpen && !closing
+                      ? "translate-y-[4px] rotate-45"
+                      : ""
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[7px] h-[2px] w-full rounded-full bg-white transition-opacity duration-200 ${
+                    menuOpen && !closing ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+                <span
+                  className={`absolute left-0 top-[11px] h-[2px] w-full rounded-full bg-white transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                    menuOpen && !closing
+                      ? "-translate-y-[4px] -rotate-45"
+                      : ""
+                  }`}
+                />
+              </span>
+            </button>
+          </header>
+
+          {menuVisible ? (
+            <nav
+              className={`absolute left-[20px] top-[66px] z-40 flex w-[320px] flex-col items-stretch gap-[30px] rounded-[10px] bg-white p-[20px] shadow-[0px_4px_14px_0px_rgba(0,0,0,0.15)] ${
+                closing ? "mobile-menu-panel-out" : "mobile-menu-panel-in"
+              }`}
+              aria-label="Мобильное меню"
+            >
+              <div className="flex w-full flex-col items-stretch gap-[10px]">
+                {mobileMenuLinks.map((l, i) => (
+                  <div key={l.label} className="contents">
+                    <a
+                      href={l.href}
+                      className="text-right text-[16px] font-normal leading-[normal] text-text"
+                      onClick={closeMenu}
+                    >
+                      {l.label}
+                    </a>
+                    {i < mobileMenuLinks.length - 1 ? (
+                      <div className="relative h-0 w-full shrink-0" aria-hidden>
+                        <img
+                          src={landingAssets.dividers.line}
+                          alt=""
+                          className="absolute inset-x-0 -top-px h-px w-full max-w-none"
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+              <a
+                href="#contacts"
+                className="btn-primary-mobile !w-full"
+                onClick={closeMenu}
+              >
+                Написать в поддержку
+              </a>
+            </nav>
+          ) : null}
+        </div>
+      </>,
+      document.body,
+    );
+
+  return (
+    <section className="absolute left-0 top-0 h-[980px] w-[360px]">
+      {stickyNav}
 
       {/*
         Stage 257:2482 — 19,76,321×843 r20
