@@ -195,6 +195,23 @@ export const landingAssets = {
     `${landingAsset("program-node-07.png")}?v=1`,
     `${landingAsset("program-node-08.png")}?v=1`,
   ],
+  /** Figma 333:411–459 composed circles (2 месяц) */
+  programNodesMonth2: [
+    `${landingAsset("program-m2-node-01.png")}?v=1`,
+    `${landingAsset("program-m2-node-02.png")}?v=1`,
+    `${landingAsset("program-m2-node-03.png")}?v=1`,
+    `${landingAsset("program-m2-node-04.png")}?v=1`,
+    `${landingAsset("program-m2-node-05.png")}?v=1`,
+    `${landingAsset("program-m2-node-06.png")}?v=1`,
+    `${landingAsset("program-m2-node-07.png")}?v=1`,
+    `${landingAsset("program-m2-node-08.png")}?v=1`,
+  ],
+  programStickersMonth2: {
+    start: `${landingAsset("program-m2-sticker-start.png")}?v=1`,
+    end: `${landingAsset("program-m2-sticker-end.png")}?v=1`,
+  },
+  /** Couple + 3 filled bars (month 3) */
+  programStickerMonth3: `${landingAsset("program-m3-sticker.png")}?v=8`,
   direction3d: [
     `${landingAsset("direction-3d-01.png")}?v=3`,
     `${landingAsset("direction-3d-02.png")}?v=3`,

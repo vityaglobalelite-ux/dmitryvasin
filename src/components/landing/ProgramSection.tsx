@@ -10,8 +10,9 @@ import { useIsMobile } from "@/lib/landing-mode";
 const TOP = 5613;
 const y = (abs: number) => abs - TOP;
 
+/* Figma 333:410–458 (frame y offset → page 5613) */
 const nodePositions = [
-  { x: 270, y: 6124, w: 116 },
+  { x: 270, y: 6124, w: 118 },
   { x: 394, y: 6012, w: 121 },
   { x: 528, y: 6074, w: 112 },
   { x: 647.5, y: 5958, w: 130 },
@@ -41,22 +42,58 @@ const mobileNodePositions = [
 const MOBILE_TOP = 5767;
 const my = (abs: number) => abs - MOBILE_TOP;
 
+/**
+ * Couple+bars only “doubles” from month 2 on (period edges):
+ * M1: start = plain couple, end = 1 bar
+ * M2: start = 1 bar, end = 2 bars
+ * M3: start = 2 bars, end = 3 bars
+ */
+function routeSticker(monthIdx: number, which: "start" | "end") {
+  if (monthIdx === 0) {
+    return which === "start"
+      ? landingAssets.misc.programStartCouple
+      : landingAssets.misc.programStickerMobile;
+  }
+  if (monthIdx === 1) {
+    return which === "start"
+      ? landingAssets.programStickersMonth2.start
+      : landingAssets.programStickersMonth2.end;
+  }
+  return which === "start"
+    ? landingAssets.programStickersMonth2.end
+    : landingAssets.programStickerMonth3;
+}
+
 function ProgramMobile() {
   const [monthIdx, setMonthIdx] = useState(0);
   const [openLesson, setOpenLesson] = useState<number | null>(0);
   const month = programMonths[monthIdx];
-  const nodeIcons = landingAssets.programNodesMobile;
+  const nodeIcons =
+    monthIdx === 1
+      ? landingAssets.programNodesMonth2
+      : landingAssets.programNodesMobile;
+
+  /* Extra board height when last node is tall — keep ~24px under badges */
+  const lastNode = month.nodes[month.nodes.length - 1];
+  const tallLast =
+    !!lastNode &&
+    (lastNode.skills.length >= 2 || lastNode.title.length > 28);
+  const boardH = tallLast ? 1048 : 984;
+  const boardAbsBottom = 5888 + boardH;
+  const resultAbsTop = boardAbsBottom + 20;
+  const accordionAbsTop = resultAbsTop + 425 + 20;
+  const sectionAbsBottom = 8592 + (boardH - 984);
 
   return (
     <section
       id="program"
       className="absolute left-0 w-[360px]"
-      style={{ top: MOBILE_TOP, height: 8592 - MOBILE_TOP }}
+      style={{ top: MOBILE_TOP, height: sectionAbsBottom - MOBILE_TOP }}
     >
       {/* Gray only behind title → result card; not under empty accordion space */}
       <div
         className="pointer-events-none absolute left-0 top-0 z-0 w-[360px] bg-light-gray"
-        style={{ height: my(7337) }}
+        style={{ height: my(accordionAbsTop) }}
       />
 
       <h2 className="h-section-mobile absolute left-[20px] top-0 z-[1] w-[289px]">
@@ -76,7 +113,7 @@ function ProgramMobile() {
               type="button"
               onClick={() => {
                 setMonthIdx(i);
-                setOpenLesson(null);
+                setOpenLesson(0);
               }}
               className={`flex h-[35px] w-[97px] shrink-0 items-center justify-center rounded-[40px] text-[13px] font-normal leading-[1.5] transition ${
                 active
@@ -90,10 +127,10 @@ function ProgramMobile() {
         })}
       </div>
 
-      {/* Group 2338 — 20,5888,320×984 */}
+      {/* Group 2338 — 20,5888 */}
       <div
         className="absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
-        style={{ top: my(5888), width: 320, height: 984 }}
+        style={{ top: my(5888), width: 320, height: boardH }}
       >
         <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-[#1a1a1a]">
           {month.programTitle}
@@ -110,11 +147,10 @@ function ProgramMobile() {
           </p>
         </div>
 
-        {/* image 29 — start couple */}
         <img
-          src={landingAssets.misc.programStartCouple}
+          src={routeSticker(monthIdx, "start")}
           alt=""
-          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-cover"
+          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-contain"
         />
 
         {/* Vector 498 — dashed path under nodes */}
@@ -127,6 +163,9 @@ function ProgramMobile() {
         {month.nodes.map((node, i) => {
           const pos = mobileNodePositions[i];
           if (!pos) return null;
+          const icon =
+            ("icon" in node && node.icon) ||
+            nodeIcons[i % nodeIcons.length];
           return (
             <button
               key={node.id}
@@ -136,7 +175,7 @@ function ProgramMobile() {
               style={{ left: pos.left, top: pos.top, width: pos.w }}
             >
               <img
-                src={nodeIcons[i % nodeIcons.length]}
+                src={icon}
                 alt=""
                 className="size-[45px] shrink-0 object-contain"
               />
@@ -157,18 +196,17 @@ function ProgramMobile() {
           );
         })}
 
-        {/* Group 2341 — bottom sticker 229,6806 → 209,918 */}
         <img
-          src={landingAssets.misc.programStickerMobile}
+          src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute left-[209px] top-[918px] z-[1] h-[46px] w-[47px] object-contain"
+          className="pointer-events-none absolute bottom-[24px] left-[209px] z-0 h-[46px] w-[47px] object-contain"
         />
       </div>
 
       {/* 286:308 — result card */}
       <div
         className="absolute left-[20px] rounded-[20px] bg-white p-[15px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
-        style={{ top: my(6892), width: 320, height: 425 }}
+        style={{ top: my(resultAbsTop), width: 320, height: 425 }}
       >
         <p className="text-[16px] font-medium leading-[1.2] text-text-dark">
           Результат программы
@@ -205,11 +243,13 @@ function ProgramMobile() {
         </div>
       </div>
 
-      {/* 286:525 — accordion; pack to bottom of Figma band when collapsed
-          so there’s no huge empty gap after the last lesson */}
+      {/* 286:525 — accordion starts under result card; reserve band height below */}
       <div
-        className="absolute left-[20px] z-[1] flex w-[320px] flex-col justify-end gap-[10px]"
-        style={{ top: my(7337), minHeight: 8592 - 7337 }}
+        className="absolute left-[20px] z-[1] flex w-[320px] flex-col gap-[10px]"
+        style={{
+          top: my(accordionAbsTop),
+          minHeight: sectionAbsBottom - accordionAbsTop,
+        }}
       >
         {month.lessons.map((lesson, i) => {
           const isOpen = openLesson === i;
@@ -313,7 +353,7 @@ function ProgramDesktop() {
             type="button"
             onClick={() => {
               setMonthIdx(i);
-              setOpenLesson(null);
+              setOpenLesson(0);
             }}
             className={`absolute h-[69px] w-[467px] rounded-[40px] text-[24px] font-medium leading-[29px] transition ${
               active
@@ -327,23 +367,25 @@ function ProgramDesktop() {
         );
       })}
 
-      {/* route board */}
+      {/* route board — Figma 333:401 */}
       <div
-        className="absolute rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
+        className="absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ left: 240, top: y(5817), width: 1075, height: 466 }}
       >
-        <h3 className="absolute left-[30px] top-[30px] text-[28px] font-semibold leading-[40px] text-text-dark">
+        {/* Figma 333:403 — Bold 30 / #1a1a1a */}
+        <h3 className="absolute left-[30px] top-[30px] text-[30px] font-bold leading-normal text-[#1a1a1a]">
           {month.programTitle}
         </h3>
 
-        <div className="absolute left-[30px] top-[78px] flex w-[317px] items-start gap-[10px]">
+        {/* Figma 333:602 */}
+        <div className="absolute left-[30px] top-[78px] flex w-[317px] items-center gap-[10px]">
           <img
             src={landingAssets.misc.hintCursorBg}
             alt=""
-            className="mt-[4px] size-[34px]"
+            className="size-[34px] shrink-0"
           />
-          <p className="w-[273px] text-[14px] leading-[21px] text-text opacity-70">
-            Кликайте на уроки, чтобы посмотреть подробную программу
+          <p className="w-[273px] text-[14px] font-normal leading-[1.5] text-[#1a1a1a]">
+            Кликайте на&nbsp;уроки, чтобы&nbsp;посмотреть подробную программу
           </p>
         </div>
 
@@ -354,45 +396,48 @@ function ProgramDesktop() {
         />
 
         <img
-          src={landingAssets.misc.cursorIcon}
+          src={routeSticker(monthIdx, "start")}
           alt=""
-          className="pointer-events-none absolute left-[42px] top-[212px] size-[81px] object-contain"
+          className="pointer-events-none absolute left-[48px] top-[212px] h-[81px] w-[83px] object-contain"
         />
-
         <img
-          src={landingAssets.misc.stickerGroup}
+          src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute left-[945px] top-[6px] h-[81px] w-[83px] object-contain"
+          className="pointer-events-none absolute left-[932px] top-[7px] h-[81px] w-[83px] object-contain"
         />
 
         {month.nodes.map((node, i) => {
           const pos = nodePositions[i];
           if (!pos) return null;
+          const customIcon = "icon" in node ? node.icon : undefined;
+          const icon =
+            customIcon ||
+            landingAssets.lessonThumbs[i % landingAssets.lessonThumbs.length];
           return (
             <button
               key={node.id}
               type="button"
               onClick={() => setOpenLesson(i)}
-              className="group absolute flex flex-col items-center text-center"
+              className="group absolute flex flex-col items-center gap-[10px] text-center"
               style={{ left: pos.x - 240, top: pos.y - 5817, width: pos.w }}
             >
               <img
-                src={
-                  landingAssets.lessonThumbs[
-                    i % landingAssets.lessonThumbs.length
-                  ]
-                }
+                src={icon}
                 alt=""
-                className="size-[60px] rounded-full object-cover shadow-md transition group-hover:scale-105"
+                className={
+                  customIcon
+                    ? "size-[60px] shrink-0 object-contain transition group-hover:scale-105"
+                    : "size-[60px] shrink-0 rounded-full object-cover shadow-md transition group-hover:scale-105"
+                }
               />
-              <span className="mt-[10px] text-[13px] font-medium leading-[16px] text-text-dark">
+              <span className="text-[12px] font-semibold leading-[1.3] text-text">
                 {node.title}
               </span>
-              <span className="mt-[6px] flex flex-col items-center gap-[4px]">
+              <span className="flex flex-col items-center gap-[4px]">
                 {node.skills.map((s) => (
                   <span
                     key={s.label}
-                    className="whitespace-nowrap rounded-full border border-[#e3e3e6] bg-white px-[10px] py-[3px] text-[10px] leading-[13px] text-text"
+                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                   >
                     {s.label}: +{s.delta}
                   </span>
@@ -411,7 +456,7 @@ function ProgramDesktop() {
         <p className="absolute left-[22px] top-[24px] text-[24px] font-medium leading-[29px] text-text-dark">
           Результат программы
         </p>
-        <p className="absolute left-[22px] top-[57px] text-[16px] leading-[24px] text-text opacity-60">
+        <p className="absolute left-[22px] top-[57px] text-[16px] font-normal leading-[1.5] text-[#888888]">
           Прогресс по итогам всех уроков
         </p>
         <div className="absolute left-[22px] top-[101px] flex w-[301px] flex-col gap-[18px]">
@@ -443,10 +488,9 @@ function ProgramDesktop() {
         </div>
       </div>
 
-      {/* Figma 249:1786 — accordion band 6303..7649 (h 1346).
-          Pack to bottom when collapsed so there’s no empty gap before «Как будут…» */}
+      {/* Figma 249:1786 — accordion band 6303..7649; start under board, spare space below */}
       <div
-        className="absolute flex w-[1440px] flex-col justify-end gap-[10px]"
+        className="absolute flex w-[1440px] flex-col gap-[10px]"
         style={{ left: 240, top: y(6303), minHeight: 7649 - 6303 }}
       >
         {month.lessons.map((lesson, i) => {
