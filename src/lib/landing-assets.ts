@@ -179,11 +179,19 @@ export const landingAssets = {
     landingAsset("lesson-thumb-08.png"),
   ],
   direction3d: [
-    landingAsset("direction-3d-01.png"),
-    landingAsset("direction-3d-02.png"),
-    landingAsset("direction-3d-03.png"),
-    landingAsset("direction-3d-04.png"),
-    landingAsset("direction-3d-05.png"),
+    `${landingAsset("direction-3d-01.png")}?v=3`,
+    `${landingAsset("direction-3d-02.png")}?v=3`,
+    `${landingAsset("direction-3d-03.png")}?v=3`,
+    `${landingAsset("direction-3d-04.png")}?v=3`,
+    `${landingAsset("direction-3d-05.png")}?v=3`,
+  ],
+  /** Composed Figma frames 325:26+ (clipped + correct orientation) */
+  direction3dMobile: [
+    `${landingAsset("direction-3d-mobile-01.png")}?v=1`,
+    `${landingAsset("direction-3d-mobile-02.png")}?v=1`,
+    `${landingAsset("direction-3d-mobile-03.png")}?v=1`,
+    `${landingAsset("direction-3d-mobile-04.png")}?v=1`,
+    `${landingAsset("direction-3d-mobile-05.png")}?v=1`,
   ],
   collageExtra: [
     `${landingAsset("collage-10.png")}?v=3`,
