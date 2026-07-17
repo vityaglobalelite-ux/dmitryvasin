@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { programMonths, skills } from "@/lib/landing-data";
+import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 5613..7649 — «Ваш маршрут на 90 дней» */
 
@@ -22,7 +23,264 @@ const nodePositions = [
 
 const tabX = [240, 726, 1212];
 
-export function ProgramSection() {
+/* Figma Главная_360: Group 2338 nodes — board-relative (board @ 20,5888) */
+const mobileNodePositions = [
+  { left: 15, top: 153, w: 116 },
+  { left: 172, top: 212, w: 121 },
+  { left: 15, top: 321, w: 112 },
+  { left: 168, top: 405, w: 130 },
+  { left: 15, top: 499, w: 130 },
+  { left: 160, top: 608, w: 145 },
+  { left: 15, top: 677, w: 130 },
+  { left: 169, top: 786, w: 127 },
+];
+
+const MOBILE_TOP = 5767;
+const my = (abs: number) => abs - MOBILE_TOP;
+
+function ProgramMobile() {
+  const [monthIdx, setMonthIdx] = useState(0);
+  const [openLesson, setOpenLesson] = useState<number | null>(0);
+  const month = programMonths[monthIdx];
+
+  return (
+    <section
+      id="program"
+      className="absolute left-0 w-[360px]"
+      style={{ top: MOBILE_TOP, height: 8592 - MOBILE_TOP }}
+    >
+      <h2 className="h-section-mobile absolute left-[20px] top-0 w-[289px]">
+        Ваш маршрут на 90 дней
+      </h2>
+
+      {/* Frame 286:169 — month tabs */}
+      <div
+        className="absolute left-[20px] flex h-[35px] w-[319px] items-center gap-[14px]"
+        style={{ top: my(5813) }}
+      >
+        {programMonths.map((m, i) => {
+          const active = i === monthIdx;
+          return (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => {
+                setMonthIdx(i);
+                setOpenLesson(null);
+              }}
+              className={`flex h-[35px] w-[97px] shrink-0 items-center justify-center rounded-[40px] text-[13px] font-normal leading-[1.5] transition ${
+                active
+                  ? "bg-[image:var(--brand-gradient)] text-white"
+                  : "border border-accent-orange bg-white text-accent-orange"
+              }`}
+            >
+              {m.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Group 2338 — route board */}
+      <div
+        className="absolute left-[20px] overflow-hidden rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
+        style={{ top: my(5888), width: 320, height: 984 }}
+      >
+        <h3 className="absolute left-[15px] top-[16px] text-[18px] font-medium leading-[1.2] text-text-dark">
+          {month.programTitle}
+        </h3>
+
+        <div className="absolute left-[15px] top-[48px] flex w-[298px] items-center gap-[10px]">
+          <img
+            src={landingAssets.misc.hintCursorBg}
+            alt=""
+            className="size-[34px] shrink-0"
+          />
+          <p className="w-[254px] text-[13px] font-normal leading-[1.5] text-text-dark">
+            Кликайте на&nbsp;уроки, чтобы&nbsp;посмотреть подробную программу
+          </p>
+        </div>
+
+        <img
+          src={landingAssets.misc.cursorIcon}
+          alt=""
+          className="pointer-events-none absolute left-[50px] top-[98px] size-[45px] object-contain"
+        />
+
+        <img
+          src={landingAssets.misc.routeCurveMobile}
+          alt=""
+          className="pointer-events-none absolute left-[72px] top-[174px] h-[636px] w-[162px]"
+        />
+
+        {month.nodes.map((node, i) => {
+          const pos = mobileNodePositions[i];
+          if (!pos) return null;
+          return (
+            <button
+              key={node.id}
+              type="button"
+              onClick={() => setOpenLesson(i)}
+              className="group absolute flex flex-col items-center gap-[10px] text-center"
+              style={{ left: pos.left, top: pos.top, width: pos.w }}
+            >
+              <img
+                src={
+                  landingAssets.lessonThumbs[
+                    i % landingAssets.lessonThumbs.length
+                  ]
+                }
+                alt=""
+                className="size-[45px] rounded-full object-cover shadow-md transition group-hover:scale-105"
+              />
+              <span className="text-[13px] font-semibold leading-[1.3] text-text">
+                {node.title}
+              </span>
+              <span className="flex flex-col items-center gap-[4px]">
+                {node.skills.map((s) => (
+                  <span
+                    key={s.label}
+                    className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-accent-orange"
+                  >
+                    {s.label}: +{s.delta}
+                  </span>
+                ))}
+              </span>
+            </button>
+          );
+        })}
+
+        <img
+          src={landingAssets.misc.stickerGroup}
+          alt=""
+          className="pointer-events-none absolute left-[209px] top-[918px] h-[46px] w-[47px] object-contain"
+        />
+      </div>
+
+      {/* 286:308 — result card */}
+      <div
+        className="absolute left-[20px] rounded-[20px] bg-white p-[15px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
+        style={{ top: my(6892), width: 320, height: 425 }}
+      >
+        <p className="text-[16px] font-medium leading-[1.2] text-text-dark">
+          Результат программы
+        </p>
+        <p className="mt-[4px] text-[13px] font-normal leading-[1.5] text-[#888888]">
+          Прогресс по итогам всех уроков
+        </p>
+        <div className="mt-[19px] flex flex-col gap-[18px]">
+          {skills.map((s) => {
+            const filled = month.progress[s.key];
+            return (
+              <div key={s.key}>
+                <div className="flex items-center gap-[10px]">
+                  <img src={s.icon} alt="" className="size-[16px]" />
+                  <span className="text-[13px] font-normal leading-[20px] text-text">
+                    {s.label}
+                  </span>
+                </div>
+                <div className="mt-[10px] flex gap-[5px]">
+                  {Array.from({ length: 20 }).map((_, i) => (
+                    <span
+                      key={i}
+                      className="h-[22px] w-[9.75px] rounded-[3px]"
+                      style={{
+                        background:
+                          i < filled ? "var(--brand-gradient)" : "#eeeeee",
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 286:525 — accordion */}
+      <div
+        className="absolute left-[20px] flex w-[320px] flex-col gap-[10px]"
+        style={{ top: my(7337) }}
+      >
+        {month.lessons.map((lesson, i) => {
+          const isOpen = openLesson === i;
+          return (
+            <article
+              key={lesson.id}
+              className="w-full overflow-hidden rounded-[10px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+            >
+              <button
+                type="button"
+                onClick={() => setOpenLesson(isOpen ? null : i)}
+                className="flex w-full items-center justify-between gap-[16px] p-[15px] text-left"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[12px] font-semibold uppercase leading-[1.1] text-accent-red">
+                    {lesson.number}
+                  </span>
+                  <span className="mt-[6px] block text-[16px] font-medium leading-[1.2] text-text-dark">
+                    {lesson.title}
+                  </span>
+                </span>
+                <span
+                  className={`flex size-[34px] shrink-0 items-center justify-center rounded-[17px] bg-light-gray text-[13px] text-accent-red transition-transform ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
+
+              {isOpen && lesson.body && (
+                <div className="px-[15px] pb-[15px]">
+                  <div className="h-px w-full bg-[#ececef]" />
+                  <div className="mt-[10px] inline-flex h-[40px] items-center gap-[10px] rounded-[10px] bg-light-gray p-[10px]">
+                    <img
+                      src={lesson.directionIcon}
+                      alt=""
+                      className="size-[20px]"
+                    />
+                    <span className="pr-[6px] text-[12px] font-bold leading-none text-text">
+                      {lesson.direction}
+                    </span>
+                  </div>
+                  <p className="mt-[10px] w-[290px] whitespace-pre-wrap text-[13px] font-normal leading-[1.5] text-text">
+                    {lesson.body}
+                  </p>
+                  <div className="mt-[10px] w-[291px] rounded-[20px] bg-light-gray p-[20px]">
+                    <p className="text-[13px] font-normal leading-[1.5] text-text">
+                      Что исследуем:
+                    </p>
+                    <p className="text-[13px] font-normal leading-[1.5] text-text">
+                      {lesson.explore.map((e) => (
+                        <span key={e} className="block">
+                          • {e};
+                        </span>
+                      ))}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setOpenLesson(null)}
+                    className="mt-[10px] flex items-center gap-[10px] text-[13px] font-normal text-accent-orange"
+                  >
+                    Вернуться к программе
+                    <img
+                      src={landingAssets.icons.arrowUp}
+                      alt=""
+                      className="h-[5px] w-[10px]"
+                    />
+                  </button>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ProgramDesktop() {
   const [monthIdx, setMonthIdx] = useState(0);
   const [openLesson, setOpenLesson] = useState<number | null>(0);
   const month = programMonths[monthIdx];
@@ -257,4 +515,9 @@ export function ProgramSection() {
       </div>
     </section>
   );
+}
+
+export function ProgramSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <ProgramMobile /> : <ProgramDesktop />;
 }

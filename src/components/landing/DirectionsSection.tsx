@@ -1,4 +1,7 @@
+"use client";
+
 import { landingAssets } from "@/lib/landing-assets";
+import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 4277..5523 — светлая секция «5 направлений исследования» */
 
@@ -72,10 +75,116 @@ const illustrations = [
   { src: landingAssets.direction3d[4], x: 1548, y: 5096, w: 132, h: 195 },
 ];
 
-export function DirectionsSection() {
+/** Figma Главная_360 — cards 284:4–284:16 + 3d at right */
+const mobileCards = [
+  {
+    title: "Осознавание",
+    y: 4602,
+    h: 119,
+    textW: 210,
+    text: "Учимся замечать не\u00a0только результат, но\u00a0и\u00a0то, как\u00a0он\u00a0возникает.",
+    illo: landingAssets.direction3d[0],
+    illoW: 89,
+    illoH: 119,
+  },
+  {
+    title: "Техника",
+    y: 4731,
+    h: 119,
+    textW: 234,
+    text: "Разбираемся, почему одни движения получаются легко, а\u00a0другие требуют лишних усилий",
+    illo: landingAssets.direction3d[1],
+    illoW: 89,
+    illoH: 119,
+  },
+  {
+    title: "Музыкальность",
+    y: 4860,
+    h: 119,
+    textW: 228,
+    text: "Уходим от\u00a0привычных музыкальных решений и\u00a0ищем новые способы взаимодействия с\u00a0музыкой.",
+    illo: landingAssets.direction3d[2],
+    illoW: 93,
+    illoH: 119,
+  },
+  {
+    title: "Взаимодействие",
+    y: 4989,
+    h: 119,
+    textW: 231,
+    text: "Ищем более понятные, точные и\u00a0комфортные способы взаимодействия в\u00a0паре.",
+    illo: landingAssets.direction3d[3],
+    illoW: 93,
+    illoH: 119,
+  },
+  {
+    title: "Вариативность",
+    y: 5118,
+    h: 139,
+    textW: 230,
+    text: "Постепенно обнаруживаем, что\u00a0вариантов продолжения движения гораздо больше, чем\u00a0кажется на\u00a0первый взгляд.",
+    illo: landingAssets.direction3d[4],
+    illoW: 95,
+    illoH: 140,
+  },
+];
+
+function DirectionsMobile() {
   return (
     <>
-      {/* image 34 — fade только сверху фона; человек без mask, выше по z */}
+      {/* image 34 — 0,4507,360×1200 */}
+      <div className="absolute left-0 top-[4507px] z-0 h-[1200px] w-[360px] overflow-hidden bg-white">
+        <img
+          src={landingAssets.backgrounds.directionsFull}
+          alt=""
+          className="absolute inset-0 size-full object-cover object-center"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white from-0% to-transparent to-[12%]" />
+      </div>
+
+      <h2 className="h-section-mobile absolute left-[20px] top-[4530px] z-[3] w-[217px]">
+        5 направлений исследования
+      </h2>
+
+      {mobileCards.map((c) => (
+        <div
+          key={c.title}
+          className="absolute left-[20px] z-[3] w-[320px] overflow-hidden rounded-[10px] bg-light-gray p-[15px]"
+          style={{ top: c.y, height: c.h }}
+        >
+          <h3 className="pr-[90px] text-[16px] font-medium leading-[1.2] text-text">
+            {c.title}
+          </h3>
+          <p
+            className="mt-[10px] pr-[90px] text-[13px] font-normal leading-[1.5] text-text"
+            style={{ maxWidth: c.textW }}
+          >
+            {c.text}
+          </p>
+          <img
+            src={c.illo}
+            alt=""
+            className="pointer-events-none absolute bottom-0 right-0 object-contain object-bottom"
+            style={{ width: c.illoW, height: c.illoH }}
+          />
+        </div>
+      ))}
+
+      {/* Group 2335 — 0,5271,360×436 */}
+      <div className="pointer-events-none absolute left-0 top-[5271px] z-[2] h-[436px] w-[360px] overflow-hidden">
+        <img
+          src={landingAssets.photos.dmitryDirectionsMobile}
+          alt="Дмитрий Васин"
+          className="absolute left-[-42px] top-0 h-[571px] w-[465px] max-w-none object-cover object-top"
+        />
+      </div>
+    </>
+  );
+}
+
+function DirectionsDesktop() {
+  return (
+    <>
       <div className="absolute left-0 top-[4403px] z-0 h-[1120px] w-[1920px] overflow-hidden bg-white">
         <img
           src={landingAssets.backgrounds.directionsFull}
@@ -90,7 +199,6 @@ export function DirectionsSection() {
         alt=""
         className="pointer-events-none absolute left-[683px] top-[4550px] z-[1] h-[972px] w-[460px] object-fill"
       />
-      {/* 255:2415 — кадр 915×1246; фото h 108.75% → низ (ноги) обрезается как в Figma */}
       <div className="pointer-events-none absolute left-[481px] top-[4277px] z-[2] h-[1246px] w-[915px] overflow-hidden">
         <img
           src={landingAssets.photos.dmitryDirectionsFull}
@@ -133,4 +241,9 @@ export function DirectionsSection() {
       ))}
     </>
   );
+}
+
+export function DirectionsSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <DirectionsMobile /> : <DirectionsDesktop />;
 }

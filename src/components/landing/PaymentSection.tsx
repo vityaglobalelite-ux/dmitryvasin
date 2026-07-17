@@ -1,11 +1,121 @@
+"use client";
+
 import { landingAssets } from "@/lib/landing-assets";
 import { paymentSteps } from "@/lib/landing-data";
+import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 11624..12694 — «Стоимость и оплата» */
 
 const stepX = [240, 605, 970, 1335];
 
-export function PaymentSection() {
+function SwipeHint({ text }: { text: string }) {
+  return (
+    <div className="flex h-[40px] w-[298px] items-center gap-[10px]">
+      <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-light-gray">
+        <img
+          src={landingAssets.icons.fingerSwipe}
+          alt=""
+          className="size-[16px]"
+          width={16}
+          height={16}
+        />
+      </div>
+      <p className="w-[254px] text-[13px] font-normal leading-[1.5] text-[#1a1a1a]">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function PaymentMobile() {
+  return (
+    <section id="payment" className="absolute left-0 top-0 h-0 w-full">
+      {/* 303:64 — title block */}
+      <div className="absolute left-[20px] top-[14420px] flex w-[297px] flex-col gap-[10px]">
+        <h2 className="h-section-mobile w-[297px]">Стоимость и оплата</h2>
+        <p className="w-[297px] text-[16px] font-medium leading-[1.2] text-text">
+          Присоединиться к закрытому исследованию можно из любой точки мира.
+        </p>
+      </div>
+
+      {/* 325:2 — swipe hint */}
+      <div className="absolute left-[20px] top-[14533px]">
+        <SwipeHint text="Листайте вправо-влево, чтобы посмотреть инструкцию по оплате" />
+      </div>
+
+      {/* Frame 2431/2432 — horizontal steps */}
+      <div className="absolute left-0 top-[14593px] z-[2] w-[360px] overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max snap-x snap-mandatory gap-[16px] px-[20px]">
+          {paymentSteps.map((s, i) => (
+            <div
+              key={s.step}
+              className="flex h-[262px] w-[290px] shrink-0 snap-start flex-col gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
+            >
+              <img
+                src={landingAssets.icons.stepChips[i]}
+                alt={`${s.step}`}
+                className="size-[40px] shrink-0"
+                width={40}
+                height={40}
+              />
+              <div className="h-[72px] w-full shrink-0 rounded-[10px] bg-[#d9d9d9]" />
+              <p className="text-[13px] font-normal leading-[1.5] text-text">
+                {s.title}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 298:33 — support row */}
+      <div className="absolute left-[20px] top-[14885px] flex h-[57px] w-[321px] items-center gap-[10px]">
+        <img
+          src={landingAssets.icons.personSupport}
+          alt=""
+          className="size-[24px] shrink-0"
+          width={24}
+          height={24}
+        />
+        <p className="w-[246px] text-[16px] font-medium leading-[1.2] text-text">
+          Если&nbsp;возникнут вопросы, служба поддержки в&nbsp;боте поможет
+          на&nbsp;любом этапе.
+        </p>
+      </div>
+
+      {/* 303:66 — Rectangle 42 support banner */}
+      <div
+        className="absolute left-[20px] top-[15062px] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+        }}
+      />
+
+      <p className="absolute left-[35px] top-[15082px] z-[2] w-[290px] text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-light-gray">
+        Если&nbsp;у&nbsp;вас есть&nbsp;вопросы&nbsp;— напишите
+        в&nbsp;поддержку, и&nbsp;вам&nbsp;помогут
+      </p>
+
+      <a
+        href="#contacts"
+        className="btn-primary absolute left-[35px] top-[15200px] z-[2]"
+      >
+        Написать в поддержку
+      </a>
+
+      {/* Untitled-10 1 — 132,15267,209×146 */}
+      <div className="pointer-events-none absolute left-[132px] top-[15267px] z-[2] h-[146px] w-[209px] overflow-hidden">
+        <img
+          src={landingAssets.misc.mockupPayment}
+          alt=""
+          className="absolute left-0 top-[-6.97%] h-[125.15%] w-[129.87%] max-w-none"
+        />
+      </div>
+    </section>
+  );
+}
+
+function PaymentDesktop() {
   return (
     <section id="payment" className="absolute left-0 top-0 h-0 w-full">
       <h2 className="h-section absolute left-[241px] top-[11624px] w-[1400px]">
@@ -76,4 +186,9 @@ export function PaymentSection() {
       </div>
     </section>
   );
+}
+
+export function PaymentSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <PaymentMobile /> : <PaymentDesktop />;
 }

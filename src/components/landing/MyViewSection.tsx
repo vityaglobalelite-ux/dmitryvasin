@@ -1,8 +1,112 @@
+"use client";
+
 import { landingAssets } from "@/lib/landing-assets";
 import { marqueeQuestions } from "@/lib/landing-data";
+import { useIsMobile } from "@/lib/landing-mode";
+
+/* Figma Главная_360: Rect33 2905 + overload 3670 + marquee 3935 + gray 4059 */
+function MyViewMobile() {
+  return (
+    <>
+      {/* Rectangle 33 — 20,2905,320×705 */}
+      <div className="absolute left-[20px] top-[2905px] h-[705px] w-[320px] rounded-[10px] bg-[image:var(--brand-gradient)]" />
+
+      {/* 258:2532 title */}
+      <h2 className="h-section-mobile absolute left-[35px] top-[2937px] z-[2] w-[281px] !text-white">
+        Мой взгляд на обучение
+      </h2>
+      {/* 258:2534 body */}
+      <p className="absolute left-[35px] top-[2980px] z-[2] w-[290px] text-[16px] font-medium leading-[1.2] text-white">
+        Этот исследовательский метод появился благодаря тысячам часов,
+        проведённых в студиях, на уроках, репетициях, выступлениях и
+        соревнованиях.
+      </p>
+      {/* 258:2533 */}
+      <div className="absolute left-[35px] top-[3095px] z-[2] w-[278px] text-[13px] font-normal leading-[1.5] text-white">
+        <p>Но больше всего на него повлияли люди.</p>
+        <p>Их вопросы. Открытия. Трудности. Неожиданные инсайты.</p>
+      </div>
+
+      {/* Frame 2422 — 35,3175 (2937+238) */}
+      <div className="absolute left-[35px] top-[3175px] z-[3] flex h-[110px] w-[290px] items-center rounded-[10px] bg-white py-[15px] pl-[14px] pr-[15px] shadow-[0px_4px_21.5px_rgba(0,0,0,0.09)]">
+        <p className="w-[249px] text-[13px] font-normal leading-[1.5] text-text">
+          За 25+ лет моей практики многие из этих наблюдений постепенно
+          сложились в идеи, которыми мне захотелось поделиться.
+        </p>
+      </div>
+      {/* idea lightbulb — 35+235=270, 2937+258=3195 */}
+      <img
+        src={landingAssets.misc.lightbulb}
+        alt=""
+        className="pointer-events-none absolute left-[270px] top-[3195px] z-[4] h-[90px] w-[67px] object-contain"
+      />
+
+      {/* Dmitry 4 — 20,3302,311×308 */}
+      <img
+        src={landingAssets.photos.myView}
+        alt="Дмитрий Васин"
+        className="pointer-events-none absolute left-[20px] top-[3302px] z-[2] h-[308px] w-[311px] object-contain object-bottom"
+      />
+
+      {/* sticker Group 2324 — 20,3671 */}
+      <img
+        src={landingAssets.misc.stickerGroup}
+        alt=""
+        className="absolute left-[20px] top-[3671px] z-[2] h-[67px] w-[60px] object-contain"
+      />
+      {/* title+body — 20,3757 (3671+87) */}
+      <h2 className="h-section-mobile absolute left-[20px] top-[3758px] z-[2] w-[317px]">
+        Одна из таких вещей — перегрузка вниманием.
+      </h2>
+      <p className="absolute left-[20px] top-[3820px] z-[2] w-[317px] text-[16px] font-medium leading-[1.2] text-text">
+        Во время танца мы одновременно пытаемся следить за множеством вещей.
+        Внимание «распыляется» и важные детали ускользают.
+      </p>
+
+      {/* Frame 2423 marquee — 0,3935,h59 */}
+      <div className="absolute left-0 top-[3935px] z-[2] flex h-[59px] w-[360px] items-center overflow-hidden bg-accent-red">
+        <div className="marquee-track">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex shrink-0 items-center">
+              {marqueeQuestions.map((q) => (
+                <span
+                  key={`${copy}-${q}`}
+                  className="mr-[40px] whitespace-nowrap text-[16px] font-medium leading-[19px] text-white"
+                >
+                  {q}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Frame 2425 — 20,4059,320×351 */}
+      <div className="absolute left-[20px] top-[4059px] z-[2] h-[351px] w-[320px] rounded-[10px] bg-light-gray">
+        <p className="absolute left-[15px] top-[15px] w-[290px] text-[13px] font-normal leading-[1.5] text-text">
+          Поэтому со временем я всё чаще стал уходить от попыток улучшать всё
+          одновременно и начал исследовать отдельные аспекты танца. Этот подход
+          лёг в основу исследования, ведь большинство вопросов, с которыми
+          сталкиваются танцоры, снова и снова возвращаются к одним и тем же
+          темам.
+        </p>
+        <p className="absolute left-[15px] top-[223px] w-[287px] text-[16px] font-medium leading-[1.2] text-text-dark">
+          Давайте посмотрим на танец через 5 направлений исследования.
+        </p>
+        <img
+          src={landingAssets.icons.directionsRow}
+          alt=""
+          className="absolute left-[15px] top-[296px] h-[40px] w-[160px] object-contain object-left"
+          width={160}
+          height={40}
+        />
+      </div>
+    </>
+  );
+}
 
 /* Figma: y 2902..4345 — «Мой взгляд на обучение» */
-export function MyViewSection() {
+function MyViewDesktop() {
   return (
     <>
       {/* gradient card (242,2953,1440×553) — без overflow-hidden, чтобы голова выходила сверху */}
@@ -109,4 +213,9 @@ export function MyViewSection() {
       </div>
     </>
   );
+}
+
+export function MyViewSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MyViewMobile /> : <MyViewDesktop />;
 }

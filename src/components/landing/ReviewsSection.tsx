@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { reviews } from "@/lib/landing-data";
+import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: Rectangle 40 (0,12784,1920x1020) light-gray + collage + CTA */
 
@@ -88,7 +89,233 @@ const collage: CollageItem[] = [
 
 const cardX = [240, 726, 1214];
 
-export function ReviewsSection() {
+type MobileCollageTile = {
+  src: string;
+  w: number;
+  h: number;
+  imgClass?: string;
+};
+
+/** Mobile collage columns matching Figma image 37 + side stack at x=330 */
+const mobileCollageColumns: { tiles: MobileCollageTile[]; gap: number }[] = [
+  {
+    gap: 0,
+    tiles: [
+      {
+        src: a.collage[0],
+        w: 290,
+        h: 531,
+        imgClass:
+          "absolute left-[-0.02%] top-[-7.21%] h-[118.36%] w-[100.03%] max-w-none",
+      },
+    ],
+  },
+  {
+    gap: 10,
+    tiles: [
+      { src: a.collageExtra[0], w: 290, h: 61 },
+      { src: a.collageExtra[1], w: 290, h: 131 },
+      {
+        src: a.collage[2],
+        w: 290,
+        h: 151,
+        imgClass:
+          "absolute left-[-0.14%] top-[-1.7%] h-[100.62%] w-[101.01%] max-w-none",
+      },
+      {
+        src: a.collage[4],
+        w: 290,
+        h: 89,
+        imgClass:
+          "absolute left-[-0.23%] top-[-2.83%] h-[102.83%] w-[100.46%] max-w-none",
+      },
+    ],
+  },
+  {
+    gap: 10,
+    tiles: [
+      {
+        src: a.collage[1],
+        w: 290,
+        h: 265,
+        imgClass: "absolute left-[-0.15%] top-0 h-full w-[100.02%] max-w-none",
+      },
+      {
+        src: a.collage[6],
+        w: 290,
+        h: 98,
+        imgClass:
+          "absolute left-[-0.52%] top-[-1.02%] h-[102%] w-[101.05%] max-w-none",
+      },
+      {
+        src: a.collage[7],
+        w: 290,
+        h: 148,
+        imgClass:
+          "absolute left-[-0.43%] top-[-0.39%] h-[100.79%] w-[100.72%] max-w-none",
+      },
+    ],
+  },
+  {
+    gap: 10,
+    tiles: [
+      { src: a.collage[3], w: 290, h: 173 },
+      { src: a.collage[5], w: 290, h: 258 },
+      {
+        src: a.collage[8],
+        w: 290,
+        h: 80,
+        imgClass:
+          "absolute left-[-0.44%] top-[-0.41%] h-[100.82%] w-[100.58%] max-w-none",
+      },
+    ],
+  },
+];
+
+function SwipeHint({
+  text,
+  chipClass = "bg-light-gray",
+}: {
+  text: string;
+  chipClass?: string;
+}) {
+  return (
+    <div className="flex h-[40px] w-[298px] items-center gap-[10px]">
+      <div
+        className={`grid size-[34px] shrink-0 place-items-center rounded-[17px] ${chipClass}`}
+      >
+        <img
+          src={landingAssets.icons.fingerSwipe}
+          alt=""
+          className="size-[16px]"
+          width={16}
+          height={16}
+        />
+      </div>
+      <p className="w-[254px] text-[13px] font-normal leading-[1.5] text-[#1a1a1a]">
+        {text}
+      </p>
+    </div>
+  );
+}
+
+function ReviewsMobile() {
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+
+  return (
+    <>
+      {/* Rectangle 40 — 0,15473,360×817 */}
+      <div className="absolute left-0 top-[15473px] h-[817px] w-[360px] bg-light-gray" />
+
+      <h2 className="h-section-mobile absolute left-[20px] top-[15533px] z-[2] w-[221px]">
+        Отзывы участников
+      </h2>
+
+      {/* Frame 2359 — swipe hint collage (on light-gray bg → white chip) */}
+      <div className="absolute left-[20px] top-[15569px] z-[2]">
+        <SwipeHint
+          text="Листайте вправо-влево, чтобы посмотреть отзывы"
+          chipClass="bg-white"
+        />
+      </div>
+
+      {/* Collage horizontal scroll */}
+      <div className="absolute left-0 top-[15629px] z-[2] w-[360px] overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max snap-x snap-mandatory gap-[20px] px-[20px]">
+          {mobileCollageColumns.map((col, ci) => (
+            <div
+              key={ci}
+              className="flex h-[531px] w-[290px] shrink-0 snap-start flex-col"
+              style={{ gap: col.gap }}
+            >
+              {col.tiles.map((tile) => (
+                <div
+                  key={`${tile.src}-${tile.h}`}
+                  className="relative overflow-hidden rounded-[5px]"
+                  style={{ width: tile.w, height: tile.h }}
+                >
+                  <img
+                    src={tile.src}
+                    alt=""
+                    className={
+                      tile.imgClass ??
+                      "absolute inset-0 size-full max-w-none object-cover"
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA Frame 2386 — 51,16180,259×50 */}
+      <a
+        href="#tariffs"
+        className="btn-primary-mobile absolute left-[51px] top-[16180px] z-[2] !w-[259px]"
+      >
+        Присоединиться сейчас
+      </a>
+
+      {/* Frame 2131331417 — results + swipe */}
+      <div className="absolute left-[20px] top-[16350px] z-[2] flex w-[320px] flex-col gap-[20px]">
+        <p className="w-[320px] text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
+          А&nbsp;вот такие результаты получают ученики, работая со&nbsp;мной
+          в&nbsp;онлайн и&nbsp;оффлайн.
+        </p>
+        <SwipeHint text="Листайте вправо-влево, чтобы посмотреть отзывы" />
+      </div>
+
+      {/* Review cards horizontal scroll */}
+      <div className="absolute left-0 top-[16534px] z-[2] w-[360px] overflow-x-auto overflow-y-hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max snap-x snap-mandatory gap-[20px] px-[20px]">
+          {reviews.map((review, i) => {
+            const isExpanded = expanded[i];
+            const text = isExpanded ? review.fullQuote : review.quote;
+            return (
+              <article
+                key={review.name}
+                className="flex h-[488px] w-[290px] shrink-0 snap-start flex-col gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
+              >
+                <img
+                  src={review.photo}
+                  alt={review.name}
+                  className="size-[60px] shrink-0 rounded-full object-cover"
+                  width={60}
+                  height={60}
+                />
+                <div className="flex w-full flex-col gap-[10px] text-text">
+                  <h3 className="text-[16px] font-medium leading-[1.2]">
+                    {review.name}
+                  </h3>
+                  <p className="text-[13px] font-normal leading-[1.5] opacity-60">
+                    {review.role}
+                  </p>
+                </div>
+                <div className="flex w-full flex-col gap-[10px]">
+                  <blockquote className="text-[13px] font-normal leading-[1.5] text-text">
+                    „{text}
+                  </blockquote>
+                  <button
+                    type="button"
+                    className="h-[20px] self-start text-[13px] font-normal leading-[1.5] text-accent-orange"
+                    onClick={() =>
+                      setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
+                    }
+                  >
+                    {isExpanded ? "Свернуть" : "Читать далее"}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ReviewsDesktop() {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
 
   return (
@@ -205,4 +432,9 @@ export function ReviewsSection() {
       })}
     </>
   );
+}
+
+export function ReviewsSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <ReviewsMobile /> : <ReviewsDesktop />;
 }

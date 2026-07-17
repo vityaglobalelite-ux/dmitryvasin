@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { countdownTarget } from "@/lib/landing-data";
+import { useIsMobile } from "@/lib/landing-mode";
 
 function getTimeLeft(target: Date) {
   const diff = Math.max(0, target.getTime() - Date.now());
@@ -17,8 +18,7 @@ function getTimeLeft(target: Date) {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/* Figma: Rectangle 41 (242,11114,1440x330) + CTA 255:2456 + mockup 255:2451 */
-export function CountdownSection() {
+function useCountdownDisplay() {
   const [time, setTime] = useState<ReturnType<typeof getTimeLeft> | null>(null);
 
   useEffect(() => {
@@ -28,10 +28,49 @@ export function CountdownSection() {
     return () => clearInterval(id);
   }, []);
 
-  const display = time
+  return time
     ? `${pad(time.days)}:${pad(time.hours)}:${pad(time.minutes)}:${pad(time.seconds)}`
     : "00:00:00:00";
+}
 
+/* Figma Главная_360: Rect41 13949 + timer + CTA 14101 + mockup 14161 */
+function CountdownMobile({ display }: { display: string }) {
+  return (
+    <>
+      <div
+        className="absolute left-[20px] top-[13949px] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+        }}
+      />
+
+      <h2 className="absolute left-[35px] top-[13969px] z-[2] w-[333px] text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white">
+        Повышение цен через:
+      </h2>
+
+      <p className="absolute left-[35px] top-[14008px] z-[2] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
+        {display}
+      </p>
+
+      <a href="#tariffs" className="btn-primary absolute left-[35px] top-[14101px] z-[2]">
+        Выбрать тариф и оплатить
+      </a>
+
+      {/* 287:824 — 162,14161,178×139 */}
+      <div className="pointer-events-none absolute left-[162px] top-[14161px] z-[2] h-[139px] w-[178px] overflow-hidden">
+        <img
+          src={landingAssets.countdown.mockup}
+          alt=""
+          className="absolute left-[-9.65%] top-[-11.79%] h-[131.94%] w-[136.61%] max-w-none"
+        />
+      </div>
+    </>
+  );
+}
+
+/* Figma: Rectangle 41 (242,11114,1440x330) + CTA 255:2456 + mockup 255:2451 */
+function CountdownDesktop({ display }: { display: string }) {
   return (
     <>
       <div
@@ -77,5 +116,15 @@ export function CountdownSection() {
         Выбрать тариф и оплатить
       </a>
     </>
+  );
+}
+
+export function CountdownSection() {
+  const isMobile = useIsMobile();
+  const display = useCountdownDisplay();
+  return isMobile ? (
+    <CountdownMobile display={display} />
+  ) : (
+    <CountdownDesktop display={display} />
   );
 }

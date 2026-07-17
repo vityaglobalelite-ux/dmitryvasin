@@ -1,7 +1,68 @@
+"use client";
+
 import { landingAssets } from "@/lib/landing-assets";
+import { useIsMobile } from "@/lib/landing-mode";
+
+/* Figma Главная_360: Frame 2421 (20,2160,320×625) */
+function QuoteVideoMobile() {
+  return (
+    <section className="absolute left-[20px] top-[2160px] flex h-[625px] w-[320px] flex-col gap-[20px] rounded-[40px] bg-light-gray p-[15px]">
+      <div className="flex flex-col gap-[30px] rounded-[10px] bg-white p-[15px]">
+        <img
+          src={landingAssets.photos.quoteAvatar}
+          alt="Дмитрий Васин"
+          className="size-[60px] rounded-full object-cover"
+          width={60}
+          height={60}
+        />
+        <div className="flex w-full flex-col gap-[10px]">
+          <p className="text-[16px] font-medium leading-[1.2] text-text">
+            Иногда одно новое наблюдение меняет танец сильнее, чем десятки
+            новых движений.
+          </p>
+          <p className="text-[13px] font-normal leading-[1.5] text-text">
+            Потому что многие ответы появляются не тогда, когда мы узнаём
+            больше. А тогда, когда начинаем смотреть на танец внимательнее.
+          </p>
+        </div>
+        <img
+          src={landingAssets.quote.marks}
+          alt=""
+          className="size-[20px]"
+          width={20}
+          height={20}
+        />
+      </div>
+
+      <div className="flex w-full flex-col gap-[10px]">
+        <div className="relative h-[163px] w-full overflow-hidden rounded-[10px] bg-[#d9d9d9]">
+          <img
+            src={landingAssets.photos.videoPreview}
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+          />
+          <button
+            type="button"
+            aria-label="Смотреть видео"
+            className="absolute left-1/2 top-1/2 size-[50px] -translate-x-1/2 -translate-y-1/2 transition hover:brightness-110"
+          >
+            <img
+              src={landingAssets.video.playButton}
+              alt=""
+              className="size-full"
+            />
+          </button>
+        </div>
+        <p className="text-center text-[20px] font-medium leading-[1.1] tracking-[-0.6px] text-text">
+          В этом коротком видео рассказываю, как именно будем исследовать танго
+        </p>
+      </div>
+    </section>
+  );
+}
 
 /* Figma: Frame 2421 (240,2110,1442x663) */
-export function QuoteVideoSection() {
+function QuoteVideoDesktop() {
   return (
     <section className="absolute left-[240px] top-[2110px] flex h-[663px] w-[1442px] gap-[20px] rounded-[40px] bg-light-gray p-[60px]">
       {/* left quote card */}
@@ -54,4 +115,9 @@ export function QuoteVideoSection() {
       </div>
     </section>
   );
+}
+
+export function QuoteVideoSection() {
+  const isMobile = useIsMobile();
+  return isMobile ? <QuoteVideoMobile /> : <QuoteVideoDesktop />;
 }
