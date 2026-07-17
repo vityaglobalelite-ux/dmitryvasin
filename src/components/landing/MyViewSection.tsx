@@ -81,25 +81,27 @@ function MyViewMobile() {
         </div>
       </div>
 
-      {/* Frame 2425 — 20,4059,320×351 */}
-      <div className="absolute left-[20px] top-[4059px] z-[2] h-[351px] w-[320px] rounded-[10px] bg-light-gray">
-        <p className="absolute left-[15px] top-[15px] w-[290px] text-[13px] font-normal leading-[1.5] text-text">
+      {/* Frame 2425 — above Vector 512 (arrow goes under card bottom) */}
+      <div className="absolute left-[20px] top-[4059px] z-[3] flex h-[351px] w-[320px] flex-col gap-[28px] rounded-[30px] bg-light-gray p-[15px]">
+        <p className="w-[290px] text-[13px] font-normal leading-[1.5] text-text">
           Поэтому со временем я всё чаще стал уходить от попыток улучшать всё
           одновременно и начал исследовать отдельные аспекты танца. Этот подход
           лёг в основу исследования, ведь большинство вопросов, с которыми
           сталкиваются танцоры, снова и снова возвращаются к одним и тем же
           темам.
         </p>
-        <p className="absolute left-[15px] top-[223px] w-[287px] text-[16px] font-medium leading-[1.2] text-text-dark">
-          Давайте посмотрим на танец через 5 направлений исследования.
-        </p>
-        <img
-          src={landingAssets.icons.directionsRow}
-          alt=""
-          className="absolute left-[15px] top-[296px] h-[40px] w-[160px] object-contain object-left"
-          width={160}
-          height={40}
-        />
+        <div className="flex flex-col gap-[16px]">
+          <p className="w-[287px] text-[16px] font-medium leading-[1.2] text-text-dark">
+            Давайте посмотрим на танец через 5 направлений исследования.
+          </p>
+          <img
+            src={landingAssets.icons.directionsRow}
+            alt=""
+            className="h-[40px] w-[160px] object-contain object-left"
+            width={160}
+            height={40}
+          />
+        </div>
       </div>
     </>
   );

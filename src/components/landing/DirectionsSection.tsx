@@ -75,7 +75,7 @@ const illustrations = [
   { src: landingAssets.direction3d[4], x: 1548, y: 5096, w: 132, h: 195 },
 ];
 
-/** Figma Главная_360 — cards 284:4–284:16 + 3d at right */
+/** Figma Главная_360 — cards 284:4–284:16 */
 const mobileCards = [
   {
     title: "Осознавание",
@@ -83,9 +83,6 @@ const mobileCards = [
     h: 119,
     textW: 210,
     text: "Учимся замечать не\u00a0только результат, но\u00a0и\u00a0то, как\u00a0он\u00a0возникает.",
-    illo: landingAssets.direction3d[0],
-    illoW: 89,
-    illoH: 119,
   },
   {
     title: "Техника",
@@ -93,9 +90,6 @@ const mobileCards = [
     h: 119,
     textW: 234,
     text: "Разбираемся, почему одни движения получаются легко, а\u00a0другие требуют лишних усилий",
-    illo: landingAssets.direction3d[1],
-    illoW: 89,
-    illoH: 119,
   },
   {
     title: "Музыкальность",
@@ -103,9 +97,6 @@ const mobileCards = [
     h: 119,
     textW: 228,
     text: "Уходим от\u00a0привычных музыкальных решений и\u00a0ищем новые способы взаимодействия с\u00a0музыкой.",
-    illo: landingAssets.direction3d[2],
-    illoW: 93,
-    illoH: 119,
   },
   {
     title: "Взаимодействие",
@@ -113,9 +104,6 @@ const mobileCards = [
     h: 119,
     textW: 231,
     text: "Ищем более понятные, точные и\u00a0комфортные способы взаимодействия в\u00a0паре.",
-    illo: landingAssets.direction3d[3],
-    illoW: 93,
-    illoH: 119,
   },
   {
     title: "Вариативность",
@@ -123,10 +111,16 @@ const mobileCards = [
     h: 139,
     textW: 230,
     text: "Постепенно обнаруживаем, что\u00a0вариантов продолжения движения гораздо больше, чем\u00a0кажется на\u00a0первый взгляд.",
-    illo: landingAssets.direction3d[4],
-    illoW: 95,
-    illoH: 140,
   },
+];
+
+/** Figma 325:26–325:35 — 3d frames on the right of each card */
+const mobileIllustrations = [
+  { src: landingAssets.direction3d[0], x: 251, y: 4602, w: 89, h: 119 },
+  { src: landingAssets.direction3d[1], x: 251, y: 4731, w: 89, h: 119 },
+  { src: landingAssets.direction3d[2], x: 247, y: 4860, w: 93, h: 119 },
+  { src: landingAssets.direction3d[3], x: 247, y: 4989, w: 93, h: 119 },
+  { src: landingAssets.direction3d[4], x: 245, y: 5118, w: 95, h: 140 },
 ];
 
 function DirectionsMobile() {
@@ -142,35 +136,53 @@ function DirectionsMobile() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white from-0% to-transparent to-[12%]" />
       </div>
 
-      <h2 className="h-section-mobile absolute left-[20px] top-[4530px] z-[3] w-[217px]">
+      {/* Vector 512 — absoluteTransform from Figma (reflection + rot, origin top-left) */}
+      <img
+        src={landingAssets.misc.arrowScribbleMobile}
+        alt=""
+        className="pointer-events-none absolute z-[1] origin-top-left"
+        style={{
+          left: 293.71,
+          top: 4508.46,
+          width: 142.76,
+          height: 97.41,
+          transform: "matrix(-0.62485, -0.78075, -0.78075, 0.62485, 0, 0)",
+        }}
+      />
+
+      <h2 className="h-section-mobile absolute left-[20px] top-[4530px] z-[20] w-[217px]">
         5 направлений исследования
       </h2>
 
       {mobileCards.map((c) => (
         <div
           key={c.title}
-          className="absolute left-[20px] z-[3] w-[320px] overflow-hidden rounded-[10px] bg-light-gray p-[15px]"
+          className="absolute left-[20px] z-[3] flex w-[320px] flex-col gap-[10px] rounded-[10px] bg-light-gray p-[15px]"
           style={{ top: c.y, height: c.h }}
         >
-          <h3 className="pr-[90px] text-[16px] font-medium leading-[1.2] text-text">
+          <h3 className="text-[16px] font-medium leading-[1.2] text-text">
             {c.title}
           </h3>
           <p
-            className="mt-[10px] pr-[90px] text-[13px] font-normal leading-[1.5] text-text"
-            style={{ maxWidth: c.textW }}
+            className="text-[13px] font-normal leading-[1.5] text-text"
+            style={{ width: c.textW }}
           >
             {c.text}
           </p>
-          <img
-            src={c.illo}
-            alt=""
-            className="pointer-events-none absolute bottom-0 right-0 object-contain object-bottom"
-            style={{ width: c.illoW, height: c.illoH }}
-          />
         </div>
       ))}
 
-      {/* Group 2335 — 0,5271,360×436 */}
+      {mobileIllustrations.map((il) => (
+        <img
+          key={il.src}
+          src={il.src}
+          alt=""
+          className="pointer-events-none absolute z-[4] object-contain object-bottom"
+          style={{ left: il.x, top: il.y, width: il.w, height: il.h }}
+        />
+      ))}
+
+      {/* Group 2335 — 0,5271,360×436 — under the cards */}
       <div className="pointer-events-none absolute left-0 top-[5271px] z-[2] h-[436px] w-[360px] overflow-hidden">
         <img
           src={landingAssets.photos.dmitryDirectionsMobile}

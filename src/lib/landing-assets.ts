@@ -154,6 +154,7 @@ export const landingAssets = {
     stepNumberCircle: landingAsset("step-number-circle-bg.svg"),
     questionsSwirl: landingAsset("questions-swirl.svg"),
     arrowScribble: landingAsset("arrow-scribble.svg"),
+    arrowScribbleMobile: `${landingAsset("arrow-scribble-mobile.svg")}?v=12`,
     routeCurve: landingAsset("route-curve.svg"),
     routeCurveMobile: landingAsset("route-curve-mobile.svg"),
     cursorIcon: landingAsset("cursor-icon.png"),
