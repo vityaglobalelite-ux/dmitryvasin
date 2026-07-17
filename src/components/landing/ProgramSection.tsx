@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
-import { programMonths, skills } from "@/lib/landing-data";
+import {
+  programMonths,
+  skills,
+  type LessonNode,
+} from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 5613..7649 — «Ваш маршрут на 90 дней» */
@@ -10,17 +14,77 @@ import { useIsMobile } from "@/lib/landing-mode";
 const TOP = 5613;
 const y = (abs: number) => abs - TOP;
 
-/* Figma 333:410–458 (frame y offset → page 5613) */
-const nodePositions = [
-  { x: 270, y: 6124, w: 118 },
-  { x: 394, y: 6012, w: 121 },
-  { x: 528, y: 6074, w: 112 },
-  { x: 647.5, y: 5958, w: 130 },
-  { x: 776, y: 6032, w: 130 },
-  { x: 899.5, y: 5928, w: 145 },
-  { x: 1033.5, y: 6031, w: 130 },
-  { x: 1154, y: 5907, w: 127 },
-];
+/**
+ * Figma Vector 498 — path vertices (viewBox 910×216).
+ * Curve on board: left 82, top 120, size 908×214.
+ * Icons are centered on vertices so labels sit in zigzag pockets.
+ */
+const ROUTE = {
+  left: 82,
+  top: 120,
+  w: 908,
+  h: 214,
+  viewW: 910,
+  viewH: 216,
+  icon: 60,
+  /** Extra clearance below icon so copy never touches the stroke (scales with canvas zoom). */
+  labelOffset: 16,
+} as const;
+
+const ROUTE_VERTICES = [
+  [0.631, 214.721],
+  [134.631, 105.721],
+  [262.631, 169.721],
+  [390.631, 47.721],
+  [518.631, 126.721],
+  [651.631, 19.721],
+  [777.631, 126.721],
+  [908.631, 0.721],
+] as const;
+
+/** Column widths from Figma frames 249:1588–1636 */
+const NODE_COL_W = [116, 121, 112, 130, 130, 145, 130, 127] as const;
+
+const desktopNodes = ROUTE_VERTICES.map(([vx, vy], i) => {
+  const cx = ROUTE.left + (vx / ROUTE.viewW) * ROUTE.w;
+  const cy = ROUTE.top + (vy / ROUTE.viewH) * ROUTE.h;
+  const w = NODE_COL_W[i];
+  return {
+    left: cx - w / 2,
+    top: cy - ROUTE.icon / 2,
+    w,
+  };
+});
+
+const BOARD_TOP = 5817;
+const BOARD_H_MIN = 466;
+const BOARD_PAD = 28;
+const PILL_H = 23;
+const STACK_GAP = 10;
+
+/** Height of route board from node content — result card uses the same value */
+function boardHeightFor(nodes: readonly LessonNode[]) {
+  let maxBottom = 0;
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const pos = desktopNodes[i];
+    if (!node || !pos) continue;
+    const label = node.routeTitle ?? node.title;
+    const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 10);
+    const wrapLines = label.split("\n").reduce((acc, line) => {
+      const chars = line.replace(/\u00a0/g, " ").length;
+      const perLine = Math.max(8, Math.floor(titleW / 7));
+      return acc + Math.max(1, Math.ceil(chars / perLine));
+    }, 0);
+    const titleH = wrapLines * 16;
+    const labelBlock =
+      titleH + node.skills.length * (PILL_H + STACK_GAP);
+    const bottom =
+      pos.top + ROUTE.icon + ROUTE.labelOffset + labelBlock;
+    maxBottom = Math.max(maxBottom, bottom);
+  }
+  return Math.max(BOARD_H_MIN, Math.ceil(maxBottom + BOARD_PAD));
+}
 
 const tabX = [240, 726, 1212];
 
@@ -166,12 +230,14 @@ function ProgramMobile() {
           const icon =
             ("icon" in node && node.icon) ||
             nodeIcons[i % nodeIcons.length];
+          const label = node.routeTitle ?? node.title;
+          const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 8);
           return (
             <button
               key={node.id}
               type="button"
               onClick={() => setOpenLesson(i)}
-              className="absolute z-[1] flex flex-col items-center gap-[10px] text-center"
+              className="absolute z-[1] flex flex-col items-center text-center"
               style={{ left: pos.left, top: pos.top, width: pos.w }}
             >
               <img
@@ -179,10 +245,13 @@ function ProgramMobile() {
                 alt=""
                 className="size-[45px] shrink-0 object-contain"
               />
-              <span className="text-[12px] font-semibold leading-[1.3] text-text">
-                {node.title}
-              </span>
-              <span className="flex w-full flex-col items-center gap-[4px]">
+              <span className="mt-[12px] flex flex-col items-center gap-[8px]">
+                <span
+                  className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
+                  style={{ width: titleW }}
+                >
+                  {label}
+                </span>
                 {node.skills.map((s) => (
                   <span
                     key={s.label}
@@ -199,7 +268,7 @@ function ProgramMobile() {
         <img
           src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute bottom-[24px] left-[209px] z-0 h-[46px] w-[47px] object-contain"
+          className="pointer-events-none absolute bottom-[24px] left-[205px] z-0 h-[46px] w-[52px] object-contain"
         />
       </div>
 
@@ -334,12 +403,15 @@ function ProgramDesktop() {
   const [monthIdx, setMonthIdx] = useState(0);
   const [openLesson, setOpenLesson] = useState<number | null>(0);
   const month = programMonths[monthIdx];
+  const boardH = boardHeightFor(month.nodes);
+  const accordionTop = BOARD_TOP + boardH + 20;
+  const sectionBottom = 7649 + Math.max(0, boardH - BOARD_H_MIN);
 
   return (
     <section
       id="program"
       className="absolute left-0 w-[1920px]"
-      style={{ top: TOP, height: 7649 - TOP }}
+      style={{ top: TOP, height: sectionBottom - TOP }}
     >
       <h2 className="h-section absolute left-[660px] top-0 w-[601px] text-center">
         Ваш маршрут на 90 дней
@@ -367,10 +439,10 @@ function ProgramDesktop() {
         );
       })}
 
-      {/* route board — Figma 333:401 */}
+      {/* route board — height follows node stack; result card matches */}
       <div
         className="absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
-        style={{ left: 240, top: y(5817), width: 1075, height: 466 }}
+        style={{ left: 240, top: y(BOARD_TOP), width: 1075, height: boardH }}
       >
         {/* Figma 333:403 — Bold 30 / #1a1a1a */}
         <h3 className="absolute left-[30px] top-[30px] text-[30px] font-bold leading-normal text-[#1a1a1a]">
@@ -389,11 +461,27 @@ function ProgramDesktop() {
           </p>
         </div>
 
-        <img
-          src={landingAssets.misc.routeCurve}
-          alt=""
-          className="pointer-events-none absolute left-[82px] top-[120px] h-[214px] w-[908px]"
-        />
+        <svg
+          className="pointer-events-none absolute"
+          style={{
+            left: ROUTE.left,
+            top: ROUTE.top,
+            width: ROUTE.w,
+            height: ROUTE.h,
+          }}
+          viewBox={`0 0 ${ROUTE.viewW} ${ROUTE.viewH}`}
+          preserveAspectRatio="none"
+          fill="none"
+          aria-hidden
+        >
+          <path
+            d="M0.630981 214.721L134.631 105.721L262.631 169.721L390.631 47.7207L518.631 126.721L651.631 19.7207L777.631 126.721L908.631 0.720703"
+            stroke="#EFB991"
+            strokeWidth="2"
+            strokeDasharray="4 4"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
 
         <img
           src={routeSticker(monthIdx, "start")}
@@ -403,37 +491,44 @@ function ProgramDesktop() {
         <img
           src={routeSticker(monthIdx, "end")}
           alt=""
-          className="pointer-events-none absolute left-[932px] top-[7px] h-[81px] w-[83px] object-contain"
+          className="pointer-events-none absolute left-[926px] top-[7px] h-[81px] w-[91px] object-contain"
         />
 
         {month.nodes.map((node, i) => {
-          const pos = nodePositions[i];
+          const pos = desktopNodes[i];
           if (!pos) return null;
           const customIcon = "icon" in node ? node.icon : undefined;
           const icon =
             customIcon ||
-            landingAssets.lessonThumbs[i % landingAssets.lessonThumbs.length];
+            landingAssets.programNodesMobile[
+              i % landingAssets.programNodesMobile.length
+            ];
+          const label = node.routeTitle ?? node.title;
+          /* Slightly tighter than Figma box — Involve metrics + zoom stay clear of stroke */
+          const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 10);
           return (
             <button
               key={node.id}
               type="button"
               onClick={() => setOpenLesson(i)}
-              className="group absolute flex flex-col items-center gap-[10px] text-center"
-              style={{ left: pos.x - 240, top: pos.y - 5817, width: pos.w }}
+              className="group absolute z-[1] flex flex-col items-center text-center"
+              style={{ left: pos.left, top: pos.top, width: pos.w }}
             >
               <img
                 src={icon}
                 alt=""
-                className={
-                  customIcon
-                    ? "size-[60px] shrink-0 object-contain transition group-hover:scale-105"
-                    : "size-[60px] shrink-0 rounded-full object-cover shadow-md transition group-hover:scale-105"
-                }
+                className="size-[60px] shrink-0 object-contain transition group-hover:scale-105"
               />
-              <span className="text-[12px] font-semibold leading-[1.3] text-text">
-                {node.title}
-              </span>
-              <span className="flex flex-col items-center gap-[4px]">
+              <span
+                className="flex flex-col items-center gap-[10px]"
+                style={{ marginTop: ROUTE.labelOffset }}
+              >
+                <span
+                  className="whitespace-pre-line text-[12px] font-semibold leading-[16px] text-text"
+                  style={{ width: titleW }}
+                >
+                  {label}
+                </span>
                 {node.skills.map((s) => (
                   <span
                     key={s.label}
@@ -448,10 +543,15 @@ function ProgramDesktop() {
         })}
       </div>
 
-      {/* result card */}
+      {/* result card — same height as route board */}
       <div
         className="absolute rounded-[20px] bg-white shadow-[0px_4px_12px_0px_rgba(0,0,0,0.08)]"
-        style={{ left: 1334, top: y(5817), width: 345, height: 466 }}
+        style={{
+          left: 1334,
+          top: y(BOARD_TOP),
+          width: 345,
+          height: boardH,
+        }}
       >
         <p className="absolute left-[22px] top-[24px] text-[24px] font-medium leading-[29px] text-text-dark">
           Результат программы
@@ -488,10 +588,14 @@ function ProgramDesktop() {
         </div>
       </div>
 
-      {/* Figma 249:1786 — accordion band 6303..7649; start under board, spare space below */}
+      {/* Accordion under route board */}
       <div
         className="absolute flex w-[1440px] flex-col gap-[10px]"
-        style={{ left: 240, top: y(6303), minHeight: 7649 - 6303 }}
+        style={{
+          left: 240,
+          top: y(accordionTop),
+          minHeight: sectionBottom - accordionTop,
+        }}
       >
         {month.lessons.map((lesson, i) => {
           const isOpen = openLesson === i;

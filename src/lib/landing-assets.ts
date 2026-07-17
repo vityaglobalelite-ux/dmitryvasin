@@ -157,7 +157,7 @@ export const landingAssets = {
     questionsSwirl: landingAsset("questions-swirl.svg"),
     arrowScribble: landingAsset("arrow-scribble.svg"),
     arrowScribbleMobile: `${landingAsset("arrow-scribble-mobile.svg")}?v=12`,
-    routeCurve: landingAsset("route-curve.svg"),
+    routeCurve: `${landingAsset("route-curve.svg")}?v=2`,
     routeCurveMobile: `${landingAsset("route-curve-mobile.svg")}?v=2`,
     cursorIcon: landingAsset("cursor-icon.png"),
     programStartCouple: `${landingAsset("program-start-couple.png")}?v=1`,
@@ -211,7 +211,7 @@ export const landingAssets = {
     end: `${landingAsset("program-m2-sticker-end.png")}?v=1`,
   },
   /** Couple + 3 filled bars (month 3) */
-  programStickerMonth3: `${landingAsset("program-m3-sticker.png")}?v=8`,
+  programStickerMonth3: `${landingAsset("program-m3-sticker.png")}?v=9`,
   direction3d: [
     `${landingAsset("direction-3d-01.png")}?v=3`,
     `${landingAsset("direction-3d-02.png")}?v=3`,
