@@ -125,26 +125,29 @@ export function ReviewsSection() {
         Присоединиться сейчас
       </a>
 
-      <div className="absolute left-[240px] top-[13914px] w-[1057px]">
-        <p className="h-section">
+      {/* Figma 249:1439 */}
+      <div className="absolute left-[240px] top-[13914px] flex w-[1057px] flex-col gap-[20px] text-text">
+        <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px]">
           А вот такие результаты получают ученики, работая со мной в онлайн и
           оффлайн.
         </p>
-        <p className="mt-[20px] text-[20px] leading-[29px] text-text">
+        <p className="text-[24px] font-medium leading-[1.2]">
           Листайте и читайте →
         </p>
       </div>
 
-      {/* Figma Group 2334 (prev, mirrored) / 2333 (next) */}
+      {/* Figma 249:2041 / 249:2038 — градиентные стрелки */}
       <button
         type="button"
         aria-label="Предыдущий отзыв"
         className="absolute left-[1620px] top-[14023px] size-[50px]"
       >
         <img
-          src={landingAssets.reviews.arrowNext}
+          src={landingAssets.reviews.arrowPrev}
           alt=""
           className="size-full -scale-x-100"
+          width={50}
+          height={50}
         />
       </button>
       <button
@@ -156,6 +159,8 @@ export function ReviewsSection() {
           src={landingAssets.reviews.arrowNext}
           alt=""
           className="size-full"
+          width={50}
+          height={50}
         />
       </button>
 
@@ -165,32 +170,29 @@ export function ReviewsSection() {
         return (
           <article
             key={review.name}
-            className="absolute h-[614px] w-[467px] rounded-[30px] bg-light-gray"
+            className="absolute flex h-[614px] w-[467px] flex-col gap-[30px] rounded-[30px] bg-light-gray px-[30px] pt-[30px]"
             style={{ left: cardX[i], top: 14113 }}
           >
             <img
               src={review.photo}
               alt={review.name}
-              className="absolute left-[30px] top-[30px] size-[206px] rounded-full object-cover"
+              className="size-[206px] shrink-0 rounded-full object-cover"
+              width={206}
+              height={206}
             />
-            <div className="absolute left-[30px] top-[266px] w-[407px]">
-              <h3 className="text-[24px] font-medium leading-[29px] text-text-dark">
+            <div className="flex w-full flex-col gap-[10px] text-text">
+              <h3 className="text-[24px] font-medium leading-[1.2]">
                 {review.name}
               </h3>
-              <p className="mt-[10px] text-[14px] leading-[21px] text-text opacity-60">
-                {review.role}
-              </p>
+              <p className="text-[14px] leading-[1.5] opacity-60">{review.role}</p>
             </div>
-            <div
-              className="absolute left-[30px] w-[407px]"
-              style={{ top: i === 0 ? 398 : 356 }}
-            >
-              <blockquote className="text-[16px] leading-[24px] text-text">
+            <div className="flex w-full flex-col gap-[10px]">
+              <blockquote className="text-[16px] leading-[1.5] text-text">
                 “{text}
               </blockquote>
               <button
                 type="button"
-                className="mt-[10px] text-[16px] font-medium text-accent-orange underline"
+                className="h-[24px] self-start text-[16px] font-medium leading-[1.5] text-accent-orange underline"
                 onClick={() =>
                   setExpanded((prev) => ({ ...prev, [i]: !prev[i] }))
                 }

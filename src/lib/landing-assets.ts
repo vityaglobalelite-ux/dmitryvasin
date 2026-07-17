@@ -123,11 +123,11 @@ export const landingAssets = {
     `${landingAsset("collage-09.png")}?v=3`,
   ],
   reviews: {
-    kirillAnna: landingAsset("review-kirill-anna.png"),
-    yulia: landingAsset("review-yulia.png"),
-    ekaterina: landingAsset("review-ekaterina.png"),
-    arrowPrev: landingAsset("review-arrow-prev.svg"),
-    arrowNext: landingAsset("review-arrow-next.svg"),
+    kirillAnna: `${landingAsset("review-kirill-anna.png")}?v=2`,
+    yulia: `${landingAsset("review-yulia.png")}?v=2`,
+    ekaterina: `${landingAsset("review-ekaterina.png")}?v=2`,
+    arrowPrev: `${landingAsset("review-arrow-prev.svg")}?v=2`,
+    arrowNext: `${landingAsset("review-arrow-next.svg")}?v=2`,
   },
   social: {
     instagram: landingAsset("social-instagram.svg"),
