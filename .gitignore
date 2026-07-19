@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# Original pre-WebP landing rasters (local backup only)
+/assets-originals/
+
 # debug
 npm-debug.log*
 yarn-debug.log*

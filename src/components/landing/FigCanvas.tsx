@@ -7,6 +7,7 @@ import {
   MOBILE_CANVAS,
   useLandingMode,
 } from "@/lib/landing-mode";
+import { ProgramTailProvider, useProgramTail } from "@/lib/program-tail";
 import { bindSectionScroll } from "@/lib/smooth-scroll";
 
 /**
@@ -16,7 +17,9 @@ import { bindSectionScroll } from "@/lib/smooth-scroll";
 function FigCanvasInner({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const mode = useLandingMode();
+  const { shift } = useProgramTail();
   const canvas = mode === "mobile" ? MOBILE_CANVAS : DESKTOP_CANVAS;
+  const height = canvas.h + Math.max(0, shift);
 
   useEffect(() => {
     const el = ref.current;
@@ -31,11 +34,31 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
 
   useEffect(() => bindSectionScroll(document), []);
 
+  /* Lazy-load below-fold images; hero marks data-eager-images */
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    root.querySelectorAll("img").forEach((img) => {
+      if (img.closest("[data-eager-images]")) {
+        if (!img.hasAttribute("decoding")) {
+          img.setAttribute("decoding", "async");
+        }
+        return;
+      }
+      if (!img.hasAttribute("loading")) {
+        img.setAttribute("loading", "lazy");
+      }
+      if (!img.hasAttribute("decoding")) {
+        img.setAttribute("decoding", "async");
+      }
+    });
+  }, [mode]);
+
   return (
     <div
       ref={ref}
       className="relative mx-auto overflow-hidden bg-white"
-      style={{ width: canvas.w, height: canvas.h }}
+      style={{ width: canvas.w, height }}
       data-landing-mode={mode}
     >
       {children}
@@ -46,7 +69,9 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
 export function FigCanvas({ children }: { children: React.ReactNode }) {
   return (
     <LandingModeProvider>
-      <FigCanvasInner>{children}</FigCanvasInner>
+      <ProgramTailProvider>
+        <FigCanvasInner>{children}</FigCanvasInner>
+      </ProgramTailProvider>
     </LandingModeProvider>
   );
 }

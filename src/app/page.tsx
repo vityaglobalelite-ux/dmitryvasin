@@ -12,6 +12,7 @@ import { QuoteVideoSection } from "@/components/landing/QuoteVideoSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
 import { TariffsSection } from "@/components/landing/TariffsSection";
 import { TelegramSection } from "@/components/landing/TelegramSection";
+import { ProgramTail } from "@/lib/program-tail";
 
 export default function Home() {
   return (
@@ -22,13 +23,15 @@ export default function Home() {
       <MyViewSection />
       <DirectionsSection />
       <ProgramSection />
-      <LessonsSection />
-      <TelegramSection />
-      <TariffsSection />
-      <CountdownSection />
-      <PaymentSection />
-      <ReviewsSection />
-      <Footer />
+      <ProgramTail>
+        <LessonsSection />
+        <TelegramSection />
+        <TariffsSection />
+        <CountdownSection />
+        <PaymentSection />
+        <ReviewsSection />
+        <Footer />
+      </ProgramTail>
     </FigCanvas>
   );
 }

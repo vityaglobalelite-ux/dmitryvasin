@@ -238,7 +238,10 @@ function HeroMobile() {
     );
 
   return (
-    <section className="absolute left-0 top-0 h-[980px] w-[360px]">
+    <section
+      className="absolute left-0 top-0 h-[980px] w-[360px]"
+      data-eager-images
+    >
       {stickyNav}
 
       {/*
@@ -331,7 +334,10 @@ function HeroMobile() {
 
 function HeroDesktop() {
   return (
-    <section className="absolute left-0 top-0 h-[900px] w-[1920px]">
+    <section
+      className="absolute left-0 top-0 h-[900px] w-[1920px]"
+      data-eager-images
+    >
       <div className="absolute left-[242px] top-[113px] z-0 h-[684px] w-[1440px] overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]">
         <img
           src={landingAssets.hero.swirl}

@@ -3,6 +3,7 @@
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -14,6 +15,17 @@ import {
   type LessonNode,
 } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+import { useProgramTail } from "@/lib/program-tail";
+import {
+  cancelSmoothScroll,
+  getSectionScrollTop,
+  smoothScrollToId,
+  smoothScrollToY,
+} from "@/lib/smooth-scroll";
+
+/** Figma top of next band after program accordion */
+const NEXT_BAND_TOP = { mobile: 8652, desktop: 7750 } as const;
+const NEXT_BAND_GAP = 40;
 
 /* Figma: y 5613..7649 — «Ваш маршрут на 90 дней» */
 
@@ -33,8 +45,12 @@ function useProgramMonth() {
   const [tabIdx, setTabIdx] = useState(0);
   const [viewIdx, setViewIdx] = useState(0);
   const [openLesson, setOpenLesson] = useState<number | null>(0);
+  const [flashLesson, setFlashLesson] = useState<number | null>(null);
   const [panelShown, setPanelShown] = useState(true);
   const timers = useRef<number[]>([]);
+  const lessonEls = useRef(new Map<number, HTMLElement>());
+  const boardEl = useRef<HTMLElement | null>(null);
+  const scrollToken = useRef(0);
 
   const clearTimers = useCallback(() => {
     for (const id of timers.current) window.clearTimeout(id);
@@ -43,12 +59,67 @@ function useProgramMonth() {
 
   useEffect(() => clearTimers, [clearTimers]);
 
+  const setLessonEl = useCallback((i: number, el: HTMLElement | null) => {
+    if (el) lessonEls.current.set(i, el);
+    else lessonEls.current.delete(i);
+  }, []);
+
+  const scrollToLesson = useCallback((i: number) => {
+    const token = ++scrollToken.current;
+    const run = () => {
+      if (token !== scrollToken.current) return;
+      const el =
+        lessonEls.current.get(i) ??
+        document.querySelector<HTMLElement>(`[data-program-lesson="${i}"]`);
+      if (!el) return;
+      void smoothScrollToY(getSectionScrollTop(el));
+    };
+    // Wait for accordion open + layout paint under CSS zoom
+    window.requestAnimationFrame(() => {
+      window.setTimeout(run, 120);
+    });
+  }, []);
+
+  const selectLessonFromMap = useCallback(
+    (i: number) => {
+      setOpenLesson(i);
+      setFlashLesson(i);
+      scrollToLesson(i);
+      const clearId = window.setTimeout(() => {
+        setFlashLesson((cur) => (cur === i ? null : cur));
+      }, 1200);
+      timers.current.push(clearId);
+    },
+    [scrollToLesson],
+  );
+
+  /** Close lesson + scroll back to the route map */
+  const returnToProgram = useCallback(() => {
+    scrollToken.current += 1;
+    cancelSmoothScroll();
+    setOpenLesson(null);
+
+    window.requestAnimationFrame(() => {
+      window.setTimeout(() => {
+        const board =
+          boardEl.current ??
+          document.querySelector<HTMLElement>("[data-program-board]");
+        if (board) {
+          void smoothScrollToY(getSectionScrollTop(board));
+          return;
+        }
+        void smoothScrollToId("program", { updateHash: false });
+      }, 100);
+    });
+  }, []);
+
   const selectMonth = useCallback(
     (i: number) => {
       if (i === tabIdx) return;
       clearTimers();
       setTabIdx(i);
       setPanelShown(false);
+      setFlashLesson(null);
 
       const swapId = window.setTimeout(() => {
         setViewIdx(i);
@@ -77,8 +148,14 @@ function useProgramMonth() {
     viewIdx,
     openLesson,
     setOpenLesson,
+    flashLesson,
+    selectLessonFromMap,
+    returnToProgram,
+    setLessonEl,
+    boardEl,
     selectMonth,
     panelStyle,
+    panelShown,
   };
 }
 
@@ -205,9 +282,18 @@ function ProgramMobile() {
     viewIdx,
     openLesson,
     setOpenLesson,
+    flashLesson,
+    selectLessonFromMap,
+    returnToProgram,
+    setLessonEl,
+    boardEl,
     selectMonth,
     panelStyle,
+    panelShown,
   } = useProgramMonth();
+  const { setShift } = useProgramTail();
+  const accordionRef = useRef<HTMLDivElement>(null);
+  const [accordionH, setAccordionH] = useState(0);
   const month = programMonths[viewIdx];
   const progressMonth = programMonths[tabIdx];
   const nodeIcons =
@@ -224,13 +310,35 @@ function ProgramMobile() {
   const boardAbsBottom = 5888 + boardH;
   const resultAbsTop = boardAbsBottom + 20;
   const accordionAbsTop = resultAbsTop + 425 + 20;
-  const sectionAbsBottom = 8592 + (boardH - 984);
+
+  useLayoutEffect(() => {
+    const el = accordionRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.offsetHeight;
+      setAccordionH(h);
+      const contentBottom = accordionAbsTop + h;
+      setShift(contentBottom + NEXT_BAND_GAP - NEXT_BAND_TOP.mobile);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      setShift(0);
+    };
+  }, [accordionAbsTop, openLesson, viewIdx, panelShown, setShift]);
+
+  const sectionH = Math.max(
+    my(accordionAbsTop) + Math.max(accordionH, 1) + 24,
+    my(accordionAbsTop) + 100,
+  );
 
   return (
     <section
       id="program"
       className="program-layout-ease absolute left-0 w-[360px]"
-      style={{ top: MOBILE_TOP, height: sectionAbsBottom - MOBILE_TOP }}
+      style={{ top: MOBILE_TOP, height: sectionH }}
     >
       {/* Gray only behind title → result card; not under empty accordion space */}
       <div
@@ -268,6 +376,10 @@ function ProgramMobile() {
 
       {/* Group 2338 — 20,5888 */}
       <div
+        ref={(el) => {
+          boardEl.current = el;
+        }}
+        data-program-board
         className="program-layout-ease absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ top: my(5888), width: 320, height: boardH }}
       >
@@ -308,18 +420,21 @@ function ProgramMobile() {
               nodeIcons[i % nodeIcons.length];
             const label = node.routeTitle ?? node.title;
             const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 8);
+            const isActive = openLesson === i;
             return (
               <button
                 key={node.id}
                 type="button"
-                onClick={() => setOpenLesson(i)}
-                className="absolute z-[1] flex flex-col items-center text-center"
+                onClick={() => selectLessonFromMap(i)}
+                className={`absolute z-[1] flex flex-col items-center text-center transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                  isActive ? "program-node-active" : ""
+                }`}
                 style={{ left: pos.left, top: pos.top, width: pos.w }}
               >
                 <img
                   src={icon}
                   alt=""
-                  className="size-[45px] shrink-0 object-contain"
+                  className="size-[45px] shrink-0 object-contain transition duration-300"
                 />
                 <span className="mt-[12px] flex flex-col items-center gap-[8px]">
                   <span
@@ -394,14 +509,14 @@ function ProgramMobile() {
         </div>
       </div>
 
-      {/* 286:525 — accordion starts under result card; reserve band height below */}
+      {/* 286:525 — accordion under result card (height follows open lesson) */}
       <div
+        ref={accordionRef}
         className="absolute left-[20px] z-[1] flex w-[320px] flex-col gap-[10px]"
         style={{
           ...panelStyle,
           top: my(accordionAbsTop),
-          minHeight: sectionAbsBottom - accordionAbsTop,
-          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}, min-height 0.5s ${MONTH_EASE_IN}`,
+          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}`,
         }}
       >
         {month.lessons.map((lesson, i) => {
@@ -409,12 +524,17 @@ function ProgramMobile() {
           return (
             <article
               key={lesson.id}
-              className="w-full overflow-hidden rounded-[10px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+              ref={(el) => setLessonEl(i, el)}
+              data-program-lesson={i}
+              className={`w-full rounded-[10px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] ${
+                flashLesson === i ? "program-lesson-flash" : ""
+              }`}
             >
               <button
                 type="button"
                 onClick={() => setOpenLesson(isOpen ? null : i)}
                 className="flex w-full items-center justify-between gap-[16px] p-[15px] text-left"
+                aria-expanded={isOpen}
               >
                 <span className="min-w-0 flex-1">
                   <span className="block text-[12px] font-semibold uppercase leading-[1.1] text-accent-red">
@@ -434,7 +554,7 @@ function ProgramMobile() {
               </button>
 
               {isOpen && lesson.body && (
-                <div className="px-[15px] pb-[15px]">
+                <div className="program-lesson-enter px-[15px] pb-[15px]">
                   <div className="h-px w-full bg-[#ececef]" />
                   <div className="mt-[10px] inline-flex h-[40px] items-center gap-[10px] rounded-[10px] bg-light-gray p-[10px]">
                     <img
@@ -463,7 +583,7 @@ function ProgramMobile() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOpenLesson(null)}
+                    onClick={returnToProgram}
                     className="mt-[10px] flex items-center gap-[10px] text-[13px] font-normal text-accent-orange"
                   >
                     Вернуться к программе
@@ -489,20 +609,48 @@ function ProgramDesktop() {
     viewIdx,
     openLesson,
     setOpenLesson,
+    flashLesson,
+    selectLessonFromMap,
+    returnToProgram,
+    setLessonEl,
+    boardEl,
     selectMonth,
     panelStyle,
+    panelShown,
   } = useProgramMonth();
+  const { setShift } = useProgramTail();
+  const accordionRef = useRef<HTMLDivElement>(null);
+  const [accordionH, setAccordionH] = useState(0);
   const month = programMonths[viewIdx];
   const progressMonth = programMonths[tabIdx];
   const boardH = boardHeightFor(month.nodes);
   const accordionTop = BOARD_TOP + boardH + 20;
-  const sectionBottom = 7649 + Math.max(0, boardH - BOARD_H_MIN);
+
+  useLayoutEffect(() => {
+    const el = accordionRef.current;
+    if (!el) return;
+    const update = () => {
+      const h = el.offsetHeight;
+      setAccordionH(h);
+      const contentBottom = accordionTop + h;
+      setShift(contentBottom + NEXT_BAND_GAP - NEXT_BAND_TOP.desktop);
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      setShift(0);
+    };
+  }, [accordionTop, openLesson, viewIdx, panelShown, setShift]);
+
+  const sectionH = y(accordionTop) + Math.max(accordionH, 1) + 40;
 
   return (
     <section
       id="program"
       className="program-layout-ease absolute left-0 w-[1920px]"
-      style={{ top: TOP, height: sectionBottom - TOP }}
+      style={{ top: TOP, height: sectionH }}
     >
       <h2 className="h-section absolute left-[660px] top-0 w-[601px] text-center">
         Ваш маршрут на 90 дней
@@ -529,6 +677,10 @@ function ProgramDesktop() {
 
       {/* route board — height follows node stack; result card matches */}
       <div
+        ref={(el) => {
+          boardEl.current = el;
+        }}
+        data-program-board
         className="program-layout-ease absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ left: 240, top: y(BOARD_TOP), width: 1075, height: boardH }}
       >
@@ -595,18 +747,21 @@ function ProgramDesktop() {
             const label = node.routeTitle ?? node.title;
             /* Slightly tighter than Figma box — Involve metrics + zoom stay clear of stroke */
             const titleW = Math.max(72, (node.titleWidth ?? pos.w) - 10);
+            const isActive = openLesson === i;
             return (
               <button
                 key={node.id}
                 type="button"
-                onClick={() => setOpenLesson(i)}
-                className="group absolute z-[1] flex flex-col items-center text-center"
+                onClick={() => selectLessonFromMap(i)}
+                className={`group absolute z-[1] flex flex-col items-center text-center ${
+                  isActive ? "program-node-active" : ""
+                }`}
                 style={{ left: pos.left, top: pos.top, width: pos.w }}
               >
                 <img
                   src={icon}
                   alt=""
-                  className="size-[60px] shrink-0 object-contain transition group-hover:scale-105"
+                  className="size-[60px] shrink-0 object-contain transition duration-300 group-hover:scale-105"
                 />
                 <span
                   className="flex flex-col items-center gap-[10px]"
@@ -685,13 +840,13 @@ function ProgramDesktop() {
 
       {/* Accordion under route board */}
       <div
+        ref={accordionRef}
         className="absolute flex w-[1440px] flex-col gap-[10px]"
         style={{
           ...panelStyle,
           left: 240,
           top: y(accordionTop),
-          minHeight: sectionBottom - accordionTop,
-          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}, min-height 0.5s ${MONTH_EASE_IN}`,
+          transition: `${panelStyle.transition}, top 0.5s ${MONTH_EASE_IN}`,
         }}
       >
         {month.lessons.map((lesson, i) => {
@@ -699,12 +854,17 @@ function ProgramDesktop() {
           return (
             <article
               key={lesson.id}
-              className="w-full rounded-[16px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)]"
+              ref={(el) => setLessonEl(i, el)}
+              data-program-lesson={i}
+              className={`w-full rounded-[16px] bg-white shadow-[0_4px_24px_rgba(0,0,0,0.06)] ${
+                flashLesson === i ? "program-lesson-flash" : ""
+              }`}
             >
               <button
                 type="button"
                 onClick={() => setOpenLesson(isOpen ? null : i)}
                 className="flex w-full items-center justify-between px-[30px] py-[18px] text-left"
+                aria-expanded={isOpen}
               >
                 <span>
                   <span className="block text-[14px] font-semibold uppercase tracking-[0.5px] text-accent-red">
@@ -724,7 +884,7 @@ function ProgramDesktop() {
               </button>
 
               {isOpen && lesson.body && (
-                <div className="px-[30px] pb-[30px]">
+                <div className="program-lesson-enter px-[30px] pb-[30px]">
                   <div className="h-px w-full bg-[#ececef]" />
                   <div className="mt-[20px] inline-flex h-[40px] items-center gap-[10px] rounded-[10px] bg-light-gray px-[10px]">
                     <img
@@ -753,7 +913,7 @@ function ProgramDesktop() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setOpenLesson(null)}
+                    onClick={returnToProgram}
                     className="mt-[20px] flex items-center gap-[10px] text-[16px] font-medium text-accent-orange underline"
                   >
                     Вернуться к программе
