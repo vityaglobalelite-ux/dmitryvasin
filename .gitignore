@@ -3,6 +3,8 @@
 # dependencies
 /node_modules
 /bot/node_modules
+/bot-support/node_modules
+/bot-support/.env
 /.pnp
 .pnp.*
 .yarn/*

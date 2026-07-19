@@ -5,23 +5,20 @@ const BTN = {
   START: "Старт",
   SUBSCRIBE: "Оформить участие",
   SUBSCRIPTION: "Моя подписка",
-  UPGRADE: "Улучшить тариф",
   SUPPORT: "Поддержка",
 };
 
 const keyboards = {
   /** Нижняя клавиатура — всегда видна в чате после первого /start */
-  replyMenu: ({ hasSubscription = false, canUpgrade = false } = {}) => {
+  replyMenu: ({ hasSubscription = false } = {}) => {
     const rows = [];
     if (!hasSubscription) {
       rows.push([BTN.START, BTN.SUBSCRIBE]);
     } else {
       rows.push([BTN.SUBSCRIPTION]);
-      if (canUpgrade) {
-        rows.push([BTN.UPGRADE]);
-      }
     }
-    rows.push([BTN.SUPPORT]);
+    // web_app открывает поддержку сразу (reply-кнопка с URL в Telegram нельзя)
+    rows.push([Markup.button.webApp(BTN.SUPPORT, config.supportWebAppUrl)]);
     return Markup.keyboard(rows).resize().persistent();
   },
 
@@ -38,14 +35,31 @@ const keyboards = {
       [Markup.button.callback("VIP-исследование", "tariff:vip")],
     ]),
 
-  afterPayment: (inviteLink) => {
+  /**
+   * @param {{ inviteLink?: string|null, isMember?: boolean, openUrl?: string|null }} opts
+   */
+  channelAccess: ({ inviteLink = null, isMember = false, openUrl = null } = {}) => {
     const rows = [];
-    if (inviteLink) {
-      rows.push([Markup.button.url("Вступить в чат", inviteLink)]);
+    if (isMember && openUrl) {
+      rows.push([Markup.button.url("Открыть канал", openUrl)]);
+    } else if (inviteLink) {
+      rows.push([
+        Markup.button.url(
+          "Вступить в закрытый telegram-канал",
+          inviteLink,
+        ),
+      ]);
     }
     rows.push([Markup.button.url("Поддержка", config.supportUrl)]);
     return Markup.inlineKeyboard(rows);
   },
+
+  afterPayment: (inviteLink, channelOpts = {}) =>
+    keyboards.channelAccess({
+      inviteLink,
+      isMember: channelOpts.isMember,
+      openUrl: channelOpts.openUrl,
+    }),
 
   vipDays: () =>
     Markup.inlineKeyboard([
@@ -82,10 +96,17 @@ const keyboards = {
       ],
     ]),
 
-  membership: (sub, upgrades = []) => {
+  membership: (sub, upgrades = [], channelOpts = {}) => {
     const rows = [];
-    if (sub?.invite_link) {
-      rows.push([Markup.button.url("Вступить в чат", sub.invite_link)]);
+    if (channelOpts.isMember && channelOpts.openUrl) {
+      rows.push([Markup.button.url("Открыть канал", channelOpts.openUrl)]);
+    } else if (sub?.invite_link) {
+      rows.push([
+        Markup.button.url(
+          "Вступить в закрытый telegram-канал",
+          sub.invite_link,
+        ),
+      ]);
     }
     if (upgrades.includes("full")) {
       rows.push([

@@ -25,7 +25,12 @@ const config = {
   supabaseUrl: required("SUPABASE_URL"),
   supabaseKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   channelId: process.env.TELEGRAM_CHANNEL_ID || "",
-  supportUrl: process.env.SUPPORT_URL || "https://t.me/",
+  supportUrl:
+    process.env.SUPPORT_URL ||
+    "https://t.me/be_tango_support_bot?start=help",
+  /** HTTPS-страница-редирект для WebApp-кнопки «Поддержка» */
+  supportWebAppUrl:
+    process.env.SUPPORT_WEBAPP_URL || "https://betango.dance/go-support.html",
   adminIds: parseAdminIds(process.env.ADMIN_TELEGRAM_IDS),
   paymentMode: process.env.PAYMENT_MODE || "mock",
   prices: {

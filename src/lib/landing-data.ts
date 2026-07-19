@@ -5,6 +5,11 @@ export const telegramBotUrl =
   process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL ??
   "https://t.me/betangoadminbot?start=join";
 
+/** «Написать в поддержку» → бот поддержки */
+export const telegramSupportBotUrl =
+  process.env.NEXT_PUBLIC_TELEGRAM_SUPPORT_BOT_URL ??
+  "https://t.me/be_tango_support_bot?start=help";
+
 export const navLinks = [
   { label: "О клубе", href: "#about" },
   { label: "Программа", href: "#program" },

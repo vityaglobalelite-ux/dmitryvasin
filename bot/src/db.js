@@ -73,6 +73,21 @@ async function getActiveSubscription(telegramId) {
   return data;
 }
 
+async function getSubscriptionByInviteLink(inviteLink) {
+  if (!inviteLink) return null;
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("invite_link", inviteLink)
+    .eq("status", "active")
+    .gt("access_ends_at", nowIso())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 async function updateSubscription(id, patch) {
   const { data, error } = await supabase
     .from("subscriptions")
@@ -196,6 +211,7 @@ module.exports = {
   updateUser,
   createSubscription,
   getActiveSubscription,
+  getSubscriptionByInviteLink,
   updateSubscription,
   upsertVipIntake,
   getVipIntake,

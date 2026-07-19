@@ -7,6 +7,8 @@ const {
   grantAccess,
   scheduleTariffNudges,
   resolveChannelId,
+  channelOpenUrl,
+  isChannelMember,
 } = require("./access");
 const { startScheduler, startVipFlow } = require("./scheduler");
 const {
@@ -24,15 +26,20 @@ function isAdmin(ctx) {
 
 async function sendPaidMessage(ctx, subscription) {
   const upgrades = upgradeOptions(subscription.tariff);
+  const member = await isChannelMember(bot, ctx.from.id);
+  const openUrl = channelOpenUrl(await resolveChannelId());
   await ctx.reply(
     "Выберите действие 👇",
-    keyboards.replyMenu({
-      hasSubscription: true,
-      canUpgrade: upgrades.length > 0,
-    }),
+    keyboards.replyMenu({ hasSubscription: true }),
   );
-  if (subscription.invite_link) {
-    await ctx.reply(texts.paid, keyboards.afterPayment(subscription.invite_link));
+  if (subscription.invite_link || (member && openUrl)) {
+    await ctx.reply(
+      texts.paid,
+      keyboards.afterPayment(subscription.invite_link, {
+        isMember: member,
+        openUrl,
+      }),
+    );
   } else {
     await ctx.reply(texts.paidNoLink, keyboards.afterPayment(null));
   }
@@ -62,6 +69,69 @@ async function handleStart(ctx) {
 }
 
 bot.start(handleStart);
+
+// Заявка на вступление по персональной ссылке — пускаем только владельца подписки
+bot.on("chat_join_request", async (ctx) => {
+  const req = ctx.chatJoinRequest;
+  const userId = req.from.id;
+  const inviteUrl = req.invite_link?.invite_link || null;
+  const chatId = String(req.chat.id);
+
+  try {
+    const channelId = await resolveChannelId();
+    if (!channelId || String(channelId) !== chatId) {
+      await ctx.decline();
+      log("join_request decline: foreign chat", chatId, userId);
+      return;
+    }
+
+    if (inviteUrl) {
+      const ownerSub = await db.getSubscriptionByInviteLink(inviteUrl);
+      if (ownerSub && ownerSub.telegram_id === userId) {
+        await ctx.approve();
+        log("join_request approve (invite owner)", userId);
+        try {
+          await ctx.telegram.sendMessage(
+            userId,
+            "Заявка одобрена — добро пожаловать в закрытый клуб исследования!",
+          );
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      if (ownerSub && ownerSub.telegram_id !== userId) {
+        await ctx.decline();
+        log(
+          "join_request decline: stolen invite",
+          "owner=",
+          ownerSub.telegram_id,
+          "applicant=",
+          userId,
+        );
+        return;
+      }
+    }
+
+    // Запасной путь: активная подписка у этого пользователя
+    const sub = await db.getActiveSubscription(userId);
+    if (sub) {
+      await ctx.approve();
+      log("join_request approve (active sub)", userId);
+      return;
+    }
+
+    await ctx.decline();
+    log("join_request decline: no sub", userId);
+  } catch (err) {
+    log("join_request error:", err.message);
+    try {
+      await ctx.decline();
+    } catch {
+      /* ignore */
+    }
+  }
+});
 
 async function handleIdCommand(ctx) {
   const chat = ctx.chat;
@@ -132,22 +202,6 @@ bot.on("channel_post", async (ctx) => {
   if (text === "/bind_channel" || text.startsWith("/bind_channel@")) {
     await handleBindChannel(ctx);
   }
-});
-
-bot.command("status", async (ctx) => {
-  const user = await db.getUser(ctx.from.id);
-  const sub = await db.getActiveSubscription(ctx.from.id);
-  const channelId = await resolveChannelId();
-  await ctx.reply(
-    [
-      `state: ${user?.state || "—"}`,
-      `payment: ${user?.payment_method || "—"}`,
-      `tariff: ${sub?.tariff || "—"}`,
-      `access_until: ${sub?.access_ends_at || "—"}`,
-      `channel: ${channelId || "не задан"}`,
-      `payment_mode: ${config.paymentMode}`,
-    ].join("\n"),
-  );
 });
 
 bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
@@ -304,25 +358,6 @@ bot.on("text", async (ctx) => {
     return;
   }
 
-  if (text === BTN.SUPPORT) {
-    await ctx.reply(
-      "Если возникнут сложности — напишите в поддержку:",
-      keyboards.afterPayment(null),
-    );
-    return;
-  }
-
-  if (text === BTN.UPGRADE) {
-    const sub = await db.getActiveSubscription(ctx.from.id);
-    const allowed = sub ? upgradeOptions(sub.tariff) : [];
-    if (!sub || !allowed.length) {
-      await handleStart(ctx);
-      return;
-    }
-    await sendMembershipCard(ctx, bot, ctx.from.id);
-    return;
-  }
-
   // Участник с активной подпиской — карточка, а не повторная воронка
   if (await sendMembershipCard(ctx, bot, ctx.from.id)) {
     return;
@@ -385,10 +420,7 @@ log(
 startScheduler(bot);
 
 bot.telegram
-  .setMyCommands([
-    { command: "start", description: "Старт / моя подписка" },
-    { command: "status", description: "Статус доступа" },
-  ])
+  .setMyCommands([{ command: "start", description: "Старт / моя подписка" }])
   .catch((err) => log("setMyCommands failed:", err.message));
 
 bot
@@ -398,6 +430,7 @@ bot
       "message",
       "callback_query",
       "channel_post",
+      "chat_join_request",
       "my_chat_member",
       "chat_member",
     ],

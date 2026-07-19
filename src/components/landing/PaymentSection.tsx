@@ -1,7 +1,7 @@
 "use client";
 
 import { landingAssets } from "@/lib/landing-assets";
-import { paymentSteps } from "@/lib/landing-data";
+import { paymentSteps, telegramSupportBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 11624..12694 — «Стоимость и оплата» */
@@ -101,7 +101,9 @@ function PaymentMobile() {
 
         {/* 303:68 — 259×60 @ 15,140 */}
         <a
-          href="#contacts"
+          href={telegramSupportBotUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="btn-primary absolute left-[15px] top-[138px] z-[1]"
         >
           Написать в поддержку
@@ -179,7 +181,12 @@ function PaymentDesktop() {
           <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-light-gray">
             Если у вас есть вопросы — напишите в поддержку, и вам помогут
           </p>
-          <a href="#contacts" className="btn-primary">
+          <a
+            href={telegramSupportBotUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-primary"
+          >
             Написать в поддержку
           </a>
         </div>

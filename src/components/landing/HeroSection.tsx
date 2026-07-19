@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
-import { telegramBotUrl } from "@/lib/landing-data";
+import { telegramBotUrl, telegramSupportBotUrl } from "@/lib/landing-data";
 import { MOBILE_CANVAS, useIsMobile } from "@/lib/landing-mode";
 
 const nav = {
@@ -24,7 +24,7 @@ const mobileMenuLinks = [
   { label: "Маршрут исследования", href: "#program" },
   { label: "Тарифы", href: "#tariffs" },
   { label: "Отзывы", href: "#reviews" },
-  { label: "Тех. поддержка", href: "#payment" },
+  { label: "Тех. поддержка", href: telegramSupportBotUrl },
   { label: "Контакты", href: "#contacts" },
 ] as const;
 
@@ -209,6 +209,9 @@ function HeroMobile() {
                       href={l.href}
                       className="text-right text-[16px] font-normal leading-[normal] text-text"
                       onClick={closeMenu}
+                      {...(l.href.startsWith("http")
+                        ? { target: "_blank", rel: "noopener noreferrer" }
+                        : {})}
                     >
                       {l.label}
                     </a>
@@ -225,7 +228,9 @@ function HeroMobile() {
                 ))}
               </div>
               <a
-                href="#contacts"
+                href={telegramSupportBotUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-primary-mobile !w-full"
                 onClick={closeMenu}
               >

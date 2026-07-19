@@ -1,7 +1,12 @@
 const { config } = require("./config");
 const { keyboards } = require("./keyboards");
 const db = require("./db");
-const { createInviteLink } = require("./access");
+const {
+  createInviteLink,
+  resolveChannelId,
+  channelOpenUrl,
+  isChannelMember,
+} = require("./access");
 
 const TARIFF_LABELS = {
   trial: "Тест-драйв | 1 месяц",
@@ -71,16 +76,18 @@ function membershipText(sub) {
     lines.push("У вас максимальный тариф. Спасибо, что с нами!");
   }
 
-  if (sub.invite_link) {
-    lines.push("");
-    lines.push("Ваша персональная ссылка на закрытый чат — по кнопке ниже.");
-  }
-
   return lines.join("\n");
 }
 
-function membershipKeyboard(sub) {
-  return keyboards.membership(sub, upgradeOptions(sub.tariff));
+function membershipTextWithChannel(sub, { isMember }) {
+  const base = membershipText(sub);
+  if (isMember) {
+    return `${base}\n\nВы уже в закрытом канале — откройте его по кнопке ниже.`;
+  }
+  if (sub.invite_link) {
+    return `${base}\n\nПерсональная ссылка в закрытый telegram-канал — по кнопке ниже (привязана к вашему Telegram).`;
+  }
+  return base;
 }
 
 async function sendMembershipCard(ctx, bot, telegramId) {
@@ -91,10 +98,12 @@ async function sendMembershipCard(ctx, bot, telegramId) {
   }
   if (!sub) return false;
 
-  // Если ссылки ещё нет — создаём
-  if (!sub.invite_link && bot) {
+  const member = await isChannelMember(bot, telegramId);
+
+  // Ссылка-заявка нужна только если ещё не в канале
+  if (!member && !sub.invite_link && bot) {
     try {
-      const link = await createInviteLink(bot);
+      const link = await createInviteLink(bot, telegramId, null);
       if (link) {
         sub = await db.updateSubscription(sub.id, {
           invite_link: link,
@@ -106,15 +115,19 @@ async function sendMembershipCard(ctx, bot, telegramId) {
     }
   }
 
+  const channelId = await resolveChannelId();
+  const openUrl = channelOpenUrl(channelId);
   const upgrades = upgradeOptions(sub.tariff);
+  const channelOpts = { isMember: member, openUrl };
+
   await ctx.reply(
     "Выберите действие 👇",
-    keyboards.replyMenu({
-      hasSubscription: true,
-      canUpgrade: upgrades.length > 0,
-    }),
+    keyboards.replyMenu({ hasSubscription: true }),
   );
-  await ctx.reply(membershipText(sub), membershipKeyboard(sub));
+  await ctx.reply(
+    membershipTextWithChannel(sub, channelOpts),
+    keyboards.membership(sub, upgrades, channelOpts),
+  );
   return true;
 }
 
@@ -124,7 +137,6 @@ module.exports = {
   isSubscriptionLive,
   upgradeOptions,
   membershipText,
-  membershipKeyboard,
   sendMembershipCard,
   formatDateRu,
 };

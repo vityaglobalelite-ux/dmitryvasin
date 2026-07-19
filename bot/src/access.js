@@ -36,14 +36,46 @@ async function resolveChannelId() {
   return db.getSetting("telegram_channel_id");
 }
 
-async function createInviteLink(bot) {
+/** Ссылка «открыть канал» для уже вступивших (t.me/c/…) */
+function channelOpenUrl(channelId) {
+  if (!channelId) return null;
+  const raw = String(channelId).replace(/^-100/, "");
+  return `https://t.me/c/${raw}/1`;
+}
+
+async function isChannelMember(bot, telegramId) {
+  const channelId = await resolveChannelId();
+  if (!channelId || !bot) return false;
+  try {
+    const member = await bot.telegram.getChatMember(channelId, telegramId);
+    return ["creator", "administrator", "member", "restricted"].includes(
+      member.status,
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Персональная ссылка с заявкой на вступление.
+ * Бот одобряет только telegram_id владельца подписки (см. chat_join_request).
+ * member_limit с creates_join_request Telegram не позволяет.
+ */
+async function createInviteLink(bot, telegramId, previousLink = null) {
   const channelId = await resolveChannelId();
   if (!channelId) {
     return null;
   }
+  if (previousLink) {
+    try {
+      await bot.telegram.revokeChatInviteLink(channelId, previousLink);
+    } catch (err) {
+      console.error("revokeChatInviteLink:", err.message);
+    }
+  }
   const link = await bot.telegram.createChatInviteLink(channelId, {
-    member_limit: 1,
-    name: `user-${Date.now()}`.slice(0, 32),
+    creates_join_request: true,
+    name: `u${telegramId}`.slice(0, 32),
   });
   return link.invite_link;
 }
@@ -92,7 +124,7 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
 
   let inviteLink = null;
   try {
-    inviteLink = await createInviteLink(bot);
+    inviteLink = await createInviteLink(bot, telegramId, active?.invite_link);
   } catch (err) {
     console.error("createInviteLink failed:", err.message);
   }
@@ -148,5 +180,7 @@ module.exports = {
   scheduleTariffNudges,
   resolveChannelId,
   createInviteLink,
+  channelOpenUrl,
+  isChannelMember,
   TARIFF_NUDGE_KINDS,
 };
