@@ -9,6 +9,7 @@ import {
 } from "@/lib/landing-mode";
 import { ProgramTailProvider, useProgramTail } from "@/lib/program-tail";
 import { bindSectionScroll } from "@/lib/smooth-scroll";
+import { StickyMobileCta } from "./StickyMobileCta";
 
 /**
  * Fixed design canvas scaled to the viewport width via CSS zoom.
@@ -78,6 +79,7 @@ export function FigCanvas({ children }: { children: React.ReactNode }) {
       <ProgramTailProvider>
         <FigCanvasInner>{children}</FigCanvasInner>
       </ProgramTailProvider>
+      <StickyMobileCta />
     </LandingModeProvider>
   );
 }
