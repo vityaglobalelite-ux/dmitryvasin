@@ -25,11 +25,17 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
     const el = ref.current;
     if (!el) return;
     const apply = () => {
-      el.style.zoom = String(document.documentElement.clientWidth / canvas.w);
+      const w =
+        window.visualViewport?.width ?? document.documentElement.clientWidth;
+      el.style.zoom = String(w / canvas.w);
     };
     apply();
     window.addEventListener("resize", apply);
-    return () => window.removeEventListener("resize", apply);
+    window.visualViewport?.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      window.visualViewport?.removeEventListener("resize", apply);
+    };
   }, [canvas.w]);
 
   useEffect(() => bindSectionScroll(document), []);

@@ -60,11 +60,17 @@ function HeroMobile() {
   useEffect(() => {
     setMounted(true);
     const applyZoom = () => {
-      setZoom(document.documentElement.clientWidth / MOBILE_CANVAS.w);
+      const w =
+        window.visualViewport?.width ?? document.documentElement.clientWidth;
+      setZoom(w / MOBILE_CANVAS.w);
     };
     applyZoom();
     window.addEventListener("resize", applyZoom);
-    return () => window.removeEventListener("resize", applyZoom);
+    window.visualViewport?.addEventListener("resize", applyZoom);
+    return () => {
+      window.removeEventListener("resize", applyZoom);
+      window.visualViewport?.removeEventListener("resize", applyZoom);
+    };
   }, []);
 
   useEffect(() => {
@@ -113,26 +119,37 @@ function HeroMobile() {
         ) : null}
 
         {/*
-          Outside FigCanvas zoom — full-bleed dock.
-          At rest: floating pill. On scroll: morphs to edge-to-edge top bar
-          so nothing peeks above/beside — only content below.
+          Outside FigCanvas — full-bleed dock.
+          Important: do NOT scale this shell with transform (iOS Telegram WKWebView
+          leaves a gap above fixed+transform layers where page content peeks through).
+          Use CSS zoom like FigCanvas, plus an unscaled white seal with upward bleed.
         */}
+        {scrolled ? (
+          <div
+            aria-hidden
+            className="mobile-nav-veil-in pointer-events-none fixed inset-x-0 top-0 z-[100] bg-white"
+            style={{
+              height: Math.ceil(56 * zoom) + 2,
+              /* Solid white above the bar — covers Telegram iOS / rubber-band gaps */
+              boxShadow: "0 -160px 0 160px #fff",
+            }}
+          />
+        ) : null}
+
         <div
-          className="fixed z-[100] origin-top-left"
+          className="fixed top-0 left-0 z-[100]"
           style={{
-            left: 0,
-            top: 0,
             width: MOBILE_CANVAS.w,
-            transform: `scale(${zoom})`,
+            zoom,
           }}
         >
           {scrolled ? (
             <div
               aria-hidden
-              className="mobile-nav-veil-in pointer-events-none absolute inset-x-0 top-0"
+              className="pointer-events-none absolute inset-x-0"
+              style={{ top: -240, height: 296 }}
             >
-              {/* Solid seal — nothing peeks above/beside the docked bar */}
-              <div className="h-[56px] w-full bg-white" />
+              <div className="h-[276px] w-full bg-white" />
               <div
                 className="h-[20px] w-full"
                 style={{

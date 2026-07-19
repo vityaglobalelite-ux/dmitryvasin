@@ -337,36 +337,34 @@ body {
   animation: mobile-menu-panel-out 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
-/* Mobile sticky nav — dock morph */
+/* Mobile sticky nav — dock morph (no translateY: iOS Telegram gaps) */
 @keyframes mobile-nav-dock {
   0% {
-    transform: translateY(-12px) scale(0.96);
-  }
-  55% {
-    transform: translateY(3px) scale(1.015);
+    opacity: 0.92;
+    transform: scale(0.985);
   }
   100% {
-    transform: translateY(0) scale(1);
+    opacity: 1;
+    transform: scale(1);
   }
 }
 
 @keyframes mobile-nav-veil-in {
   from {
     opacity: 0;
-    transform: translateY(-100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 .mobile-nav-docked {
-  animation: mobile-nav-dock 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: mobile-nav-dock 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top center;
 }
 
 .mobile-nav-veil-in {
-  animation: mobile-nav-veil-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: mobile-nav-veil-in 0.35s ease-out both;
 }
 
 .scrollbar-hide {
