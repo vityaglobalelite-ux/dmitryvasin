@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
+import { telegramBotUrl } from "@/lib/landing-data";
 import { MOBILE_CANVAS, useIsMobile } from "@/lib/landing-mode";
 
 const nav = {
@@ -310,7 +311,9 @@ function HeroMobile() {
 преподавателем и учеником.`}
           </p>
           <a
-            href="#tariffs"
+            href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="btn-primary-mobile absolute left-[15px] top-[164px] z-[1]"
           >
             Присоединиться
@@ -423,13 +426,17 @@ function HeroDesktop() {
         остаётся между преподавателем и&nbsp;учеником.
       </p>
       <a
-        href="#tariffs"
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn-primary absolute left-[332px] top-[647px] z-[4]"
       >
         Присоединиться
       </a>
       <a
-        href="#tariffs"
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="absolute left-[601px] top-[647px] z-[4] size-[60px]"
       >
         <img

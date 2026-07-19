@@ -1,3 +1,5 @@
+import { telegramBotUrl } from "@/lib/landing-data";
+
 type Props = {
   href?: string;
   children: React.ReactNode;
@@ -6,7 +8,7 @@ type Props = {
 };
 
 export function PrimaryButton({
-  href = "#tariffs",
+  href = telegramBotUrl,
   children,
   variant = "gradient",
   className = "",
@@ -17,8 +19,15 @@ export function PrimaryButton({
     variant === "gradient"
       ? "bg-gradient-to-r from-[#9e151e] to-[#4c0d32] text-white"
       : "bg-white text-[#4c0d32]";
+  const external = href.startsWith("http");
   return (
-    <a href={href} className={`${base} ${look} ${className}`}>
+    <a
+      href={href}
+      className={`${base} ${look} ${className}`}
+      {...(external
+        ? { target: "_blank", rel: "noopener noreferrer" }
+        : {})}
+    >
       {children}
     </a>
   );

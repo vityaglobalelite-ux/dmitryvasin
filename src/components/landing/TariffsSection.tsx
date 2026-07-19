@@ -1,7 +1,7 @@
 "use client";
 
 import { landingAssets } from "@/lib/landing-assets";
-import { tariffs } from "@/lib/landing-data";
+import { tariffs, telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma: y 10354..11120 — «Выбирайте тариф участия» */
@@ -128,7 +128,12 @@ function TariffsMobile() {
                   {t.oldPrice}
                 </span>
               </p>
-              <a href="#payment" className="btn-primary-mobile !w-[259px]">
+              <a
+                href={telegramBotUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary-mobile !w-[259px]"
+              >
                 Оплатить
               </a>
             </div>
@@ -238,7 +243,12 @@ function TariffsDesktop() {
                 {t.oldPrice}
               </span>
             </p>
-            <a href="#payment" className="btn-primary">
+            <a
+              href={telegramBotUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-primary"
+            >
               Оплатить
             </a>
           </div>

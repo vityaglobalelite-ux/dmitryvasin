@@ -1,7 +1,7 @@
 "use client";
 
 import { landingAssets } from "@/lib/landing-assets";
-import { outcomesChecklist } from "@/lib/landing-data";
+import { outcomesChecklist, telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 /* Figma Главная_360: lessons band ~8652–11229 */
@@ -78,7 +78,9 @@ function LessonsMobile() {
           и&nbsp;учеником. Но&nbsp;в&nbsp;этот&nbsp;раз&nbsp;я решил открыть
           эту&nbsp;дверь и&nbsp;приглашаю вас&nbsp;внутрь
         </p>
-        <a href="#tariffs" className="btn-primary-mobile">
+        <a href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer" className="btn-primary-mobile">
           Присоединиться
         </a>
       </div>
@@ -159,7 +161,9 @@ function LessonsMobile() {
           </div>
         </div>
         <a
-          href="#tariffs"
+          href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer"
           className="btn-primary-mobile relative z-[2]"
           style={{ width: 259 }}
         >
@@ -267,7 +271,9 @@ function LessonsDesktop() {
 Но\u00a0в\u00a0этот\u00a0раз\u00a0я решил открыть
 эту дверь и\u00a0приглашаю вас\u00a0внутрь`}
         </p>
-        <a href="#tariffs" className="btn-primary">
+        <a href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer" className="btn-primary">
           Присоединиться
         </a>
       </div>
@@ -354,7 +360,9 @@ function LessonsDesktop() {
             танце гораздо больше, чем&nbsp;раньше.
           </p>
         </div>
-        <a href="#tariffs" className="btn-primary">
+        <a href={telegramBotUrl}
+            target="_blank"
+            rel="noopener noreferrer" className="btn-primary">
           Присоединиться
         </a>
         {/* 249:2119 */}

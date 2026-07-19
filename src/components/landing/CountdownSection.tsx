@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
-import { countdownTarget } from "@/lib/landing-data";
+import { countdownTarget, telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 function getTimeLeft(target: Date) {
@@ -55,7 +55,9 @@ function CountdownMobile({ display }: { display: string }) {
 
       {/* 287:795 — 259×60 */}
       <a
-        href="#tariffs"
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn-primary absolute left-[15px] top-[152px] z-[1]"
       >
         Выбрать тариф и оплатить
@@ -117,7 +119,12 @@ function CountdownDesktop({ display }: { display: string }) {
       </span>
 
       {/* Figma 255:2456 — тёмный CTA как «Оплатить» */}
-      <a href="#tariffs" className="btn-primary absolute left-[302px] top-[11324px]">
+      <a
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-primary absolute left-[302px] top-[11324px]"
+      >
         Выбрать тариф и оплатить
       </a>
     </>

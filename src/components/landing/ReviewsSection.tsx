@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { landingAssets } from "@/lib/landing-assets";
-import { reviews } from "@/lib/landing-data";
+import { reviews, telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 type Review = (typeof reviews)[number];
@@ -422,7 +422,9 @@ function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void })
 
       {/* 325:9 Frame 2386 — 51,16180,259×50 */}
       <a
-        href="#tariffs"
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn-primary-mobile absolute left-[51px] top-[16180px] z-[2]"
         style={{ width: 259 }}
       >
@@ -513,7 +515,9 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
 
       {/* Figma 347:1891 */}
       <a
-        href="#tariffs"
+        href={telegramBotUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="btn-primary absolute left-[831px] top-[13634px]"
       >
         Присоединиться сейчас
