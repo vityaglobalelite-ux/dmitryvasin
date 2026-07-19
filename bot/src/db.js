@@ -65,6 +65,7 @@ async function getActiveSubscription(telegramId) {
     .select("*")
     .eq("telegram_id", telegramId)
     .eq("status", "active")
+    .gt("access_ends_at", nowIso())
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();

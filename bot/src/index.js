@@ -1,7 +1,7 @@
 const { Telegraf } = require("telegraf");
 const { config } = require("./config");
 const { texts } = require("./texts");
-const { keyboards } = require("./keyboards");
+const { keyboards, BTN } = require("./keyboards");
 const db = require("./db");
 const {
   grantAccess,
@@ -9,6 +9,12 @@ const {
   resolveChannelId,
 } = require("./access");
 const { startScheduler, startVipFlow } = require("./scheduler");
+const {
+  sendMembershipCard,
+  upgradeOptions,
+  TARIFF_RANK,
+  TARIFF_LABELS,
+} = require("./membership");
 
 const bot = new Telegraf(config.token);
 
@@ -17,6 +23,14 @@ function isAdmin(ctx) {
 }
 
 async function sendPaidMessage(ctx, subscription) {
+  const upgrades = upgradeOptions(subscription.tariff);
+  await ctx.reply(
+    "Выберите действие 👇",
+    keyboards.replyMenu({
+      hasSubscription: true,
+      canUpgrade: upgrades.length > 0,
+    }),
+  );
   if (subscription.invite_link) {
     await ctx.reply(texts.paid, keyboards.afterPayment(subscription.invite_link));
   } else {
@@ -24,18 +38,30 @@ async function sendPaidMessage(ctx, subscription) {
   }
 }
 
-bot.start(async (ctx) => {
-  const user = await db.upsertUser(ctx.from);
-  await db.updateUser(user.telegram_id, {
+async function startPurchaseFlow(ctx, userId) {
+  await db.updateUser(userId, {
     state: "awaiting_payment_method",
     payment_method: null,
   });
-  await db.cancelMessages(user.telegram_id, [
-    "tariff_nudge_10m",
-    "tariff_nudge_24h",
-  ]);
+  await db.cancelMessages(userId, ["tariff_nudge_10m", "tariff_nudge_24h"]);
+  await ctx.reply(
+    "Выберите действие 👇",
+    keyboards.replyMenu({ hasSubscription: false }),
+  );
   await ctx.reply(texts.welcome, keyboards.paymentMethods());
-});
+}
+
+async function handleStart(ctx) {
+  const user = await db.upsertUser(ctx.from);
+  const shown = await sendMembershipCard(ctx, bot, user.telegram_id);
+  if (shown) {
+    await db.updateUser(user.telegram_id, { state: "paid" });
+    return;
+  }
+  await startPurchaseFlow(ctx, user.telegram_id);
+}
+
+bot.start(handleStart);
 
 async function handleIdCommand(ctx) {
   const chat = ctx.chat;
@@ -126,8 +152,11 @@ bot.command("status", async (ctx) => {
 
 bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
   await ctx.answerCbQuery();
-  const method = ctx.match[1];
   await db.upsertUser(ctx.from);
+  if (await sendMembershipCard(ctx, bot, ctx.from.id)) {
+    return;
+  }
+  const method = ctx.match[1];
   await db.updateUser(ctx.from.id, {
     payment_method: method,
     state: "awaiting_tariff",
@@ -136,10 +165,21 @@ bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
   await ctx.reply(texts.chooseTariff, keyboards.tariffs());
 });
 
-bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
-  await ctx.answerCbQuery();
-  const tariff = ctx.match[1];
+async function purchaseTariff(ctx, tariff) {
   const user = await db.upsertUser(ctx.from);
+  const current = await db.getActiveSubscription(user.telegram_id);
+
+  if (current) {
+    const currentRank = TARIFF_RANK[current.tariff] || 0;
+    const nextRank = TARIFF_RANK[tariff] || 0;
+    if (nextRank <= currentRank) {
+      await ctx.reply(
+        `У вас уже активен тариф «${TARIFF_LABELS[current.tariff] || current.tariff}». Выберите более высокий тариф или откройте /start.`,
+      );
+      await sendMembershipCard(ctx, bot, user.telegram_id);
+      return;
+    }
+  }
 
   if (config.paymentMode !== "mock") {
     await ctx.reply(
@@ -156,6 +196,26 @@ bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
     user.payment_method,
   );
   await sendPaidMessage(ctx, sub);
+}
+
+bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  await purchaseTariff(ctx, ctx.match[1]);
+});
+
+bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
+  await ctx.answerCbQuery();
+  const tariff = ctx.match[1];
+  const user = await db.upsertUser(ctx.from);
+  const current = await db.getActiveSubscription(user.telegram_id);
+  const allowed = current ? upgradeOptions(current.tariff) : [];
+  if (!current || !allowed.includes(tariff)) {
+    await ctx.reply("Этот апгрейд сейчас недоступен. Откройте /start.");
+    await sendMembershipCard(ctx, bot, user.telegram_id);
+    return;
+  }
+  // В mock сразу улучшаем; позже здесь будет оплата
+  await purchaseTariff(ctx, tariff);
 });
 
 bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
@@ -211,18 +271,15 @@ bot.action(/^vip_time:(morning|day|evening)$/, async (ctx) => {
 });
 
 bot.on("text", async (ctx) => {
-  if (ctx.message.text?.startsWith("/")) return;
+  const text = ctx.message.text?.trim() || "";
+  if (text.startsWith("/")) return;
 
-  const user = await db.getUser(ctx.from.id);
-  if (!user) {
-    await db.upsertUser(ctx.from);
-    await ctx.reply(texts.welcome, keyboards.paymentMethods());
-    return;
-  }
+  const user = (await db.getUser(ctx.from.id)) || (await db.upsertUser(ctx.from));
 
+  // Свободные ответы VIP-анкеты важнее кнопок меню
   if (user.state === "vip_q1") {
     await db.upsertVipIntake(ctx.from.id, {
-      timezone_country: ctx.message.text.trim(),
+      timezone_country: text,
       step: "q2",
     });
     await db.updateUser(ctx.from.id, { state: "vip_q2" });
@@ -232,7 +289,7 @@ bot.on("text", async (ctx) => {
 
   if (user.state === "vip_q4") {
     await db.upsertVipIntake(ctx.from.id, {
-      topic: ctx.message.text.trim(),
+      topic: text,
       step: "done",
       completed_at: new Date().toISOString(),
     });
@@ -241,7 +298,41 @@ bot.on("text", async (ctx) => {
     return;
   }
 
+  // Нижнее меню действий
+  if (text === BTN.START || text === BTN.SUBSCRIBE || text === BTN.SUBSCRIPTION) {
+    await handleStart(ctx);
+    return;
+  }
+
+  if (text === BTN.SUPPORT) {
+    await ctx.reply(
+      "Если возникнут сложности — напишите в поддержку:",
+      keyboards.afterPayment(null),
+    );
+    return;
+  }
+
+  if (text === BTN.UPGRADE) {
+    const sub = await db.getActiveSubscription(ctx.from.id);
+    const allowed = sub ? upgradeOptions(sub.tariff) : [];
+    if (!sub || !allowed.length) {
+      await handleStart(ctx);
+      return;
+    }
+    await sendMembershipCard(ctx, bot, ctx.from.id);
+    return;
+  }
+
+  // Участник с активной подпиской — карточка, а не повторная воронка
+  if (await sendMembershipCard(ctx, bot, ctx.from.id)) {
+    return;
+  }
+
   if (user.state === "awaiting_payment_method" || user.state === "new") {
+    await ctx.reply(
+      "Выберите действие 👇",
+      keyboards.replyMenu({ hasSubscription: false }),
+    );
     await ctx.reply(texts.welcome, keyboards.paymentMethods());
     return;
   }
@@ -266,10 +357,7 @@ bot.on("text", async (ctx) => {
     return;
   }
 
-  await ctx.reply(
-    "Если нужна помощь с доступом — нажмите «Поддержка».\nЧтобы начать заново: /start",
-    keyboards.afterPayment(null),
-  );
+  await startPurchaseFlow(ctx, ctx.from.id);
 });
 
 bot.catch((err, ctx) => {
@@ -295,6 +383,13 @@ log(
   `Starting bot (payment_mode=${config.paymentMode}, channel=${config.channelId || "db/env"})`,
 );
 startScheduler(bot);
+
+bot.telegram
+  .setMyCommands([
+    { command: "start", description: "Старт / моя подписка" },
+    { command: "status", description: "Статус доступа" },
+  ])
+  .catch((err) => log("setMyCommands failed:", err.message));
 
 bot
   .launch({

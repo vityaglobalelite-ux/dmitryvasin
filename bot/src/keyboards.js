@@ -1,7 +1,30 @@
 const { Markup } = require("telegraf");
 const { config } = require("./config");
 
+const BTN = {
+  START: "Старт",
+  SUBSCRIBE: "Оформить участие",
+  SUBSCRIPTION: "Моя подписка",
+  UPGRADE: "Улучшить тариф",
+  SUPPORT: "Поддержка",
+};
+
 const keyboards = {
+  /** Нижняя клавиатура — всегда видна в чате после первого /start */
+  replyMenu: ({ hasSubscription = false, canUpgrade = false } = {}) => {
+    const rows = [];
+    if (!hasSubscription) {
+      rows.push([BTN.START, BTN.SUBSCRIBE]);
+    } else {
+      rows.push([BTN.SUBSCRIPTION]);
+      if (canUpgrade) {
+        rows.push([BTN.UPGRADE]);
+      }
+    }
+    rows.push([BTN.SUPPORT]);
+    return Markup.keyboard(rows).resize().persistent();
+  },
+
   paymentMethods: () =>
     Markup.inlineKeyboard([
       [Markup.button.callback("Российская карта", "pay:ru")],
@@ -58,6 +81,26 @@ const keyboards = {
         ),
       ],
     ]),
+
+  membership: (sub, upgrades = []) => {
+    const rows = [];
+    if (sub?.invite_link) {
+      rows.push([Markup.button.url("Вступить в чат", sub.invite_link)]);
+    }
+    if (upgrades.includes("full")) {
+      rows.push([
+        Markup.button.callback(
+          "Улучшить до Полного исследования",
+          "upgrade:full",
+        ),
+      ]);
+    }
+    if (upgrades.includes("vip")) {
+      rows.push([Markup.button.callback("Улучшить до VIP", "upgrade:vip")]);
+    }
+    rows.push([Markup.button.url("Поддержка", config.supportUrl)]);
+    return Markup.inlineKeyboard(rows);
+  },
 };
 
-module.exports = { keyboards };
+module.exports = { keyboards, BTN };

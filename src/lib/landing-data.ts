@@ -2,7 +2,8 @@ import { landingAssets } from "./landing-assets";
 
 /** CTA «Присоединиться» / «Оплатить» → Telegram-бот */
 export const telegramBotUrl =
-  process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL ?? "https://t.me/betangoadminbot";
+  process.env.NEXT_PUBLIC_TELEGRAM_BOT_URL ??
+  "https://t.me/betangoadminbot?start=join";
 
 export const navLinks = [
   { label: "О клубе", href: "#about" },
