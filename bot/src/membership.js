@@ -1,6 +1,6 @@
-const { config } = require("./config");
 const { keyboards } = require("./keyboards");
 const db = require("./db");
+const { getPriceLabels } = require("./price-labels");
 const {
   createInviteLink,
   resolveChannelId,
@@ -50,7 +50,7 @@ function upgradeOptions(tariff) {
   return options;
 }
 
-function membershipText(sub) {
+function membershipText(sub, prices) {
   const label = TARIFF_LABELS[sub.tariff] || sub.tariff;
   const lines = [
     "Вы уже участник исследования танго.",
@@ -66,10 +66,10 @@ function membershipText(sub) {
       "Можете улучшить тариф — получите полный доступ или VIP с индивидуальными занятиями:",
     );
     if (upgrades.includes("full")) {
-      lines.push(`• Полное исследование — ${config.prices.full}`);
+      lines.push(`• Полное исследование — ${prices.full}`);
     }
     if (upgrades.includes("vip")) {
-      lines.push(`• VIP-исследование — ${config.prices.vip}`);
+      lines.push(`• VIP-исследование — ${prices.vip}`);
     }
   } else {
     lines.push("");
@@ -79,8 +79,8 @@ function membershipText(sub) {
   return lines.join("\n");
 }
 
-function membershipTextWithChannel(sub, { isMember }) {
-  const base = membershipText(sub);
+function membershipTextWithChannel(sub, { isMember }, prices) {
+  const base = membershipText(sub, prices);
   if (isMember) {
     return `${base}\n\nВы уже в закрытом канале — откройте его по кнопке ниже.`;
   }
@@ -98,6 +98,8 @@ async function sendMembershipCard(ctx, bot, telegramId) {
   }
   if (!sub) return false;
 
+  const user = await db.getUser(telegramId);
+  const prices = await getPriceLabels(user?.payment_method);
   const member = await isChannelMember(bot, telegramId);
 
   // Ссылка-заявка нужна только если ещё не в канале
@@ -125,7 +127,7 @@ async function sendMembershipCard(ctx, bot, telegramId) {
     keyboards.replyMenu({ hasSubscription: true }),
   );
   await ctx.reply(
-    membershipTextWithChannel(sub, channelOpts),
+    membershipTextWithChannel(sub, channelOpts, prices),
     keyboards.membership(sub, upgrades, channelOpts),
   );
   return true;

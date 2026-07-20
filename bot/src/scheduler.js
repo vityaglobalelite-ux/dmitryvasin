@@ -1,4 +1,4 @@
-const { texts } = require("./texts");
+const { getTexts } = require("./texts");
 const { keyboards } = require("./keyboards");
 const db = require("./db");
 const { config } = require("./config");
@@ -12,7 +12,13 @@ async function sendSafe(bot, telegramId, text, extra) {
   }
 }
 
+async function textsForUser(telegramId) {
+  const user = await db.getUser(telegramId);
+  return getTexts(user?.payment_method);
+}
+
 async function startVipFlow(bot, telegramId) {
+  const texts = await textsForUser(telegramId);
   await db.upsertVipIntake(telegramId, { step: "q1" });
   await db.updateUser(telegramId, { state: "vip_q1" });
   await sendSafe(bot, telegramId, texts.vipIntro);
@@ -22,6 +28,7 @@ async function processDueMessages(bot) {
   const due = await db.fetchDueMessages(50);
   for (const msg of due) {
     try {
+      const texts = await textsForUser(msg.telegram_id);
       switch (msg.kind) {
         case "tariff_nudge_10m":
           await sendSafe(
@@ -123,7 +130,6 @@ function startScheduler(bot) {
   tickMessages();
   tickPayments();
   const msgTimer = setInterval(tickMessages, config.schedulerIntervalMs);
-  // Быстрее подхватываем webhook → paid (доступ за ~10 с)
   const payTimer = setInterval(tickPayments, 10_000);
   return { msgTimer, payTimer };
 }

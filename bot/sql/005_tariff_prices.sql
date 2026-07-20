@@ -11,6 +11,10 @@ create table if not exists tariff_prices (
     check (checkout_currency in ('rub', 'usd', 'eur')),
   -- optional Stripe Price ID (if set for that currency, used instead of amount)
   stripe_price_id text,
+  -- optional crossed-out / "was" prices for promo copy
+  price_rub_was numeric(12, 2),
+  price_usd_was numeric(12, 2),
+  price_eur_was numeric(12, 2),
   label text,
   active boolean not null default true,
   updated_at timestamptz not null default now()
@@ -23,12 +27,13 @@ grant all on table tariff_prices to service_role;
 
 -- Seed (поменяйте под себя)
 insert into tariff_prices (
-  tariff, price_rub, price_usd, price_eur, checkout_currency, label
+  tariff, price_rub, price_usd, price_eur, checkout_currency,
+  price_rub_was, price_usd_was, price_eur_was, label
 ) values
-  ('trial',    1000.00, 11.00, 10.00, 'eur', 'Test-drive | 1 month'),
-  ('full',     1000.00, 11.00, 10.00, 'eur', 'Full research | 90 days'),
-  ('vip',      1000.00, 11.00, 10.00, 'eur', 'VIP research | 90 days'),
-  ('month2',   1000.00, 11.00, 10.00, 'eur', 'Month 2 renewal'),
-  ('month2_3', 1000.00, 11.00, 10.00, 'eur', 'Month 2+3 renewal'),
-  ('month3',   1000.00, 11.00, 10.00, 'eur', 'Month 3 renewal')
+  ('trial',    1000.00, 11.00, 10.00, 'eur', null, null, null, 'Test-drive | 1 month'),
+  ('full',     1000.00, 11.00, 10.00, 'eur', null, null, null, 'Full research | 90 days'),
+  ('vip',      1000.00, 11.00, 10.00, 'eur', null, null, null, 'VIP research | 90 days'),
+  ('month2',   1000.00, 11.00, 10.00, 'eur', null, null, null, 'Month 2 renewal'),
+  ('month2_3', 1000.00, 11.00, 10.00, 'eur', 2000, 22, 20, 'Month 2+3 renewal'),
+  ('month3',   1000.00, 11.00, 10.00, 'eur', null, null, null, 'Month 3 renewal')
 on conflict (tariff) do nothing;

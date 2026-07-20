@@ -204,6 +204,15 @@ async function setSetting(key, value) {
   if (error) throw error;
 }
 
+async function getTariffPrices() {
+  const { data, error } = await supabase
+    .from("tariff_prices")
+    .select("*")
+    .eq("active", true);
+  if (error) throw error;
+  return data || [];
+}
+
 async function fetchPaidUngrantedPayments(limit = 20) {
   const { data, error } = await supabase
     .from("payments")
@@ -270,6 +279,7 @@ module.exports = {
   markMessageSent,
   getSetting,
   setSetting,
+  getTariffPrices,
   fetchPaidUngrantedPayments,
   claimPaidPayment,
   markPaymentGranted,

@@ -1,6 +1,6 @@
 const { Telegraf } = require("telegraf");
 const { config } = require("./config");
-const { texts } = require("./texts");
+const { getTexts } = require("./texts");
 const { keyboards, BTN } = require("./keyboards");
 const db = require("./db");
 const {
@@ -26,7 +26,7 @@ function isAdmin(ctx) {
 }
 
 async function sendPaidMessage(ctx, subscription) {
-  const upgrades = upgradeOptions(subscription.tariff);
+  const texts = await getTexts();
   const member = await isChannelMember(bot, ctx.from.id);
   const openUrl = channelOpenUrl(await resolveChannelId());
   await ctx.reply(
@@ -47,6 +47,7 @@ async function sendPaidMessage(ctx, subscription) {
 }
 
 async function startPurchaseFlow(ctx, userId) {
+  const texts = await getTexts();
   await db.updateUser(userId, {
     state: "awaiting_payment_method",
     payment_method: null,
@@ -217,11 +218,12 @@ bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
     state: "awaiting_tariff",
   });
   await scheduleTariffNudges(ctx.from.id);
+  const texts = await getTexts(method);
   await ctx.reply(texts.chooseTariff, keyboards.tariffs());
 });
 
 async function startStripeCheckout(ctx, user, tariff) {
-  await ctx.reply(texts.payStripe);
+  const texts = await getTexts(user.payment_method || "foreign");
   try {
     const session = await createCheckoutSession({
       telegramId: user.telegram_id,
@@ -229,8 +231,9 @@ async function startStripeCheckout(ctx, user, tariff) {
       paymentMethod: user.payment_method || "foreign",
     });
     await db.updateUser(user.telegram_id, { state: "awaiting_payment" });
+    // Один bubble: текст + кнопки одной ширины
     await ctx.reply(
-      "Нажмите кнопку, чтобы перейти к оплате:",
+      `${texts.payStripe}\n\nНажмите кнопку, чтобы перейти к оплате:`,
       keyboards.stripePay(session.url),
     );
   } catch (err) {
@@ -271,6 +274,7 @@ async function purchaseTariff(ctx, tariff) {
 
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
+      const texts = await getTexts("ru");
       await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
       return;
     }
@@ -321,6 +325,7 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
 
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
+      const texts = await getTexts("ru");
       await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
       return;
     }
@@ -341,6 +346,7 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
 
 bot.action(/^vip_days:(weekdays|weekend|any)$/, async (ctx) => {
   await ctx.answerCbQuery();
+  const texts = await getTexts();
   const map = {
     weekdays: "Будни",
     weekend: "Выходные",
@@ -356,6 +362,7 @@ bot.action(/^vip_days:(weekdays|weekend|any)$/, async (ctx) => {
 
 bot.action(/^vip_time:(morning|day|evening)$/, async (ctx) => {
   await ctx.answerCbQuery();
+  const texts = await getTexts();
   const map = {
     morning: "Утро",
     day: "День",
@@ -374,6 +381,7 @@ bot.on("text", async (ctx) => {
   if (text.startsWith("/")) return;
 
   const user = (await db.getUser(ctx.from.id)) || (await db.upsertUser(ctx.from));
+  const texts = await getTexts(user.payment_method);
 
   // Свободные ответы VIP-анкеты важнее кнопок меню
   if (user.state === "vip_q1") {

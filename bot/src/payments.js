@@ -5,10 +5,11 @@ const {
   isChannelMember,
   resolveChannelId,
 } = require("./access");
-const { texts } = require("./texts");
+const { getTexts } = require("./texts");
 const { keyboards } = require("./keyboards");
 
 async function sendPaidToUser(bot, telegramId, subscription) {
+  const texts = await getTexts();
   const member = await isChannelMember(bot, telegramId);
   const openUrl = channelOpenUrl(await resolveChannelId());
   try {
