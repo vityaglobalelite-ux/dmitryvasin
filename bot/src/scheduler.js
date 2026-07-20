@@ -2,6 +2,7 @@ const { texts } = require("./texts");
 const { keyboards } = require("./keyboards");
 const db = require("./db");
 const { config } = require("./config");
+const { processPaidPayments } = require("./payments");
 
 async function sendSafe(bot, telegramId, text, extra) {
   try {
@@ -108,13 +109,23 @@ async function processDueMessages(bot) {
 }
 
 function startScheduler(bot) {
-  const tick = () => {
+  const tickMessages = () => {
     processDueMessages(bot).catch((err) =>
       console.error("Scheduler tick failed:", err),
     );
   };
-  tick();
-  return setInterval(tick, config.schedulerIntervalMs);
+  const tickPayments = () => {
+    if (config.paymentMode !== "stripe") return;
+    processPaidPayments(bot).catch((err) =>
+      console.error("Payments tick failed:", err),
+    );
+  };
+  tickMessages();
+  tickPayments();
+  const msgTimer = setInterval(tickMessages, config.schedulerIntervalMs);
+  // Быстрее подхватываем webhook → paid (доступ за ~10 с)
+  const payTimer = setInterval(tickPayments, 10_000);
+  return { msgTimer, payTimer };
 }
 
 module.exports = { startScheduler, startVipFlow };

@@ -204,6 +204,55 @@ async function setSetting(key, value) {
   if (error) throw error;
 }
 
+async function fetchPaidUngrantedPayments(limit = 20) {
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("status", "paid")
+    .order("created_at", { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
+async function claimPaidPayment(paymentId) {
+  const { data, error } = await supabase.rpc("claim_paid_payment", {
+    p_id: paymentId,
+  });
+  if (error) throw error;
+  return data || null;
+}
+
+async function markPaymentGranted(paymentId, subscriptionId) {
+  const { data, error } = await supabase
+    .from("payments")
+    .update({
+      status: "granted",
+      subscription_id: subscriptionId,
+      granted_at: nowIso(),
+      updated_at: nowIso(),
+      error: null,
+    })
+    .eq("id", paymentId)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function markPaymentGrantFailed(paymentId, errorMessage) {
+  const { error } = await supabase
+    .from("payments")
+    .update({
+      status: "paid",
+      error: String(errorMessage || "grant failed").slice(0, 500),
+      updated_at: nowIso(),
+    })
+    .eq("id", paymentId)
+    .eq("status", "granting");
+  if (error) throw error;
+}
+
 module.exports = {
   supabase,
   upsertUser,
@@ -221,4 +270,8 @@ module.exports = {
   markMessageSent,
   getSetting,
   setSetting,
+  fetchPaidUngrantedPayments,
+  claimPaidPayment,
+  markPaymentGranted,
+  markPaymentGrantFailed,
 };

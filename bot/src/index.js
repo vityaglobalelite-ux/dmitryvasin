@@ -17,6 +17,7 @@ const {
   TARIFF_RANK,
   TARIFF_LABELS,
 } = require("./membership");
+const { createCheckoutSession } = require("./stripe-checkout");
 
 const bot = new Telegraf(config.token);
 
@@ -219,6 +220,28 @@ bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
   await ctx.reply(texts.chooseTariff, keyboards.tariffs());
 });
 
+async function startStripeCheckout(ctx, user, tariff) {
+  await ctx.reply(texts.payStripe);
+  try {
+    const session = await createCheckoutSession({
+      telegramId: user.telegram_id,
+      tariff,
+      paymentMethod: user.payment_method || "foreign",
+    });
+    await db.updateUser(user.telegram_id, { state: "awaiting_payment" });
+    await ctx.reply(
+      "Нажмите кнопку, чтобы перейти к оплате:",
+      keyboards.stripePay(session.url),
+    );
+  } catch (err) {
+    console.error("Stripe checkout failed:", err.message);
+    await ctx.reply(
+      "Не удалось создать ссылку на оплату. Попробуйте ещё раз чуть позже или напишите в поддержку.",
+      keyboards.afterPayment(null),
+    );
+  }
+}
+
 async function purchaseTariff(ctx, tariff) {
   const user = await db.upsertUser(ctx.from);
   const current = await db.getActiveSubscription(user.telegram_id);
@@ -235,21 +258,30 @@ async function purchaseTariff(ctx, tariff) {
     }
   }
 
-  if (config.paymentMode !== "mock") {
-    await ctx.reply(
-      "Оплата пока не подключена. Режим mock выключен — напишите в поддержку.",
-      keyboards.afterPayment(null),
+  if (config.paymentMode === "mock") {
+    const sub = await grantAccess(
+      bot,
+      user.telegram_id,
+      tariff,
+      user.payment_method,
     );
+    await sendPaidMessage(ctx, sub);
     return;
   }
 
-  const sub = await grantAccess(
-    bot,
-    user.telegram_id,
-    tariff,
-    user.payment_method,
+  if (config.paymentMode === "stripe") {
+    if (user.payment_method === "ru") {
+      await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
+      return;
+    }
+    await startStripeCheckout(ctx, user, tariff);
+    return;
+  }
+
+  await ctx.reply(
+    "Оплата пока не подключена. Напишите в поддержку.",
+    keyboards.afterPayment(null),
   );
-  await sendPaidMessage(ctx, sub);
 }
 
 bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
@@ -268,7 +300,6 @@ bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
     await sendMembershipCard(ctx, bot, user.telegram_id);
     return;
   }
-  // В mock сразу улучшаем; позже здесь будет оплата
   await purchaseTariff(ctx, tariff);
 });
 
@@ -277,21 +308,35 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
   const tariff = ctx.match[1];
   const user = await db.upsertUser(ctx.from);
 
-  if (config.paymentMode !== "mock") {
-    await ctx.reply(
-      "Оплата пока не подключена. Режим mock выключен — напишите в поддержку.",
-      keyboards.afterPayment(null),
+  if (config.paymentMode === "mock") {
+    const sub = await grantAccess(
+      bot,
+      user.telegram_id,
+      tariff,
+      user.payment_method,
     );
+    await sendPaidMessage(ctx, sub);
     return;
   }
 
-  const sub = await grantAccess(
-    bot,
-    user.telegram_id,
-    tariff,
-    user.payment_method,
+  if (config.paymentMode === "stripe") {
+    if (user.payment_method === "ru") {
+      await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
+      return;
+    }
+    // Renewals: if method unknown, treat as foreign (Stripe)
+    if (!user.payment_method) {
+      await db.updateUser(user.telegram_id, { payment_method: "foreign" });
+      user.payment_method = "foreign";
+    }
+    await startStripeCheckout(ctx, user, tariff);
+    return;
+  }
+
+  await ctx.reply(
+    "Оплата пока не подключена. Напишите в поддержку.",
+    keyboards.afterPayment(null),
   );
-  await sendPaidMessage(ctx, sub);
 });
 
 bot.action(/^vip_days:(weekdays|weekend|any)$/, async (ctx) => {
@@ -374,6 +419,14 @@ bot.on("text", async (ctx) => {
 
   if (user.state === "awaiting_tariff") {
     await ctx.reply(texts.chooseTariff, keyboards.tariffs());
+    return;
+  }
+
+  if (user.state === "awaiting_payment") {
+    await ctx.reply(
+      "Ожидаем оплату. Если уже оплатили — доступ придёт сюда в течение минуты. Или выберите тариф снова:",
+      keyboards.tariffs(),
+    );
     return;
   }
 

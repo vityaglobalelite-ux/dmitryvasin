@@ -28,6 +28,13 @@ const keyboards = {
       [Markup.button.callback("Карта иностранного банка", "pay:foreign")],
     ]),
 
+  /** Stripe Checkout URL (foreign cards) */
+  stripePay: (checkoutUrl) =>
+    Markup.inlineKeyboard([
+      [Markup.button.url("Оплатить картой", checkoutUrl)],
+      [Markup.button.url("Поддержка", config.supportUrl)],
+    ]),
+
   tariffs: () =>
     Markup.inlineKeyboard([
       [Markup.button.callback("Тест-драйв | 1 месяц", "tariff:trial")],

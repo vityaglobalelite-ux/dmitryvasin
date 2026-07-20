@@ -32,7 +32,15 @@ const config = {
   supportWebAppUrl:
     process.env.SUPPORT_WEBAPP_URL || "https://betango.dance/go-support.html",
   adminIds: parseAdminIds(process.env.ADMIN_TELEGRAM_IDS),
+  /**
+   * mock — тариф сразу выдаёт доступ (без Stripe)
+   * stripe — foreign → Stripe Checkout; ru пока заглушка
+   */
   paymentMode: process.env.PAYMENT_MODE || "mock",
+  checkoutSecret: process.env.CHECKOUT_SECRET || "",
+  botUsername: (process.env.TELEGRAM_BOT_USERNAME || "").replace(/^@/, ""),
+  stripeSuccessUrl: process.env.STRIPE_SUCCESS_URL || "",
+  stripeCancelUrl: process.env.STRIPE_CANCEL_URL || "",
   prices: {
     trial: process.env.PRICE_TRIAL || "1 000 ₽",
     full: process.env.PRICE_FULL || "1 000 ₽",
