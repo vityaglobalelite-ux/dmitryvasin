@@ -21,10 +21,6 @@ const { createCheckoutSession } = require("./stripe-checkout");
 
 const bot = new Telegraf(config.token);
 
-function isAdmin(ctx) {
-  return config.adminIds.has(ctx.from?.id);
-}
-
 async function sendPaidMessage(ctx, subscription) {
   const texts = await getTexts();
   const member = await isChannelMember(bot, ctx.from.id);
@@ -147,62 +143,13 @@ async function handleIdCommand(ctx) {
   }
 }
 
-async function handleBindChannel(ctx) {
-  if (!isAdmin(ctx) && config.adminIds.size > 0) {
-    try {
-      await ctx.reply("Команда только для админов.");
-    } catch {
-      /* ignore */
-    }
-    return;
-  }
-  if (ctx.chat.type === "private") {
-    return ctx.reply(
-      "Напишите /bind_channel в канале/чате клуба (бот должен быть админом).",
-    );
-  }
-  const chatId = String(ctx.chat.id);
-  await db.setSetting("telegram_channel_id", chatId);
-  const text = `Канал привязан: ${chatId}\ntitle: ${ctx.chat.title || "—"}`;
-  log("Channel bound:", chatId);
-
-  // В канале без права «Управление публикациями» reply падает — шлём в личку
-  let delivered = false;
-  try {
-    await ctx.reply(text);
-    delivered = true;
-  } catch {
-    try {
-      await ctx.telegram.sendMessage(ctx.chat.id, text);
-      delivered = true;
-    } catch {
-      /* no post rights in channel */
-    }
-  }
-  if (!delivered && ctx.from?.id) {
-    try {
-      await ctx.telegram.sendMessage(
-        ctx.from.id,
-        `${text}\n\n(В канале бот не смог ответить — включите «Управление публикациями».)`,
-      );
-    } catch {
-      /* user never started the bot */
-    }
-  }
-}
-
 bot.command("id", handleIdCommand);
-bot.command("bind_channel", handleBindChannel);
 
 // Каналы шлют channel_post, а не message — обычные bot.command их не видят
 bot.on("channel_post", async (ctx) => {
   const text = ctx.channelPost?.text?.trim() || "";
   if (text === "/id" || text.startsWith("/id@")) {
     await handleIdCommand(ctx);
-    return;
-  }
-  if (text === "/bind_channel" || text.startsWith("/bind_channel@")) {
-    await handleBindChannel(ctx);
   }
 });
 
