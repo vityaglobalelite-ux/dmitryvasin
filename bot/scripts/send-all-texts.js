@@ -5,10 +5,10 @@
  */
 require("dotenv").config();
 const { Telegraf } = require("telegraf");
-const { getTexts } = require("../src/texts");
-const { config } = require("../src/config");
-const { getPriceLabels } = require("../src/price-labels");
-const { membershipText, TARIFF_LABELS } = require("../src/membership");
+const { getTexts } = require("./src/texts");
+const { config } = require("./src/config");
+const { getPriceLabels } = require("./src/price-labels");
+const { membershipText, TARIFF_LABELS } = require("./src/membership");
 
 async function main() {
   const telegramId = Number(process.argv[2] || "5347333358");
