@@ -1,7 +1,64 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { useIsMobile } from "@/lib/landing-mode";
+
+type QuoteVideoPlayerProps = {
+  playButtonSize: number;
+  className?: string;
+};
+
+function QuoteVideoPlayer({ playButtonSize, className }: QuoteVideoPlayerProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [playing, setPlaying] = useState(false);
+
+  const start = () => {
+    setPlaying(true);
+    requestAnimationFrame(() => {
+      void videoRef.current?.play().catch(() => {
+        /* autoplay may be blocked; native controls remain */
+      });
+    });
+  };
+
+  return (
+    <div className={`relative overflow-hidden bg-[#d9d9d9] ${className ?? ""}`}>
+      {playing ? (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 size-full object-cover"
+          src={landingAssets.video.intro}
+          poster={landingAssets.photos.videoPreview}
+          controls
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <>
+          <img
+            src={landingAssets.photos.videoPreview}
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+          />
+          <button
+            type="button"
+            aria-label="Смотреть видео"
+            onClick={start}
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition hover:brightness-110"
+            style={{ width: playButtonSize, height: playButtonSize }}
+          >
+            <img
+              src={landingAssets.video.playButton}
+              alt=""
+              className="size-full"
+            />
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
 
 /* Figma Главная_360: Frame 2421 (20,2160,320×625) */
 function QuoteVideoMobile() {
@@ -35,24 +92,10 @@ function QuoteVideoMobile() {
       </div>
 
       <div className="flex w-full flex-col gap-[10px]">
-        <div className="relative h-[163px] w-full overflow-hidden rounded-[10px] bg-[#d9d9d9]">
-          <img
-            src={landingAssets.photos.videoPreview}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
-          <button
-            type="button"
-            aria-label="Смотреть видео"
-            className="absolute left-1/2 top-1/2 size-[50px] -translate-x-1/2 -translate-y-1/2 transition hover:brightness-110"
-          >
-            <img
-              src={landingAssets.video.playButton}
-              alt=""
-              className="size-full"
-            />
-          </button>
-        </div>
+        <QuoteVideoPlayer
+          playButtonSize={50}
+          className="h-[163px] w-full rounded-[10px]"
+        />
         <p className="text-center text-[20px] font-medium leading-[1.1] tracking-[-0.6px] text-text">
           В этом коротком видео рассказываю, как именно будем исследовать танго
         </p>
@@ -91,24 +134,10 @@ function QuoteVideoDesktop() {
 
       {/* right video column */}
       <div className="flex min-w-0 flex-1 flex-col gap-[20px]">
-        <div className="relative h-[435px] w-full overflow-hidden rounded-[30px] bg-[#d9d9d9]">
-          <img
-            src={landingAssets.photos.videoPreview}
-            alt=""
-            className="absolute inset-0 size-full object-cover"
-          />
-          <button
-            type="button"
-            aria-label="Смотреть видео"
-            className="absolute left-1/2 top-1/2 size-[71px] -translate-x-1/2 -translate-y-1/2 transition hover:brightness-110"
-          >
-            <img
-              src={landingAssets.video.playButton}
-              alt=""
-              className="size-full"
-            />
-          </button>
-        </div>
+        <QuoteVideoPlayer
+          playButtonSize={71}
+          className="h-[435px] w-full rounded-[30px]"
+        />
         <p className="text-center text-[40px] font-medium leading-[1.1] tracking-[-1.2px] text-text">
           В этом коротком видео рассказываю, как именно будем исследовать танго
         </p>

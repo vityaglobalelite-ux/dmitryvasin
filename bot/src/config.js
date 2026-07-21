@@ -46,7 +46,7 @@ const config = {
     "https://t.me/be_tango_support_bot?start=help",
   /** HTTPS-страница-редирект для WebApp-кнопки «Поддержка» */
   supportWebAppUrl:
-    process.env.SUPPORT_WEBAPP_URL || "https://betango.dance/go-support.html",
+    process.env.SUPPORT_WEBAPP_URL || "https://dmitryvasin.com/go-support.html",
   adminIds: parseAdminIds(process.env.ADMIN_TELEGRAM_IDS),
   /**
    * mock — тариф сразу выдаёт доступ (без Stripe)

@@ -28,21 +28,13 @@ npm run dev
 
 [http://localhost:3000](http://localhost:3000)
 
-## GitHub Pages
+## Production
 
-Сайт публикуется при push в `master`: [GitHub Actions](.github/workflows/deploy-pages.yml).
+Продакшен: **https://dmitryvasin.com** (статика на VPS, Caddy).
 
-**Один раз в репозитории на GitHub:** Settings → Pages → Build and deployment → **Source: GitHub Actions**.
+Сборка без `basePath` (`NEXT_PUBLIC_BASE_PATH=""`). Артефакт из `out/` кладётся в `/var/www/dmitryvasin.com` на сервере.
 
-После успешного деплоя: **https://vityaglobalelite-ux.github.io/dmitryvasin/**
-
-Локальная проверка сборки как на Pages:
-
-```bash
-set NEXT_PUBLIC_BASE_PATH=/dmitryvasin
-npm run build
-npx serve out
-```
+GitHub Pages workflow ([deploy-pages.yml](.github/workflows/deploy-pages.yml)) тоже собирает без `basePath` как запасной деплой.
 
 ## Cloudflare
 

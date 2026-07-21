@@ -97,6 +97,10 @@ export const landingAssets = {
   },
   video: {
     playButton: landingAsset("video-play-button.svg"),
+    /** Public Supabase Storage URL (set after upload) */
+    intro:
+      process.env.NEXT_PUBLIC_LANDING_INTRO_VIDEO_URL ??
+      "https://api.betango.dance/storage/v1/object/public/landing/explore-tango-1080p.mp4",
   },
   illustrations: {
     awareness3d: asset("illustration-awareness-3d.webp"),

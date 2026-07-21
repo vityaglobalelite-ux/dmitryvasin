@@ -1,4 +1,4 @@
-name: Deploy to GitHub Pages
+name: Deploy site
 
 on:
   push:
@@ -26,12 +26,17 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          NEXT_PUBLIC_BASE_PATH: /dmitryvasin
+          # Production domain is root: https://dmitryvasin.com
+          NEXT_PUBLIC_BASE_PATH: ""
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-static
+          path: ./out
 
-  deploy:
+  deploy-pages:
     needs: build
     runs-on: ubuntu-latest
     environment:
