@@ -8,8 +8,14 @@ import {
   type ReactNode,
 } from "react";
 
+import { MOBILE_CANVAS_HEIGHT_SHRINK } from "@/lib/mobile-section-gaps";
+
 export const DESKTOP_CANVAS = { w: 1920, h: 15131 } as const;
-export const MOBILE_CANVAS = { w: 360, h: 17666 } as const;
+/** Figma Главная_360 is 17666; shortened after mobile inter-section gap compression */
+export const MOBILE_CANVAS = {
+  w: 360,
+  h: 17666 - MOBILE_CANVAS_HEIGHT_SHRINK,
+} as const;
 /** Viewport max-width that uses Figma Главная_360 (360×17666). */
 export const MOBILE_MAX_WIDTH = 767;
 

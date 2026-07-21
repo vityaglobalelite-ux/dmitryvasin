@@ -13,7 +13,8 @@ import { StickyMobileCta } from "./StickyMobileCta";
 
 /**
  * Fixed design canvas scaled to the viewport width via CSS zoom.
- * Desktop: Figma 1920×15131. Mobile (≤767px): Figma Главная_360 360×17666.
+ * Desktop: Figma 1920×15131. Mobile (≤767px): Figma Главная_360 360×17666
+ * (canvas height shortened via MOBILE_GAP_SHIFT — see mobile-section-gaps.ts).
  */
 function FigCanvasInner({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
