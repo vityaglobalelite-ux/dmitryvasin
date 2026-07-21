@@ -142,7 +142,7 @@ function QuoteVideoPlayer({
 /* Figma Главная_360: Frame 2421 (20,2160,320×625) */
 function QuoteVideoMobile() {
   return (
-    <section className="absolute left-[20px] top-[2160px] flex h-[625px] w-[320px] flex-col gap-[20px] rounded-[40px] bg-light-gray p-[15px]">
+    <section className="absolute left-[20px] top-[2160px] flex h-[650px] w-[320px] flex-col gap-[20px] rounded-[40px] bg-light-gray px-[15px] pb-[15px] pt-[40px]">
       <div className="flex flex-col gap-[30px] rounded-[10px] bg-white p-[15px]">
         <img
           src={landingAssets.photos.quoteAvatar}

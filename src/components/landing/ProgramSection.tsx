@@ -252,6 +252,8 @@ const mobileNodePositions = [
 ];
 
 const MOBILE_TOP = 5767;
+/** Inset so title/content aren't flush to the top of the gray band */
+const MOBILE_PAD_TOP = 40;
 const my = (abs: number) => abs - MOBILE_TOP;
 
 /**
@@ -307,7 +309,8 @@ function ProgramMobile() {
     !!lastNode &&
     (lastNode.skills.length >= 2 || lastNode.title.length > 28);
   const boardH = tallLast ? 1048 : 984;
-  const boardAbsBottom = 5888 + boardH;
+  const boardAbsTop = 5888 + MOBILE_PAD_TOP;
+  const boardAbsBottom = boardAbsTop + boardH;
   const resultAbsTop = boardAbsBottom + 20;
   const accordionAbsTop = resultAbsTop + 425 + 20;
 
@@ -346,14 +349,17 @@ function ProgramMobile() {
         style={{ height: my(accordionAbsTop) }}
       />
 
-      <h2 className="h-section-mobile absolute left-[20px] top-0 z-[1] w-[289px]">
+      <h2
+        className="h-section-mobile absolute left-[20px] z-[1] w-[289px]"
+        style={{ top: MOBILE_PAD_TOP }}
+      >
         Ваш маршрут на 90 дней
       </h2>
 
-      {/* Month tabs — 20,5813 */}
+      {/* Month tabs — 20,5813 (+ pad) */}
       <div
         className="absolute left-[20px] z-[1] flex h-[35px] w-[319px] items-center gap-[14px]"
-        style={{ top: my(5813) }}
+        style={{ top: my(5813 + MOBILE_PAD_TOP) }}
       >
         {programMonths.map((m, i) => {
           const active = i === tabIdx;
@@ -381,7 +387,7 @@ function ProgramMobile() {
         }}
         data-program-board
         className="program-layout-ease absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
-        style={{ top: my(5888), width: 320, height: boardH }}
+        style={{ top: my(boardAbsTop), width: 320, height: boardH }}
       >
         <div className="absolute left-[15px] top-[48px] flex w-[298px] items-center gap-[10px]">
           <img

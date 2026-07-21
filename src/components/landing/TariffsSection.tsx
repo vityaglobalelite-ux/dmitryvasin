@@ -3,6 +3,10 @@
 import { landingAssets } from "@/lib/landing-assets";
 import { tariffs, telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+import {
+  tariffKeyForIndex,
+  useLandingTariffPrices,
+} from "@/lib/tariff-prices";
 
 /* Figma: y 10354..11120 — «Выбирайте тариф участия» */
 
@@ -16,7 +20,6 @@ function DurationLabel({
   duration: string;
   className?: string;
 }) {
-  // Bold the leading duration chunk before «участия»
   const match = duration.match(/^(.*?)(\s+участия.*)$/u);
   if (!match) {
     return <span className={className}>{duration}</span>;
@@ -29,7 +32,36 @@ function DurationLabel({
   );
 }
 
+function PriceRow({
+  price,
+  oldPrice,
+  priceClassName,
+  oldClassName,
+}: {
+  price: string;
+  oldPrice: string | null;
+  priceClassName: string;
+  oldClassName: string;
+}) {
+  return (
+    <p className="flex items-center gap-[30px] whitespace-nowrap">
+      <span
+        className={priceClassName}
+        style={{
+          backgroundImage:
+            "linear-gradient(137.53deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+        }}
+      >
+        {price}
+      </span>
+      {oldPrice ? <span className={oldClassName}>{oldPrice}</span> : null}
+    </p>
+  );
+}
+
 function TariffsMobile() {
+  const { prices } = useLandingTariffPrices();
+
   return (
     <section className="absolute left-0 top-0 h-0 w-full">
       <h2
@@ -39,7 +71,6 @@ function TariffsMobile() {
         Выбирайте тариф участия
       </h2>
 
-      {/* Frame 2391 — 20,12325,193×50 */}
       <div className="absolute left-[20px] top-[12325px] flex h-[50px] w-[193px] items-center gap-[10px] rounded-[10px] bg-[image:var(--brand-gradient)] px-[15px] py-[8px]">
         <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
           <img
@@ -57,6 +88,7 @@ function TariffsMobile() {
 
       {tariffs.map((t, i) => {
         const isVip = i === 2;
+        const display = prices[tariffKeyForIndex(i)];
         return (
           <article
             key={t.id}
@@ -114,20 +146,12 @@ function TariffsMobile() {
             </div>
 
             <div className="flex flex-col gap-[30px]">
-              <p className="flex items-center gap-[30px] whitespace-nowrap">
-                <span
-                  className="bg-clip-text text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-transparent"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(137.53deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
-                  }}
-                >
-                  {t.price}
-                </span>
-                <span className="text-[16px] font-medium leading-[1.2] text-text line-through">
-                  {t.oldPrice}
-                </span>
-              </p>
+              <PriceRow
+                price={display.price}
+                oldPrice={display.oldPrice}
+                priceClassName="bg-clip-text text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-transparent"
+                oldClassName="text-[16px] font-medium leading-[1.2] text-text line-through"
+              />
               <a
                 href={telegramBotUrl}
                 target="_blank"
@@ -145,6 +169,8 @@ function TariffsMobile() {
 }
 
 function TariffsDesktop() {
+  const { prices } = useLandingTariffPrices();
+
   return (
     <section className="absolute left-0 top-0 h-0 w-full">
       <h2
@@ -154,7 +180,6 @@ function TariffsDesktop() {
         Выбирайте тариф участия
       </h2>
 
-      {/* Figma 287:657 — градиентный чип «Старт» */}
       <div
         className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center gap-[10px] rounded-[20px] px-[20px] py-[10px]"
         style={{
@@ -177,83 +202,74 @@ function TariffsDesktop() {
         </span>
       </div>
 
-      {tariffs.map((t, i) => (
-        <article
-          key={t.id}
-          className="absolute flex h-[636px] w-[467px] flex-col justify-between rounded-[20px] bg-light-gray p-[30px]"
-          style={{ left: cardX[i], top: 10458 }}
-        >
-          <div className="flex w-full flex-col gap-[30px]">
-            <div className="flex h-[50px] flex-col gap-[6px]">
-              <p className="text-[14px] font-semibold uppercase leading-[1.1] text-accent-red">
-                {t.badge}
-              </p>
-              <p className="text-[30px] font-semibold leading-[1.2] text-[#1a1a1a]">
-                {t.title}
-              </p>
-            </div>
-
-            {/* Figma 249:1859 — белый duration pill */}
-            <div className="flex h-[62px] w-full items-center gap-[10px] rounded-[20px] bg-white px-[20px] py-[10px]">
-              <div
-                className="grid size-[34px] shrink-0 place-items-center rounded-[17px]"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(111.28deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
-                }}
-              >
-                <img
-                  src={landingAssets.icons.calendarBoldWhite}
-                  alt=""
-                  className="size-[20px]"
-                  width={20}
-                  height={20}
-                />
+      {tariffs.map((t, i) => {
+        const display = prices[tariffKeyForIndex(i)];
+        return (
+          <article
+            key={t.id}
+            className="absolute flex h-[636px] w-[467px] flex-col justify-between rounded-[20px] bg-light-gray p-[30px]"
+            style={{ left: cardX[i], top: 10458 }}
+          >
+            <div className="flex w-full flex-col gap-[30px]">
+              <div className="flex h-[50px] flex-col gap-[6px]">
+                <p className="text-[14px] font-semibold uppercase leading-[1.1] text-accent-red">
+                  {t.badge}
+                </p>
+                <p className="text-[30px] font-semibold leading-[1.2] text-[#1a1a1a]">
+                  {t.title}
+                </p>
               </div>
-              <DurationLabel duration={t.duration} />
+
+              <div className="flex h-[62px] w-full items-center gap-[10px] rounded-[20px] bg-white px-[20px] py-[10px]">
+                <div
+                  className="grid size-[34px] shrink-0 place-items-center rounded-[17px]"
+                  style={{
+                    backgroundImage:
+                      "linear-gradient(111.28deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
+                  }}
+                >
+                  <img
+                    src={landingAssets.icons.calendarBoldWhite}
+                    alt=""
+                    className="size-[20px]"
+                    width={20}
+                    height={20}
+                  />
+                </div>
+                <DurationLabel duration={t.duration} />
+              </div>
+
+              <ul className="flex w-full flex-col gap-[10px]">
+                {t.features.map((f, fi) => (
+                  <li key={f} className="contents">
+                    {fi > 0 ? (
+                      <div className="h-px w-full bg-white" aria-hidden />
+                    ) : null}
+                    <p className="text-[16px] leading-[1.5] text-[#1a1a1a]">{f}</p>
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <ul className="flex w-full flex-col gap-[10px]">
-              {t.features.map((f, fi) => (
-                <li key={f} className="contents">
-                  {fi > 0 ? (
-                    <div
-                      className="h-px w-full bg-white"
-                      aria-hidden
-                    />
-                  ) : null}
-                  <p className="text-[16px] leading-[1.5] text-[#1a1a1a]">{f}</p>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="flex flex-col gap-[30px]">
-            <p className="flex items-center gap-[30px] whitespace-nowrap">
-              <span
-                className="bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent"
-                style={{
-                  backgroundImage:
-                    "linear-gradient(137.53deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
-                }}
+            <div className="flex flex-col gap-[30px]">
+              <PriceRow
+                price={display.price}
+                oldPrice={display.oldPrice}
+                priceClassName="bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent"
+                oldClassName="text-[20px] font-semibold leading-[1.2] text-text line-through"
+              />
+              <a
+                href={telegramBotUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-primary"
               >
-                {t.price}
-              </span>
-              <span className="text-[20px] font-semibold leading-[1.2] text-text line-through">
-                {t.oldPrice}
-              </span>
-            </p>
-            <a
-              href={telegramBotUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-primary"
-            >
-              Оплатить
-            </a>
-          </div>
-        </article>
-      ))}
+                Оплатить
+              </a>
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
 }
