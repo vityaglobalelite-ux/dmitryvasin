@@ -893,6 +893,3 @@ export const socialLinks = [
     label: "Email",
   },
 ] as const;
-
-/** Price increase countdown target */
-export const countdownTarget = new Date("2026-07-25T00:00:00+03:00");

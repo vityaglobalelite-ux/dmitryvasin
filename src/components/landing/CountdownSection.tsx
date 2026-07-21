@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
-import { countdownTarget, telegramBotUrl } from "@/lib/landing-data";
+import { telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+import { usePriceIncreaseTarget } from "@/lib/price-increase";
 
 function getTimeLeft(target: Date) {
   const diff = Math.max(0, target.getTime() - Date.now());
@@ -18,15 +19,19 @@ function getTimeLeft(target: Date) {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function useCountdownDisplay() {
+function useCountdownDisplay(target: Date | null) {
   const [time, setTime] = useState<ReturnType<typeof getTimeLeft> | null>(null);
 
   useEffect(() => {
-    const tick = () => setTime(getTimeLeft(countdownTarget));
+    if (!target) {
+      setTime(null);
+      return;
+    }
+    const tick = () => setTime(getTimeLeft(target));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [target]);
 
   return time
     ? `${pad(time.days)}:${pad(time.hours)}:${pad(time.minutes)}:${pad(time.seconds)}`
@@ -133,7 +138,11 @@ function CountdownDesktop({ display }: { display: string }) {
 
 export function CountdownSection() {
   const isMobile = useIsMobile();
-  const display = useCountdownDisplay();
+  const { target, active } = usePriceIncreaseTarget();
+  const display = useCountdownDisplay(active ? target : null);
+
+  if (!active || !target) return null;
+
   return isMobile ? (
     <CountdownMobile display={display} />
   ) : (
