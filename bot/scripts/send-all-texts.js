@@ -103,6 +103,21 @@ async function main() {
 
   push("27. reply menu (нет подписки)", "Выберите действие 👇");
   push("28. reply menu (есть подписка)", "Выберите действие 👇");
+  push("29. chatAccessEnded (кик после grace)", texts.chatAccessEnded);
+  push(
+    "30. membership grace (+1 месяц к чатам)",
+    membershipText(
+      {
+        tariff: "trial",
+        access_ends_at: endTrial,
+        chat_access_ends_at: endFull,
+        unlocked_months: [1],
+      },
+      prices,
+      [{ kind: "open", label: "Уроки — месяц 1", url: "https://t.me/" }],
+      { inGrace: true },
+    ),
+  );
 
   await bot.telegram.sendMessage(
     telegramId,
