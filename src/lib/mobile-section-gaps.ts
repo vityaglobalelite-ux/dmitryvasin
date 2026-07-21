@@ -4,7 +4,7 @@
  * Gaps BETWEEN section backgrounds (where colors meet), not inner padding.
  * MyView → Directions (arrow) keeps its relative gap.
  */
-const TARGET_GAP = 80;
+const TARGET_GAP = 40;
 
 const ORIGINAL = {
   /** Noticed full-bleed gray ends exactly where Quote rounded block starts */

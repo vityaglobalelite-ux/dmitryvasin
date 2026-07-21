@@ -868,13 +868,31 @@ export const footerLinks = [
 ] as const;
 
 export const socialLinks = [
-  { icon: landingAssets.social.instagram, href: "#", label: "Instagram" },
-  { icon: landingAssets.social.telegram, href: "#", label: "Telegram" },
-  { icon: landingAssets.social.vk, href: "#", label: "VK" },
-  { icon: landingAssets.social.facebook, href: "#", label: "Facebook" },
-  { icon: landingAssets.social.email, href: "#", label: "Email" },
-  { icon: landingAssets.social.youtube, href: "#", label: "YouTube" },
-  { icon: landingAssets.social.whatsapp, href: "#", label: "WhatsApp" },
+  {
+    icon: landingAssets.social.instagram,
+    href: "https://www.instagram.com/dmitryvasintango",
+    label: "Instagram",
+  },
+  {
+    icon: landingAssets.social.telegram,
+    href: "https://t.me/DmitryVasinTango",
+    label: "Telegram",
+  },
+  {
+    icon: landingAssets.social.vk,
+    href: "https://vk.com/dmitryvasintango",
+    label: "VK",
+  },
+  {
+    icon: landingAssets.social.facebook,
+    href: "https://www.facebook.com/DmitryVasinSagdianaHamzina",
+    label: "Facebook",
+  },
+  {
+    icon: landingAssets.social.youtube,
+    href: "https://www.youtube.com/@dmitryvasintango",
+    label: "YouTube",
+  },
 ] as const;
 
 /** Price increase countdown target */

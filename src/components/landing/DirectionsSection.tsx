@@ -156,7 +156,7 @@ function DirectionsMobile() {
       {mobileCards.map((c) => (
         <div
           key={c.title}
-          className="absolute left-[20px] z-[3] flex w-[320px] flex-col gap-[10px] overflow-hidden rounded-[10px] bg-light-gray p-[15px]"
+          className="absolute left-[20px] z-[3] flex w-[320px] flex-col justify-center gap-[10px] overflow-hidden rounded-[10px] bg-light-gray px-[15px] py-[15px]"
           style={{ top: c.y, height: c.h }}
         >
           <h3 className="relative z-[2] max-w-[210px] text-[16px] font-medium leading-[1.2] text-text">
