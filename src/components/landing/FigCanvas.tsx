@@ -21,7 +21,8 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
   const mode = useLandingMode();
   const { shift } = useProgramTail();
   const canvas = mode === "mobile" ? MOBILE_CANVAS : DESKTOP_CANVAS;
-  const height = canvas.h + Math.max(0, shift);
+  /* shift < 0 when accordion collapses — must shrink canvas or a huge empty gap appears at the bottom */
+  const height = canvas.h + shift;
 
   useEffect(() => {
     const el = ref.current;
