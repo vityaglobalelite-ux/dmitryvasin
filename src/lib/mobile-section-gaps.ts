@@ -1,11 +1,14 @@
 /**
  * Mobile inter-section spacing (Figma canvas px).
- * Compress gaps that are larger than TARGET; leave smaller ones alone.
- * MyView → Directions (arrow scribble) is NOT compressed.
+ *
+ * Gaps BETWEEN section backgrounds (where colors meet), not inner padding.
+ * MyView → Directions (arrow) keeps its relative gap.
  */
 const TARGET_GAP = 80;
 
 const ORIGINAL = {
+  /** Noticed full-bleed gray ends exactly where Quote rounded block starts */
+  noticedToQuote: 0,
   quoteToMyView: 120,
   directionsToProgram: 60,
   lessonsToTelegram: 120,
@@ -15,27 +18,29 @@ const ORIGINAL = {
   reviewsToFooter: 58,
 } as const;
 
-/** Only pull up when original gap is larger than target */
-function pull(original: number) {
-  return Math.min(0, TARGET_GAP - original);
+function delta(original: number) {
+  return TARGET_GAP - original;
 }
 
-const s0 = pull(ORIGINAL.quoteToMyView);
-const s1 = s0 + pull(ORIGINAL.directionsToProgram);
-const s2 = s1 + pull(ORIGINAL.lessonsToTelegram);
-const s3 = s2 + pull(ORIGINAL.telegramToTariffs);
-const s4 = s3 + pull(ORIGINAL.countdownToPayment);
-const s5 = s4 + pull(ORIGINAL.paymentToReviews);
-const s6 = s5 + pull(ORIGINAL.reviewsToFooter);
+const sQuote = delta(ORIGINAL.noticedToQuote);
+const sMyView = sQuote + Math.min(0, delta(ORIGINAL.quoteToMyView));
+const sProgram = sMyView + delta(ORIGINAL.directionsToProgram);
+const sTelegram = sProgram + Math.min(0, delta(ORIGINAL.lessonsToTelegram));
+const sTariffs = sTelegram + Math.min(0, delta(ORIGINAL.telegramToTariffs));
+const sPayment = sTariffs + Math.min(0, delta(ORIGINAL.countdownToPayment));
+const sReviews = sPayment + delta(ORIGINAL.paymentToReviews);
+const sFooter = sReviews + delta(ORIGINAL.reviewsToFooter);
 
 export const MOBILE_GAP_SHIFT = {
-  myViewAndDirections: s0,
-  programAndLessons: s1,
-  telegram: s2,
-  tariffsAndCountdown: s3,
-  payment: s4,
-  reviews: s5,
-  footer: s6,
+  /** Push Quote (and the gap of white) below Noticed gray */
+  quote: sQuote,
+  myViewAndDirections: sMyView,
+  programAndLessons: sProgram,
+  telegram: sTelegram,
+  tariffsAndCountdown: sTariffs,
+  payment: sPayment,
+  reviews: sReviews,
+  footer: sFooter,
 } as const;
 
 export const MOBILE_CANVAS_HEIGHT_SHRINK = -MOBILE_GAP_SHIFT.footer;

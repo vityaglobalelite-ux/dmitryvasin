@@ -21,9 +21,12 @@ export default function Home() {
     <FigCanvas>
       <HeroSection />
       <NoticedSection />
-      <QuoteVideoSection />
 
-      {/* Keep MyView → Directions gap: arrow scribble lives here */}
+      {/* Air between Noticed gray band and Quote rounded block */}
+      <MobileYShift y={MOBILE_GAP_SHIFT.quote}>
+        <QuoteVideoSection />
+      </MobileYShift>
+
       <MobileYShift y={MOBILE_GAP_SHIFT.myViewAndDirections}>
         <MyViewSection />
         <DirectionsSection />
