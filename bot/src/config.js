@@ -74,6 +74,8 @@ const config = {
     month2_3: 60,
     month3: 30,
   },
+  /** После окончания подписки ещё N дней доступ к купленным чатам с уроками */
+  chatGraceDays: Number(process.env.CHAT_GRACE_DAYS || 30),
   schedulerIntervalMs: 30_000,
   vipIntroDelayMinutes: Number(process.env.VIP_INTRO_DELAY_MINUTES || 5),
 };

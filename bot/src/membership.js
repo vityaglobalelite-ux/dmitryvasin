@@ -4,6 +4,8 @@ const { getPriceLabels } = require("./price-labels");
 const {
   ensureMonthInvites,
   buildMonthAccessRows,
+  isPaidLive,
+  isChatAccessLive,
 } = require("./access");
 const { resolveUnlockedMonths } = require("./channels");
 
@@ -36,8 +38,7 @@ function formatDateRu(iso) {
 }
 
 function isSubscriptionLive(sub) {
-  if (!sub || sub.status !== "active") return false;
-  return new Date(sub.access_ends_at).getTime() > Date.now();
+  return isPaidLive(sub);
 }
 
 function upgradeOptions(tariff) {
@@ -48,39 +49,59 @@ function upgradeOptions(tariff) {
   return options;
 }
 
-function membershipText(sub, prices, accessRows = []) {
+function membershipText(sub, prices, accessRows = [], { inGrace = false } = {}) {
   const label = TARIFF_LABELS[sub.tariff] || sub.tariff;
   const lines = [
     "🕺Вы уже участник исследования танго.",
     "",
     `▶️Тариф: ${label}`,
-    `▶️Доступ до: ${formatDateRu(sub.access_ends_at)}`,
   ];
 
-  const upgrades = upgradeOptions(sub.tariff);
-  if (upgrades.length) {
+  if (inGrace) {
+    lines.push(`▶️Оплаченный период завершён: ${formatDateRu(sub.access_ends_at)}`);
+    lines.push(
+      `▶️Доступ к чатам с уроками до: ${formatDateRu(sub.chat_access_ends_at)}`,
+    );
     lines.push("");
-    if (upgrades.includes("full") && upgrades.includes("vip")) {
-      lines.push(
-        "💡Можете улучшить тариф — получите полный доступ или VIP с индивидуальными занятиями:",
-      );
-    } else if (upgrades.includes("vip")) {
-      lines.push(
-        "💡Можете улучшить тариф — получите VIP с индивидуальными занятиями:",
-      );
-    } else {
-      lines.push("💡Можете улучшить тариф:");
-    }
-    lines.push("");
-    if (upgrades.includes("full")) {
-      lines.push(`✔️Полное исследование — ${prices.full}`);
-    }
-    if (upgrades.includes("vip")) {
-      lines.push(`✔️VIP-исследование — ${prices.vip}`);
-    }
+    lines.push(
+      "⏳Сейчас у вас дополнительный месяц доступа к уже открытым материалам.",
+    );
+    lines.push(
+      "💡Чтобы продолжить исследование и открыть следующие месяцы — продлите участие.",
+    );
   } else {
-    lines.push("");
-    lines.push("У вас максимальный тариф. ♥️Спасибо, что с нами!");
+    lines.push(`▶️Доступ до: ${formatDateRu(sub.access_ends_at)}`);
+    if (sub.chat_access_ends_at) {
+      lines.push(
+        `▶️Чаты с уроками доступны до: ${formatDateRu(sub.chat_access_ends_at)} (+1 месяц после подписки)`,
+      );
+    }
+
+    const upgrades = upgradeOptions(sub.tariff);
+    if (upgrades.length) {
+      lines.push("");
+      if (upgrades.includes("full") && upgrades.includes("vip")) {
+        lines.push(
+          "💡Можете улучшить тариф — получите полный доступ или VIP с индивидуальными занятиями:",
+        );
+      } else if (upgrades.includes("vip")) {
+        lines.push(
+          "💡Можете улучшить тариф — получите VIP с индивидуальными занятиями:",
+        );
+      } else {
+        lines.push("💡Можете улучшить тариф:");
+      }
+      lines.push("");
+      if (upgrades.includes("full")) {
+        lines.push(`✔️Полное исследование — ${prices.full}`);
+      }
+      if (upgrades.includes("vip")) {
+        lines.push(`✔️VIP-исследование — ${prices.vip}`);
+      }
+    } else {
+      lines.push("");
+      lines.push("У вас максимальный тариф. ♥️Спасибо, что с нами!");
+    }
   }
 
   if (accessRows.length) {
@@ -100,10 +121,26 @@ function membershipText(sub, prices, accessRows = []) {
 
 async function sendMembershipCard(ctx, bot, telegramId) {
   let sub = await db.getActiveSubscription(telegramId);
-  if (sub && !isSubscriptionLive(sub)) {
+  let inGrace = false;
+
+  if (sub && !isPaidLive(sub)) {
     await db.updateSubscription(sub.id, { status: "expired" });
     sub = null;
   }
+
+  if (!sub) {
+    sub = await db.getChatAccessSubscription(telegramId);
+    if (sub && isChatAccessLive(sub)) {
+      inGrace = true;
+      if (sub.status === "active") {
+        await db.updateSubscription(sub.id, { status: "expired" });
+        sub = { ...sub, status: "expired" };
+      }
+    } else {
+      sub = null;
+    }
+  }
+
   if (!sub) return false;
 
   const user = await db.getUser(telegramId);
@@ -121,17 +158,27 @@ async function sendMembershipCard(ctx, bot, telegramId) {
     invitesByMonth,
   );
 
-  const upgrades = upgradeOptions(sub.tariff);
+  const upgrades = inGrace ? [] : upgradeOptions(sub.tariff);
   const channelOpts = { accessRows };
 
   await ctx.reply(
     "Выберите действие 👇",
     keyboards.replyMenu({ hasSubscription: true }),
   );
+
   await ctx.reply(
-    membershipText(sub, prices, accessRows),
+    membershipText(sub, prices, accessRows, { inGrace }),
     keyboards.membership(sub, upgrades, channelOpts),
   );
+
+  if (inGrace) {
+    if (sub.tariff === "trial") {
+      await ctx.reply("⏬️Продлить участие:", keyboards.renewTrial());
+    } else if (sub.tariff === "month2") {
+      await ctx.reply("⏬️Продлить на 3-й месяц:", keyboards.renewMonth3());
+    }
+  }
+
   return true;
 }
 

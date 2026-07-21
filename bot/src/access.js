@@ -187,6 +187,7 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
 
   const days = config.durationsDays[tariff];
   const ends = addDays(base, days);
+  const chatAccessEnds = addDays(ends, config.chatGraceDays);
   const unlockedMonths = resolveUnlockedMonths(tariff, previousMonths);
 
   const previousInvites = active
@@ -208,6 +209,8 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     status: "active",
     access_starts_at: starts.toISOString(),
     access_ends_at: ends.toISOString(),
+    chat_access_ends_at: chatAccessEnds.toISOString(),
+    chat_kicked_at: null,
     invite_link: primaryLink,
     invite_created_at: primaryLink ? starts.toISOString() : null,
     unlocked_months: unlockedMonths,
@@ -304,12 +307,104 @@ async function ensureMonthInvites(bot, subscription) {
 }
 
 async function userCanJoinMonth(telegramId, month) {
-  const sub = await db.getActiveSubscription(telegramId);
+  const sub = await db.getChatAccessSubscription(telegramId);
   if (!sub) return false;
   const months = sub.unlocked_months?.length
     ? sub.unlocked_months
     : resolveUnlockedMonths(sub.tariff, []);
   return months.includes(month);
+}
+
+function isPaidLive(sub) {
+  if (!sub || sub.status !== "active") return false;
+  return new Date(sub.access_ends_at).getTime() > Date.now();
+}
+
+function isChatAccessLive(sub) {
+  if (!sub || sub.chat_kicked_at) return false;
+  const end = sub.chat_access_ends_at || sub.access_ends_at;
+  if (!end) return false;
+  return new Date(end).getTime() > Date.now();
+}
+
+/**
+ * Kick user from all unlocked month chats and mark subscription.
+ */
+async function revokeChatAccess(bot, subscription) {
+  const months = subscription.unlocked_months?.length
+    ? subscription.unlocked_months
+    : resolveUnlockedMonths(subscription.tariff, []);
+  const telegramId = subscription.telegram_id;
+
+  for (const month of months) {
+    const chatId = chatIdForMonth(month);
+    if (!chatId || !bot) continue;
+    try {
+      // ban + unban = remove from group without permanent ban
+      await bot.telegram.banChatMember(chatId, telegramId);
+      await bot.telegram.unbanChatMember(chatId, telegramId, {
+        only_if_banned: true,
+      });
+      console.log("kicked", telegramId, "from month", month, chatId);
+    } catch (err) {
+      console.error(`kick month ${month} user ${telegramId}:`, err.message);
+    }
+  }
+
+  // Revoke invite links
+  try {
+    const invites = await db.getInvitesBySubscription(subscription.id);
+    for (const inv of invites) {
+      try {
+        await bot.telegram.revokeChatInviteLink(inv.chat_id, inv.invite_link);
+      } catch {
+        /* ignore */
+      }
+    }
+  } catch (err) {
+    console.error("revoke invites:", err.message);
+  }
+
+  await db.updateSubscription(subscription.id, {
+    status: "expired",
+    chat_kicked_at: new Date().toISOString(),
+  });
+}
+
+async function processExpiredChatAccess(bot, limit = 20) {
+  const due = await db.fetchSubscriptionsDueForKick(limit);
+  for (const sub of due) {
+    try {
+      // Newer live chat-access sub? skip kick for this user, just mark old row
+      const live = await db.getChatAccessSubscription(sub.telegram_id);
+      if (live && live.id !== sub.id) {
+        await db.updateSubscription(sub.id, {
+          chat_kicked_at: new Date().toISOString(),
+          status: sub.status === "active" ? "expired" : sub.status,
+        });
+        continue;
+      }
+
+      await revokeChatAccess(bot, sub);
+
+      const { getTexts } = require("./texts");
+      const user = await db.getUser(sub.telegram_id);
+      const texts = await getTexts(user?.payment_method);
+      try {
+        await bot.telegram.sendMessage(
+          sub.telegram_id,
+          texts.chatAccessEnded,
+          require("./keyboards").keyboards.paymentMethods(),
+        );
+      } catch (err) {
+        console.error("kick notify failed:", err.message);
+      }
+      await db.updateUser(sub.telegram_id, { state: "new" });
+      console.log("chat access revoked", sub.id, sub.telegram_id);
+    } catch (err) {
+      console.error("processExpiredChatAccess:", sub.id, err.message);
+    }
+  }
 }
 
 module.exports = {
@@ -327,6 +422,10 @@ module.exports = {
   buildMonthAccessRows,
   ensureMonthInvites,
   userCanJoinMonth,
+  isPaidLive,
+  isChatAccessLive,
+  revokeChatAccess,
+  processExpiredChatAccess,
   TARIFF_NUDGE_KINDS,
   MONTH_LABELS,
 };

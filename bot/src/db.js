@@ -73,6 +73,36 @@ async function getActiveSubscription(telegramId) {
   return data;
 }
 
+/** Paid ended, but chat grace still active (or paid still active). */
+async function getChatAccessSubscription(telegramId) {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("telegram_id", telegramId)
+    .is("chat_kicked_at", null)
+    .gt("chat_access_ends_at", nowIso())
+    .in("status", ["active", "expired"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+/** Subs whose chat grace ended and not yet kicked. */
+async function fetchSubscriptionsDueForKick(limit = 30) {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .is("chat_kicked_at", null)
+    .lte("chat_access_ends_at", nowIso())
+    .in("status", ["active", "expired"])
+    .order("chat_access_ends_at", { ascending: true })
+    .limit(limit);
+  if (error) throw error;
+  return data || [];
+}
+
 async function getSubscriptionByInviteLink(inviteLink) {
   if (!inviteLink) return null;
   // New multi-month invites table
@@ -87,8 +117,9 @@ async function getSubscriptionByInviteLink(inviteLink) {
       .from("subscriptions")
       .select("*")
       .eq("id", inv.subscription_id)
-      .eq("status", "active")
-      .gt("access_ends_at", nowIso())
+      .is("chat_kicked_at", null)
+      .gt("chat_access_ends_at", nowIso())
+      .in("status", ["active", "expired"])
       .maybeSingle();
     if (error) throw error;
     if (data) {
@@ -101,8 +132,9 @@ async function getSubscriptionByInviteLink(inviteLink) {
     .from("subscriptions")
     .select("*")
     .eq("invite_link", inviteLink)
-    .eq("status", "active")
-    .gt("access_ends_at", nowIso())
+    .is("chat_kicked_at", null)
+    .gt("chat_access_ends_at", nowIso())
+    .in("status", ["active", "expired"])
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -333,6 +365,8 @@ module.exports = {
   updateUser,
   createSubscription,
   getActiveSubscription,
+  getChatAccessSubscription,
+  fetchSubscriptionsDueForKick,
   getSubscriptionByInviteLink,
   getInvitesBySubscription,
   replaceSubscriptionInvites,

@@ -3,6 +3,7 @@ const { keyboards } = require("./keyboards");
 const db = require("./db");
 const { config } = require("./config");
 const { processPaidPayments } = require("./payments");
+const { processExpiredChatAccess } = require("./access");
 
 async function sendSafe(bot, telegramId, text, extra) {
   try {
@@ -127,11 +128,18 @@ function startScheduler(bot) {
       console.error("Payments tick failed:", err),
     );
   };
+  const tickKicks = () => {
+    processExpiredChatAccess(bot).catch((err) =>
+      console.error("Chat kick tick failed:", err),
+    );
+  };
   tickMessages();
   tickPayments();
+  tickKicks();
   const msgTimer = setInterval(tickMessages, config.schedulerIntervalMs);
   const payTimer = setInterval(tickPayments, 10_000);
-  return { msgTimer, payTimer };
+  const kickTimer = setInterval(tickKicks, 60_000);
+  return { msgTimer, payTimer, kickTimer };
 }
 
 module.exports = { startScheduler, startVipFlow };
