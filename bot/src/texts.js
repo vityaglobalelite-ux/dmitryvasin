@@ -1,4 +1,11 @@
+function costLine(price, untilLabel) {
+  return untilLabel
+    ? `💰Стоимость до ${untilLabel}: ${price}`
+    : `💰Стоимость: ${price}`;
+}
+
 function buildTexts(p) {
+  const until = p.priceUntil || null;
   return {
     welcome: [
       "🕺Здравствуйте! На связи я, Дмитрий Васин.",
@@ -17,7 +24,7 @@ function buildTexts(p) {
       "✔️Закрытый Telegram-чат",
       "✔️Возможность задавать вопросы",
       "✔️Возможность продлить участие",
-      `💰Стоимость до…: ${p.trial}`,
+      costLine(p.trial, until),
       "",
       "2️⃣ТАРИФ. ПОЛНОЕ ИССЛЕДОВАНИЕ",
       "✅90 дней участия",
@@ -25,7 +32,7 @@ function buildTexts(p) {
       "✔️Закрытый Telegram-чат",
       "✔️Возможность задавать вопросы",
       "✔️Доступ к материалам ещё 30 дней после завершения",
-      `💰Стоимость до…: ${p.full}`,
+      costLine(p.full, until),
       "",
       "3️⃣ТАРИФ. VIP- ИССЛЕДОВАНИЕ",
       "✅90 дней участия + 2 индивидуальных онлайн-занятия со мной",
@@ -34,7 +41,7 @@ function buildTexts(p) {
       "✔️Возможность задавать вопросы",
       "✔️Доступ к материалам ещё 30 дней после завершения",
       "✔️2 персональных онлайн-занятия со мной в согласованное время",
-      `💰Стоимость до…: ${p.vip}`,
+      costLine(p.vip, until),
     ].join("\n"),
 
     tariffNudge10m: "🙌Напоминаю, пора выбрать свой тариф участия⏬️",
@@ -242,11 +249,33 @@ function buildTexts(p) {
 }
 
 const { getPriceLabels } = require("./price-labels");
+const db = require("./db");
+
+/** Format bot_settings.price_increase_at for «Стоимость до …»; null if missing/past. */
+async function getPriceUntilLabel() {
+  try {
+    const raw = await db.getSetting("price_increase_at");
+    if (!raw?.trim()) return null;
+    const d = new Date(raw.trim());
+    if (!Number.isFinite(d.getTime()) || d.getTime() <= Date.now()) return null;
+    return d.toLocaleString("ru-RU", {
+      timeZone: "Europe/Moscow",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  } catch {
+    return null;
+  }
+}
 
 /** Texts with prices from tariff_prices (fallback: env PRICE_*). */
 async function getTexts(paymentMethod = "ru") {
-  const p = await getPriceLabels(paymentMethod);
-  return buildTexts(p);
+  const [p, priceUntil] = await Promise.all([
+    getPriceLabels(paymentMethod),
+    getPriceUntilLabel(),
+  ]);
+  return buildTexts({ ...p, priceUntil });
 }
 
 /** @deprecated sync snapshot from env — prefer getTexts() */
