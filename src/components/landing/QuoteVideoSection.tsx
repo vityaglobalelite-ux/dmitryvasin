@@ -1,39 +1,118 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { useIsMobile } from "@/lib/landing-mode";
 
 type QuoteVideoPlayerProps = {
   playButtonSize: number;
   className?: string;
+  /** Open native fullscreen when playback starts (typical mobile UX). */
+  enterFullscreenOnPlay?: boolean;
 };
 
-function QuoteVideoPlayer({ playButtonSize, className }: QuoteVideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
+type VideoEl = HTMLVideoElement & {
+  webkitEnterFullscreen?: () => void;
+  webkitDisplayingFullscreen?: boolean;
+};
+
+async function enterNativeFullscreen(video: VideoEl) {
+  try {
+    if (typeof video.webkitEnterFullscreen === "function") {
+      video.webkitEnterFullscreen();
+      return;
+    }
+    if (video.requestFullscreen) {
+      await video.requestFullscreen();
+      return;
+    }
+    const root = video.parentElement as (HTMLElement & {
+      requestFullscreen?: () => Promise<void>;
+    }) | null;
+    if (root?.requestFullscreen) {
+      await root.requestFullscreen();
+    }
+  } catch {
+    /* user gesture / browser policy — stay inline */
+  }
+}
+
+function QuoteVideoPlayer({
+  playButtonSize,
+  className,
+  enterFullscreenOnPlay = false,
+}: QuoteVideoPlayerProps) {
+  const videoRef = useRef<VideoEl>(null);
   const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !playing) return;
+
+    const onEnded = () => {
+      setPlaying(false);
+    };
+    const onFullscreenChange = () => {
+      const doc = document as Document & {
+        webkitFullscreenElement?: Element | null;
+      };
+      const fsEl =
+        document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+      const inFs =
+        fsEl === video ||
+        fsEl === video.parentElement ||
+        Boolean(video.webkitDisplayingFullscreen);
+      if (!inFs && video.paused) {
+        setPlaying(false);
+      }
+    };
+
+    video.addEventListener("ended", onEnded);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    video.addEventListener("webkitendfullscreen", onFullscreenChange);
+
+    return () => {
+      video.removeEventListener("ended", onEnded);
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
+      video.removeEventListener("webkitendfullscreen", onFullscreenChange);
+    };
+  }, [playing]);
 
   const start = () => {
     setPlaying(true);
     requestAnimationFrame(() => {
-      void videoRef.current?.play().catch(() => {
-        /* autoplay may be blocked; native controls remain */
-      });
+      const video = videoRef.current;
+      if (!video) return;
+
+      void (async () => {
+        try {
+          await video.play();
+        } catch {
+          /* native controls remain if autoplay is blocked */
+        }
+        if (enterFullscreenOnPlay) {
+          await enterNativeFullscreen(video);
+        }
+      })();
     });
   };
 
   return (
-    <div className={`relative overflow-hidden bg-[#d9d9d9] ${className ?? ""}`}>
+    <div
+      className={`relative overflow-hidden bg-black ${className ?? ""}`}
+    >
       {playing ? (
         <video
           ref={videoRef}
-          className="absolute inset-0 size-full object-cover"
+          className="quote-video absolute inset-0 size-full bg-black object-contain"
           src={landingAssets.video.intro}
           poster={landingAssets.photos.videoPreview}
           controls
           playsInline
           preload="metadata"
+          controlsList="nodownload"
         />
+
       ) : (
         <>
           <img
@@ -94,6 +173,7 @@ function QuoteVideoMobile() {
       <div className="flex w-full flex-col gap-[10px]">
         <QuoteVideoPlayer
           playButtonSize={50}
+          enterFullscreenOnPlay
           className="h-[163px] w-full rounded-[10px]"
         />
         <p className="text-center text-[20px] font-medium leading-[1.1] tracking-[-0.6px] text-text">
@@ -136,7 +216,7 @@ function QuoteVideoDesktop() {
       <div className="flex min-w-0 flex-1 flex-col gap-[20px]">
         <QuoteVideoPlayer
           playButtonSize={71}
-          className="h-[435px] w-full rounded-[30px]"
+          className="aspect-video h-auto max-h-[435px] w-full rounded-[30px]"
         />
         <p className="text-center text-[40px] font-medium leading-[1.1] tracking-[-1.2px] text-text">
           В этом коротком видео рассказываю, как именно будем исследовать танго

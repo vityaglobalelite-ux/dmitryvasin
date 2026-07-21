@@ -594,3 +594,17 @@ body {
     opacity: 0;
   }
 }
+
+/* Native fullscreen: keep 16:9 video fully visible (no crop) */
+.quote-video:fullscreen,
+.quote-video:-webkit-full-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  background: #000 !important;
+  border-radius: 0 !important;
+}
