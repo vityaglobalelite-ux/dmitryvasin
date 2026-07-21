@@ -1,7 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import type { LegalBlock, LegalDocMeta } from "@/lib/legal-docs";
 import { legalNav } from "@/lib/legal-docs";
-import { siteConfig } from "@/lib/site-data";
 
 function Block({ block }: { block: LegalBlock }) {
   if (block.type === "h2") {
@@ -18,20 +19,36 @@ function Block({ block }: { block: LegalBlock }) {
   );
 }
 
+function goBackOrHome() {
+  const here = window.location.href;
+  window.history.back();
+  /* Mobile Safari often has unreliable history.length / empty referrer.
+     If we didn't leave this page, fall back to home. */
+  window.setTimeout(() => {
+    if (window.location.href === here) {
+      window.location.assign("/");
+    }
+  }, 250);
+}
+
+function BackHome() {
+  return (
+    <button
+      type="button"
+      onClick={goBackOrHome}
+      className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-semibold uppercase tracking-[-0.02em] text-plum transition hover:text-accent-red"
+    >
+      ← Назад
+    </button>
+  );
+}
+
 export function LegalPage({ doc }: { doc: LegalDocMeta }) {
   return (
     <div className="legal-page min-h-screen bg-[#f7f5f3] text-text">
       <header className="sticky top-0 z-20 border-b border-black/5 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto flex h-[64px] w-full max-w-[920px] items-center justify-between px-5 md:px-8">
-          <Link
-            href="/"
-            className="text-[13px] font-semibold uppercase tracking-[-0.02em] text-plum transition hover:text-accent-red"
-          >
-            ← На главную
-          </Link>
-          <span className="hidden text-[12px] text-text/60 sm:inline">
-            {siteConfig.url.replace(/^https?:\/\//, "")}
-          </span>
+        <div className="mx-auto flex h-[64px] w-full max-w-[920px] items-center px-5 md:px-8">
+          <BackHome />
         </div>
       </header>
 

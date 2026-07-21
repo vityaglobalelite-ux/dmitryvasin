@@ -109,7 +109,7 @@ Address: Florida, U.S.A. limited liability company with a registered agent addre
         ))}
       </nav>
 
-      <div className="absolute left-[1390px] top-[100px] flex gap-[10px]">
+      <div className="absolute left-[1450px] top-[100px] flex gap-[10px]">
         {socialLinks.map((s) => (
           <SocialIcon
             key={s.label}
@@ -121,7 +121,7 @@ Address: Florida, U.S.A. limited liability company with a registered agent addre
           />
         ))}
       </div>
-      <p className="absolute left-[1396px] top-[170px] text-[12px] leading-[1.5] text-text">
+      <p className="absolute left-[1456px] top-[170px] text-[12px] leading-[1.5] text-text">
         *Meta запрещена на территории РФ
       </p>
     </footer>

@@ -878,29 +878,14 @@ export const footerLinks = [
 
 export const socialLinks = [
   {
-    icon: landingAssets.social.instagram,
-    href: "https://www.instagram.com/dmitryvasintango",
-    label: "Instagram",
-  },
-  {
     icon: landingAssets.social.telegram,
     href: "https://t.me/DmitryVasinTango",
     label: "Telegram",
   },
   {
     icon: landingAssets.social.vk,
-    href: "https://vk.com/dmitryvasintango",
+    href: "https://vk.ru/dmitryvasintango",
     label: "VK",
-  },
-  {
-    icon: landingAssets.social.facebook,
-    href: "https://www.facebook.com/DmitryVasinSagdianaHamzina",
-    label: "Facebook",
-  },
-  {
-    icon: landingAssets.social.youtube,
-    href: "https://www.youtube.com/@dmitryvasintango",
-    label: "YouTube",
   },
   {
     icon: landingAssets.social.email,
