@@ -862,9 +862,18 @@ export const reviews = [
 ] as const;
 
 export const footerLinks = [
-  "Политика конфиденциальности",
-  "Договор оферты",
-  "Согласие на получение рекламной и информационной рассылки",
+  {
+    label: "Политика конфиденциальности",
+    href: "/privacy-policy/",
+  },
+  {
+    label: "Договор оферты",
+    href: "/subscription-agreement/",
+  },
+  {
+    label: "Политика DMCA (Сообщение о случаях нарушения авторских прав)",
+    href: "/dmca-page/",
+  },
 ] as const;
 
 export const socialLinks = [
@@ -892,6 +901,11 @@ export const socialLinks = [
     icon: landingAssets.social.youtube,
     href: "https://www.youtube.com/@dmitryvasintango",
     label: "YouTube",
+  },
+  {
+    icon: landingAssets.social.email,
+    href: "mailto:Support@betango.dance",
+    label: "Email",
   },
 ] as const;
 
