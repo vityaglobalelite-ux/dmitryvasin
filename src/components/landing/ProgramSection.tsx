@@ -442,7 +442,7 @@ function ProgramMobile() {
                 <img
                   src={icon}
                   alt=""
-                  className="size-[45px] shrink-0 object-contain transition duration-300"
+                  className="size-[45px] shrink-0 rounded-full object-contain transition duration-300"
                 />
                 <span className="mt-[12px] flex flex-col items-center gap-[8px]">
                   <span
@@ -456,7 +456,9 @@ function ProgramMobile() {
                       key={s.label}
                       className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                     >
-                      {s.delta != null ? `${s.label}: +${s.delta}` : s.label}
+                      {"delta" in s && s.delta != null
+                        ? `${s.label}: +${s.delta}`
+                        : s.label}
                     </span>
                   ))}
                 </span>
@@ -769,7 +771,7 @@ function ProgramDesktop() {
                 <img
                   src={icon}
                   alt=""
-                  className="size-[60px] shrink-0 object-contain transition duration-300 group-hover:scale-105"
+                  className="size-[60px] shrink-0 rounded-full object-contain transition duration-300 group-hover:scale-105"
                 />
                 <span
                   className="flex flex-col items-center gap-[10px]"
@@ -786,7 +788,9 @@ function ProgramDesktop() {
                       key={s.label}
                       className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                     >
-                      {s.delta != null ? `${s.label}: +${s.delta}` : s.label}
+                      {"delta" in s && s.delta != null
+                        ? `${s.label}: +${s.delta}`
+                        : s.label}
                     </span>
                   ))}
                 </span>
