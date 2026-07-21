@@ -6,10 +6,14 @@ const db = require("./db");
 const {
   grantAccess,
   scheduleTariffNudges,
-  resolveChannelId,
-  channelOpenUrl,
-  isChannelMember,
+  monthForChatId,
+  knownChatIds,
+  buildMonthAccessRows,
+  ensureMonthInvites,
+  userCanJoinMonth,
+  MONTH_LABELS,
 } = require("./access");
+const { resolveUnlockedMonths } = require("./channels");
 const { startScheduler, startVipFlow } = require("./scheduler");
 const {
   sendMembershipCard,
@@ -21,22 +25,39 @@ const { createCheckoutSession } = require("./stripe-checkout");
 
 const bot = new Telegraf(config.token);
 
+async function accessRowsForSubscription(botInstance, subscription, telegramId) {
+  if (!subscription) return [];
+  const invites =
+    subscription._monthInvites?.length
+      ? subscription._monthInvites.map((x) => ({
+          month: x.month,
+          invite_link: x.inviteLink,
+        }))
+      : await ensureMonthInvites(botInstance, subscription);
+  const invitesByMonth = new Map(
+    invites
+      .filter((r) => r.invite_link || r.inviteLink)
+      .map((r) => [r.month, r.invite_link || r.inviteLink]),
+  );
+  const unlocked = subscription.unlocked_months?.length
+    ? subscription.unlocked_months
+    : resolveUnlockedMonths(subscription.tariff, []);
+  return buildMonthAccessRows(botInstance, telegramId, unlocked, invitesByMonth);
+}
+
 async function sendPaidMessage(ctx, subscription) {
   const texts = await getTexts();
-  const member = await isChannelMember(bot, ctx.from.id);
-  const openUrl = channelOpenUrl(await resolveChannelId());
+  const accessRows = await accessRowsForSubscription(
+    bot,
+    subscription,
+    ctx.from.id,
+  );
   await ctx.reply(
     "Выберите действие 👇",
     keyboards.replyMenu({ hasSubscription: true }),
   );
-  if (subscription.invite_link || (member && openUrl)) {
-    await ctx.reply(
-      texts.paid,
-      keyboards.afterPayment(subscription.invite_link, {
-        isMember: member,
-        openUrl,
-      }),
-    );
+  if (accessRows.length) {
+    await ctx.reply(texts.paid, keyboards.afterPayment(null, { accessRows }));
   } else {
     await ctx.reply(texts.paidNoLink, keyboards.afterPayment(null));
   }
@@ -68,30 +89,38 @@ async function handleStart(ctx) {
 
 bot.start(handleStart);
 
-// Заявка на вступление по персональной ссылке — пускаем только владельца подписки
+// Заявка на вступление — только в чаты месяцев 1/2/3 и только при доступе
 bot.on("chat_join_request", async (ctx) => {
   const req = ctx.chatJoinRequest;
   const userId = req.from.id;
   const inviteUrl = req.invite_link?.invite_link || null;
   const chatId = String(req.chat.id);
+  const month = monthForChatId(chatId);
 
   try {
-    const channelId = await resolveChannelId();
-    if (!channelId || String(channelId) !== chatId) {
+    if (!month || !knownChatIds().includes(chatId)) {
       await ctx.decline();
-      log("join_request decline: foreign chat", chatId, userId);
+      log("join_request decline: unknown chat", chatId, userId);
       return;
     }
 
     if (inviteUrl) {
       const ownerSub = await db.getSubscriptionByInviteLink(inviteUrl);
       if (ownerSub && ownerSub.telegram_id === userId) {
+        const unlocked = ownerSub.unlocked_months?.length
+          ? ownerSub.unlocked_months
+          : resolveUnlockedMonths(ownerSub.tariff, []);
+        if (!unlocked.includes(month)) {
+          await ctx.decline();
+          log("join_request decline: month not unlocked", month, userId);
+          return;
+        }
         await ctx.approve();
-        log("join_request approve (invite owner)", userId);
+        log("join_request approve (invite owner)", userId, "month", month);
         try {
           await ctx.telegram.sendMessage(
             userId,
-            "Заявка одобрена — добро пожаловать в закрытый клуб исследования!",
+            `Заявка одобрена — добро пожаловать в «${MONTH_LABELS[month]}»!`,
           );
         } catch {
           /* ignore */
@@ -111,16 +140,14 @@ bot.on("chat_join_request", async (ctx) => {
       }
     }
 
-    // Запасной путь: активная подписка у этого пользователя
-    const sub = await db.getActiveSubscription(userId);
-    if (sub) {
+    if (await userCanJoinMonth(userId, month)) {
       await ctx.approve();
-      log("join_request approve (active sub)", userId);
+      log("join_request approve (active sub month)", userId, month);
       return;
     }
 
     await ctx.decline();
-    log("join_request decline: no sub", userId);
+    log("join_request decline: no access", userId, "month", month);
   } catch (err) {
     log("join_request error:", err.message);
     try {
@@ -194,14 +221,22 @@ async function startStripeCheckout(ctx, user, tariff) {
 
 async function purchaseTariff(ctx, tariff) {
   const user = await db.upsertUser(ctx.from);
+  if (!user.payment_method) {
+    const texts = await getTexts();
+    await ctx.reply(texts.needPaymentMethod);
+    return;
+  }
   const current = await db.getActiveSubscription(user.telegram_id);
 
   if (current) {
     const currentRank = TARIFF_RANK[current.tariff] || 0;
     const nextRank = TARIFF_RANK[tariff] || 0;
     if (nextRank <= currentRank) {
+      const texts = await getTexts(user.payment_method);
       await ctx.reply(
-        `У вас уже активен тариф «${TARIFF_LABELS[current.tariff] || current.tariff}». Выберите более высокий тариф или откройте /start.`,
+        texts.tariffAlreadyActive(
+          TARIFF_LABELS[current.tariff] || current.tariff,
+        ),
       );
       await sendMembershipCard(ctx, bot, user.telegram_id);
       return;
@@ -247,7 +282,8 @@ bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
   const current = await db.getActiveSubscription(user.telegram_id);
   const allowed = current ? upgradeOptions(current.tariff) : [];
   if (!current || !allowed.includes(tariff)) {
-    await ctx.reply("Этот апгрейд сейчас недоступен. Откройте /start.");
+    const texts = await getTexts();
+    await ctx.reply(texts.upgradeUnavailable);
     await sendMembershipCard(ctx, bot, user.telegram_id);
     return;
   }
@@ -423,7 +459,7 @@ function log(...args) {
 // telegraf.launch() при long polling не резолвится, пока бот жив —
 // планировщик и лог старта запускаем сразу.
 log(
-  `Starting bot (payment_mode=${config.paymentMode}, channel=${config.channelId || "db/env"})`,
+  `Starting bot (payment_mode=${config.paymentMode}, m1=${config.channels.month1 || "-"}, m2=${config.channels.month2 || "-"}, m3=${config.channels.month3 || "-"})`,
 );
 startScheduler(bot);
 

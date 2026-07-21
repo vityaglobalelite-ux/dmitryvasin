@@ -1,17 +1,38 @@
 const db = require("./db");
 const {
   grantAccess,
-  channelOpenUrl,
-  isChannelMember,
-  resolveChannelId,
+  ensureMonthInvites,
+  buildMonthAccessRows,
 } = require("./access");
+const { resolveUnlockedMonths } = require("./channels");
 const { getTexts } = require("./texts");
 const { keyboards } = require("./keyboards");
 
 async function sendPaidToUser(bot, telegramId, subscription) {
   const texts = await getTexts();
-  const member = await isChannelMember(bot, telegramId);
-  const openUrl = channelOpenUrl(await resolveChannelId());
+
+  const invites =
+    subscription._monthInvites?.length
+      ? subscription._monthInvites.map((x) => ({
+          month: x.month,
+          invite_link: x.inviteLink,
+        }))
+      : await ensureMonthInvites(bot, subscription);
+  const invitesByMonth = new Map(
+    invites
+      .filter((r) => r.invite_link || r.inviteLink)
+      .map((r) => [r.month, r.invite_link || r.inviteLink]),
+  );
+  const unlocked = subscription.unlocked_months?.length
+    ? subscription.unlocked_months
+    : resolveUnlockedMonths(subscription.tariff, []);
+  const accessRows = await buildMonthAccessRows(
+    bot,
+    telegramId,
+    unlocked,
+    invitesByMonth,
+  );
+
   try {
     await bot.telegram.sendMessage(
       telegramId,
@@ -22,14 +43,8 @@ async function sendPaidToUser(bot, telegramId, subscription) {
     console.error("sendPaid menu:", err.message);
   }
 
-  const body =
-    subscription.invite_link || (member && openUrl)
-      ? texts.paid
-      : texts.paidNoLink;
-  const kb = keyboards.afterPayment(subscription.invite_link, {
-    isMember: member,
-    openUrl,
-  });
+  const body = accessRows.length ? texts.paid : texts.paidNoLink;
+  const kb = keyboards.afterPayment(null, { accessRows });
   try {
     await bot.telegram.sendMessage(telegramId, body, kb);
   } catch (err) {

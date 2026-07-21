@@ -75,6 +75,28 @@ async function getActiveSubscription(telegramId) {
 
 async function getSubscriptionByInviteLink(inviteLink) {
   if (!inviteLink) return null;
+  // New multi-month invites table
+  const { data: inv, error: invErr } = await supabase
+    .from("subscription_invites")
+    .select("subscription_id, telegram_id, month")
+    .eq("invite_link", inviteLink)
+    .maybeSingle();
+  if (invErr) throw invErr;
+  if (inv?.subscription_id) {
+    const { data, error } = await supabase
+      .from("subscriptions")
+      .select("*")
+      .eq("id", inv.subscription_id)
+      .eq("status", "active")
+      .gt("access_ends_at", nowIso())
+      .maybeSingle();
+    if (error) throw error;
+    if (data) {
+      data._inviteMonth = inv.month;
+      return data;
+    }
+  }
+
   const { data, error } = await supabase
     .from("subscriptions")
     .select("*")
@@ -84,6 +106,48 @@ async function getSubscriptionByInviteLink(inviteLink) {
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function getInvitesBySubscription(subscriptionId) {
+  const { data, error } = await supabase
+    .from("subscription_invites")
+    .select("*")
+    .eq("subscription_id", subscriptionId)
+    .order("month", { ascending: true });
+  if (error) throw error;
+  return data || [];
+}
+
+async function replaceSubscriptionInvites(subscriptionId, telegramId, rows) {
+  const { error: delErr } = await supabase
+    .from("subscription_invites")
+    .delete()
+    .eq("subscription_id", subscriptionId);
+  if (delErr) throw delErr;
+  if (!rows?.length) return [];
+  const payload = rows.map((r) => ({
+    invite_link: r.inviteLink || r.invite_link,
+    subscription_id: subscriptionId,
+    telegram_id: telegramId,
+    month: r.month,
+    chat_id: String(r.chatId || r.chat_id),
+  }));
+  const { data, error } = await supabase
+    .from("subscription_invites")
+    .insert(payload)
+    .select("*");
+  if (error) throw error;
+  return data || [];
+}
+
+async function upsertSubscriptionInvite(row) {
+  const { data, error } = await supabase
+    .from("subscription_invites")
+    .upsert(row, { onConflict: "invite_link" })
+    .select("*")
+    .single();
   if (error) throw error;
   return data;
 }
@@ -270,6 +334,9 @@ module.exports = {
   createSubscription,
   getActiveSubscription,
   getSubscriptionByInviteLink,
+  getInvitesBySubscription,
+  replaceSubscriptionInvites,
+  upsertSubscriptionInvite,
   updateSubscription,
   upsertVipIntake,
   getVipIntake,

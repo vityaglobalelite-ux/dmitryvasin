@@ -17,7 +17,6 @@ const keyboards = {
     } else {
       rows.push([BTN.SUBSCRIPTION]);
     }
-    // web_app открывает поддержку сразу (reply-кнопка с URL в Telegram нельзя)
     rows.push([Markup.button.webApp(BTN.SUPPORT, config.supportWebAppUrl)]);
     return Markup.keyboard(rows).resize().persistent();
   },
@@ -28,7 +27,6 @@ const keyboards = {
       [Markup.button.callback("Карта иностранного банка", "pay:foreign")],
     ]),
 
-  /** Stripe Checkout URL (foreign cards) */
   stripePay: (checkoutUrl) =>
     Markup.inlineKeyboard([
       [Markup.button.url("Оплатить картой", checkoutUrl)],
@@ -43,30 +41,43 @@ const keyboards = {
     ]),
 
   /**
-   * @param {{ inviteLink?: string|null, isMember?: boolean, openUrl?: string|null }} opts
+   * @param {Array<{label:string, url:string, kind?:string}>} accessRows
    */
+  monthAccess: (accessRows = []) => {
+    const rows = (accessRows || [])
+      .filter((r) => r?.url)
+      .map((r) => {
+        const prefix = r.kind === "open" ? "Открыть: " : "Вступить: ";
+        return [Markup.button.url(`${prefix}${r.label}`, r.url)];
+      });
+    rows.push([Markup.button.url("Поддержка", config.supportUrl)]);
+    return Markup.inlineKeyboard(rows);
+  },
+
+  /** @deprecated single-link helper */
   channelAccess: ({ inviteLink = null, isMember = false, openUrl = null } = {}) => {
     const rows = [];
     if (isMember && openUrl) {
       rows.push([Markup.button.url("Открыть канал", openUrl)]);
     } else if (inviteLink) {
       rows.push([
-        Markup.button.url(
-          "Вступить в закрытый telegram-канал",
-          inviteLink,
-        ),
+        Markup.button.url("Вступить в закрытый telegram-канал", inviteLink),
       ]);
     }
     rows.push([Markup.button.url("Поддержка", config.supportUrl)]);
     return Markup.inlineKeyboard(rows);
   },
 
-  afterPayment: (inviteLink, channelOpts = {}) =>
-    keyboards.channelAccess({
+  afterPayment: (inviteLink, channelOpts = {}) => {
+    if (channelOpts.accessRows?.length) {
+      return keyboards.monthAccess(channelOpts.accessRows);
+    }
+    return keyboards.channelAccess({
       inviteLink,
       isMember: channelOpts.isMember,
       openUrl: channelOpts.openUrl,
-    }),
+    });
+  },
 
   vipDays: () =>
     Markup.inlineKeyboard([
@@ -105,7 +116,13 @@ const keyboards = {
 
   membership: (sub, upgrades = [], channelOpts = {}) => {
     const rows = [];
-    if (channelOpts.isMember && channelOpts.openUrl) {
+    if (channelOpts.accessRows?.length) {
+      for (const r of channelOpts.accessRows) {
+        if (!r?.url) continue;
+        const prefix = r.kind === "open" ? "Открыть: " : "Вступить: ";
+        rows.push([Markup.button.url(`${prefix}${r.label}`, r.url)]);
+      }
+    } else if (channelOpts.isMember && channelOpts.openUrl) {
       rows.push([Markup.button.url("Открыть канал", channelOpts.openUrl)]);
     } else if (sub?.invite_link) {
       rows.push([

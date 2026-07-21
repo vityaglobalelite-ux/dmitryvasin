@@ -20,11 +20,27 @@ function parseAdminIds(raw) {
   );
 }
 
+function parseChannelId(raw) {
+  const v = String(raw || "").trim();
+  return v || "";
+}
+
 const config = {
   token: required("TELEGRAM_BOT_TOKEN"),
   supabaseUrl: required("SUPABASE_URL"),
   supabaseKey: required("SUPABASE_SERVICE_ROLE_KEY"),
-  channelId: process.env.TELEGRAM_CHANNEL_ID || "",
+  /** @deprecated use channels.month1 */
+  channelId:
+    process.env.TELEGRAM_CHANNEL_MONTH1 ||
+    process.env.TELEGRAM_CHANNEL_ID ||
+    "",
+  channels: {
+    month1: parseChannelId(
+      process.env.TELEGRAM_CHANNEL_MONTH1 || process.env.TELEGRAM_CHANNEL_ID,
+    ),
+    month2: parseChannelId(process.env.TELEGRAM_CHANNEL_MONTH2),
+    month3: parseChannelId(process.env.TELEGRAM_CHANNEL_MONTH3),
+  },
   supportUrl:
     process.env.SUPPORT_URL ||
     "https://t.me/be_tango_support_bot?start=help",

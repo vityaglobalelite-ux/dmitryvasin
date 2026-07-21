@@ -1,5 +1,6 @@
 const { config } = require("./config");
 const db = require("./db");
+const { resolveUnlockedMonths, MONTH_LABELS } = require("./channels");
 
 const TARIFF_KINDS = new Set([
   "trial",
@@ -31,23 +32,44 @@ function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60 * 1000);
 }
 
-async function resolveChannelId() {
-  if (config.channelId) return config.channelId;
-  return db.getSetting("telegram_channel_id");
+function chatIdForMonth(month) {
+  const map = {
+    1: config.channels.month1,
+    2: config.channels.month2,
+    3: config.channels.month3,
+  };
+  return map[month] || "";
 }
 
-/** Ссылка «открыть канал» для уже вступивших (t.me/c/…) */
+function monthForChatId(chatId) {
+  const id = String(chatId || "");
+  if (id && id === String(config.channels.month1)) return 1;
+  if (id && id === String(config.channels.month2)) return 2;
+  if (id && id === String(config.channels.month3)) return 3;
+  return null;
+}
+
+function knownChatIds() {
+  return [config.channels.month1, config.channels.month2, config.channels.month3]
+    .filter(Boolean)
+    .map(String);
+}
+
+/** @deprecated single-channel helper */
+async function resolveChannelId() {
+  return config.channels.month1 || config.channelId || null;
+}
+
 function channelOpenUrl(channelId) {
   if (!channelId) return null;
   const raw = String(channelId).replace(/^-100/, "");
   return `https://t.me/c/${raw}/1`;
 }
 
-async function isChannelMember(bot, telegramId) {
-  const channelId = await resolveChannelId();
-  if (!channelId || !bot) return false;
+async function isMemberOfChat(bot, chatId, telegramId) {
+  if (!chatId || !bot) return false;
   try {
-    const member = await bot.telegram.getChatMember(channelId, telegramId);
+    const member = await bot.telegram.getChatMember(chatId, telegramId);
     return ["creator", "administrator", "member", "restricted"].includes(
       member.status,
     );
@@ -56,45 +78,88 @@ async function isChannelMember(bot, telegramId) {
   }
 }
 
-/**
- * Персональная ссылка с заявкой на вступление.
- * Бот одобряет только telegram_id владельца подписки (см. chat_join_request).
- * member_limit с creates_join_request Telegram не позволяет.
- */
-async function createInviteLink(bot, telegramId, previousLink = null) {
+/** @deprecated use buildAccessButtons / isMemberOfChat */
+async function isChannelMember(bot, telegramId) {
   const channelId = await resolveChannelId();
-  if (!channelId) {
-    return null;
-  }
+  return isMemberOfChat(bot, channelId, telegramId);
+}
+
+async function createInviteForChat(bot, chatId, telegramId, previousLink = null) {
+  if (!chatId) return null;
   if (previousLink) {
     try {
-      await bot.telegram.revokeChatInviteLink(channelId, previousLink);
+      await bot.telegram.revokeChatInviteLink(chatId, previousLink);
     } catch (err) {
       console.error("revokeChatInviteLink:", err.message);
     }
   }
-  const link = await bot.telegram.createChatInviteLink(channelId, {
+  const link = await bot.telegram.createChatInviteLink(chatId, {
     creates_join_request: true,
-    name: `u${telegramId}`.slice(0, 32),
+    name: `u${telegramId}m`.slice(0, 32),
   });
   return link.invite_link;
 }
 
-async function scheduleTrialRenewals(telegramId, accessEndsAt) {
-  await db.cancelMessages(telegramId, TRIAL_RENEW_KINDS);
-  const end = new Date(accessEndsAt);
-  await db.scheduleMessage(telegramId, "renew_trial_d5", addDays(end, -5));
-  await db.scheduleMessage(telegramId, "renew_trial_d2", addDays(end, -2));
-  await db.scheduleMessage(telegramId, "renew_trial_d0", end);
-  await db.scheduleMessage(telegramId, "renew_trial_p3", addDays(end, 3));
+/**
+ * Create personal invite links for each unlocked month.
+ * @returns {Promise<Array<{month:number, chatId:string, inviteLink:string|null, label:string}>>}
+ */
+async function createMonthInvites(bot, telegramId, months, previousInvites = []) {
+  const prevByMonth = new Map(
+    (previousInvites || []).map((row) => [row.month, row.invite_link]),
+  );
+  const results = [];
+  for (const month of months) {
+    const chatId = chatIdForMonth(month);
+    if (!chatId) {
+      results.push({
+        month,
+        chatId: null,
+        inviteLink: null,
+        label: MONTH_LABELS[month],
+      });
+      continue;
+    }
+    let inviteLink = null;
+    try {
+      inviteLink = await createInviteForChat(
+        bot,
+        chatId,
+        telegramId,
+        prevByMonth.get(month) || null,
+      );
+    } catch (err) {
+      console.error(`createInvite month ${month}:`, err.message);
+    }
+    results.push({
+      month,
+      chatId: String(chatId),
+      inviteLink,
+      label: MONTH_LABELS[month],
+    });
+  }
+  return results;
 }
 
-async function scheduleMonth2Renewals(telegramId, accessEndsAt) {
-  await db.cancelMessages(telegramId, MONTH2_RENEW_KINDS);
-  const end = new Date(accessEndsAt);
-  await db.scheduleMessage(telegramId, "renew_month2_d3", addDays(end, -3));
-  await db.scheduleMessage(telegramId, "renew_month2_d0", end);
-  await db.scheduleMessage(telegramId, "renew_month2_p3", addDays(end, 3));
+/**
+ * Access buttons: open URL if already member, else invite link.
+ */
+async function buildMonthAccessRows(bot, telegramId, unlockedMonths, invitesByMonth) {
+  const rows = [];
+  for (const month of unlockedMonths || []) {
+    const chatId = chatIdForMonth(month);
+    const label = MONTH_LABELS[month] || `Месяц ${month}`;
+    if (!chatId) continue;
+    const member = await isMemberOfChat(bot, chatId, telegramId);
+    if (member) {
+      const openUrl = channelOpenUrl(chatId);
+      if (openUrl) rows.push({ month, label, url: openUrl, kind: "open" });
+    } else {
+      const invite = invitesByMonth.get(month);
+      if (invite) rows.push({ month, label, url: invite, kind: "invite" });
+    }
+  }
+  return rows;
 }
 
 async function grantAccess(bot, telegramId, tariff, paymentMethod) {
@@ -105,6 +170,7 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   await db.cancelMessages(telegramId, TARIFF_NUDGE_KINDS);
 
   const active = await db.getActiveSubscription(telegramId);
+  const previousMonths = active?.unlocked_months || [];
   if (active) {
     await db.updateSubscription(active.id, { status: "replaced" });
   }
@@ -121,13 +187,19 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
 
   const days = config.durationsDays[tariff];
   const ends = addDays(base, days);
+  const unlockedMonths = resolveUnlockedMonths(tariff, previousMonths);
 
-  let inviteLink = null;
-  try {
-    inviteLink = await createInviteLink(bot, telegramId, active?.invite_link);
-  } catch (err) {
-    console.error("createInviteLink failed:", err.message);
-  }
+  const previousInvites = active
+    ? await db.getInvitesBySubscription(active.id)
+    : [];
+  const monthInvites = await createMonthInvites(
+    bot,
+    telegramId,
+    unlockedMonths,
+    previousInvites,
+  );
+  const primaryLink =
+    monthInvites.find((x) => x.inviteLink)?.inviteLink || null;
 
   const sub = await db.createSubscription({
     telegram_id: telegramId,
@@ -136,9 +208,20 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     status: "active",
     access_starts_at: starts.toISOString(),
     access_ends_at: ends.toISOString(),
-    invite_link: inviteLink,
-    invite_created_at: inviteLink ? starts.toISOString() : null,
+    invite_link: primaryLink,
+    invite_created_at: primaryLink ? starts.toISOString() : null,
+    unlocked_months: unlockedMonths,
   });
+
+  await db.replaceSubscriptionInvites(
+    sub.id,
+    telegramId,
+    monthInvites.filter((x) => x.inviteLink && x.chatId),
+  );
+
+  // Attach invites on returned object for UI
+  sub._monthInvites = monthInvites;
+  sub.unlocked_months = unlockedMonths;
 
   await db.updateUser(telegramId, {
     state: tariff === "vip" ? "vip_pending" : "paid",
@@ -168,6 +251,23 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   return sub;
 }
 
+async function scheduleTrialRenewals(telegramId, accessEndsAt) {
+  await db.cancelMessages(telegramId, TRIAL_RENEW_KINDS);
+  const end = new Date(accessEndsAt);
+  await db.scheduleMessage(telegramId, "renew_trial_d5", addDays(end, -5));
+  await db.scheduleMessage(telegramId, "renew_trial_d2", addDays(end, -2));
+  await db.scheduleMessage(telegramId, "renew_trial_d0", end);
+  await db.scheduleMessage(telegramId, "renew_trial_p3", addDays(end, 3));
+}
+
+async function scheduleMonth2Renewals(telegramId, accessEndsAt) {
+  await db.cancelMessages(telegramId, MONTH2_RENEW_KINDS);
+  const end = new Date(accessEndsAt);
+  await db.scheduleMessage(telegramId, "renew_month2_d3", addDays(end, -3));
+  await db.scheduleMessage(telegramId, "renew_month2_d0", end);
+  await db.scheduleMessage(telegramId, "renew_month2_p3", addDays(end, 3));
+}
+
 async function scheduleTariffNudges(telegramId) {
   await db.cancelMessages(telegramId, TARIFF_NUDGE_KINDS);
   const now = new Date();
@@ -175,12 +275,58 @@ async function scheduleTariffNudges(telegramId) {
   await db.scheduleMessage(telegramId, "tariff_nudge_24h", addDays(now, 1));
 }
 
+/** Ensure invites exist for unlocked months; recreate missing ones. */
+async function ensureMonthInvites(bot, subscription) {
+  if (!subscription) return [];
+  const months = subscription.unlocked_months?.length
+    ? subscription.unlocked_months
+    : resolveUnlockedMonths(subscription.tariff, []);
+  let existing = await db.getInvitesBySubscription(subscription.id);
+  const byMonth = new Map(existing.map((r) => [r.month, r]));
+  const missing = months.filter((m) => !byMonth.has(m) && chatIdForMonth(m));
+  if (missing.length && bot) {
+    const created = await createMonthInvites(bot, subscription.telegram_id, missing, []);
+    const ok = created.filter((x) => x.inviteLink && x.chatId);
+    if (ok.length) {
+      for (const row of ok) {
+        await db.upsertSubscriptionInvite({
+          invite_link: row.inviteLink,
+          subscription_id: subscription.id,
+          telegram_id: subscription.telegram_id,
+          month: row.month,
+          chat_id: row.chatId,
+        });
+      }
+      existing = await db.getInvitesBySubscription(subscription.id);
+    }
+  }
+  return existing;
+}
+
+async function userCanJoinMonth(telegramId, month) {
+  const sub = await db.getActiveSubscription(telegramId);
+  if (!sub) return false;
+  const months = sub.unlocked_months?.length
+    ? sub.unlocked_months
+    : resolveUnlockedMonths(sub.tariff, []);
+  return months.includes(month);
+}
+
 module.exports = {
   grantAccess,
   scheduleTariffNudges,
   resolveChannelId,
-  createInviteLink,
+  createInviteLink: createInviteForChat,
   channelOpenUrl,
   isChannelMember,
+  isMemberOfChat,
+  chatIdForMonth,
+  monthForChatId,
+  knownChatIds,
+  createMonthInvites,
+  buildMonthAccessRows,
+  ensureMonthInvites,
+  userCanJoinMonth,
   TARIFF_NUDGE_KINDS,
+  MONTH_LABELS,
 };

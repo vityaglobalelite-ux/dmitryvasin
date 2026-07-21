@@ -2,11 +2,10 @@ const { keyboards } = require("./keyboards");
 const db = require("./db");
 const { getPriceLabels } = require("./price-labels");
 const {
-  createInviteLink,
-  resolveChannelId,
-  channelOpenUrl,
-  isChannelMember,
+  ensureMonthInvites,
+  buildMonthAccessRows,
 } = require("./access");
+const { resolveUnlockedMonths } = require("./channels");
 
 const TARIFF_LABELS = {
   trial: "Тест-драйв | 1 месяц",
@@ -17,7 +16,6 @@ const TARIFF_LABELS = {
   month3: "3-й месяц",
 };
 
-/** Чем выше — тем «дороже» / полнее тариф */
 const TARIFF_RANK = {
   trial: 1,
   month2: 1,
@@ -50,44 +48,54 @@ function upgradeOptions(tariff) {
   return options;
 }
 
-function membershipText(sub, prices) {
+function membershipText(sub, prices, accessRows = []) {
   const label = TARIFF_LABELS[sub.tariff] || sub.tariff;
   const lines = [
-    "Вы уже участник исследования танго.",
+    "🕺Вы уже участник исследования танго.",
     "",
-    `Тариф: ${label}`,
-    `Доступ до: ${formatDateRu(sub.access_ends_at)}`,
+    `▶️Тариф: ${label}`,
+    `▶️Доступ до: ${formatDateRu(sub.access_ends_at)}`,
   ];
 
   const upgrades = upgradeOptions(sub.tariff);
   if (upgrades.length) {
     lines.push("");
-    lines.push(
-      "Можете улучшить тариф — получите полный доступ или VIP с индивидуальными занятиями:",
-    );
+    if (upgrades.includes("full") && upgrades.includes("vip")) {
+      lines.push(
+        "💡Можете улучшить тариф — получите полный доступ или VIP с индивидуальными занятиями:",
+      );
+    } else if (upgrades.includes("vip")) {
+      lines.push(
+        "💡Можете улучшить тариф — получите VIP с индивидуальными занятиями:",
+      );
+    } else {
+      lines.push("💡Можете улучшить тариф:");
+    }
+    lines.push("");
     if (upgrades.includes("full")) {
-      lines.push(`• Полное исследование — ${prices.full}`);
+      lines.push(`✔️Полное исследование — ${prices.full}`);
     }
     if (upgrades.includes("vip")) {
-      lines.push(`• VIP-исследование — ${prices.vip}`);
+      lines.push(`✔️VIP-исследование — ${prices.vip}`);
     }
   } else {
     lines.push("");
-    lines.push("У вас максимальный тариф. Спасибо, что с нами!");
+    lines.push("У вас максимальный тариф. ♥️Спасибо, что с нами!");
+  }
+
+  if (accessRows.length) {
+    lines.push("");
+    const allOpen = accessRows.every((r) => r.kind === "open");
+    if (allOpen) {
+      lines.push("⏬️Вы уже в чатах с уроками — откройте их по кнопкам ниже.");
+    } else {
+      lines.push(
+        "⏬️Персональные ссылки в чаты с уроками — по кнопкам ниже (привязаны к вашему Telegram).",
+      );
+    }
   }
 
   return lines.join("\n");
-}
-
-function membershipTextWithChannel(sub, { isMember }, prices) {
-  const base = membershipText(sub, prices);
-  if (isMember) {
-    return `${base}\n\nВы уже в закрытом канале — откройте его по кнопке ниже.`;
-  }
-  if (sub.invite_link) {
-    return `${base}\n\nПерсональная ссылка в закрытый telegram-канал — по кнопке ниже (привязана к вашему Telegram).`;
-  }
-  return base;
 }
 
 async function sendMembershipCard(ctx, bot, telegramId) {
@@ -100,34 +108,28 @@ async function sendMembershipCard(ctx, bot, telegramId) {
 
   const user = await db.getUser(telegramId);
   const prices = await getPriceLabels(user?.payment_method);
-  const member = await isChannelMember(bot, telegramId);
 
-  // Ссылка-заявка нужна только если ещё не в канале
-  if (!member && !sub.invite_link && bot) {
-    try {
-      const link = await createInviteLink(bot, telegramId, null);
-      if (link) {
-        sub = await db.updateSubscription(sub.id, {
-          invite_link: link,
-          invite_created_at: new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      console.error("invite refresh failed:", err.message);
-    }
-  }
+  const invites = await ensureMonthInvites(bot, sub);
+  const invitesByMonth = new Map(invites.map((r) => [r.month, r.invite_link]));
+  const unlocked = sub.unlocked_months?.length
+    ? sub.unlocked_months
+    : resolveUnlockedMonths(sub.tariff, []);
+  const accessRows = await buildMonthAccessRows(
+    bot,
+    telegramId,
+    unlocked,
+    invitesByMonth,
+  );
 
-  const channelId = await resolveChannelId();
-  const openUrl = channelOpenUrl(channelId);
   const upgrades = upgradeOptions(sub.tariff);
-  const channelOpts = { isMember: member, openUrl };
+  const channelOpts = { accessRows };
 
   await ctx.reply(
     "Выберите действие 👇",
     keyboards.replyMenu({ hasSubscription: true }),
   );
   await ctx.reply(
-    membershipTextWithChannel(sub, channelOpts, prices),
+    membershipText(sub, prices, accessRows),
     keyboards.membership(sub, upgrades, channelOpts),
   );
   return true;
