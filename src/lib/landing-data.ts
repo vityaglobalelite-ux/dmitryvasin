@@ -106,7 +106,7 @@ export type LessonNode = {
   routeTitle?: string;
   /** Figma title box width — keeps copy inside the zigzag pocket */
   titleWidth?: number;
-  skills: { label: string; delta: number }[];
+  skills: { label: string; delta?: number }[];
   icon?: string;
 };
 
@@ -337,6 +337,7 @@ export const programMonths = [
       {
         id: 12,
         title: "Не только напротив",
+        routeTitle: "Не только\nнапротив",
         titleWidth: 105,
         skills: [
           { label: "Взаимодействие", delta: 1 },
@@ -511,74 +512,81 @@ export const programMonths = [
       {
         id: 17,
         title: "Другая перспектива",
-        routeTitle: "Другая\nперспектива",
-        titleWidth: 100,
+        routeTitle: "Другая перспектива",
+        titleWidth: 118,
         skills: [
           { label: "Осознавание", delta: 1 },
           { label: "Техника", delta: 1 },
         ],
+        icon: landingAssets.programNodesMonth3[0],
       },
       {
         id: 18,
         title: "Невидимая связь",
-        routeTitle: "Невидимая\nсвязь",
-        titleWidth: 90,
+        routeTitle: "Невидимая связь",
+        titleWidth: 121,
         skills: [{ label: "Взаимодействие", delta: 1 }],
+        icon: landingAssets.programNodesMonth3[1],
       },
       {
         id: 19,
         title: "Следуя за свободной стороной",
-        routeTitle: "Следуя за\nсвободной стороной",
-        titleWidth: 110,
+        routeTitle: "Следуя за\u00a0свободной стороной",
+        titleWidth: 140,
         skills: [
-          { label: "Техника", delta: 1 },
           { label: "Взаимодействие", delta: 1 },
+          { label: "Техника", delta: 1 },
         ],
+        icon: landingAssets.programNodesMonth3[2],
       },
       {
         id: 20,
         title: "Каждый шаг — это выбор",
-        routeTitle: "Каждый шаг\u00a0—\nэто выбор",
-        titleWidth: 100,
+        routeTitle: "Каждый шаг\u00a0— это\u00a0выбор",
+        titleWidth: 105,
         skills: [
           { label: "Взаимодействие", delta: 1 },
           { label: "Вариативность", delta: 1 },
         ],
+        icon: landingAssets.programNodesMonth3[3],
       },
       {
         id: 21,
         title: "Сначала опора",
-        routeTitle: "Сначала\nопора",
-        titleWidth: 82,
-        skills: [
-          { label: "Техника", delta: 1 },
-          { label: "Взаимодействие", delta: 1 },
-        ],
+        routeTitle: "Сначала опора",
+        titleWidth: 102,
+        skills: [{ label: "Музыкальность", delta: 1 }],
+        icon: landingAssets.programNodesMonth3[4],
       },
       {
         id: 22,
         title: "Четыре скорости времени",
-        routeTitle: "Четыре скорости\nвремени",
-        titleWidth: 110,
-        skills: [{ label: "Музыкальность", delta: 1 }],
+        routeTitle: "Четыре скорости времени",
+        titleWidth: 145,
+        skills: [
+          { label: "Техника", delta: 1 },
+          { label: "Взаимодействие", delta: 1 },
+        ],
+        icon: landingAssets.programNodesMonth3[5],
       },
       {
         id: 23,
-        title: "Момент четвертой скорости",
-        routeTitle: "Момент четвертой\nскорости",
-        titleWidth: 120,
+        title: "Момент четвёртой скорости",
+        routeTitle: "Момент четвёртой скорости",
+        titleWidth: 113,
         skills: [
           { label: "Музыкальность", delta: 1 },
           { label: "Взаимодействие", delta: 1 },
         ],
+        icon: landingAssets.programNodesMonth3[6],
       },
       {
         id: 24,
         title: "Собирая всё вместе",
-        routeTitle: "Собирая всё\nвместе",
-        titleWidth: 100,
-        /* Short label — full «Итоговое исследование» overflows the right peak */
-        skills: [{ label: "Исследование", delta: 1 }],
+        routeTitle: "Собирая всё\u00a0вместе",
+        titleWidth: 93,
+        skills: [{ label: "Итоговое исследование" }],
+        icon: landingAssets.programNodesMonth3[7],
       },
     ] satisfies LessonNode[],
     lessons: [
@@ -614,7 +622,7 @@ export const programMonths = [
         id: 19,
         number: "Урок 19",
         title: "Следуя за свободной стороной",
-        direction: "Техника + Взаимодействие",
+        direction: "Взаимодействие + Техника",
         directionIcon: landingAssets.icons.footprint,
         body: "Часто движение начинается с усилия. Мы привыкаем отталкиваться от опорной ноги, переносить вес и создавать импульс для следующего шага. В этом уроке мы попробуем исследовать другой подход и посмотрим, что происходит, когда движение начинает организовываться через свободную сторону тела. Такой подход помогает сделать движение более мягким, связанным и чувствительным к взаимодействию.",
         explore: [
@@ -642,8 +650,8 @@ export const programMonths = [
         id: 21,
         number: "Урок 21",
         title: "Сначала опора",
-        direction: "Техника + Взаимодействие",
-        directionIcon: landingAssets.icons.footprint,
+        direction: "Музыкальность",
+        directionIcon: landingAssets.icons.shoeProgress,
         body: "Зачастую всё внимание направлено на само движение. Мы думаем о том, куда пойти, как сделать шаг или каким образом организовать взаимодействие. При этом то, что делает движение более свободным и устойчивым, нередко остаётся незамеченным. В этом уроке мы будем исследовать, как поиск опоры влияет на качество движения и взаимодействия. Мы посмотрим, каким образом ощущение опоры помогает создавать больше свободы, легкости и ясности как в собственном движении, так и в работе с партнёром.",
         explore: [
           "как находить опору перед движением",
@@ -656,8 +664,8 @@ export const programMonths = [
         id: 22,
         number: "Урок 22",
         title: "Четыре скорости времени",
-        direction: "Музыкальность",
-        directionIcon: landingAssets.icons.shoeProgress,
+        direction: "Техника + Взаимодействие",
+        directionIcon: landingAssets.icons.footprint,
         body: "Очень часто быстрые ритмические рисунки кажутся сложными и недоступными. При этом проблема далеко не всегда связана со скоростью движения. Гораздо чаще нам просто не хватает опыта восприятия времени на разных уровнях. В этом уроке мы будем исследовать четыре скорости времени и наблюдать за тем, как меняется наше восприятие музыки при изменении плотности счёта. Такой подход помогает лучше понимать музыкальную структуру и постепенно подготавливает нас к работе с синкопированием.",
         explore: [
           "первую, вторую, третью и четвёртую скорости времени",
@@ -669,7 +677,7 @@ export const programMonths = [
       {
         id: 23,
         number: "Урок 23",
-        title: "Момент четвертой скорости",
+        title: "Момент четвёртой скорости",
         direction: "Музыкальность + Взаимодействие",
         directionIcon: landingAssets.icons.shoeProgress,
         body: "В предыдущем уроке мы исследовали четыре скорости времени и познакомились с самой быстрой из них. Теперь пришло время использовать её в движении. В этом уроке мы будем исследовать, как короткий переход на четвёртую скорость может менять характер движения, музыкальность и взаимодействие в паре. Мы увидим, что синкопирование — это не отдельный режим танца, а один из способов временно изменить плотность движения внутри музыки.",

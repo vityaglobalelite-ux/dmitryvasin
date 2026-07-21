@@ -301,7 +301,9 @@ function ProgramMobile() {
   const nodeIcons =
     viewIdx === 1
       ? landingAssets.programNodesMonth2
-      : landingAssets.programNodesMobile;
+      : viewIdx === 2
+        ? landingAssets.programNodesMonth3
+        : landingAssets.programNodesMobile;
 
   /* Extra board height when last node is tall — keep ~24px under badges */
   const lastNode = month.nodes[month.nodes.length - 1];
@@ -454,7 +456,7 @@ function ProgramMobile() {
                       key={s.label}
                       className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                     >
-                      {s.label}: +{s.delta}
+                      {s.delta != null ? `${s.label}: +${s.delta}` : s.label}
                     </span>
                   ))}
                 </span>
@@ -784,7 +786,7 @@ function ProgramDesktop() {
                       key={s.label}
                       className="whitespace-nowrap rounded-[20px] border border-[rgba(224,76,41,0.22)] bg-[rgba(224,76,41,0.12)] px-[10px] py-[4px] text-[11px] font-bold leading-[13px] text-[#c2461e]"
                     >
-                      {s.label}: +{s.delta}
+                      {s.delta != null ? `${s.label}: +${s.delta}` : s.label}
                     </span>
                   ))}
                 </span>

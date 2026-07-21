@@ -205,12 +205,12 @@ export const landingAssets = {
     asset("program-node-07.webp"),
     asset("program-node-08.webp"),
   ],
-  /** Figma 333:411–459 composed circles (2 месяц) */
+  /** Figma 333:411–459 composed circles (2 месяц); 399:5 / 399:12 icon updates */
   programNodesMonth2: [
     asset("program-m2-node-01.webp"),
-    asset("program-m2-node-02.webp"),
+    asset("program-m2-node-02.webp", "m2i2"),
     asset("program-m2-node-03.webp"),
-    asset("program-m2-node-04.webp"),
+    asset("program-m2-node-04.webp", "m2i2"),
     asset("program-m2-node-05.webp"),
     asset("program-m2-node-06.webp"),
     asset("program-m2-node-07.webp"),
@@ -220,6 +220,17 @@ export const landingAssets = {
     start: asset("program-m2-sticker-start.webp"),
     end: asset("program-m2-sticker-end.webp"),
   },
+  /** Figma 385:325–384 composed circles (3 месяц) */
+  programNodesMonth3: [
+    asset("program-m3-node-01.webp"),
+    asset("program-m3-node-02.webp"),
+    asset("program-m3-node-03.webp"),
+    asset("program-m3-node-04.webp"),
+    asset("program-m3-node-05.webp"),
+    asset("program-m3-node-06.webp"),
+    asset("program-m3-node-07.webp"),
+    asset("program-m3-node-08.webp"),
+  ],
   /** Couple + 3 filled bars (month 3) */
   programStickerMonth3: asset("program-m3-sticker.webp"),
   direction3d: [
