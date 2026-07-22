@@ -184,6 +184,13 @@ export const landingAssets = {
     startBadge: landingAsset("start-badge.svg"),
     telegramInfoIcon: landingAsset("telegram-info-icon.svg"),
   },
+  /** Figma 420:2 / 420:10 / 420:22 / 420:19 — bot screens in payment steps */
+  paymentSteps: [
+    asset("payment-step-01.webp", "bot1"),
+    asset("payment-step-02.webp", "bot1"),
+    asset("payment-step-03.webp", "bot1"),
+    asset("payment-step-04.webp", "bot1"),
+  ],
   lessonThumbs: [
     asset("lesson-thumb-01.webp"),
     asset("lesson-thumb-02.webp"),

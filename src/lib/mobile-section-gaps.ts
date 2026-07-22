@@ -28,7 +28,10 @@ const sProgram = sMyView + delta(ORIGINAL.directionsToProgram);
 const sTelegram = sProgram + Math.min(0, delta(ORIGINAL.lessonsToTelegram));
 const sTariffs = sTelegram + Math.min(0, delta(ORIGINAL.telegramToTariffs));
 const sPayment = sTariffs + Math.min(0, delta(ORIGINAL.countdownToPayment));
-const sReviews = sPayment + delta(ORIGINAL.paymentToReviews);
+/** Mobile payment step cards grew (72px stubs → bot screenshots) */
+export const MOBILE_PAYMENT_STEPS_GROWTH = 61;
+const sReviews =
+  sPayment + delta(ORIGINAL.paymentToReviews) + MOBILE_PAYMENT_STEPS_GROWTH;
 const sFooter = sReviews + delta(ORIGINAL.reviewsToFooter);
 
 export const MOBILE_GAP_SHIFT = {

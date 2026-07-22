@@ -85,7 +85,7 @@ function FooterDesktop() {
   return (
     <footer
       id="contacts"
-      className="absolute left-0 top-[14807px] h-[324px] w-[1920px] bg-light-gray"
+      className="absolute left-0 top-[14908px] h-[324px] w-[1920px] bg-light-gray"
     >
       <p className="absolute left-[241px] top-[100px] w-[520px] whitespace-pre-wrap text-[16px] leading-[1.5] text-text">
         {`Все права защищены, контент сайта принадлежит  

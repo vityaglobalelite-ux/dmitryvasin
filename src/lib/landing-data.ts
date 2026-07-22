@@ -823,19 +823,23 @@ export const paymentSteps = [
   {
     step: 1,
     title: "Нажмите «ОПЛАТИТЬ» или «ПРИСОЕДИНИТЬСЯ»",
+    preview: landingAssets.paymentSteps[0],
   },
   {
     step: 2,
-    title: "Перейдите в Telegram-бот,",
+    title: "Перейдите в Telegram-бот",
+    preview: landingAssets.paymentSteps[1],
   },
   {
     step: 3,
-    title: "Выберите тариф и удобную валюту оплаты.",
+    title: "Выберите тариф и удобную валюту оплаты",
+    preview: landingAssets.paymentSteps[2],
   },
   {
     step: 4,
     title:
-      "Сразу после оплаты вы получите ссылку на вход в закрытый Telegram-чат исследования.",
+      "Сразу после оплаты вы получите ссылку на вход в закрытый Telegram-чат исследования",
+    preview: landingAssets.paymentSteps[3],
   },
 ] as const;
 

@@ -53,18 +53,58 @@ function writeScrollY(y: number) {
   window.scrollTo(0, y);
 }
 
-export function smoothScrollToY(targetY: number): Promise<void> {
-  cancelSmoothScroll();
-  const token = scrollToken;
-  const startY =
+function readScrollY(): number {
+  return (
     window.scrollY ||
     document.documentElement.scrollTop ||
     document.body.scrollTop ||
-    0;
-  const distance = targetY - startY;
+    0
+  );
+}
+
+/**
+ * Short correction pass after the animation: layout may still be moving
+ * (in-app browser bars collapsing, accordion height easing, canvas re-zoom),
+ * so keep converging on the re-measured target. Aborts on user input.
+ */
+function settleScrollY(getTarget: () => number, token: number) {
+  const startedAt = performance.now();
+  let cancelled = false;
+  const abort = () => {
+    cancelled = true;
+  };
+  window.addEventListener("touchstart", abort, { passive: true, once: true });
+  window.addEventListener("wheel", abort, { passive: true, once: true });
+
+  const tick = () => {
+    if (cancelled || token !== scrollToken) {
+      window.removeEventListener("touchstart", abort);
+      window.removeEventListener("wheel", abort);
+      return;
+    }
+    const target = getTarget();
+    if (Math.abs(readScrollY() - target) > 2) {
+      writeScrollY(target);
+    }
+    if (performance.now() - startedAt < 400) {
+      requestAnimationFrame(tick);
+    } else {
+      window.removeEventListener("touchstart", abort);
+      window.removeEventListener("wheel", abort);
+    }
+  };
+  requestAnimationFrame(tick);
+}
+
+export function smoothScrollToY(target: number | (() => number)): Promise<void> {
+  cancelSmoothScroll();
+  const token = scrollToken;
+  const getTarget = typeof target === "function" ? target : () => target;
+  const startY = readScrollY();
+  const distance = getTarget() - startY;
 
   if (Math.abs(distance) < 1) {
-    writeScrollY(targetY);
+    writeScrollY(getTarget());
     return Promise.resolve();
   }
 
@@ -77,22 +117,55 @@ export function smoothScrollToY(targetY: number): Promise<void> {
 
   return new Promise((resolve) => {
     let startTime: number | null = null;
+    let stalledFrames = 0;
+    let done = false;
+
+    const finish = (y: number) => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(failSafe);
+      activeRaf = 0;
+      writeScrollY(y);
+      settleScrollY(getTarget, token);
+      resolve();
+    };
+
+    /* In-app webviews (Telegram iOS) can starve rAF entirely — without this
+       the click moves the page a few px and the animation silently dies */
+    const failSafe = window.setTimeout(() => {
+      if (token !== scrollToken || done) return;
+      if (activeRaf) cancelAnimationFrame(activeRaf);
+      finish(getTarget());
+    }, duration + 300);
 
     const step = (now: number) => {
-      if (token !== scrollToken) {
+      if (token !== scrollToken || done) {
+        window.clearTimeout(failSafe);
         resolve();
         return;
       }
       if (startTime === null) startTime = now;
       const t = Math.min(1, (now - startTime) / duration);
-      writeScrollY(startY + distance * smootherstep(t));
+      /* Re-measure every frame: the layout can shift mid-flight (collapsing
+         browser chrome, accordion easing), so a frozen target lands wrong */
+      const y = startY + (getTarget() - startY) * smootherstep(t);
+      writeScrollY(y);
+
+      // WKWebView in-app browsers may drop programmatic scroll writes
+      if (Math.abs(readScrollY() - y) > 24) {
+        stalledFrames += 1;
+        if (stalledFrames >= 5) {
+          finish(getTarget());
+          return;
+        }
+      } else {
+        stalledFrames = 0;
+      }
 
       if (t < 1) {
         activeRaf = requestAnimationFrame(step);
       } else {
-        activeRaf = 0;
-        writeScrollY(targetY);
-        resolve();
+        finish(getTarget());
       }
     };
 
@@ -116,8 +189,8 @@ export function smoothScrollToId(
       document.body.style.overflow = "";
     }
 
-    // Re-measure after delay (menu close / layout settle)
-    await smoothScrollToY(getSectionScrollTop(el));
+    // Live target — re-measured every frame (menu close / layout settle)
+    await smoothScrollToY(() => getSectionScrollTop(el));
 
     if (updateHash) {
       const next = `#${id}`;

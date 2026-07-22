@@ -72,7 +72,7 @@ function useProgramMonth() {
         lessonEls.current.get(i) ??
         document.querySelector<HTMLElement>(`[data-program-lesson="${i}"]`);
       if (!el) return;
-      void smoothScrollToY(getSectionScrollTop(el));
+      void smoothScrollToY(() => getSectionScrollTop(el));
     };
     // Wait for accordion open + layout paint under CSS zoom
     window.requestAnimationFrame(() => {
@@ -105,7 +105,7 @@ function useProgramMonth() {
           boardEl.current ??
           document.querySelector<HTMLElement>("[data-program-board]");
         if (board) {
-          void smoothScrollToY(getSectionScrollTop(board));
+          void smoothScrollToY(() => getSectionScrollTop(board));
           return;
         }
         void smoothScrollToId("program", { updateHash: false });

@@ -22,21 +22,22 @@ type CollageItem = {
   imgClass?: string;
 };
 
+/* +101 vs previous — payment bot-screen cards taller (Figma 249:1998+) */
 const collage: CollageItem[] = [
   {
     src: a.collage[0],
     x: 240,
-    y: 12969,
+    y: 13070,
     w: 345,
     h: 632,
     imgClass: "absolute left-[-0.02%] top-[-7.21%] h-[118.36%] w-[100.03%] max-w-none",
   },
-  { src: a.collageExtra[0], x: 605, y: 12969, w: 345, h: 73 },
-  { src: a.collageExtra[1], x: 605, y: 13062, w: 345, h: 156 },
+  { src: a.collageExtra[0], x: 605, y: 13070, w: 345, h: 73 },
+  { src: a.collageExtra[1], x: 605, y: 13163, w: 345, h: 156 },
   {
     src: a.collage[2],
     x: 605,
-    y: 13238,
+    y: 13339,
     w: 345,
     h: 180,
     imgClass:
@@ -45,7 +46,7 @@ const collage: CollageItem[] = [
   {
     src: a.collage[4],
     x: 605,
-    y: 13438,
+    y: 13539,
     w: 344,
     h: 106,
     imgClass:
@@ -54,7 +55,7 @@ const collage: CollageItem[] = [
   {
     src: a.collage[1],
     x: 970,
-    y: 12969,
+    y: 13070,
     w: 345,
     h: 265,
     imgClass: "absolute left-[-0.15%] top-0 h-full w-[100.02%] max-w-none",
@@ -62,7 +63,7 @@ const collage: CollageItem[] = [
   {
     src: a.collage[6],
     x: 970,
-    y: 13254,
+    y: 13355,
     w: 345,
     h: 98,
     imgClass:
@@ -71,18 +72,18 @@ const collage: CollageItem[] = [
   {
     src: a.collage[7],
     x: 970,
-    y: 13372,
+    y: 13473,
     w: 345,
     h: 222,
     imgClass:
       "absolute left-[-0.43%] top-[-0.39%] h-[100.79%] w-[100.72%] max-w-none",
   },
-  { src: a.collage[3], x: 1335, y: 12969, w: 345, h: 173 },
-  { src: a.collage[5], x: 1335, y: 13162, w: 345, h: 309 },
+  { src: a.collage[3], x: 1335, y: 13070, w: 345, h: 173 },
+  { src: a.collage[5], x: 1335, y: 13263, w: 345, h: 309 },
   {
     src: a.collage[8],
     x: 1335,
-    y: 13491,
+    y: 13592,
     w: 343,
     h: 82,
     imgClass:
@@ -489,10 +490,10 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
       {/* Figma 249:1377 — светло-серый фон секции */}
       <div
         id="reviews"
-        className="absolute left-0 top-[12784px] h-[1020px] w-[1920px] bg-light-gray"
+        className="absolute left-0 top-[12885px] h-[1020px] w-[1920px] bg-light-gray"
       />
 
-      <h2 className="h-section absolute left-[730px] top-[12874px] w-[459px] text-center">
+      <h2 className="h-section absolute left-[730px] top-[12975px] w-[459px] text-center">
         Отзывы участников
       </h2>
 
@@ -518,13 +519,13 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
         href={telegramBotUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="btn-primary absolute left-[831px] top-[13634px]"
+        className="btn-primary absolute left-[831px] top-[13735px]"
       >
         Присоединиться сейчас
       </a>
 
       {/* Figma 249:1439 */}
-      <div className="absolute left-[240px] top-[13914px] flex w-[1057px] flex-col gap-[20px] text-text">
+      <div className="absolute left-[240px] top-[14015px] flex w-[1057px] flex-col gap-[20px] text-text">
         <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px]">
           А вот такие результаты получают ученики, работая со мной в онлайн и
           оффлайн.
@@ -538,7 +539,7 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
       <button
         type="button"
         aria-label="Предыдущий отзыв"
-        className="absolute left-[1620px] top-[14023px] size-[50px]"
+        className="absolute left-[1620px] top-[14124px] size-[50px]"
       >
         <img
           src={landingAssets.reviews.arrowPrev}
@@ -551,7 +552,7 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
       <button
         type="button"
         aria-label="Следующий отзыв"
-        className="absolute left-[1680px] top-[14023px] size-[50px]"
+        className="absolute left-[1680px] top-[14124px] size-[50px]"
       >
         <img
           src={landingAssets.reviews.arrowNext}
@@ -566,7 +567,7 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
         <article
           key={review.name}
           className="absolute flex h-[614px] w-[467px] flex-col gap-[30px] rounded-[30px] bg-light-gray px-[30px] pb-[30px] pt-[30px]"
-          style={{ left: cardX[i], top: 14113 }}
+          style={{ left: cardX[i], top: 14214 }}
         >
           <img
             src={review.photo}

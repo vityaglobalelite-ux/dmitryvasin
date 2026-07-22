@@ -10,7 +10,8 @@ import {
 
 import { MOBILE_CANVAS_HEIGHT_SHRINK } from "@/lib/mobile-section-gaps";
 
-export const DESKTOP_CANVAS = { w: 1920, h: 15131 } as const;
+/** Figma Дизайн height after payment bot-screen cards (+101) */
+export const DESKTOP_CANVAS = { w: 1920, h: 15232 } as const;
 /** Figma Главная_360 is 17666; shortened after mobile inter-section gap compression */
 export const MOBILE_CANVAS = {
   w: 360,

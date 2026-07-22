@@ -3,8 +3,9 @@
 import { landingAssets } from "@/lib/landing-assets";
 import { paymentSteps, telegramSupportBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+import { MOBILE_PAYMENT_STEPS_GROWTH } from "@/lib/mobile-section-gaps";
 
-/* Figma: y 11624..12694 — «Стоимость и оплата» */
+/* Figma: y 11624..12694 — «Стоимость и оплата»; cards 249:1998–2016 h=421 */
 
 const stepX = [240, 605, 970, 1335];
 
@@ -52,7 +53,7 @@ function PaymentMobile() {
           {paymentSteps.map((s, i) => (
             <div
               key={s.step}
-              className="flex h-[262px] w-[290px] shrink-0 snap-start flex-col gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
+              className="flex w-[290px] shrink-0 snap-start flex-col gap-[20px] rounded-[10px] bg-light-gray p-[15px]"
             >
               <img
                 src={landingAssets.icons.stepChips[i]}
@@ -61,7 +62,13 @@ function PaymentMobile() {
                 width={40}
                 height={40}
               />
-              <div className="h-[72px] w-full shrink-0 rounded-[10px] bg-[#d9d9d9]" />
+              <img
+                src={s.preview}
+                alt=""
+                className="h-[155px] w-full shrink-0 rounded-[10px] object-cover"
+                width={260}
+                height={155}
+              />
               <p className="text-[13px] font-normal leading-[1.5] text-text">
                 {s.title}
               </p>
@@ -71,7 +78,10 @@ function PaymentMobile() {
       </div>
 
       {/* 298:33 — support row */}
-      <div className="absolute left-[20px] top-[14885px] flex h-[57px] w-[321px] items-center gap-[10px]">
+      <div
+        className="absolute left-[20px] flex h-[57px] w-[321px] items-center gap-[10px]"
+        style={{ top: 14885 + MOBILE_PAYMENT_STEPS_GROWTH }}
+      >
         <img
           src={landingAssets.icons.personSupport}
           alt=""
@@ -87,8 +97,9 @@ function PaymentMobile() {
 
       {/* 303:66 + 303:67 + 303:68 + 298:32 — support banner */}
       <div
-        className="absolute left-[20px] top-[15062px] z-[2] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
+        className="absolute left-[20px] z-[2] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
         style={{
+          top: 15062 + MOBILE_PAYMENT_STEPS_GROWTH,
           backgroundImage:
             "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
         }}
@@ -139,7 +150,7 @@ function PaymentDesktop() {
       {paymentSteps.map((s, i) => (
         <div
           key={s.step}
-          className="absolute flex h-[320px] w-[345px] flex-col gap-[30px] rounded-[30px] bg-light-gray p-[30px]"
+          className="absolute flex h-[421px] w-[345px] flex-col gap-[30px] rounded-[30px] bg-light-gray p-[30px]"
           style={{ left: stepX[i], top: 11794, width: i === 0 ? 346 : 345 }}
         >
           <img
@@ -149,13 +160,19 @@ function PaymentDesktop() {
             width={50}
             height={50}
           />
-          <div className="h-[72px] w-full shrink-0 rounded-[10px] bg-[#d9d9d9]" />
+          <img
+            src={s.preview}
+            alt=""
+            className="h-[193px] w-full shrink-0 rounded-[20px] object-cover"
+            width={286}
+            height={193}
+          />
           <p className="text-[16px] leading-[1.5] text-text">{s.title}</p>
         </div>
       ))}
 
       {/* Figma 249:2023 */}
-      <div className="absolute left-[240px] top-[12154px] flex h-[30px] w-[990px] items-center gap-[10px]">
+      <div className="absolute left-[240px] top-[12255px] flex h-[30px] w-[990px] items-center gap-[10px]">
         <img
           src={landingAssets.icons.personSupport}
           alt=""
@@ -171,7 +188,7 @@ function PaymentDesktop() {
 
       {/* Figma 249:1900 — градиентный баннер поддержки */}
       <div
-        className="absolute left-[240px] top-[12364px] h-[330px] w-[1440px] overflow-hidden rounded-[40px]"
+        className="absolute left-[240px] top-[12465px] h-[330px] w-[1440px] overflow-hidden rounded-[40px]"
         style={{
           backgroundImage:
             "linear-gradient(149.52deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
@@ -191,7 +208,7 @@ function PaymentDesktop() {
           </a>
         </div>
 
-        {/* Figma 249:2022 — crop inside 318×330 at (1362,12364) → rel (1122,0) */}
+        {/* Figma 249:2022 — crop inside 318×330 at (1362,12465) → rel (1122,0) */}
         <div className="pointer-events-none absolute left-[1122px] top-0 h-[330px] w-[318px] overflow-hidden">
           <img
             src={landingAssets.misc.mockupPayment}

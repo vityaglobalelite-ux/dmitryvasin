@@ -66,6 +66,10 @@
 html {
   /* Anchor navigation uses cinematic RAF scroll (see smooth-scroll.ts) */
   scroll-behavior: auto;
+  /* iPad Safari font-boosts text inside the zoom-scaled 1920px canvas,
+     breaking Figma-coordinate layout; Tailwind's 100% does not disable it */
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
 }
 
 /* Figma hero display lines: 106px line boxes */
