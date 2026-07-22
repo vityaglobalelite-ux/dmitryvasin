@@ -51,11 +51,7 @@ function FooterMobile() {
         ))}
       </div>
 
-      <p className="absolute left-[20px] top-[122px] w-[224px] text-[12px] leading-[1.5] text-text">
-        *Meta запрещена на территории РФ
-      </p>
-
-      <nav className="absolute left-[20px] top-[180px] flex w-[320px] flex-col gap-[10px]">
+      <nav className="absolute left-[20px] top-[132px] flex w-[320px] flex-col gap-[10px]">
         {footerLinks.map((link) => (
           <a
             key={link.href}
@@ -68,15 +64,25 @@ function FooterMobile() {
         ))}
       </nav>
 
-      <p className="absolute left-[20px] top-[340px] w-[320px] text-[13px] font-normal leading-[1.5] text-text">
-        Все&nbsp;права защищены, контент сайта принадлежит BeTango Global LLC
-        Address: Florida, U.S.A. limited liability company with a registered
-        agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702
-      </p>
-
-      <p className="absolute left-[20px] top-[500px] w-[320px] text-[13px] font-normal leading-[1.5] text-text">
-        © 2026
-      </p>
+      <div className="absolute left-[20px] top-[292px] flex w-[320px] flex-col gap-[12px] text-[13px] font-normal leading-[1.5] text-text">
+        <p>
+          Все&nbsp;права защищены, контент сайта принадлежит BeTango Global LLC
+          Address: Florida, U.S.A. limited liability company with a registered
+          agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702
+        </p>
+        <div className="flex flex-col gap-[4px]">
+          <a
+            href="mailto:Support@betango.dance"
+            className="hover:text-accent-red"
+          >
+            Support@betango.dance
+          </a>
+          <a href="tel:+15619275713" className="hover:text-accent-red">
+            +1 (561) 927 5713
+          </a>
+        </div>
+        <p>© 2026</p>
+      </div>
     </footer>
   );
 }
@@ -87,14 +93,25 @@ function FooterDesktop() {
       id="contacts"
       className="absolute left-0 top-[14908px] h-[324px] w-[1920px] bg-light-gray"
     >
-      <p className="absolute left-[241px] top-[100px] w-[520px] whitespace-pre-wrap text-[16px] leading-[1.5] text-text">
-        {`Все права защищены, контент сайта принадлежит  
+      <div className="absolute left-[241px] top-[100px] flex w-[520px] flex-col gap-[16px] text-[16px] leading-[1.5] text-text">
+        <p className="whitespace-pre-wrap">
+          {`Все права защищены, контент сайта принадлежит  
 BeTango Global LLC 
-Address: Florida, U.S.A. limited liability company with a registered agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702 `}
-      </p>
-      <p className="absolute left-[241px] top-[212px] text-[16px] leading-[1.5] text-text">
-        © 2026
-      </p>
+Address: Florida, U.S.A. limited liability company with a registered agent address at 7901 4th St. N., Ste. 300, St. Petersburg, FL 33702`}
+        </p>
+        <div className="flex flex-col gap-[4px]">
+          <a
+            href="mailto:Support@betango.dance"
+            className="hover:text-accent-red"
+          >
+            Support@betango.dance
+          </a>
+          <a href="tel:+15619275713" className="hover:text-accent-red">
+            +1 (561) 927 5713
+          </a>
+        </div>
+        <p>© 2026</p>
+      </div>
 
       <nav className="absolute left-[848px] top-[100px] flex w-[516px] flex-col gap-[20px]">
         {footerLinks.map((link) => (
@@ -121,9 +138,6 @@ Address: Florida, U.S.A. limited liability company with a registered agent addre
           />
         ))}
       </div>
-      <p className="absolute left-[1456px] top-[170px] text-[12px] leading-[1.5] text-text">
-        *Meta запрещена на территории РФ
-      </p>
     </footer>
   );
 }
