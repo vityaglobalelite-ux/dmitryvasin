@@ -14,12 +14,13 @@ function TelegramMobile() {
       <div className="absolute left-[35px] top-[11364px] z-[2] flex w-[290px] flex-col gap-[40px]">
         <div className="flex w-full flex-col gap-[20px] text-white">
           <h2 className="h-section-mobile w-[290px] !text-white">
-            Исследование проходит в&nbsp;закрытом Telegram-чате
+            Исследование проходит в&nbsp;закрытых Telegram-чатах
+            по&nbsp;месяцам
           </h2>
           <div className="w-[269px] text-[13px] font-normal leading-[1.5]">
             <p>
-              Все&nbsp;уроки и&nbsp;материалы собраны в&nbsp;одном чате
-              и&nbsp;сформированы по&nbsp;темам.
+              Каждый&nbsp;месяц исследования&nbsp;— отдельный закрытый
+              чат. Уроки и&nbsp;материалы сформированы по&nbsp;темам.
             </p>
             <p className="mt-0">&nbsp;</p>
             <p>
@@ -49,7 +50,7 @@ function TelegramMobile() {
       <div className="pointer-events-none absolute left-[-20px] top-[11752px] z-[2] h-[392px] w-[360px] overflow-hidden">
         <img
           src={landingAssets.photos.telegramTall}
-          alt="Telegram-чат исследования"
+          alt="Telegram-чаты исследования"
           className="absolute left-[-78.81%] top-[-55.72%] h-[207.33%] w-[258.15%] max-w-none"
         />
       </div>
@@ -72,15 +73,15 @@ function TelegramDesktop() {
       {/* 249:1434 — Medium 50 / 3 строки в 593 */}
       <h2 className="h-section absolute left-[302px] top-[9656px] z-[2] w-[593px] whitespace-pre !text-white">
         {`Исследование
-проходит в\u00a0закрытом
-Telegram-чате`}
+проходит в\u00a0закрытых
+чатах по\u00a0месяцам`}
       </h2>
 
       {/* 249:1561 */}
       <div className="absolute left-[302px] top-[9851px] z-[2] w-[524px] space-y-[24px] text-[16px] font-normal leading-[1.5] text-white">
         <p>
-          Все&nbsp;уроки и&nbsp;материалы собраны в&nbsp;одном чате
-          и&nbsp;сформированы по&nbsp;темам.
+          Каждый&nbsp;месяц исследования&nbsp;— отдельный закрытый чат.
+          Уроки и&nbsp;материалы сформированы по&nbsp;темам.
         </p>
         <p>
           Смотрите наши уроки по&nbsp;расписанию и&nbsp;«подсматривайте»
@@ -107,7 +108,7 @@ Telegram-чате`}
       <div className="pointer-events-none absolute left-[1054px] top-[9498px] z-[2] h-[682px] w-[626px] overflow-hidden">
         <img
           src={landingAssets.photos.telegramTall}
-          alt="Telegram-чат исследования"
+          alt="Telegram-чаты исследования"
           className="absolute left-[-78.81%] top-[-55.72%] h-[207.33%] w-[258.15%] max-w-none"
         />
       </div>
