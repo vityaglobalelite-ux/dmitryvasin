@@ -17,14 +17,33 @@ const keyboards = {
     } else {
       rows.push([BTN.SUBSCRIPTION]);
     }
-    rows.push([Markup.button.webApp(BTN.SUPPORT, config.supportWebAppUrl)]);
+    // Обычная текстовая кнопка: WebApp-редирект ненадёжен на десктопе
+    rows.push([BTN.SUPPORT]);
     return Markup.keyboard(rows).resize().persistent();
   },
 
+  supportLink: () =>
+    Markup.inlineKeyboard([
+      [Markup.button.url("Написать в поддержку", config.supportUrl)],
+    ]),
+
   paymentMethods: () =>
     Markup.inlineKeyboard([
-      [Markup.button.callback("Российская карта", "pay:ru")],
-      [Markup.button.callback("Карта иностранного банка", "pay:foreign")],
+      [Markup.button.callback("Международная карта (Stripe)", "pay:foreign")],
+      [Markup.button.callback("Карта РФ", "pay:ru")],
+      [Markup.button.callback("Оплата звёздами Telegram ⭐", "pay:stars")],
+    ]),
+
+  /** Инвойс Stars: первая кнопка обязана быть Pay, вторая — пополнение баланса */
+  starsInvoice: (amount) =>
+    Markup.inlineKeyboard([
+      [Markup.button.pay(`Заплатить ${amount} ⭐`)],
+      [
+        Markup.button.url(
+          "Пополнить звёзды — @PremiumBot",
+          "https://t.me/PremiumBot?start=stars",
+        ),
+      ],
     ]),
 
   stripePay: (checkoutUrl) =>

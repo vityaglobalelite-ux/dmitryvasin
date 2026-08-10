@@ -6,6 +6,7 @@ create table if not exists tariff_prices (
   price_rub numeric(12, 2) not null check (price_rub > 0),
   price_usd numeric(12, 2) not null check (price_usd > 0),
   price_eur numeric(12, 2) not null check (price_eur > 0),
+  price_stars integer not null check (price_stars > 0),
   -- which currency Stripe charges for foreign-card Checkout: rub | usd | eur
   checkout_currency text not null default 'eur'
     check (checkout_currency in ('rub', 'usd', 'eur')),
@@ -15,6 +16,7 @@ create table if not exists tariff_prices (
   price_rub_was numeric(12, 2),
   price_usd_was numeric(12, 2),
   price_eur_was numeric(12, 2),
+  price_stars_was integer not null check (price_stars_was > 0),
   label text,
   active boolean not null default true,
   updated_at timestamptz not null default now()
@@ -27,13 +29,13 @@ grant all on table tariff_prices to service_role;
 
 -- Seed (поменяйте под себя)
 insert into tariff_prices (
-  tariff, price_rub, price_usd, price_eur, checkout_currency,
-  price_rub_was, price_usd_was, price_eur_was, label
+  tariff, price_rub, price_usd, price_eur, price_stars, checkout_currency,
+  price_rub_was, price_usd_was, price_eur_was, price_stars_was, label
 ) values
-  ('trial',    1000.00, 11.00, 10.00, 'eur', null, null, null, 'Test-drive | 1 month'),
-  ('full',     1000.00, 11.00, 10.00, 'eur', null, null, null, 'Full research | 90 days'),
-  ('vip',      1000.00, 11.00, 10.00, 'eur', null, null, null, 'VIP research | 90 days'),
-  ('month2',   1000.00, 11.00, 10.00, 'eur', null, null, null, 'Month 2 renewal'),
-  ('month2_3', 1000.00, 11.00, 10.00, 'eur', 2000, 22, 20, 'Month 2+3 renewal'),
-  ('month3',   1000.00, 11.00, 10.00, 'eur', null, null, null, 'Month 3 renewal')
+  ('trial',    1000.00, 11.00, 10.00, 1000, 'eur', null, null, null, 1000, 'Test-drive | 1 month'),
+  ('full',     1000.00, 11.00, 10.00, 1000, 'eur', null, null, null, 1000, 'Full research | 90 days'),
+  ('vip',      1000.00, 11.00, 10.00, 1000, 'eur', null, null, null, 1000, 'VIP research | 90 days'),
+  ('month2',   1000.00, 11.00, 10.00, 1000, 'eur', null, null, null, 1000, 'Month 2 renewal'),
+  ('month2_3', 1000.00, 11.00, 10.00, 1000, 'eur', 2000, 22, 20, 2000, 'Month 2+3 renewal'),
+  ('month3',   1000.00, 11.00, 10.00, 1000, 'eur', null, null, null, 1000, 'Month 3 renewal')
 on conflict (tariff) do nothing;

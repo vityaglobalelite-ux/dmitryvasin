@@ -52,47 +52,53 @@ async function sendPaidToUser(bot, telegramId, subscription) {
   }
 }
 
+async function processPaidPayment(bot, row) {
+  let claimed;
+  try {
+    claimed = await db.claimPaidPayment(row.id);
+  } catch (err) {
+    console.error("claimPaidPayment:", row.id, err.message);
+    return false;
+  }
+  if (!claimed) return false;
+
+  try {
+    const sub = await grantAccess(
+      bot,
+      claimed.telegram_id,
+      claimed.tariff,
+      claimed.payment_method || "foreign",
+    );
+    await db.markPaymentGranted(claimed.id, sub.id);
+    await sendPaidToUser(bot, claimed.telegram_id, sub);
+    console.log(
+      "payment granted",
+      claimed.id,
+      "user",
+      claimed.telegram_id,
+      "tariff",
+      claimed.tariff,
+    );
+    return true;
+  } catch (err) {
+    console.error("grant after payment failed:", claimed.id, err.message);
+    try {
+      await db.markPaymentGrantFailed(claimed.id, err.message);
+    } catch (e2) {
+      console.error("markPaymentGrantFailed:", e2.message);
+    }
+    return false;
+  }
+}
+
 /**
- * Process Stripe payments marked paid by webhook → grant club access.
+ * Process payments marked paid by Stripe webhooks or Telegram Stars updates.
  */
 async function processPaidPayments(bot, limit = 20) {
   const rows = await db.fetchPaidUngrantedPayments(limit);
   for (const row of rows) {
-    let claimed;
-    try {
-      claimed = await db.claimPaidPayment(row.id);
-    } catch (err) {
-      console.error("claimPaidPayment:", row.id, err.message);
-      continue;
-    }
-    if (!claimed) continue;
-
-    try {
-      const sub = await grantAccess(
-        bot,
-        claimed.telegram_id,
-        claimed.tariff,
-        claimed.payment_method || "foreign",
-      );
-      await db.markPaymentGranted(claimed.id, sub.id);
-      await sendPaidToUser(bot, claimed.telegram_id, sub);
-      console.log(
-        "payment granted",
-        claimed.id,
-        "user",
-        claimed.telegram_id,
-        "tariff",
-        claimed.tariff,
-      );
-    } catch (err) {
-      console.error("grant after payment failed:", claimed.id, err.message);
-      try {
-        await db.markPaymentGrantFailed(claimed.id, err.message);
-      } catch (e2) {
-        console.error("markPaymentGrantFailed:", e2.message);
-      }
-    }
+    await processPaidPayment(bot, row);
   }
 }
 
-module.exports = { processPaidPayments, sendPaidToUser };
+module.exports = { processPaidPayment, processPaidPayments, sendPaidToUser };
