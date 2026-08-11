@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { landingAssets } from "@/lib/landing-assets";
 import { telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
-import { usePriceIncreaseTarget } from "@/lib/price-increase";
+import { useCountdownTail } from "@/lib/countdown-tail";
 
 function getTimeLeft(target: Date) {
   const diff = Math.max(0, target.getTime() - Date.now());
@@ -138,7 +138,7 @@ function CountdownDesktop({ display }: { display: string }) {
 
 export function CountdownSection() {
   const isMobile = useIsMobile();
-  const { target, active } = usePriceIncreaseTarget();
+  const { target, active } = useCountdownTail();
   const display = useCountdownDisplay(active ? target : null);
 
   if (!active || !target) return null;

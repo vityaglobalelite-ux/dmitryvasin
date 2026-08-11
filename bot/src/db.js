@@ -309,55 +309,6 @@ async function getTariffPrices() {
   return data || [];
 }
 
-async function getTariffPrice(tariff) {
-  const { data, error } = await supabase
-    .from("tariff_prices")
-    .select("*")
-    .eq("tariff", tariff)
-    .eq("active", true)
-    .maybeSingle();
-  if (error) throw error;
-  return data;
-}
-
-async function recordTelegramStarsPayment({
-  telegramId,
-  tariff,
-  amountStars,
-  telegramPaymentChargeId,
-  providerPaymentChargeId,
-  invoicePayload,
-}) {
-  const row = {
-    telegram_id: telegramId,
-    tariff,
-    payment_method: "stars",
-    status: "paid",
-    amount_stars: amountStars,
-    currency: "XTR",
-    telegram_payment_charge_id: telegramPaymentChargeId,
-    provider_payment_charge_id: providerPaymentChargeId || null,
-    metadata: { invoice_payload: invoicePayload },
-    updated_at: nowIso(),
-  };
-  const { data, error } = await supabase
-    .from("payments")
-    .insert(row)
-    .select("*")
-    .single();
-
-  if (!error) return data;
-  if (error.code !== "23505") throw error;
-
-  const { data: existing, error: existingError } = await supabase
-    .from("payments")
-    .select("*")
-    .eq("telegram_payment_charge_id", telegramPaymentChargeId)
-    .single();
-  if (existingError) throw existingError;
-  return existing;
-}
-
 async function fetchPaidUngrantedPayments(limit = 20) {
   const { data, error } = await supabase
     .from("payments")
@@ -430,8 +381,6 @@ module.exports = {
   getSetting,
   setSetting,
   getTariffPrices,
-  getTariffPrice,
-  recordTelegramStarsPayment,
   fetchPaidUngrantedPayments,
   claimPaidPayment,
   markPaymentGranted,

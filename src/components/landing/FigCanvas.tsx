@@ -7,6 +7,10 @@ import {
   MOBILE_CANVAS,
   useLandingMode,
 } from "@/lib/landing-mode";
+import {
+  CountdownTailProvider,
+  useCountdownTail,
+} from "@/lib/countdown-tail";
 import { ProgramTailProvider, useProgramTail } from "@/lib/program-tail";
 import { bindSectionScroll } from "@/lib/smooth-scroll";
 import { StickyMobileCta } from "./StickyMobileCta";
@@ -20,9 +24,11 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const mode = useLandingMode();
   const { shift } = useProgramTail();
+  const { collapse: countdownCollapse } = useCountdownTail();
   const canvas = mode === "mobile" ? MOBILE_CANVAS : DESKTOP_CANVAS;
-  /* shift < 0 when accordion collapses — must shrink canvas or a huge empty gap appears at the bottom */
-  const height = canvas.h + shift;
+  /* shift < 0 when accordion collapses; countdownCollapse > 0 when banner hidden —
+     must shrink canvas or empty gaps appear at the bottom */
+  const height = canvas.h + shift - countdownCollapse;
 
   useEffect(() => {
     const el = ref.current;
@@ -79,7 +85,9 @@ export function FigCanvas({ children }: { children: React.ReactNode }) {
   return (
     <LandingModeProvider>
       <ProgramTailProvider>
-        <FigCanvasInner>{children}</FigCanvasInner>
+        <CountdownTailProvider>
+          <FigCanvasInner>{children}</FigCanvasInner>
+        </CountdownTailProvider>
       </ProgramTailProvider>
       <StickyMobileCta />
     </LandingModeProvider>

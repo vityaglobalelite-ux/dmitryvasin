@@ -1,5 +1,4 @@
 const { Telegraf } = require("telegraf");
-const { randomUUID } = require("crypto");
 const { config } = require("./config");
 const { getTexts } = require("./texts");
 const { keyboards, BTN } = require("./keyboards");
@@ -23,18 +22,8 @@ const {
   TARIFF_LABELS,
 } = require("./membership");
 const { createCheckoutSession } = require("./stripe-checkout");
-const { processPaidPayment } = require("./payments");
 
 const bot = new Telegraf(config.token);
-const STARS_PAYLOAD_PREFIX = "stars:v1";
-const PAYABLE_TARIFFS = new Set([
-  "trial",
-  "full",
-  "vip",
-  "month2",
-  "month2_3",
-  "month3",
-]);
 
 async function accessRowsForSubscription(botInstance, subscription, telegramId) {
   if (!subscription) return [];
@@ -191,7 +180,7 @@ bot.on("channel_post", async (ctx) => {
   }
 });
 
-bot.action(/^pay:(ru|foreign|stars)$/, async (ctx) => {
+bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
   await ctx.answerCbQuery();
   await db.upsertUser(ctx.from);
   if (await sendMembershipCard(ctx, bot, ctx.from.id)) {
@@ -228,54 +217,6 @@ async function startStripeCheckout(ctx, user, tariff) {
       keyboards.afterPayment(null),
     );
   }
-}
-
-function createStarsPayload(telegramId, tariff) {
-  return `${STARS_PAYLOAD_PREFIX}:${telegramId}:${tariff}:${randomUUID()}`;
-}
-
-function parseStarsPayload(payload) {
-  const [kind, version, telegramId, tariff, orderId] = String(payload || "").split(":");
-  if (
-    `${kind}:${version}` !== STARS_PAYLOAD_PREFIX ||
-    !/^\d+$/.test(telegramId) ||
-    !PAYABLE_TARIFFS.has(tariff) ||
-    !orderId
-  ) {
-    return null;
-  }
-  return { telegramId: Number(telegramId), tariff };
-}
-
-function starsAmount(row) {
-  const amount = Number(row?.price_stars);
-  return Number.isSafeInteger(amount) && amount > 0 ? amount : null;
-}
-
-async function startStarsCheckout(ctx, user, tariff) {
-  const price = await db.getTariffPrice(tariff);
-  const amount = starsAmount(price);
-  if (!amount) {
-    await ctx.reply(
-      "Цена в Telegram Stars для этого тарифа пока не задана. Напишите в поддержку.",
-      keyboards.afterPayment(null),
-    );
-    return;
-  }
-
-  await ctx.replyWithInvoice(
-    {
-      title: TARIFF_LABELS[tariff] || price.label || tariff,
-      description:
-        "Оплата участия звёздами Telegram. Если звёзд не хватает — пополните баланс по кнопке ниже и вернитесь к оплате.",
-      payload: createStarsPayload(user.telegram_id, tariff),
-      provider_token: "",
-      currency: "XTR",
-      prices: [{ label: "Участие", amount }],
-    },
-    keyboards.starsInvoice(amount),
-  );
-  await db.updateUser(user.telegram_id, { state: "awaiting_payment" });
 }
 
 async function purchaseTariff(ctx, tariff) {
@@ -319,10 +260,6 @@ async function purchaseTariff(ctx, tariff) {
       await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
       return;
     }
-    if (user.payment_method === "stars") {
-      await startStarsCheckout(ctx, user, tariff);
-      return;
-    }
     await startStripeCheckout(ctx, user, tariff);
     return;
   }
@@ -336,67 +273,6 @@ async function purchaseTariff(ctx, tariff) {
 bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
   await ctx.answerCbQuery();
   await purchaseTariff(ctx, ctx.match[1]);
-});
-
-bot.on("pre_checkout_query", async (ctx) => {
-  const query = ctx.preCheckoutQuery;
-  const parsed = parseStarsPayload(query.invoice_payload);
-  try {
-    const price = parsed ? await db.getTariffPrice(parsed.tariff) : null;
-    const amount = starsAmount(price);
-    const valid =
-      parsed &&
-      parsed.telegramId === query.from.id &&
-      query.currency === "XTR" &&
-      amount === query.total_amount;
-    await ctx.answerPreCheckoutQuery(
-      Boolean(valid),
-      valid ? undefined : "Счёт устарел или содержит неверную сумму. Создайте новый счёт.",
-    );
-  } catch (err) {
-    console.error("Stars pre-checkout failed:", err.message);
-    await ctx.answerPreCheckoutQuery(
-      false,
-      "Не удалось проверить платёж. Попробуйте ещё раз чуть позже.",
-    );
-  }
-});
-
-bot.on("successful_payment", async (ctx) => {
-  const payment = ctx.message.successful_payment;
-  const parsed = parseStarsPayload(payment.invoice_payload);
-  if (
-    !parsed ||
-    parsed.telegramId !== ctx.from.id ||
-    payment.currency !== "XTR"
-  ) {
-    console.error("Invalid Telegram Stars payment payload", payment.invoice_payload);
-    await ctx.reply("Платёж получен, но не распознан. Напишите в поддержку.");
-    return;
-  }
-
-  try {
-    const price = await db.getTariffPrice(parsed.tariff);
-    const amount = starsAmount(price);
-    if (!amount || amount !== payment.total_amount) {
-      throw new Error("paid amount does not match current tariff price");
-    }
-    const row = await db.recordTelegramStarsPayment({
-      telegramId: ctx.from.id,
-      tariff: parsed.tariff,
-      amountStars: payment.total_amount,
-      telegramPaymentChargeId: payment.telegram_payment_charge_id,
-      providerPaymentChargeId: payment.provider_payment_charge_id,
-      invoicePayload: payment.invoice_payload,
-    });
-    await processPaidPayment(bot, row);
-  } catch (err) {
-    console.error("Telegram Stars payment processing failed:", err.message);
-    await ctx.reply(
-      "Оплата получена. Доступ будет выдан автоматически; если он не появился, напишите в поддержку.",
-      keyboards.afterPayment(null),
-    );
-  }
 });
 
 bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
@@ -434,10 +310,6 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
     if (user.payment_method === "ru") {
       const texts = await getTexts("ru");
       await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
-      return;
-    }
-    if (user.payment_method === "stars") {
-      await startStarsCheckout(ctx, user, tariff);
       return;
     }
     // Renewals: if method unknown, treat as foreign (Stripe)
@@ -609,7 +481,6 @@ bot
     allowedUpdates: [
       "message",
       "callback_query",
-      "pre_checkout_query",
       "channel_post",
       "chat_join_request",
       "my_chat_member",

@@ -92,7 +92,7 @@ async function processPaidPayment(bot, row) {
 }
 
 /**
- * Process payments marked paid by Stripe webhooks or Telegram Stars updates.
+ * Process Stripe payments marked paid by webhook → grant club access.
  */
 async function processPaidPayments(bot, limit = 20) {
   const rows = await db.fetchPaidUngrantedPayments(limit);

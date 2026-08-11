@@ -13,6 +13,7 @@ import { QuoteVideoSection } from "@/components/landing/QuoteVideoSection";
 import { ReviewsSection } from "@/components/landing/ReviewsSection";
 import { TariffsSection } from "@/components/landing/TariffsSection";
 import { TelegramSection } from "@/components/landing/TelegramSection";
+import { CountdownTail } from "@/lib/countdown-tail";
 import { MOBILE_GAP_SHIFT } from "@/lib/mobile-section-gaps";
 import { ProgramTail } from "@/lib/program-tail";
 
@@ -47,15 +48,17 @@ export default function Home() {
           <TariffsSection />
           <CountdownSection />
         </MobileYShift>
-        <MobileYShift y={MOBILE_GAP_SHIFT.payment}>
-          <PaymentSection />
-        </MobileYShift>
-        <MobileYShift y={MOBILE_GAP_SHIFT.reviews}>
-          <ReviewsSection />
-        </MobileYShift>
-        <MobileYShift y={MOBILE_GAP_SHIFT.footer}>
-          <Footer />
-        </MobileYShift>
+        <CountdownTail>
+          <MobileYShift y={MOBILE_GAP_SHIFT.payment}>
+            <PaymentSection />
+          </MobileYShift>
+          <MobileYShift y={MOBILE_GAP_SHIFT.reviews}>
+            <ReviewsSection />
+          </MobileYShift>
+          <MobileYShift y={MOBILE_GAP_SHIFT.footer}>
+            <Footer />
+          </MobileYShift>
+        </CountdownTail>
       </ProgramTail>
     </FigCanvas>
   );

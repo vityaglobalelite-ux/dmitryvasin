@@ -15,18 +15,12 @@ function formatMajor(amount, currency) {
   }).format(n);
   if (currency === "usd") return `$${formatted}`;
   if (currency === "eur") return `${formatted} €`;
-  if (currency === "stars") return `${formatted} ⭐`;
   return `${formatted} ₽`;
 }
 
-function pickCurrency(row, paymentMethod) {
-  if (paymentMethod === "foreign") {
-    const c = (row?.checkout_currency || "eur").toLowerCase();
-    if (c === "usd" || c === "eur" || c === "rub") return c;
-    return "eur";
-  }
-  if (paymentMethod === "stars") return "stars";
-  return "rub";
+/** Bot copy: foreign → USD, ru → RUB. Never show EUR in descriptions. */
+function pickCurrency(_row, paymentMethod) {
+  return paymentMethod === "foreign" ? "usd" : "rub";
 }
 
 function amountFor(row, currency, { was = false } = {}) {
@@ -34,12 +28,10 @@ function amountFor(row, currency, { was = false } = {}) {
   if (was) {
     if (currency === "usd") return row.price_usd_was;
     if (currency === "eur") return row.price_eur_was;
-    if (currency === "stars") return row.price_stars_was;
     return row.price_rub_was;
   }
   if (currency === "usd") return row.price_usd;
   if (currency === "eur") return row.price_eur;
-  if (currency === "stars") return row.price_stars;
   return row.price_rub;
 }
 
@@ -59,14 +51,11 @@ async function loadRows(force = false) {
 }
 
 /**
- * Labels for bot copy. foreign → checkout_currency; stars → Telegram Stars; ru → rub.
+ * Labels for bot copy. foreign → USD; ru → RUB.
  * @param {string|null|undefined} paymentMethod
  */
 async function getPriceLabels(paymentMethod = "ru") {
-  const method =
-    paymentMethod === "foreign" || paymentMethod === "stars"
-      ? paymentMethod
-      : "ru";
+  const method = paymentMethod === "foreign" ? "foreign" : "ru";
   const map = await loadRows();
   const env = config.prices;
   const labels = {
@@ -87,8 +76,6 @@ async function getPriceLabels(paymentMethod = "ru") {
     const amount = amountFor(row, currency);
     if (amount != null) {
       labels[tariff] = formatMajor(amount, currency);
-    } else if (currency === "stars") {
-      labels[tariff] = "цена в Stars не задана";
     }
   }
 
@@ -98,8 +85,6 @@ async function getPriceLabels(paymentMethod = "ru") {
     const was = amountFor(m23, currency, { was: true });
     if (was != null) {
       labels.month2_3_was = formatMajor(was, currency);
-    } else if (currency === "stars") {
-      labels.month2_3_was = "цена в Stars не задана";
     }
   }
 
