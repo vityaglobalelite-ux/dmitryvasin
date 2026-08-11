@@ -188,7 +188,7 @@ export const landingAssets = {
   paymentSteps: [
     asset("payment-step-01.webp", "bot1"),
     asset("payment-step-02.webp", "bot1"),
-    asset("payment-step-03.webp", "bot1"),
+    asset("payment-step-03.webp", "bot4"),
     asset("payment-step-04.webp", "bot1"),
   ],
   lessonThumbs: [
