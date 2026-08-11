@@ -25,6 +25,16 @@ const { createCheckoutSession } = require("./stripe-checkout");
 
 const bot = new Telegraf(config.token);
 
+/** Only DM for any user-facing replies. Groups/channels: silent except join-request approve/decline. */
+bot.use(async (ctx, next) => {
+  if (ctx.chatJoinRequest) return next();
+
+  const chatType = ctx.chat?.type;
+  if (chatType && chatType !== "private") return;
+
+  return next();
+});
+
 async function accessRowsForSubscription(botInstance, subscription, telegramId) {
   if (!subscription) return [];
   const invites =
@@ -471,9 +481,21 @@ log(
 );
 startScheduler(bot);
 
-bot.telegram
-  .setMyCommands([{ command: "start", description: "Старт / моя подписка" }])
-  .catch((err) => log("setMyCommands failed:", err.message));
+async function syncBotCommands() {
+  const startCmd = [{ command: "start", description: "Старт / моя подписка" }];
+  // Default + groups: no command menu (bot is silent there).
+  await bot.telegram.setMyCommands([], { scope: { type: "default" } });
+  await bot.telegram.setMyCommands([], { scope: { type: "all_group_chats" } });
+  await bot.telegram.deleteMyCommands({ scope: { type: "all_group_chats" } }).catch(() => {});
+  // Private DMs only.
+  await bot.telegram.setMyCommands(startCmd, {
+    scope: { type: "all_private_chats" },
+  });
+}
+
+syncBotCommands().catch((err) =>
+  log("setMyCommands failed:", err.message),
+);
 
 bot
   .launch({

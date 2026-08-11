@@ -1,6 +1,7 @@
 const { config } = require("./config");
 const db = require("./db");
 const { resolveUnlockedMonths, MONTH_LABELS } = require("./channels");
+const { resolveAccessWindow, addDays } = require("./club-calendar");
 
 const TARIFF_KINDS = new Set([
   "trial",
@@ -23,10 +24,6 @@ const MONTH2_RENEW_KINDS = [
   "renew_month2_d0",
   "renew_month2_p3",
 ];
-
-function addDays(date, days) {
-  return new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
-}
 
 function addMinutes(date, minutes) {
   return new Date(date.getTime() + minutes * 60 * 1000);
@@ -175,19 +172,8 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     await db.updateSubscription(active.id, { status: "replaced" });
   }
 
-  const starts = new Date();
-  let base = starts;
-  if (
-    active &&
-    new Date(active.access_ends_at) > starts &&
-    (tariff === "month2" || tariff === "month2_3" || tariff === "month3")
-  ) {
-    base = new Date(active.access_ends_at);
-  }
-
-  const days = config.durationsDays[tariff];
-  const ends = addDays(base, days);
-  const chatAccessEnds = addDays(ends, config.chatGraceDays);
+  const { accessStartsAt, accessEndsAt, chatAccessEndsAt } =
+    resolveAccessWindow(tariff, new Date());
   const unlockedMonths = resolveUnlockedMonths(tariff, previousMonths);
 
   const previousInvites = active
@@ -207,12 +193,12 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     tariff,
     payment_method: paymentMethod || null,
     status: "active",
-    access_starts_at: starts.toISOString(),
-    access_ends_at: ends.toISOString(),
-    chat_access_ends_at: chatAccessEnds.toISOString(),
+    access_starts_at: accessStartsAt.toISOString(),
+    access_ends_at: accessEndsAt.toISOString(),
+    chat_access_ends_at: chatAccessEndsAt.toISOString(),
     chat_kicked_at: null,
     invite_link: primaryLink,
-    invite_created_at: primaryLink ? starts.toISOString() : null,
+    invite_created_at: primaryLink ? new Date().toISOString() : null,
     unlocked_months: unlockedMonths,
   });
 
@@ -238,9 +224,9 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   ]);
 
   if (tariff === "trial") {
-    await scheduleTrialRenewals(telegramId, ends);
+    await scheduleTrialRenewals(telegramId, accessEndsAt);
   } else if (tariff === "month2") {
-    await scheduleMonth2Renewals(telegramId, ends);
+    await scheduleMonth2Renewals(telegramId, accessEndsAt);
   }
 
   if (tariff === "vip") {

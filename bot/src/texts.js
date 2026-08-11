@@ -1,6 +1,6 @@
 function costLine(price, untilLabel) {
   return untilLabel
-    ? `💰Стоимость до ${untilLabel}: ${price}`
+    ? `💰Стоимость до ${untilLabel} (с этой даты новая цена): ${price}`
     : `💰Стоимость: ${price}`;
 }
 
@@ -260,11 +260,11 @@ async function getPriceUntilLabel() {
     if (!raw?.trim()) return null;
     const d = new Date(raw.trim());
     if (!Number.isFinite(d.getTime()) || d.getTime() <= Date.now()) return null;
+    // Show calendar day in Miami so «17 августа» matches the price cutover.
     return d.toLocaleString("ru-RU", {
-      timeZone: "Europe/Moscow",
+      timeZone: "America/New_York",
       day: "numeric",
       month: "long",
-      year: "numeric",
     });
   } catch {
     return null;

@@ -82,7 +82,7 @@ function TariffsMobile() {
           />
         </div>
         <span className="whitespace-nowrap text-[16px] font-medium leading-[1.2] text-white">
-          Старт: 25 июля
+          Старт: 20 августа
         </span>
       </div>
 
@@ -198,7 +198,7 @@ function TariffsDesktop() {
         </div>
         <span className="whitespace-nowrap text-[24px] leading-[1.2] text-white">
           <span className="font-bold">Старт:</span>
-          <span className="font-medium"> 25 июля</span>
+          <span className="font-medium"> 20 августа</span>
         </span>
       </div>
 
