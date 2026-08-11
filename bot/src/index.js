@@ -107,9 +107,12 @@ bot.on("chat_join_request", async (ctx) => {
   const chatId = String(req.chat.id);
   const month = monthForChatId(chatId);
 
+  const approve = () => ctx.approveChatJoinRequest(userId);
+  const decline = () => ctx.declineChatJoinRequest(userId);
+
   try {
     if (!month || !knownChatIds().includes(chatId)) {
-      await ctx.decline();
+      await decline();
       log("join_request decline: unknown chat", chatId, userId);
       return;
     }
@@ -121,11 +124,11 @@ bot.on("chat_join_request", async (ctx) => {
           ? ownerSub.unlocked_months
           : resolveUnlockedMonths(ownerSub.tariff, []);
         if (!unlocked.includes(month)) {
-          await ctx.decline();
+          await decline();
           log("join_request decline: month not unlocked", month, userId);
           return;
         }
-        await ctx.approve();
+        await approve();
         log("join_request approve (invite owner)", userId, "month", month);
         try {
           await ctx.telegram.sendMessage(
@@ -138,7 +141,7 @@ bot.on("chat_join_request", async (ctx) => {
         return;
       }
       if (ownerSub && ownerSub.telegram_id !== userId) {
-        await ctx.decline();
+        await decline();
         log(
           "join_request decline: stolen invite",
           "owner=",
@@ -151,17 +154,17 @@ bot.on("chat_join_request", async (ctx) => {
     }
 
     if (await userCanJoinMonth(userId, month)) {
-      await ctx.approve();
+      await approve();
       log("join_request approve (active sub month)", userId, month);
       return;
     }
 
-    await ctx.decline();
+    await decline();
     log("join_request decline: no access", userId, "month", month);
   } catch (err) {
     log("join_request error:", err.message);
     try {
-      await ctx.decline();
+      await decline();
     } catch {
       /* ignore */
     }
