@@ -166,6 +166,20 @@ export function supportsCssZoom() {
   return typeof CSS !== "undefined" && CSS.supports("zoom", "1");
 }
 
+/**
+ * iPhone/iPad Safari: CSS `zoom` can leave fonts unscaled (or boosted), so
+ * absolute Figma text overlaps. Prefer transform scale on touch devices.
+ */
+export function prefersTransformCanvasScale() {
+  if (typeof window === "undefined") return false;
+  try {
+    if (navigator.maxTouchPoints > 0) return true;
+    return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  } catch {
+    return false;
+  }
+}
+
 export function LandingModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<LandingMode>("desktop");
   const modeRef = useRef(mode);

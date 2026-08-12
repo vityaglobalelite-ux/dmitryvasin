@@ -9,6 +9,7 @@ import {
   isLandingLayoutFrozen,
   LandingModeProvider,
   MOBILE_CANVAS,
+  prefersTransformCanvasScale,
   supportsCssZoom,
   useLandingMode,
 } from "@/lib/landing-mode";
@@ -59,19 +60,28 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
         String(next),
       );
 
-      if (supportsCssZoom()) {
-        el.style.zoom = String(next);
-        el.style.transform = "";
-        el.style.transformOrigin = "";
-        shell.style.width = "";
-        shell.style.height = "";
-      } else {
-        /* Firefox <126: zoom unsupported — scale + sized shell keeps scroll height correct */
+      const useTransform =
+        prefersTransformCanvasScale() || !supportsCssZoom();
+
+      if (useTransform) {
+        /*
+          Touch Safari: transform scales fonts with layout (CSS zoom does not
+          reliably — absolute Figma copy overlaps on iPhone landscape).
+          Shell owns scroll size; canvas is full design size then scaled.
+        */
         el.style.zoom = "";
         el.style.transform = `scale(${next})`;
         el.style.transformOrigin = "top left";
         shell.style.width = `${canvas.w * next}px`;
         shell.style.height = `${height * next}px`;
+        shell.style.overflow = "hidden";
+      } else {
+        el.style.zoom = String(next);
+        el.style.transform = "";
+        el.style.transformOrigin = "";
+        shell.style.width = "";
+        shell.style.height = "";
+        shell.style.overflow = "";
       }
 
       setReady(true);

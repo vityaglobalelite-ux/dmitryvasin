@@ -66,24 +66,25 @@
 html {
   /* Anchor navigation uses cinematic RAF scroll (see smooth-scroll.ts) */
   scroll-behavior: auto;
-  /* iPad Safari font-boosts text inside the zoom-scaled canvas,
-     breaking Figma-coordinate layout; Tailwind's 100% does not disable it */
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+  /* Prevent iOS Safari from inflating text inside the scaled Figma canvas */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   overflow-x: clip;
 }
 
 body {
   overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
-[data-landing-mode] {
-  -webkit-text-size-adjust: none;
-  text-size-adjust: none;
+.fig-canvas,
+.fig-canvas * {
+  -webkit-text-size-adjust: 100% !important;
+  text-size-adjust: 100% !important;
 }
 
 .fig-canvas-shell {
-  /* Sized by CSS zoom layout box; transform-fallback sets explicit size in JS */
   max-width: 100%;
 }
 
