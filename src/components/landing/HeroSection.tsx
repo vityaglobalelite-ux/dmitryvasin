@@ -5,7 +5,11 @@ import { createPortal } from "react-dom";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
 import { telegramBotUrl, telegramSupportBotUrl } from "@/lib/landing-data";
-import { MOBILE_CANVAS, useIsMobile } from "@/lib/landing-mode";
+import {
+  MOBILE_CANVAS,
+  useCanvasZoom,
+  useIsMobile,
+} from "@/lib/landing-mode";
 
 const nav = {
   left: [
@@ -38,7 +42,7 @@ function HeroMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [zoom, setZoom] = useState(1);
+  const zoom = useCanvasZoom();
   const [scrolled, setScrolled] = useState(false);
   const menuVisible = menuOpen || closing;
 
@@ -59,18 +63,6 @@ function HeroMobile() {
 
   useEffect(() => {
     setMounted(true);
-    const applyZoom = () => {
-      const w =
-        window.visualViewport?.width ?? document.documentElement.clientWidth;
-      setZoom(w / MOBILE_CANVAS.w);
-    };
-    applyZoom();
-    window.addEventListener("resize", applyZoom);
-    window.visualViewport?.addEventListener("resize", applyZoom);
-    return () => {
-      window.removeEventListener("resize", applyZoom);
-      window.visualViewport?.removeEventListener("resize", applyZoom);
-    };
   }, []);
 
   useEffect(() => {

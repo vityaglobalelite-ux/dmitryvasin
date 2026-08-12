@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useEffect, useRef, useState } from "react";
 import {
+  CanvasZoomProvider,
   DESKTOP_CANVAS,
+  getCanvasZoom,
   LandingModeProvider,
   MOBILE_CANVAS,
+  supportsCssZoom,
   useLandingMode,
 } from "@/lib/landing-mode";
 import {
@@ -16,12 +19,12 @@ import { bindSectionScroll } from "@/lib/smooth-scroll";
 import { StickyMobileCta } from "./StickyMobileCta";
 
 /**
- * Fixed design canvas scaled to the viewport width via CSS zoom.
- * Desktop: Figma 1920×15131. Mobile (≤767px): Figma Главная_360 360×17666
- * (canvas height shortened via MOBILE_GAP_SHIFT — see mobile-section-gaps.ts).
+ * Fixed Figma canvas scaled uniformly to the viewport.
+ * Phone → 360. Tablet/desktop → 1920, fitted by width AND first-screen height.
  */
 function FigCanvasInner({ children }: { children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const mode = useLandingMode();
   const { shift } = useProgramTail();
   const { collapse: countdownCollapse } = useCountdownTail();
@@ -30,28 +33,59 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
      must shrink canvas or empty gaps appear at the bottom */
   const height = canvas.h + shift - countdownCollapse;
 
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
+  const [zoom, setZoom] = useState(1);
+  const [ready, setReady] = useState(false);
+
+  useLayoutEffect(() => {
+    const el = canvasRef.current;
+    const shell = shellRef.current;
+    if (!el || !shell) return;
+
     const apply = () => {
-      const w =
-        window.visualViewport?.width ?? document.documentElement.clientWidth;
-      el.style.zoom = String(w / canvas.w);
+      const next = getCanvasZoom(canvas.w, mode);
+      setZoom(next);
+      document.documentElement.style.setProperty(
+        "--canvas-zoom",
+        String(next),
+      );
+
+      if (supportsCssZoom()) {
+        el.style.zoom = String(next);
+        el.style.transform = "";
+        el.style.transformOrigin = "";
+        shell.style.width = "";
+        shell.style.height = "";
+      } else {
+        /* Firefox <126: zoom unsupported — scale + sized shell keeps scroll height correct */
+        el.style.zoom = "";
+        el.style.transform = `scale(${next})`;
+        el.style.transformOrigin = "top left";
+        shell.style.width = `${canvas.w * next}px`;
+        shell.style.height = `${height * next}px`;
+      }
+
+      setReady(true);
+      window.dispatchEvent(
+        new CustomEvent("figcanvas:zoom", { detail: { zoom: next } }),
+      );
     };
+
     apply();
     window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", apply);
     window.visualViewport?.addEventListener("resize", apply);
     return () => {
       window.removeEventListener("resize", apply);
+      window.removeEventListener("orientationchange", apply);
       window.visualViewport?.removeEventListener("resize", apply);
     };
-  }, [canvas.w]);
+  }, [canvas.w, height, mode]);
 
   useEffect(() => bindSectionScroll(document), []);
 
   /* Lazy-load below-fold images; hero marks data-eager-images */
   useEffect(() => {
-    const root = ref.current;
+    const root = canvasRef.current;
     if (!root) return;
     root.querySelectorAll("img").forEach((img) => {
       if (img.closest("[data-eager-images]")) {
@@ -70,14 +104,27 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
   }, [mode]);
 
   return (
-    <div
-      ref={ref}
-      className="relative mx-auto overflow-hidden bg-white"
-      style={{ width: canvas.w, height }}
-      data-landing-mode={mode}
-    >
-      {children}
-    </div>
+    <CanvasZoomProvider value={zoom}>
+      <div
+        ref={shellRef}
+        className="fig-canvas-shell relative mx-auto"
+        data-canvas-ready={ready ? "true" : "false"}
+      >
+        <div
+          ref={canvasRef}
+          className="fig-canvas relative overflow-hidden bg-white"
+          style={{
+            width: canvas.w,
+            height,
+            visibility: ready ? "visible" : "hidden",
+          }}
+          data-landing-mode={mode}
+        >
+          {children}
+        </div>
+      </div>
+      <StickyMobileCta />
+    </CanvasZoomProvider>
   );
 }
 
@@ -89,7 +136,6 @@ export function FigCanvas({ children }: { children: React.ReactNode }) {
           <FigCanvasInner>{children}</FigCanvasInner>
         </CountdownTailProvider>
       </ProgramTailProvider>
-      <StickyMobileCta />
     </LandingModeProvider>
   );
 }

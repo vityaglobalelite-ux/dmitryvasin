@@ -1,5 +1,11 @@
 /** Cinematic in-page scroll for the zoomed Figma canvas. */
 
+import {
+  getCanvasZoom,
+  isMobileViewport,
+  MOBILE_CANVAS,
+} from "@/lib/landing-mode";
+
 let activeRaf = 0;
 let scrollToken = 0;
 
@@ -13,9 +19,8 @@ function prefersReducedMotion(): boolean {
 }
 
 function stickyOffset(): number {
-  const mobile = window.matchMedia("(max-width: 767px)").matches;
-  if (!mobile) return 28;
-  const zoom = document.documentElement.clientWidth / 360;
+  if (!isMobileViewport()) return 28;
+  const zoom = getCanvasZoom(MOBILE_CANVAS.w, "mobile");
   return Math.round(56 * zoom + 16);
 }
 
@@ -184,8 +189,11 @@ export function smoothScrollToId(
     const el = document.getElementById(id);
     if (!el) return false;
 
-    // Ensure page can scroll (mobile menu may still be unlocking)
-    if (document.body.style.overflow === "hidden") {
+    // Unlock only for mobile menu — not video / modal overlays
+    if (
+      document.body.style.overflow === "hidden" &&
+      !document.querySelector(".quote-video-shell--overlay-fs")
+    ) {
       document.body.style.overflow = "";
     }
 

@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useEffect,
+  useLayoutEffect,
   useState,
   type ReactNode,
 } from "react";
@@ -17,12 +17,27 @@ export const MOBILE_CANVAS = {
   w: 360,
   h: 17666 - MOBILE_CANVAS_HEIGHT_SHRINK,
 } as const;
-/** Viewport max-width that uses Figma Главная_360 (360×17666). */
-export const MOBILE_MAX_WIDTH = 767;
+
+/**
+ * Portrait-phone short side only (≈ CSS width).
+ * 600 keeps large phones on 360; iPad Mini (744+) and up stay on desktop 1920 —
+ * so tablets never get a tiny phone column with side gutters.
+ */
+export const MOBILE_MAX_WIDTH = 600;
+
+/**
+ * Desktop hero height (HeroDesktop h-[900px]).
+ * Tablets/PCs: fit this frame + width, never above Figma 1:1.
+ */
+export const DESKTOP_VIEWPORT_FRAME_H = 900;
+
+/** Never blow past Figma 1:1 on wide monitors. */
+export const MAX_DESKTOP_CANVAS_ZOOM = 1;
 
 export type LandingMode = "desktop" | "mobile";
 
 const LandingModeContext = createContext<LandingMode>("desktop");
+const CanvasZoomContext = createContext(1);
 
 export function useLandingMode() {
   return useContext(LandingModeContext);
@@ -32,15 +47,83 @@ export function useIsMobile() {
   return useLandingMode() === "mobile";
 }
 
+export function useCanvasZoom() {
+  return useContext(CanvasZoomContext);
+}
+
+export function CanvasZoomProvider({
+  value,
+  children,
+}: {
+  value: number;
+  children: ReactNode;
+}) {
+  return (
+    <CanvasZoomContext.Provider value={value}>
+      {children}
+    </CanvasZoomContext.Provider>
+  );
+}
+
+export function getViewportSize() {
+  const w =
+    window.visualViewport?.width ?? document.documentElement.clientWidth;
+  const h =
+    window.visualViewport?.height ?? document.documentElement.clientHeight;
+  return { w, h };
+}
+
+/**
+ * Mobile 360 only for portrait phones.
+ * - Landscape phone → desktop (360 can’t fill a wide short screen)
+ * - Tablet (short side > 600) → desktop
+ */
+export function isMobileViewport(w?: number, h?: number) {
+  const size =
+    w !== undefined && h !== undefined ? { w, h } : getViewportSize();
+  const shortSide = Math.min(size.w, size.h);
+  const portrait = size.h >= size.w;
+  return portrait && shortSide <= MOBILE_MAX_WIDTH;
+}
+
+/**
+ * Mobile: always fill WIDTH (vw/360) — no side letterboxing.
+ * Desktop/tablet: min(vw/1920, vh/900, 1) — same first screen on every PC/tablet.
+ */
+export function getCanvasZoom(canvasWidth: number, mode: LandingMode) {
+  const { w, h } = getViewportSize();
+
+  if (mode === "mobile") {
+    return w / canvasWidth;
+  }
+
+  return Math.min(
+    w / canvasWidth,
+    h / DESKTOP_VIEWPORT_FRAME_H,
+    MAX_DESKTOP_CANVAS_ZOOM,
+  );
+}
+
+export function supportsCssZoom() {
+  return typeof CSS !== "undefined" && CSS.supports("zoom", "1");
+}
+
 export function LandingModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<LandingMode>("desktop");
 
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${MOBILE_MAX_WIDTH}px)`);
-    const apply = () => setMode(mq.matches ? "mobile" : "desktop");
+  useLayoutEffect(() => {
+    const apply = () => {
+      setMode(isMobileViewport() ? "mobile" : "desktop");
+    };
     apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
+    window.addEventListener("resize", apply);
+    window.addEventListener("orientationchange", apply);
+    window.visualViewport?.addEventListener("resize", apply);
+    return () => {
+      window.removeEventListener("resize", apply);
+      window.removeEventListener("orientationchange", apply);
+      window.visualViewport?.removeEventListener("resize", apply);
+    };
   }, []);
 
   return (

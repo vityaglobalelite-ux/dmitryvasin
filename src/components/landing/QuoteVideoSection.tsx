@@ -165,8 +165,11 @@ function QuoteVideoPlayer({
         : null;
     ro?.observe(slot!);
 
+    const onZoom = () => measureSlot();
+
     window.addEventListener("resize", measureSlot);
     window.addEventListener("scroll", measureSlot, true);
+    window.addEventListener("figcanvas:zoom", onZoom);
     window.visualViewport?.addEventListener("resize", measureSlot);
     window.visualViewport?.addEventListener("scroll", measureSlot);
 
@@ -174,6 +177,7 @@ function QuoteVideoPlayer({
       ro?.disconnect();
       window.removeEventListener("resize", measureSlot);
       window.removeEventListener("scroll", measureSlot, true);
+      window.removeEventListener("figcanvas:zoom", onZoom);
       window.visualViewport?.removeEventListener("resize", measureSlot);
       window.visualViewport?.removeEventListener("scroll", measureSlot);
     };
@@ -343,19 +347,11 @@ function QuoteVideoPlayer({
 
       unlockOrientation();
 
-      if (
-        fsAttemptRef.current &&
-        !fsEnteredRef.current &&
-        enterFullscreenOnPlay &&
-        !video.ended
-      ) {
-        openOverlayFullscreen();
-        if (video.paused) {
-          void video.play().catch(() => {});
-        }
-        return;
-      }
-
+      /*
+        Exit only — never reopen overlay here.
+        Failed-enter recovery is the 900ms timer in enterMobileFullscreen.
+        Reopening on webkitendfullscreen trapped users who dismissed native FS.
+      */
       fsAttemptRef.current = false;
       fsEnteredRef.current = false;
 
@@ -386,7 +382,6 @@ function QuoteVideoPlayer({
     };
   }, [
     clearFallbackTimer,
-    enterFullscreenOnPlay,
     openOverlayFullscreen,
     popOverlayHistory,
     setOverlay,
@@ -425,6 +420,9 @@ function QuoteVideoPlayer({
       exitDocumentFullscreen();
       if (historyPushedRef.current) {
         historyPushedRef.current = false;
+        if (window.history.state?.quoteVideoOverlay === OVERLAY_HISTORY_KEY) {
+          window.history.back();
+        }
       }
     };
   }, [clearFallbackTimer]);

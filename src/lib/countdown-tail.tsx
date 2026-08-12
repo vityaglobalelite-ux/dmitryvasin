@@ -61,10 +61,11 @@ export function CountdownTail({ children }: { children: ReactNode }) {
   const { collapse } = useCountdownTail();
   return (
     <div
-      className="absolute left-0 top-0 w-full will-change-transform"
+      className="absolute left-0 top-0 w-full"
       style={{
         transform: `translate3d(0, ${-collapse}px, 0)`,
-        transition: "transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)",
+        /* No transition — FigCanvas height jumps with collapse; animating
+           only transform left a 450ms gap/overlap under the footer. */
       }}
     >
       {children}

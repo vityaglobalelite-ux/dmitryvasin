@@ -66,10 +66,25 @@
 html {
   /* Anchor navigation uses cinematic RAF scroll (see smooth-scroll.ts) */
   scroll-behavior: auto;
-  /* iPad Safari font-boosts text inside the zoom-scaled 1920px canvas,
+  /* iPad Safari font-boosts text inside the zoom-scaled canvas,
      breaking Figma-coordinate layout; Tailwind's 100% does not disable it */
   -webkit-text-size-adjust: none;
   text-size-adjust: none;
+  overflow-x: clip;
+}
+
+body {
+  overflow-x: clip;
+}
+
+[data-landing-mode] {
+  -webkit-text-size-adjust: none;
+  text-size-adjust: none;
+}
+
+.fig-canvas-shell {
+  /* Sized by CSS zoom layout box; transform-fallback sets explicit size in JS */
+  max-width: 100%;
 }
 
 /* Figma hero display lines: 106px line boxes */
@@ -136,6 +151,7 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
+  overflow-x: clip;
 }
 
 /* Mobile sticky CTA — pinned to the bottom of the viewport (outside FigCanvas zoom) */

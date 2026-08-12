@@ -5,8 +5,7 @@ import { telegramBotUrl } from "@/lib/landing-data";
 
 /**
  * Mobile-only CTA pinned to the bottom of the viewport.
- * Rendered outside FigCanvas so it is not affected by the canvas `zoom`
- * scaling and stays 1:1 with the real viewport.
+ * Outside FigCanvas zoom; full viewport width (mobile always fills width).
  */
 export function StickyMobileCta() {
   const isMobile = useIsMobile();
