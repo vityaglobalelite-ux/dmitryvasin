@@ -71,7 +71,7 @@ function TariffsMobile() {
         Выбирайте тариф участия
       </h2>
 
-      <div className="absolute left-[20px] top-[12325px] flex h-[50px] w-[193px] items-center gap-[10px] rounded-[10px] bg-[image:var(--brand-gradient)] px-[15px] py-[8px]">
+      <div className="absolute left-[20px] top-[12325px] flex h-[50px] w-fit max-w-[320px] items-center gap-[10px] rounded-[10px] bg-[image:var(--brand-gradient)] px-[15px] py-[8px]">
         <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
           <img
             src={landingAssets.icons.stopwatchStart}
@@ -181,7 +181,7 @@ function TariffsDesktop() {
       </h2>
 
       <div
-        className="absolute left-[1417px] top-[10354px] flex h-[62px] w-[263px] items-center gap-[10px] rounded-[20px] px-[20px] py-[10px]"
+        className="absolute right-[240px] top-[10354px] flex h-[62px] w-fit max-w-[480px] items-center gap-[10px] rounded-[20px] px-[20px] py-[10px]"
         style={{
           backgroundImage:
             "linear-gradient(148.81deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
