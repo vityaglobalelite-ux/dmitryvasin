@@ -4,6 +4,7 @@ import {
   createContext,
   useContext,
   useLayoutEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -49,6 +50,16 @@ type LockedZoomViewport = {
 };
 
 let lockedZoomViewport: LockedZoomViewport | null = null;
+/** While video FS / overlay is open — freeze mobile↔desktop flips from orientation. */
+let landingLayoutFrozen = false;
+
+export function setLandingLayoutFrozen(frozen: boolean) {
+  landingLayoutFrozen = frozen;
+}
+
+export function isLandingLayoutFrozen() {
+  return landingLayoutFrozen;
+}
 
 export function useLandingMode() {
   return useContext(LandingModeContext);
@@ -98,6 +109,11 @@ function aspectOf(w: number, h: number): "portrait" | "landscape" {
 export function getZoomViewportSize() {
   const raw = getViewportSize();
   const aspect = aspectOf(raw.w, raw.h);
+
+  /* Orientation changes during video must not rebuild the canvas scale. */
+  if (landingLayoutFrozen && lockedZoomViewport) {
+    return { w: lockedZoomViewport.w, h: lockedZoomViewport.h };
+  }
 
   if (
     !lockedZoomViewport ||
@@ -152,10 +168,14 @@ export function supportsCssZoom() {
 
 export function LandingModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<LandingMode>("desktop");
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
   useLayoutEffect(() => {
     const apply = () => {
-      setMode(isMobileViewport() ? "mobile" : "desktop");
+      if (landingLayoutFrozen) return;
+      const next = isMobileViewport() ? "mobile" : "desktop";
+      if (next !== modeRef.current) setMode(next);
     };
     apply();
     window.addEventListener("resize", apply);

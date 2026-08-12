@@ -6,6 +6,7 @@ import {
   DESKTOP_CANVAS,
   getCanvasZoom,
   invalidateZoomViewportLock,
+  isLandingLayoutFrozen,
   LandingModeProvider,
   MOBILE_CANVAS,
   supportsCssZoom,
@@ -45,6 +46,7 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
     let lastZoom = -1;
 
     const apply = (opts?: { relock?: boolean }) => {
+      if (isLandingLayoutFrozen()) return;
       if (opts?.relock) invalidateZoomViewportLock();
 
       const next = getCanvasZoom(canvas.w, mode);

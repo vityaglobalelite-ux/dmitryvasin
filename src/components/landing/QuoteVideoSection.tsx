@@ -3,21 +3,22 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
   useId,
   useRef,
   useState,
-  type CSSProperties,
   type SyntheticEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { landingAssets } from "@/lib/landing-assets";
-import { useIsMobile } from "@/lib/landing-mode";
+import {
+  setLandingLayoutFrozen,
+  useIsMobile,
+} from "@/lib/landing-mode";
 
 type QuoteVideoPlayerProps = {
   playButtonSize: number;
   className?: string;
-  /** Open fullscreen + landscape when playback starts (mobile). */
+  /** Prefer native fullscreen when playback starts (mobile). */
   enterFullscreenOnPlay?: boolean;
 };
 
@@ -38,34 +39,14 @@ function isIosLikeVideoApi(video: VideoEl) {
   return typeof video.webkitEnterFullscreen === "function";
 }
 
-async function lockLandscape() {
-  try {
-    const orientation = screen.orientation as ScreenOrientation & {
-      lock?: (orientation: string) => Promise<void>;
-    };
-    if (typeof orientation.lock === "function") {
-      await orientation.lock("landscape");
-    }
-  } catch {
-    /* iOS / policy — CSS forced-landscape handles the rest */
-  }
-}
-
-function unlockOrientation() {
-  try {
-    screen.orientation?.unlock?.();
-  } catch {
-    /* ignore */
-  }
-}
-
-async function requestElementFullscreen(el: ShellEl) {
+async function requestElementFullscreen(el: ShellEl | VideoEl) {
   if (typeof el.requestFullscreen === "function") {
     await el.requestFullscreen();
     return true;
   }
-  if (typeof el.webkitRequestFullscreen === "function") {
-    await el.webkitRequestFullscreen();
+  const withWebkit = el as ShellEl;
+  if (typeof withWebkit.webkitRequestFullscreen === "function") {
+    await withWebkit.webkitRequestFullscreen();
     return true;
   }
   return false;
@@ -92,6 +73,13 @@ function getFullscreenElement(): Element | null {
   return document.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
 }
 
+/**
+ * Mobile quote video.
+ * - Stays in document flow while inline (no fixed portal → no scroll jump).
+ * - Native fullscreen only (iOS webkit / Fullscreen API) — no orientation.lock
+ *   (lock was rotating the phone → landing flipped to desktop → player unmounted).
+ * - CSS overlay via body portal only as last resort; layout stays frozen meanwhile.
+ */
 function QuoteVideoPlayer({
   playButtonSize,
   className,
@@ -99,31 +87,23 @@ function QuoteVideoPlayer({
 }: QuoteVideoPlayerProps) {
   const videoRef = useRef<VideoEl>(null);
   const shellRef = useRef<ShellEl>(null);
-  const slotRef = useRef<HTMLDivElement>(null);
   const fsAttemptRef = useRef(false);
   const fsEnteredRef = useRef(false);
   const overlayFsRef = useRef(false);
   const historyPushedRef = useRef(false);
   const fallbackTimerRef = useRef<number | null>(null);
+  const resumeAfterPortalRef = useRef(false);
 
   const [playing, setPlaying] = useState(false);
   const [overlayFs, setOverlayFs] = useState(false);
   const [portalReady, setPortalReady] = useState(false);
   const [buffering, setBuffering] = useState(false);
-  const [slotBox, setSlotBox] = useState({
-    top: 0,
-    left: 0,
-    width: 0,
-    height: 0,
-  });
   const titleId = useId();
-
-  /* Body portal escapes FigCanvas CSS zoom. */
-  const usePortal = enterFullscreenOnPlay;
 
   const setOverlay = useCallback((next: boolean) => {
     overlayFsRef.current = next;
     setOverlayFs(next);
+    setLandingLayoutFrozen(next || Boolean(videoRef.current?.webkitDisplayingFullscreen));
   }, []);
 
   const clearFallbackTimer = useCallback(() => {
@@ -137,52 +117,6 @@ function QuoteVideoPlayer({
     setPortalReady(true);
   }, []);
 
-  const measureSlot = useCallback(() => {
-    const slot = slotRef.current;
-    if (!slot) return;
-    const rect = slot.getBoundingClientRect();
-    setSlotBox({
-      top: rect.top,
-      left: rect.left,
-      width: rect.width,
-      height: rect.height,
-    });
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!usePortal || overlayFs) return;
-    measureSlot();
-  }, [usePortal, overlayFs, measureSlot, className]);
-
-  useEffect(() => {
-    if (!usePortal || overlayFs) return;
-    measureSlot();
-
-    const slot = slotRef.current;
-    const ro =
-      typeof ResizeObserver !== "undefined" && slot
-        ? new ResizeObserver(() => measureSlot())
-        : null;
-    ro?.observe(slot!);
-
-    const onZoom = () => measureSlot();
-
-    window.addEventListener("resize", measureSlot);
-    window.addEventListener("scroll", measureSlot, true);
-    window.addEventListener("figcanvas:zoom", onZoom);
-    window.visualViewport?.addEventListener("resize", measureSlot);
-    window.visualViewport?.addEventListener("scroll", measureSlot);
-
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener("resize", measureSlot);
-      window.removeEventListener("scroll", measureSlot, true);
-      window.removeEventListener("figcanvas:zoom", onZoom);
-      window.visualViewport?.removeEventListener("resize", measureSlot);
-      window.visualViewport?.removeEventListener("scroll", measureSlot);
-    };
-  }, [usePortal, overlayFs, measureSlot]);
-
   const popOverlayHistory = useCallback(() => {
     if (!historyPushedRef.current) return;
     historyPushedRef.current = false;
@@ -195,8 +129,9 @@ function QuoteVideoPlayer({
     clearFallbackTimer();
     fsAttemptRef.current = false;
     fsEnteredRef.current = false;
+    resumeAfterPortalRef.current = false;
     setOverlay(false);
-    unlockOrientation();
+    setLandingLayoutFrozen(false);
     exitDocumentFullscreen();
     popOverlayHistory();
     const video = videoRef.current;
@@ -228,8 +163,9 @@ function QuoteVideoPlayer({
     clearFallbackTimer();
     fsEnteredRef.current = true;
     fsAttemptRef.current = false;
+    resumeAfterPortalRef.current = true;
+    setLandingLayoutFrozen(true);
     setOverlay(true);
-    void lockLandscape();
 
     if (!historyPushedRef.current) {
       window.history.pushState(
@@ -240,13 +176,23 @@ function QuoteVideoPlayer({
     }
   }, [clearFallbackTimer, setOverlay]);
 
+  /* After portal mount, resume the same media without requiring a new gesture. */
+  useEffect(() => {
+    if (!overlayFs || !resumeAfterPortalRef.current) return;
+    const video = videoRef.current;
+    if (!video) return;
+    resumeAfterPortalRef.current = false;
+    setPlaying(true);
+    void video.play().catch(() => {});
+  }, [overlayFs]);
+
   const enterMobileFullscreen = useCallback(
     (video: VideoEl) => {
       clearFallbackTimer();
       fsAttemptRef.current = true;
       fsEnteredRef.current = false;
+      setLandingLayoutFrozen(true);
 
-      /* iOS Safari: native player — typically landscape for 16:9. */
       if (isIosLikeVideoApi(video)) {
         try {
           video.webkitEnterFullscreen?.();
@@ -264,49 +210,39 @@ function QuoteVideoPlayer({
             return;
           }
           openOverlayFullscreen();
-        }, 900);
+        }, 700);
         return;
       }
 
-      const shell = shellRef.current;
-      if (shell) {
-        void (async () => {
-          try {
-            const ok = await requestElementFullscreen(shell);
-            if (ok) {
-              clearFallbackTimer();
-              fsEnteredRef.current = true;
-              fsAttemptRef.current = false;
-              await lockLandscape();
-              return;
-            }
-          } catch {
-            /* overlay fallback */
-          }
-          if (!fsEnteredRef.current) {
-            openOverlayFullscreen();
-          }
-        })();
-
-        fallbackTimerRef.current = window.setTimeout(() => {
-          fallbackTimerRef.current = null;
-          if (!fsAttemptRef.current || fsEnteredRef.current) return;
-          if (getFullscreenElement()) {
+      void (async () => {
+        try {
+          const ok = await requestElementFullscreen(video);
+          if (ok) {
+            clearFallbackTimer();
             fsEnteredRef.current = true;
             fsAttemptRef.current = false;
             return;
           }
-          openOverlayFullscreen();
-        }, 900);
-        return;
-      }
+        } catch {
+          /* overlay fallback */
+        }
+        if (!fsEnteredRef.current) openOverlayFullscreen();
+      })();
 
-      openOverlayFullscreen();
+      fallbackTimerRef.current = window.setTimeout(() => {
+        fallbackTimerRef.current = null;
+        if (!fsAttemptRef.current || fsEnteredRef.current) return;
+        if (getFullscreenElement()) {
+          fsEnteredRef.current = true;
+          fsAttemptRef.current = false;
+          return;
+        }
+        openOverlayFullscreen();
+      }, 700);
     },
     [clearFallbackTimer, openOverlayFullscreen],
   );
 
-  /* Stable FS listeners — overlay tracked via ref to avoid rebind gaps. */
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -320,6 +256,7 @@ function QuoteVideoPlayer({
       clearFallbackTimer();
       fsEnteredRef.current = true;
       fsAttemptRef.current = false;
+      setLandingLayoutFrozen(true);
     };
 
     const onBeginFs = () => {
@@ -329,31 +266,22 @@ function QuoteVideoPlayer({
     };
 
     const syncFsExit = () => {
-      const shell = shellRef.current;
       const fsEl = getFullscreenElement();
       const inNativeFs =
         fsEl === video ||
-        fsEl === shell ||
+        fsEl === shellRef.current ||
         Boolean(video.webkitDisplayingFullscreen);
 
       if (inNativeFs) {
         markEntered();
-        setOverlay(false);
-        popOverlayHistory();
         return;
       }
 
       if (overlayFsRef.current) return;
 
-      unlockOrientation();
-
-      /*
-        Exit only — never reopen overlay here.
-        Failed-enter recovery is the 900ms timer in enterMobileFullscreen.
-        Reopening on webkitendfullscreen trapped users who dismissed native FS.
-      */
       fsAttemptRef.current = false;
       fsEnteredRef.current = false;
+      setLandingLayoutFrozen(false);
 
       if (video.paused) {
         setPlaying(false);
@@ -382,7 +310,7 @@ function QuoteVideoPlayer({
     };
   }, [
     clearFallbackTimer,
-    openOverlayFullscreen,
+    overlayFs,
     popOverlayHistory,
     setOverlay,
     stopPlayback,
@@ -397,7 +325,6 @@ function QuoteVideoPlayer({
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") stopPlayback();
     };
-
     const onPopState = () => {
       if (!overlayFsRef.current) return;
       historyPushedRef.current = false;
@@ -416,7 +343,7 @@ function QuoteVideoPlayer({
   useEffect(() => {
     return () => {
       clearFallbackTimer();
-      unlockOrientation();
+      setLandingLayoutFrozen(false);
       exitDocumentFullscreen();
       if (historyPushedRef.current) {
         historyPushedRef.current = false;
@@ -437,7 +364,6 @@ function QuoteVideoPlayer({
     setPlaying(true);
     setBuffering(video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA);
 
-    /* Same user-gesture turn: no await / rAF before fullscreen. */
     const playAttempt = video.play();
     if (playAttempt !== undefined) {
       void playAttempt.catch(() => {
@@ -452,25 +378,10 @@ function QuoteVideoPlayer({
     }
   };
 
-  const shellStyle: CSSProperties | undefined = usePortal
-    ? overlayFs
-      ? undefined
-      : {
-          position: "fixed",
-          top: slotBox.top,
-          left: slotBox.left,
-          width: slotBox.width,
-          height: slotBox.height,
-          zIndex: 60,
-          visibility: slotBox.width > 0 ? "visible" : "hidden",
-        }
-    : undefined;
-
   const shellClassName = [
     "quote-video-shell relative overflow-hidden bg-black",
     overlayFs ? "quote-video-shell--overlay-fs" : "",
-    !overlayFs && usePortal ? "rounded-[10px]" : "",
-    !usePortal ? (className ?? "") : "",
+    !overlayFs ? (className ?? "") : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -479,7 +390,6 @@ function QuoteVideoPlayer({
     <div
       ref={shellRef}
       className={shellClassName}
-      style={shellStyle}
       data-fs={overlayFs ? "overlay" : undefined}
     >
       <div className="quote-video-stage">
@@ -490,7 +400,7 @@ function QuoteVideoPlayer({
           poster={landingAssets.photos.videoPreview}
           controls={playing}
           playsInline
-          preload="auto"
+          preload="metadata"
           controlsList="nodownload"
           style={{ opacity: playing || overlayFs ? 1 : 0 }}
           aria-labelledby={titleId}
@@ -548,15 +458,15 @@ function QuoteVideoPlayer({
     </div>
   );
 
-  if (usePortal) {
+  /* Portal only for overlay FS — inline player stays in the canvas (no scroll lag). */
+  if (overlayFs && portalReady) {
     return (
       <>
         <div
-          ref={slotRef}
           className={`relative overflow-hidden bg-black ${className ?? ""}`}
           aria-hidden
         />
-        {portalReady ? createPortal(player, document.body) : null}
+        {createPortal(player, document.body)}
       </>
     );
   }
