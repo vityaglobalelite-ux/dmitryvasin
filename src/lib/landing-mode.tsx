@@ -34,10 +34,21 @@ export const DESKTOP_VIEWPORT_FRAME_H = 900;
 /** Never blow past Figma 1:1 on wide monitors. */
 export const MAX_DESKTOP_CANVAS_ZOOM = 1;
 
+/** Relock zoom viewport only on real width / orientation changes — not URL-bar show/hide. */
+const VIEWPORT_WIDTH_RELOCK_PX = 48;
+
 export type LandingMode = "desktop" | "mobile";
 
 const LandingModeContext = createContext<LandingMode>("desktop");
 const CanvasZoomContext = createContext(1);
+
+type LockedZoomViewport = {
+  w: number;
+  h: number;
+  aspect: "portrait" | "landscape";
+};
+
+let lockedZoomViewport: LockedZoomViewport | null = null;
 
 export function useLandingMode() {
   return useContext(LandingModeContext);
@@ -65,12 +76,42 @@ export function CanvasZoomProvider({
   );
 }
 
+/** Live viewport — used for mobile/desktop mode detection. */
 export function getViewportSize() {
   const w =
     window.visualViewport?.width ?? document.documentElement.clientWidth;
   const h =
     window.visualViewport?.height ?? document.documentElement.clientHeight;
   return { w, h };
+}
+
+function aspectOf(w: number, h: number): "portrait" | "landscape" {
+  return h >= w ? "portrait" : "landscape";
+}
+
+/**
+ * Stable size for canvas zoom.
+ * Mobile browser chrome show/hide changes visualViewport height (and sometimes
+ * width by a few px) on scroll — that must NOT rescale the whole Figma canvas.
+ * Relock only when orientation flips or width jumps meaningfully.
+ */
+export function getZoomViewportSize() {
+  const raw = getViewportSize();
+  const aspect = aspectOf(raw.w, raw.h);
+
+  if (
+    !lockedZoomViewport ||
+    lockedZoomViewport.aspect !== aspect ||
+    Math.abs(raw.w - lockedZoomViewport.w) >= VIEWPORT_WIDTH_RELOCK_PX
+  ) {
+    lockedZoomViewport = { w: raw.w, h: raw.h, aspect };
+  }
+
+  return { w: lockedZoomViewport.w, h: lockedZoomViewport.h };
+}
+
+export function invalidateZoomViewportLock() {
+  lockedZoomViewport = null;
 }
 
 /**
@@ -89,9 +130,10 @@ export function isMobileViewport(w?: number, h?: number) {
 /**
  * Mobile: always fill WIDTH (vw/360) — no side letterboxing.
  * Desktop/tablet: min(vw/1920, vh/900, 1) — same first screen on every PC/tablet.
+ * Uses locked zoom viewport so URL-bar collapse doesn’t change scale.
  */
 export function getCanvasZoom(canvasWidth: number, mode: LandingMode) {
-  const { w, h } = getViewportSize();
+  const { w, h } = getZoomViewportSize();
 
   if (mode === "mobile") {
     return w / canvasWidth;

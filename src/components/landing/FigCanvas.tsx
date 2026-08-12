@@ -5,6 +5,7 @@ import {
   CanvasZoomProvider,
   DESKTOP_CANVAS,
   getCanvasZoom,
+  invalidateZoomViewportLock,
   LandingModeProvider,
   MOBILE_CANVAS,
   supportsCssZoom,
@@ -41,8 +42,15 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
     const shell = shellRef.current;
     if (!el || !shell) return;
 
-    const apply = () => {
+    let lastZoom = -1;
+
+    const apply = (opts?: { relock?: boolean }) => {
+      if (opts?.relock) invalidateZoomViewportLock();
+
       const next = getCanvasZoom(canvas.w, mode);
+      if (Math.abs(next - lastZoom) < 0.0005) return;
+      lastZoom = next;
+
       setZoom(next);
       document.documentElement.style.setProperty(
         "--canvas-zoom",
@@ -70,14 +78,17 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
       );
     };
 
-    apply();
-    window.addEventListener("resize", apply);
-    window.addEventListener("orientationchange", apply);
-    window.visualViewport?.addEventListener("resize", apply);
+    const onResize = () => apply();
+    const onOrientation = () => apply({ relock: true });
+
+    apply({ relock: true });
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onOrientation);
+    window.visualViewport?.addEventListener("resize", onResize);
     return () => {
-      window.removeEventListener("resize", apply);
-      window.removeEventListener("orientationchange", apply);
-      window.visualViewport?.removeEventListener("resize", apply);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onOrientation);
+      window.visualViewport?.removeEventListener("resize", onResize);
     };
   }, [canvas.w, height, mode]);
 
