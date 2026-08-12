@@ -379,7 +379,7 @@ function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void })
         className="absolute left-0 top-[15473px] h-[817px] w-[360px] bg-light-gray"
       />
 
-      <h2 className="h-section-mobile absolute left-[20px] top-[15533px] z-[2] w-[221px]">
+      <h2 className="h-section-mobile absolute left-[20px] top-[15533px] z-[2] w-[320px] whitespace-nowrap">
         Отзывы о работе со мной
       </h2>
 
@@ -493,7 +493,7 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
         className="absolute left-0 top-[12885px] h-[1020px] w-[1920px] bg-light-gray"
       />
 
-      <h2 className="h-section absolute left-[730px] top-[12975px] w-[459px] text-center">
+      <h2 className="h-section absolute left-[560px] top-[12975px] w-[800px] text-center whitespace-nowrap">
         Отзывы о работе со мной
       </h2>
 
