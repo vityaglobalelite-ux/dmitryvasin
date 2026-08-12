@@ -380,7 +380,7 @@ function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void })
       />
 
       <h2 className="h-section-mobile absolute left-[20px] top-[15533px] z-[2] w-[221px]">
-        Отзывы участников
+        Отзывы о работе со мной
       </h2>
 
       {/* Frame 2359 — swipe hint collage (on light-gray bg → white chip) */}
@@ -494,7 +494,7 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
       />
 
       <h2 className="h-section absolute left-[730px] top-[12975px] w-[459px] text-center">
-        Отзывы участников
+        Отзывы о работе со мной
       </h2>
 
       {collage.map((c) => (

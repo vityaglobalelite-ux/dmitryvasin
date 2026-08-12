@@ -1,6 +1,6 @@
 function costLine(price, untilLabel) {
   return untilLabel
-    ? `💰Стоимость до ${untilLabel} (с этой даты новая цена): ${price}`
+    ? `💰Стоимость до ${untilLabel}: ${price}`
     : `💰Стоимость: ${price}`;
 }
 
