@@ -50,7 +50,7 @@ const config = {
   adminIds: parseAdminIds(process.env.ADMIN_TELEGRAM_IDS),
   /**
    * mock — тариф сразу выдаёт доступ (без Stripe)
-   * stripe — foreign → Stripe Checkout; ru пока заглушка
+   * stripe — foreign → Stripe Checkout; ru → реквизиты Т‑Банк + чек в поддержку
    */
   paymentMode: process.env.PAYMENT_MODE || "mock",
   checkoutSecret: process.env.CHECKOUT_SECRET || "",

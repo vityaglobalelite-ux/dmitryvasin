@@ -270,7 +270,8 @@ async function purchaseTariff(ctx, tariff) {
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
       const texts = await getTexts("ru");
-      await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
+      const amount = texts.priceByTariff?.[tariff] || null;
+      await ctx.reply(texts.payRu(amount), keyboards.ruPay());
       return;
     }
     await startStripeCheckout(ctx, user, tariff);
@@ -322,7 +323,8 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
       const texts = await getTexts("ru");
-      await ctx.reply(texts.payRuStub, keyboards.afterPayment(null));
+      const amount = texts.priceByTariff?.[tariff] || null;
+      await ctx.reply(texts.payRu(amount), keyboards.ruPay());
       return;
     }
     // Renewals: if method unknown, treat as foreign (Stripe)

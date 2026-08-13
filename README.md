@@ -30,11 +30,16 @@ npm run dev
 
 ## Production
 
-Продакшен: **https://dmitryvasin.com** (статика на VPS, Caddy).
+Продакшен: **https://dmitryvasin.com/privateclub** (статика на VPS, Caddy).
 
-Сборка без `basePath` (`NEXT_PUBLIC_BASE_PATH=""`). Артефакт из `out/` кладётся в `/var/www/dmitryvasin.com` на сервере.
+Сборка с `NEXT_PUBLIC_BASE_PATH=/privateclub`. Артефакт из `out/` кладётся в `/var/www/dmitryvasin.com/privateclub` на сервере.
 
-GitHub Pages workflow ([deploy-pages.yml](.github/workflows/deploy-pages.yml)) тоже собирает без `basePath` как запасной деплой.
+```bash
+NEXT_PUBLIC_BASE_PATH=/privateclub npm run build
+scp -r out/* dmitryvasin-vps:/var/www/dmitryvasin.com/privateclub/
+```
+
+GitHub Pages workflow ([deploy-pages.yml](.github/workflows/deploy-pages.yml)) собирает без `basePath` как запасной деплой.
 
 ## Cloudflare
 

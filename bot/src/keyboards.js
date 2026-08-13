@@ -39,6 +39,17 @@ const keyboards = {
       [Markup.button.url("Поддержка", config.supportUrl)],
     ]),
 
+  /** Оплата картой РФ — реквизиты + отправка чека в поддержку */
+  ruPay: () =>
+    Markup.inlineKeyboard([
+      [
+        Markup.button.url(
+          "📎 Отправить чек в поддержку",
+          config.supportUrl,
+        ),
+      ],
+    ]),
+
   tariffs: () =>
     Markup.inlineKeyboard([
       [Markup.button.callback("Тест-драйв | 1 месяц", "tariff:trial")],

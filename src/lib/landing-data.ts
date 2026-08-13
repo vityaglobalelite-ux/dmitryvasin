@@ -873,18 +873,20 @@ export const reviews = [
   },
 ] as const;
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export const footerLinks = [
   {
     label: "Политика конфиденциальности",
-    href: "/privacy-policy/",
+    href: `${basePath}/privacy-policy/`,
   },
   {
     label: "Договор оферты",
-    href: "/subscription-agreement/",
+    href: `${basePath}/subscription-agreement/`,
   },
   {
     label: "Политика DMCA (Сообщение о случаях нарушения авторских прав)",
-    href: "/dmca-page/",
+    href: `${basePath}/dmca-page/`,
   },
 ] as const;
 

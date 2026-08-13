@@ -31,7 +31,7 @@ async function main() {
   push("3. tariffNudge10m", texts.tariffNudge10m);
   push("4. tariffNudge24h", texts.tariffNudge24h);
   push("5. payStripe", texts.payStripe);
-  push("6. payRuStub", texts.payRuStub);
+  push("6. payRu", texts.payRu(prices.full));
   push("7. needPaymentMethod", texts.needPaymentMethod);
   push(
     "8. tariffAlreadyActive",
