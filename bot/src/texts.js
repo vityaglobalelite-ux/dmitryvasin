@@ -1,6 +1,6 @@
 function costLine(price, untilLabel) {
   return untilLabel
-    ? `💰Стоимость до ${untilLabel}: ${price}`
+    ? `💰Стоимость по ${untilLabel} включительно: ${price}`
     : `💰Стоимость: ${price}`;
 }
 
@@ -90,6 +90,13 @@ function buildTexts(p) {
     get payRuStub() {
       return this.payRu();
     },
+
+    photoMaybeReceipt: [
+      "Похоже, вы хотели отправить чек об оплате.",
+      "",
+      "Пришлите его, пожалуйста, в чат поддержки — там его увидят и откроют доступ.",
+      "Сюда чеки не доходят.",
+    ].join("\n"),
 
     needPaymentMethod:
       "💰Сначала выберите способ оплаты через /start.",
@@ -280,15 +287,16 @@ function buildTexts(p) {
 const { getPriceLabels } = require("./price-labels");
 const db = require("./db");
 
-/** Format bot_settings.price_increase_at for «Стоимость до …»; null if missing/past. */
+/** Last inclusive Miami calendar day of the promo; null if missing/past. */
 async function getPriceUntilLabel() {
   try {
     const raw = await db.getSetting("price_increase_at");
     if (!raw?.trim()) return null;
     const d = new Date(raw.trim());
     if (!Number.isFinite(d.getTime()) || d.getTime() <= Date.now()) return null;
-    // Show calendar day in Miami so «17 августа» matches the price cutover.
-    return d.toLocaleString("ru-RU", {
+    // Cutover at 00:00 Miami is the next calendar day; show the last included day.
+    const lastInclusive = new Date(d.getTime() - 1);
+    return lastInclusive.toLocaleString("ru-RU", {
       timeZone: "America/New_York",
       day: "numeric",
       month: "long",

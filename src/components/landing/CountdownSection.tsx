@@ -50,7 +50,7 @@ function CountdownMobile({ display }: { display: string }) {
     >
       {/* 287:738 — Medium 24 / lh 1.2 */}
       <h2 className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
-        Повышение цен через:
+        Закрытие доступа через:
       </h2>
 
       {/* 287:739 — Medium 57 / lh 1.1 / tracking -3% */}
@@ -103,7 +103,7 @@ function CountdownDesktop({ display }: { display: string }) {
       </div>
 
       <h2 className="absolute left-[302px] top-[11174px] w-[333px] text-[50px] font-medium leading-[55px] tracking-[-1.5px] text-white">
-        Повышение цен через:
+        Закрытие доступа через:
       </h2>
 
       <p className="absolute left-[674px] top-[11198px] w-[698px] text-[128px] font-bold leading-[154px] tracking-[-3px] text-white tabular-nums">

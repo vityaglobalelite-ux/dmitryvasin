@@ -374,6 +374,28 @@ bot.action(/^vip_time:(morning|day|evening)$/, async (ctx) => {
   await ctx.reply(texts.vipQ4);
 });
 
+const receiptHintGroups = new Map();
+
+function alreadyHintedMediaGroup(mediaGroupId) {
+  if (!mediaGroupId) return false;
+  const now = Date.now();
+  if (receiptHintGroups.has(mediaGroupId)) return true;
+  receiptHintGroups.set(mediaGroupId, now);
+  if (receiptHintGroups.size > 200) {
+    const cutoff = now - 60_000;
+    for (const [id, at] of receiptHintGroups) {
+      if (at < cutoff) receiptHintGroups.delete(id);
+    }
+  }
+  return false;
+}
+
+bot.on(["photo", "document"], async (ctx) => {
+  if (alreadyHintedMediaGroup(ctx.message.media_group_id)) return;
+  const texts = await getTexts();
+  await ctx.reply(texts.photoMaybeReceipt, keyboards.ruPay());
+});
+
 bot.on("text", async (ctx) => {
   const text = ctx.message.text?.trim() || "";
   if (text.startsWith("/")) return;
