@@ -4,6 +4,7 @@ const db = require("./db");
 const { config } = require("./config");
 const { processPaidPayments } = require("./payments");
 const { processExpiredChatAccess } = require("./access");
+const { applyStage3PricesIfDue, isSaleNudgeKind, isSalesClosed } = require("./club-cutover");
 
 async function sendSafe(bot, telegramId, text, extra) {
   try {
@@ -30,6 +31,10 @@ async function processDueMessages(bot) {
   for (const msg of due) {
     try {
       const texts = await textsForUser(msg.telegram_id);
+      if (isSaleNudgeKind(msg.kind) && (await isSalesClosed())) {
+        await db.markMessageSent(msg.id);
+        continue;
+      }
       switch (msg.kind) {
         case "tariff_nudge_10m":
           await sendSafe(
@@ -133,13 +138,20 @@ function startScheduler(bot) {
       console.error("Chat kick tick failed:", err),
     );
   };
+  const tickCutover = () => {
+    applyStage3PricesIfDue().catch((err) =>
+      console.error("Stage-3 cutover failed:", err),
+    );
+  };
   tickMessages();
   tickPayments();
   tickKicks();
+  tickCutover();
   const msgTimer = setInterval(tickMessages, config.schedulerIntervalMs);
   const payTimer = setInterval(tickPayments, 10_000);
   const kickTimer = setInterval(tickKicks, 60_000);
-  return { msgTimer, payTimer, kickTimer };
+  const cutoverTimer = setInterval(tickCutover, 10_000);
+  return { msgTimer, payTimer, kickTimer, cutoverTimer };
 }
 
 module.exports = { startScheduler, startVipFlow };

@@ -22,6 +22,7 @@ const {
   TARIFF_LABELS,
 } = require("./membership");
 const { createCheckoutSession } = require("./stripe-checkout");
+const { isNewEnrollmentBlocked, applyStage3PricesIfDue } = require("./club-cutover");
 
 const bot = new Telegraf(config.token);
 
@@ -73,7 +74,29 @@ async function sendPaidMessage(ctx, subscription) {
   }
 }
 
+async function replyClubClosed(ctx) {
+  const texts = await getTexts();
+  if (ctx.from?.id) {
+    await db.cancelMessages(ctx.from.id, ["tariff_nudge_10m", "tariff_nudge_24h"]);
+  }
+  await ctx.reply(
+    "Выберите действие 👇",
+    keyboards.replyMenu({ hasSubscription: false, allowEnroll: false }),
+  );
+  await ctx.reply(texts.clubClosed, keyboards.supportLink());
+}
+
+async function blockNewEnrollment(ctx) {
+  if (!(await isNewEnrollmentBlocked(ctx.from?.id))) return false;
+  await replyClubClosed(ctx);
+  return true;
+}
+
 async function startPurchaseFlow(ctx, userId) {
+  if (await isNewEnrollmentBlocked(userId)) {
+    await replyClubClosed(ctx);
+    return;
+  }
   const texts = await getTexts();
   await db.updateUser(userId, {
     state: "awaiting_payment_method",
@@ -199,6 +222,7 @@ bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
   if (await sendMembershipCard(ctx, bot, ctx.from.id)) {
     return;
   }
+  if (await blockNewEnrollment(ctx)) return;
   const method = ctx.match[1];
   await db.updateUser(ctx.from.id, {
     payment_method: method,
@@ -225,6 +249,10 @@ async function startStripeCheckout(ctx, user, tariff) {
     );
   } catch (err) {
     console.error("Stripe checkout failed:", err.message);
+    if (err.code === "sales_closed" || err.message === "sales_closed") {
+      await replyClubClosed(ctx);
+      return;
+    }
     await ctx.reply(
       "Не удалось создать ссылку на оплату. Попробуйте ещё раз чуть позже или напишите в поддержку.",
       keyboards.afterPayment(null),
@@ -233,6 +261,8 @@ async function startStripeCheckout(ctx, user, tariff) {
 }
 
 async function purchaseTariff(ctx, tariff) {
+  if (await blockNewEnrollment(ctx)) return;
+  await applyStage3PricesIfDue();
   const user = await db.upsertUser(ctx.from);
   if (!user.payment_method) {
     const texts = await getTexts();
@@ -306,6 +336,7 @@ bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
 
 bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
   await ctx.answerCbQuery();
+  await applyStage3PricesIfDue();
   const tariff = ctx.match[1];
   const user = await db.upsertUser(ctx.from);
 
@@ -444,6 +475,17 @@ bot.on("text", async (ctx) => {
     return;
   }
 
+  // Нет и не было подписки — даже если уже жали /start и выбирали тариф
+  if (await blockNewEnrollment(ctx)) return;
+
+  if (user.state === "awaiting_payment") {
+    await ctx.reply(
+      "Ожидаем оплату. Если уже оплатили — доступ придёт сюда в течение минуты. Или выберите тариф снова:",
+      keyboards.tariffs(),
+    );
+    return;
+  }
+
   if (user.state === "awaiting_payment_method" || user.state === "new") {
     await ctx.reply(
       "Выберите действие 👇",
@@ -455,14 +497,6 @@ bot.on("text", async (ctx) => {
 
   if (user.state === "awaiting_tariff") {
     await ctx.reply(texts.chooseTariff, keyboards.tariffs());
-    return;
-  }
-
-  if (user.state === "awaiting_payment") {
-    await ctx.reply(
-      "Ожидаем оплату. Если уже оплатили — доступ придёт сюда в течение минуты. Или выберите тариф снова:",
-      keyboards.tariffs(),
-    );
     return;
   }
 

@@ -79,6 +79,15 @@ async function getPriceLabels(paymentMethod = "ru") {
     }
   }
 
+  const { isSalesClosed, STAGE3_PRICES } = require("./club-cutover");
+  if (await isSalesClosed()) {
+    const currency = method === "foreign" ? "usd" : "rub";
+    for (const tariff of Object.keys(STAGE3_PRICES)) {
+      const p = STAGE3_PRICES[tariff];
+      labels[tariff] = formatMajor(p[currency], currency);
+    }
+  }
+
   const m23 = map.get("month2_3");
   if (m23) {
     const currency = pickCurrency(m23, method);
@@ -91,8 +100,14 @@ async function getPriceLabels(paymentMethod = "ru") {
   return labels;
 }
 
+function clearPriceCache() {
+  rowsByTariff = null;
+  cacheAt = 0;
+}
+
 module.exports = {
   getPriceLabels,
   loadRows,
   formatMajor,
+  clearPriceCache,
 };

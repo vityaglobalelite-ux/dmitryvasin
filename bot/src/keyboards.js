@@ -10,14 +10,13 @@ const BTN = {
 
 const keyboards = {
   /** Нижняя клавиатура — всегда видна в чате после первого /start */
-  replyMenu: ({ hasSubscription = false } = {}) => {
+  replyMenu: ({ hasSubscription = false, allowEnroll = true } = {}) => {
     const rows = [];
-    if (!hasSubscription) {
-      rows.push([BTN.START, BTN.SUBSCRIBE]);
-    } else {
+    if (hasSubscription) {
       rows.push([BTN.SUBSCRIPTION]);
+    } else if (allowEnroll) {
+      rows.push([BTN.START, BTN.SUBSCRIBE]);
     }
-    // Обычная текстовая кнопка: WebApp-редирект ненадёжен на десктопе
     rows.push([BTN.SUPPORT]);
     return Markup.keyboard(rows).resize().persistent();
   },

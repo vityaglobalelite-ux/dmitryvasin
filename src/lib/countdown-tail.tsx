@@ -24,10 +24,14 @@ export const COUNTDOWN_COLLAPSE = {
 } as const;
 
 type CountdownTailCtx = {
-  /** Positive px removed from canvas / applied as -translateY when inactive */
+  /** Positive px removed from canvas / applied as -translateY when banner hidden */
   collapse: number;
   target: Date | null;
+  /** Countdown still running (sales open) */
   active: boolean;
+  /** Cutover passed — keep the banner, show «Вход в клуб закрыт» */
+  closed: boolean;
+  salesOpen: boolean;
   ready: boolean;
 };
 
@@ -35,15 +39,16 @@ const Ctx = createContext<CountdownTailCtx | null>(null);
 
 export function CountdownTailProvider({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
-  const { target, active, ready } = usePriceIncreaseTarget();
-  const collapse = active
+  const { target, active, closed, salesOpen, ready } = usePriceIncreaseTarget();
+  const showBanner = Boolean(target);
+  const collapse = showBanner
     ? 0
     : isMobile
       ? COUNTDOWN_COLLAPSE.mobile
       : COUNTDOWN_COLLAPSE.desktop;
   const value = useMemo(
-    () => ({ collapse, target, active, ready }),
-    [collapse, target, active, ready],
+    () => ({ collapse, target, active, closed, salesOpen, ready }),
+    [collapse, target, active, closed, salesOpen, ready],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

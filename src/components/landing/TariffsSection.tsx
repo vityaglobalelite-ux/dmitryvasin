@@ -1,7 +1,8 @@
 "use client";
 
 import { landingAssets } from "@/lib/landing-assets";
-import { tariffs, telegramBotUrl } from "@/lib/landing-data";
+import { ClubCta } from "@/components/landing/ClubCta";
+import { tariffs } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 import {
   tariffKeyForIndex,
@@ -152,14 +153,9 @@ function TariffsMobile() {
                 priceClassName="bg-clip-text text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-transparent"
                 oldClassName="text-[16px] font-medium leading-[1.2] text-text line-through"
               />
-              <a
-                href={telegramBotUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary-mobile !w-[259px]"
-              >
+              <ClubCta className="btn-primary-mobile !w-[259px]">
                 Оплатить
-              </a>
+              </ClubCta>
             </div>
           </article>
         );
@@ -258,14 +254,7 @@ function TariffsDesktop() {
                 priceClassName="bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent"
                 oldClassName="text-[20px] font-semibold leading-[1.2] text-text line-through"
               />
-              <a
-                href={telegramBotUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-primary"
-              >
-                Оплатить
-              </a>
+              <ClubCta className="btn-primary">Оплатить</ClubCta>
             </div>
           </article>
         );

@@ -39,7 +39,9 @@ async function createCheckoutSession({ telegramId, tariff, paymentMethod }) {
 
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error(data.error || `create-checkout HTTP ${res.status}`);
+    const err = new Error(data.error || `create-checkout HTTP ${res.status}`);
+    err.code = data.error || String(res.status);
+    throw err;
   }
   if (!data.url) {
     throw new Error("create-checkout returned no url");

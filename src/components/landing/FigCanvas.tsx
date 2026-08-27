@@ -139,7 +139,6 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
           style={{
             width: canvas.w,
             height,
-            visibility: ready ? "visible" : "hidden",
           }}
           data-landing-mode={mode}
         >

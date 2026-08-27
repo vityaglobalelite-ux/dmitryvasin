@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Logo } from "@/components/landing/Logo";
 import { landingAssets } from "@/lib/landing-assets";
-import { telegramBotUrl, telegramSupportBotUrl } from "@/lib/landing-data";
+import { ClubCta } from "@/components/landing/ClubCta";
+import { telegramSupportBotUrl } from "@/lib/landing-data";
 import {
   MOBILE_CANVAS,
   useCanvasZoom,
@@ -324,14 +325,9 @@ function HeroMobile() {
 что обычно остаётся между
 преподавателем и учеником.`}
           </p>
-          <a
-            href={telegramBotUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-primary-mobile absolute left-[15px] top-[164px] z-[1]"
-          >
+          <ClubCta className="btn-primary-mobile absolute left-[15px] top-[164px] z-[1]">
             Присоединиться
-          </a>
+          </ClubCta>
         </div>
 
         {/*
@@ -439,19 +435,12 @@ function HeroDesktop() {
         <br />
         остаётся между преподавателем и&nbsp;учеником.
       </p>
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary absolute left-[332px] top-[647px] z-[4]"
-      >
+      <ClubCta className="btn-primary absolute left-[332px] top-[647px] z-[4]">
         Присоединиться
-      </a>
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      </ClubCta>
+      <ClubCta
         className="absolute left-[601px] top-[647px] z-[4] size-[60px]"
+        preserveChildren
       >
         <img
           src={landingAssets.hero.arrowButton}
@@ -460,7 +449,7 @@ function HeroDesktop() {
           width={60}
           height={60}
         />
-      </a>
+      </ClubCta>
 
       {heroArcItems.map((item) => (
         <div

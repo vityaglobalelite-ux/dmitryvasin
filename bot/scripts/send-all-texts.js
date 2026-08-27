@@ -104,6 +104,7 @@ async function main() {
   push("27. reply menu (нет подписки)", "Выберите действие 👇");
   push("28. reply menu (есть подписка)", "Выберите действие 👇");
   push("29. chatAccessEnded (кик после grace)", texts.chatAccessEnded);
+  push("29c. clubClosed", texts.clubClosed);
   push(
     "30. membership grace (+1 месяц к чатам)",
     membershipText(

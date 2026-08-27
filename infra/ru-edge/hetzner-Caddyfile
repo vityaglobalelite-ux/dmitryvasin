@@ -1,0 +1,65 @@
+{$PROXY_DOMAIN} {
+	encode gzip
+
+	@supabase_api path /auth/v1/* /rest/v1/* /graphql/v1 /realtime/v1/* /storage/v1/* /functions/v1/* /mcp /sso/*
+
+	handle @supabase_api {
+		reverse_proxy kong:8000 {
+			transport http {
+				read_timeout 3600s
+				write_timeout 3600s
+			}
+		}
+	}
+
+	handle {
+		basic_auth {
+			#DASHBOARD_BASIC_AUTH#
+		}
+
+		reverse_proxy studio:3000
+	}
+
+	header -server
+	header Strict-Transport-Security max-age=63072000; includeSubDomains; preload
+}
+
+betango.dance, www.betango.dance {
+	encode gzip
+	root * /srv/betango.dance
+	try_files {path} {path}/ {path}/index.html /index.html
+	file_server
+	header -server
+	header Strict-Transport-Security max-age=63072000; includeSubDomains; preload
+}
+
+dmitryvasin.com {
+	encode gzip
+
+	@public_data path /edge-supabase/rest/v1/tariff_prices /edge-supabase/rest/v1/bot_settings
+	handle @public_data {
+		uri strip_prefix /edge-supabase
+		reverse_proxy kong:8000
+	}
+
+	handle /edge-supabase/* {
+		respond 404
+	}
+
+	handle {
+		root * /srv/dmitryvasin.com
+		try_files {path} {path}/ {path}/index.html /index.html
+		file_server
+	}
+
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	@html path *.html /
+	header @html Cache-Control "no-cache, no-store, must-revalidate"
+	header @html Pragma "no-cache"
+	header @html Expires "0"
+
+	header -server
+	header Strict-Transport-Security max-age=63072000; includeSubDomains; preload
+}

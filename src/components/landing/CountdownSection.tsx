@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ClubCta } from "@/components/landing/ClubCta";
 import { landingAssets } from "@/lib/landing-assets";
-import { telegramBotUrl } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 import { useCountdownTail } from "@/lib/countdown-tail";
+import { CLUB_CLOSED_ID } from "@/lib/tariff-stage3";
 
 function getTimeLeft(target: Date) {
   const diff = Math.max(0, target.getTime() - Date.now());
@@ -38,37 +39,61 @@ function useCountdownDisplay(target: Date | null) {
     : "00:00:00:00";
 }
 
+function ClosedCopy({
+  titleClassName,
+  subtitleClassName,
+}: {
+  titleClassName: string;
+  subtitleClassName: string;
+}) {
+  return (
+    <>
+      <h2 className={titleClassName}>Вход в клуб закрыт</h2>
+      <p className={subtitleClassName}>
+        Набор новых участников приостановлен
+      </p>
+    </>
+  );
+}
+
 /* Figma Главная_360: 287:736 Rect41 + 287:738/739 + 287:795 + 287:824 */
-function CountdownMobile({ display }: { display: string }) {
+function CountdownMobile({
+  display,
+  closed,
+}: {
+  display: string;
+  closed: boolean;
+}) {
   return (
     <div
+      id={closed ? CLUB_CLOSED_ID : undefined}
       className="absolute left-[20px] top-[13949px] z-[2] h-[351px] w-[320px] overflow-hidden rounded-[10px]"
       style={{
         backgroundImage:
           "linear-gradient(109.54deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
       }}
     >
-      {/* 287:738 — Medium 24 / lh 1.2 */}
-      <h2 className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
-        Закрытие доступа через:
-      </h2>
+      {closed ? (
+        <ClosedCopy
+          titleClassName="absolute left-[15px] top-[28px] z-[1] w-[290px] text-[32px] font-medium leading-[1.15] tracking-[-0.6px] text-white"
+          subtitleClassName="absolute left-[15px] top-[118px] z-[1] w-[250px] text-[16px] font-medium leading-[1.3] text-white/90"
+        />
+      ) : (
+        <>
+          <h2 className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
+            Закрытие
+            <br />
+            доступа через:
+          </h2>
+          <p className="absolute left-[15px] top-[59px] z-[1] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
+            {display}
+          </p>
+          <ClubCta className="btn-primary absolute left-[15px] top-[152px] z-[1]">
+            Выбрать тариф и оплатить
+          </ClubCta>
+        </>
+      )}
 
-      {/* 287:739 — Medium 57 / lh 1.1 / tracking -3% */}
-      <p className="absolute left-[15px] top-[59px] z-[1] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
-        {display}
-      </p>
-
-      {/* 287:795 — 259×60 */}
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary absolute left-[15px] top-[152px] z-[1]"
-      >
-        Выбрать тариф и оплатить
-      </a>
-
-      {/* 287:824 — Untitled-10 2, 178×139 @ 142,212; CROP as in Figma */}
       <div className="pointer-events-none absolute left-[142px] top-[212px] z-0 h-[139px] w-[178px] overflow-hidden">
         <img
           src={landingAssets.countdown.clockMobile}
@@ -82,17 +107,23 @@ function CountdownMobile({ display }: { display: string }) {
 }
 
 /* Figma: Rectangle 41 (242,11114,1440x330) + CTA 255:2456 + mockup 255:2451 */
-function CountdownDesktop({ display }: { display: string }) {
+function CountdownDesktop({
+  display,
+  closed,
+}: {
+  display: string;
+  closed: boolean;
+}) {
   return (
     <>
       <div
+        id={closed ? CLUB_CLOSED_ID : undefined}
         className="absolute left-[242px] top-[11114px] h-[330px] w-[1440px] overflow-hidden rounded-[40px]"
         style={{
           backgroundImage:
             "linear-gradient(149.52deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
         }}
       >
-        {/* Figma 255:2451 — crop inside 319×331 at (1362,11114) → rel (1120,0) */}
         <div className="pointer-events-none absolute left-[1120px] top-0 h-[331px] w-[319px] overflow-hidden">
           <img
             src={landingAssets.countdown.mockup}
@@ -102,50 +133,63 @@ function CountdownDesktop({ display }: { display: string }) {
         </div>
       </div>
 
-      <h2 className="absolute left-[302px] top-[11174px] w-[333px] text-[50px] font-medium leading-[55px] tracking-[-1.5px] text-white">
-        Закрытие доступа через:
-      </h2>
+      {closed ? (
+        <ClosedCopy
+          titleClassName="absolute left-[302px] top-[11188px] z-[1] w-[780px] text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white"
+          subtitleClassName="absolute left-[302px] top-[11308px] z-[1] w-[720px] text-[24px] font-medium leading-[1.2] text-white/90"
+        />
+      ) : (
+        <>
+          <h2 className="absolute left-[302px] top-[11174px] w-[360px] text-[44px] font-medium leading-[1.15] tracking-[-1.32px] text-white">
+            Закрытие
+            <br />
+            доступа через:
+          </h2>
 
-      <p className="absolute left-[674px] top-[11198px] w-[698px] text-[128px] font-bold leading-[154px] tracking-[-3px] text-white tabular-nums">
-        {display}
-      </p>
+          <p className="absolute left-[674px] top-[11198px] w-[698px] text-[128px] font-bold leading-[154px] tracking-[-3px] text-white tabular-nums">
+            {display}
+          </p>
 
-      <span className="absolute left-[728px] top-[11335px] text-[16px] leading-[24px] text-white">
-        дней
-      </span>
-      <span className="absolute left-[907px] top-[11335px] text-[16px] leading-[24px] text-white">
-        часов
-      </span>
-      <span className="absolute left-[1090px] top-[11335px] text-[16px] leading-[24px] text-white">
-        минут
-      </span>
-      <span className="absolute left-[1270px] top-[11335px] text-[16px] leading-[24px] text-white">
-        секунд
-      </span>
+          <span className="absolute left-[728px] top-[11335px] text-[16px] leading-[24px] text-white">
+            дней
+          </span>
+          <span className="absolute left-[907px] top-[11335px] text-[16px] leading-[24px] text-white">
+            часов
+          </span>
+          <span className="absolute left-[1090px] top-[11335px] text-[16px] leading-[24px] text-white">
+            минут
+          </span>
+          <span className="absolute left-[1270px] top-[11335px] text-[16px] leading-[24px] text-white">
+            секунд
+          </span>
 
-      {/* Figma 255:2456 — тёмный CTA как «Оплатить» */}
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary absolute left-[302px] top-[11324px]"
-      >
-        Выбрать тариф и оплатить
-      </a>
+          <ClubCta className="btn-primary absolute left-[302px] top-[11324px]">
+            Выбрать тариф и оплатить
+          </ClubCta>
+        </>
+      )}
     </>
   );
 }
 
 export function CountdownSection() {
   const isMobile = useIsMobile();
-  const { target, active } = useCountdownTail();
+  const { target, active, closed } = useCountdownTail();
   const display = useCountdownDisplay(active ? target : null);
+
+  if (closed) {
+    return isMobile ? (
+      <CountdownMobile display={display} closed />
+    ) : (
+      <CountdownDesktop display={display} closed />
+    );
+  }
 
   if (!active || !target) return null;
 
   return isMobile ? (
-    <CountdownMobile display={display} />
+    <CountdownMobile display={display} closed={false} />
   ) : (
-    <CountdownDesktop display={display} />
+    <CountdownDesktop display={display} closed={false} />
   );
 }

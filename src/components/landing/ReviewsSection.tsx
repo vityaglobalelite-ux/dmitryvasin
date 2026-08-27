@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { landingAssets } from "@/lib/landing-assets";
-import { reviews, telegramBotUrl } from "@/lib/landing-data";
+import { ClubCta } from "@/components/landing/ClubCta";
+import { reviews } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 
 type Review = (typeof reviews)[number];
@@ -422,15 +423,12 @@ function ReviewsMobile({ onReadMore }: { onReadMore: (review: Review) => void })
       </div>
 
       {/* 325:9 Frame 2386 — 51,16180,259×50 */}
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      <ClubCta
         className="btn-primary-mobile absolute left-[51px] top-[16180px] z-[2]"
         style={{ width: 259 }}
       >
         Присоединиться сейчас
-      </a>
+      </ClubCta>
 
       {/* Frame 2131331417 — results + swipe */}
       <div className="absolute left-[20px] top-[16350px] z-[2] flex w-[320px] flex-col gap-[20px]">
@@ -515,14 +513,9 @@ function ReviewsDesktop({ onReadMore }: { onReadMore: (review: Review) => void }
       ))}
 
       {/* Figma 347:1891 */}
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary absolute left-[831px] top-[13735px]"
-      >
+      <ClubCta className="btn-primary absolute left-[831px] top-[13735px]">
         Присоединиться сейчас
-      </a>
+      </ClubCta>
 
       {/* Figma 249:1439 */}
       <div className="absolute left-[240px] top-[14015px] flex w-[1057px] flex-col gap-[20px] text-text">

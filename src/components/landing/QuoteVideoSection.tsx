@@ -96,8 +96,9 @@ function QuoteVideoPlayer({
 
   const [playing, setPlaying] = useState(false);
   const [overlayFs, setOverlayFs] = useState(false);
-  const [portalReady, setPortalReady] = useState(false);
   const [buffering, setBuffering] = useState(false);
+  const [sourceAttached, setSourceAttached] = useState(false);
+  const portalReady = typeof document !== "undefined";
   const titleId = useId();
 
   const setOverlay = useCallback((next: boolean) => {
@@ -111,10 +112,6 @@ function QuoteVideoPlayer({
       window.clearTimeout(fallbackTimerRef.current);
       fallbackTimerRef.current = null;
     }
-  }, []);
-
-  useEffect(() => {
-    setPortalReady(true);
   }, []);
 
   const popOverlayHistory = useCallback(() => {
@@ -361,6 +358,12 @@ function QuoteVideoPlayer({
     const video = videoRef.current;
     if (!video) return;
 
+    if (!sourceAttached) {
+      video.src = landingAssets.video.intro;
+      video.load();
+      setSourceAttached(true);
+    }
+
     setPlaying(true);
     setBuffering(video.readyState < HTMLMediaElement.HAVE_FUTURE_DATA);
 
@@ -396,11 +399,11 @@ function QuoteVideoPlayer({
         <video
           ref={videoRef}
           className="quote-video absolute inset-0 size-full bg-black object-contain"
-          src={landingAssets.video.intro}
+          src={sourceAttached ? landingAssets.video.intro : undefined}
           poster={landingAssets.photos.videoPreview}
           controls={playing}
           playsInline
-          preload="metadata"
+          preload="none"
           controlsList="nodownload"
           style={{ opacity: playing || overlayFs ? 1 : 0 }}
           aria-labelledby={titleId}

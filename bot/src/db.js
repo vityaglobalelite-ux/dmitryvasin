@@ -73,6 +73,18 @@ async function getActiveSubscription(telegramId) {
   return data;
 }
 
+/** True if this Telegram user ever had a paid club subscription (any status). /start without payment does not count. */
+async function hasAnySubscription(telegramId) {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("id")
+    .eq("telegram_id", telegramId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
+
 /** Paid ended, but chat grace still active (or paid still active). */
 async function getChatAccessSubscription(telegramId) {
   const { data, error } = await supabase
@@ -309,6 +321,25 @@ async function getTariffPrices() {
   return data || [];
 }
 
+/** Promote landing tariffs to stage-3 list prices; clear strikethrough. */
+async function applyLandingStagePrices(pricesByTariff) {
+  for (const [tariff, p] of Object.entries(pricesByTariff)) {
+    const { error } = await supabase
+      .from("tariff_prices")
+      .update({
+        price_rub: p.rub,
+        price_usd: p.usd,
+        price_eur: p.eur,
+        price_rub_was: null,
+        price_usd_was: null,
+        price_eur_was: null,
+        updated_at: nowIso(),
+      })
+      .eq("tariff", tariff);
+    if (error) throw error;
+  }
+}
+
 async function fetchPaidUngrantedPayments(limit = 20) {
   const { data, error } = await supabase
     .from("payments")
@@ -365,6 +396,7 @@ module.exports = {
   updateUser,
   createSubscription,
   getActiveSubscription,
+  hasAnySubscription,
   getChatAccessSubscription,
   fetchSubscriptionsDueForKick,
   getSubscriptionByInviteLink,
@@ -381,6 +413,7 @@ module.exports = {
   getSetting,
   setSetting,
   getTariffPrices,
+  applyLandingStagePrices,
   fetchPaidUngrantedPayments,
   claimPaidPayment,
   markPaymentGranted,

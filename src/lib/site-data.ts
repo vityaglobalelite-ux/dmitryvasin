@@ -1,13 +1,14 @@
 import { assets } from "@/lib/assets";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const siteOrigin = "https://dmitryvasin.com";
 
 export const siteConfig = {
   title: "Дмитрий Васин. СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!",
   description:
     "Аргентинское танго в лёгких и понятных видеоуроках, в своём темпе и в любое время, всегда в твоём смартфоне. СЛОЖНЫЕ ПРОЦЕССЫ В ТАНГО ПРОСТЫМ И ДОСТУПНЫМ ЯЗЫКОМ",
-  url: `https://dmitryvasin.com${basePath}`,
-  ogImage: assets.ogPhoto,
+  url: `${siteOrigin}${basePath}`,
+  ogImage: `${siteOrigin}${assets.ogPhoto}`,
 };
 
 export const navLinks = [

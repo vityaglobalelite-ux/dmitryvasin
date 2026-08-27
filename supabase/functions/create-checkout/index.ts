@@ -6,6 +6,7 @@ import {
   resolvePriceFromDb,
   resolvePriceFromEnv,
 } from "../_shared/tariffs.ts";
+import { isSalesClosedAt } from "../_shared/sales-window.ts";
 
 function assertCheckoutAuth(req: Request): void {
   const secret = Deno.env.get("CHECKOUT_SECRET");
@@ -65,6 +66,25 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
+
+    const { data: cutover, error: cutoverErr } = await supabase
+      .from("bot_settings")
+      .select("value")
+      .eq("key", "price_increase_at")
+      .maybeSingle();
+    if (cutoverErr) throw cutoverErr;
+    if (isSalesClosedAt(cutover?.value)) {
+      const { data: sub, error: subErr } = await supabase
+        .from("subscriptions")
+        .select("id")
+        .eq("telegram_id", telegramId)
+        .limit(1)
+        .maybeSingle();
+      if (subErr) throw subErr;
+      if (!sub) {
+        return jsonResponse({ error: "sales_closed" }, 403);
+      }
+    }
 
     const { data: user, error: userErr } = await supabase
       .from("bot_users")

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { tariffs as fallbackTariffs } from "@/lib/landing-data";
+import { useCountdownTail } from "@/lib/countdown-tail";
+import { STAGE3_PRICES } from "@/lib/tariff-stage3";
 
 export type DisplayCurrency = "rub" | "usd" | "eur";
 
@@ -158,16 +159,10 @@ function pickAmount(
   return toNum(row.price_rub);
 }
 
-function fallbackMap(): Record<TariffKey, DisplayPrice> {
-  const out = {} as Record<TariffKey, DisplayPrice>;
-  LANDING_TARIFFS.forEach((key, i) => {
-    const t = fallbackTariffs[i];
-    out[key] = {
-      price: t?.price ?? "1 000 ₽",
-      oldPrice: t?.oldPrice ?? null,
-    };
-  });
-  return out;
+function statusMap(label: string): Record<TariffKey, DisplayPrice> {
+  return Object.fromEntries(
+    LANDING_TARIFFS.map((key) => [key, { price: label, oldPrice: null }]),
+  ) as Record<TariffKey, DisplayPrice>;
 }
 
 async function detectCountryCode(): Promise<string | null> {
@@ -184,7 +179,10 @@ async function detectCountryCode(): Promise<string | null> {
 }
 
 async function fetchPriceRows(): Promise<PriceRow[] | null> {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\/$/, "");
+  const base = (
+    process.env.NEXT_PUBLIC_PUBLIC_DATA_URL ??
+    process.env.NEXT_PUBLIC_SUPABASE_URL
+  )?.replace(/\/$/, "");
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   if (!base || !anon) return null;
 
@@ -194,37 +192,58 @@ async function fetchPriceRows(): Promise<PriceRow[] | null> {
     `&active=eq.true` +
     `&tariff=in.(${LANDING_TARIFFS.join(",")})`;
 
-  try {
-    const res = await fetch(url, {
-      headers: {
-        apikey: anon,
-        Authorization: `Bearer ${anon}`,
-        Accept: "application/json",
-      },
-      signal: AbortSignal.timeout(4000),
-    });
-    if (!res.ok) return null;
-    return (await res.json()) as PriceRow[];
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          apikey: anon,
+          Authorization: `Bearer ${anon}`,
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(5000),
+      });
+      if (res.ok) return (await res.json()) as PriceRow[];
+      if (res.status < 500) return null;
+    } catch {
+      // Retry transient edge/origin failures below.
+    }
+
+    if (attempt < 2) {
+      await new Promise((resolve) => window.setTimeout(resolve, 300 * (attempt + 1)));
+    }
   }
+
+  return null;
+}
+
+function stage3Display(
+  currency: DisplayCurrency,
+): Record<TariffKey, DisplayPrice> {
+  return Object.fromEntries(
+    LANDING_TARIFFS.map((key) => [
+      key,
+      {
+        price: formatMoney(STAGE3_PRICES[key][currency], currency),
+        oldPrice: null,
+      },
+    ]),
+  ) as Record<TariffKey, DisplayPrice>;
 }
 
 function buildDisplay(
   rows: PriceRow[] | null,
   currency: DisplayCurrency,
-): Record<TariffKey, DisplayPrice> {
-  const fallback = fallbackMap();
-  if (!rows?.length) return fallback;
+): Record<TariffKey, DisplayPrice> | null {
+  if (!rows?.length) return null;
 
   const byTariff = new Map(rows.map((r) => [r.tariff, r]));
-  const out = { ...fallback };
+  const out = {} as Record<TariffKey, DisplayPrice>;
 
   for (const key of LANDING_TARIFFS) {
     const row = byTariff.get(key);
-    if (!row) continue;
+    if (!row) return null;
     const price = pickAmount(row, currency, "price");
-    if (price == null || price <= 0) continue;
+    if (price == null || price <= 0) return null;
     const was = pickAmount(row, currency, "was");
     out[key] = {
       price: formatMoney(price, currency),
@@ -235,35 +254,42 @@ function buildDisplay(
   return out;
 }
 
-/** Prices for landing cards: DB + geo currency, RUB fallback. */
+/** Prices for landing cards: live DB values + geo currency, never hardcoded money. */
 export function useLandingTariffPrices(): {
   prices: Record<TariffKey, DisplayPrice>;
   currency: DisplayCurrency;
   ready: boolean;
+  error: boolean;
 } {
+  const { closed } = useCountdownTail();
   const [currency, setCurrency] = useState<DisplayCurrency>("rub");
-  const [prices, setPrices] = useState<Record<TariffKey, DisplayPrice>>(fallbackMap);
+  const [prices, setPrices] = useState<Record<TariffKey, DisplayPrice>>(() =>
+    statusMap("Загрузка…"),
+  );
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const [country, rows] = await Promise.all([
         detectCountryCode(),
-        fetchPriceRows(),
+        closed ? Promise.resolve(null) : fetchPriceRows(),
       ]);
       if (cancelled) return;
       const cur = currencyForCountry(country);
+      const display = closed ? stage3Display(cur) : buildDisplay(rows, cur);
       setCurrency(cur);
-      setPrices(buildDisplay(rows, cur));
+      setPrices(display ?? statusMap("Цена недоступна"));
+      setError(!closed && !display);
       setReady(true);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [closed]);
 
-  return { prices, currency, ready };
+  return { prices, currency, ready, error };
 }
 
 export function tariffKeyForIndex(index: number): TariffKey {

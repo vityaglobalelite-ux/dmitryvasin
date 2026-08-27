@@ -1,7 +1,8 @@
 "use client";
 
+import { ClubCta } from "@/components/landing/ClubCta";
+import { useCountdownTail } from "@/lib/countdown-tail";
 import { useIsMobile } from "@/lib/landing-mode";
-import { telegramBotUrl } from "@/lib/landing-data";
 
 /**
  * Mobile-only CTA pinned to the bottom of the viewport.
@@ -9,16 +10,12 @@ import { telegramBotUrl } from "@/lib/landing-data";
  */
 export function StickyMobileCta() {
   const isMobile = useIsMobile();
-  if (!isMobile) return null;
+  const { salesOpen } = useCountdownTail();
+  if (!isMobile || !salesOpen) return null;
 
   return (
     <div className="sticky-cta" role="presentation">
-      <a
-        href={telegramBotUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="sticky-cta__btn"
-      >
+      <ClubCta className="sticky-cta__btn">
         <span>Присоединиться</span>
         <svg
           className="sticky-cta__arrow"
@@ -36,7 +33,7 @@ export function StickyMobileCta() {
             strokeLinejoin="round"
           />
         </svg>
-      </a>
+      </ClubCta>
     </div>
   );
 }
