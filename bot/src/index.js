@@ -21,6 +21,7 @@ const {
   TARIFF_LABELS,
   canBuyTariff,
   evaluateRenewal,
+  isPointJoinTariff,
 } = require("./membership");
 const { createCheckoutSession } = require("./stripe-checkout");
 const { getPriceLabels } = require("./price-labels");
@@ -73,7 +74,7 @@ async function sendPaidMessage(ctx, subscription) {
     keyboards.replyMenu({ hasSubscription: true }),
   );
   const body = accessRows.length
-    ? texts.paidForTariff(subscription.tariff)
+    ? texts.paidForTariff(subscription.granted_tariff || subscription.tariff)
     : texts.paidNoLink;
   if (accessRows.length) {
     await ctx.reply(body, keyboards.afterPayment(null, { accessRows }));
@@ -101,10 +102,6 @@ async function blockNewEnrollment(ctx) {
 }
 
 async function startPurchaseFlow(ctx, userId) {
-  if (await isNewEnrollmentBlocked(userId)) {
-    await replyClubClosed(ctx);
-    return;
-  }
   const texts = await getTexts();
   await db.updateUser(userId, {
     state: "awaiting_payment_method",
@@ -281,7 +278,7 @@ async function purchaseTariff(ctx, tariff) {
 
   if (current && !canBuyTariff(current, tariff)) {
     const texts = await getTexts(user.payment_method);
-    const addon = tariff === "month1" || tariff === "month2_3";
+    const addon = isPointJoinTariff(tariff);
     await ctx.reply(
       addon
         ? texts.addonAlreadyActive

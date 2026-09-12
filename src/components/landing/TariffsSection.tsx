@@ -345,7 +345,9 @@ function TariffsMobile() {
                 priceClassName="bg-clip-text text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-transparent"
                 oldClassName="text-[16px] font-medium leading-[1.2] text-text line-through"
               />
-              <ClubCta className="btn-primary-mobile !w-full">Оплатить</ClubCta>
+              <ClubCta className="btn-primary-mobile !w-full">
+                Оплатить
+              </ClubCta>
             </div>
           </article>
         );

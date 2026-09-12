@@ -90,11 +90,9 @@ async function isSalesClosed() {
   return closed;
 }
 
-/** Closed to people who never bought. /start or unpaid funnel does not count as a member. */
-async function isNewEnrollmentBlocked(telegramId) {
-  if (!(await isSalesClosed())) return false;
-  if (!telegramId) return true;
-  return !(await require("./db").hasAnySubscription(telegramId));
+/** Cutover date applies stage-3 prices. Enrollment stays open. */
+async function isNewEnrollmentBlocked(_telegramId) {
+  return false;
 }
 
 function isSaleNudgeKind(kind) {

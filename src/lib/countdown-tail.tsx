@@ -92,7 +92,7 @@ type CountdownTailCtx = {
   target: Date | null;
   /** Countdown still running (sales open) */
   active: boolean;
-  /** Cutover passed — keep the banner, show «Вход в клуб закрыт» */
+  /** Unused after cutover: sales stay open, closed phase is never set */
   closed: boolean;
   salesOpen: boolean;
   ready: boolean;
@@ -103,7 +103,7 @@ const Ctx = createContext<CountdownTailCtx | null>(null);
 export function CountdownTailProvider({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const { target, active, closed, salesOpen, ready } = usePriceIncreaseTarget();
-  const showBanner = Boolean(target);
+  const showBanner = active;
   const extra = isMobile
     ? TARIFF_STATUS_EXTRA_Y.mobile
     : TARIFF_STATUS_EXTRA_Y.desktop;

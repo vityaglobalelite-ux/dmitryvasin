@@ -39,6 +39,12 @@ function formatDateRu(iso) {
   });
 }
 
+const POINT_JOIN_TARIFFS = new Set(["month1", "month2_3"]);
+
+function isPointJoinTariff(tariff) {
+  return POINT_JOIN_TARIFFS.has(tariff);
+}
+
 function isSubscriptionLive(sub) {
   return isPaidLive(sub);
 }
@@ -243,6 +249,7 @@ module.exports = {
   TARIFF_LABELS,
   TARIFF_RANK,
   isSubscriptionLive,
+  isPointJoinTariff,
   upgradeOptions,
   canBuyTariff,
   evaluateRenewal,

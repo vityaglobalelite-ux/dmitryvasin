@@ -270,7 +270,7 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     monthInvites.filter((x) => x.inviteLink && x.chatId),
   );
 
-  // Attach invites on returned object for UI
+  sub.granted_tariff = tariff;
   sub._monthInvites = monthInvites;
   sub.unlocked_months = unlockedMonths;
 

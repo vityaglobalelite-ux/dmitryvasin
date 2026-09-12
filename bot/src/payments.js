@@ -47,7 +47,7 @@ async function sendPaidToUser(bot, telegramId, subscription) {
   }
 
   const body = accessRows.length
-    ? texts.paidForTariff(subscription.tariff)
+    ? texts.paidForTariff(subscription.granted_tariff || subscription.tariff)
     : texts.paidNoLink;
   const kb = keyboards.afterPayment(null, { accessRows });
   try {
