@@ -18,11 +18,13 @@ const { startScheduler, startVipFlow } = require("./scheduler");
 const {
   sendMembershipCard,
   upgradeOptions,
-  TARIFF_RANK,
   TARIFF_LABELS,
+  canBuyTariff,
+  evaluateRenewal,
 } = require("./membership");
 const { createCheckoutSession } = require("./stripe-checkout");
-const { isNewEnrollmentBlocked, applyStage3PricesIfDue } = require("./club-cutover");
+const { getPriceLabels } = require("./price-labels");
+const { isNewEnrollmentBlocked, applyClubPricesIfDue } = require("./club-cutover");
 
 const bot = new Telegraf(config.token);
 
@@ -57,7 +59,10 @@ async function accessRowsForSubscription(botInstance, subscription, telegramId) 
 }
 
 async function sendPaidMessage(ctx, subscription) {
-  const texts = await getTexts();
+  const user = ctx.from?.id ? await db.getUser(ctx.from.id) : null;
+  const texts = await getTexts(
+    user?.payment_method || subscription.payment_method,
+  );
   const accessRows = await accessRowsForSubscription(
     bot,
     subscription,
@@ -67,10 +72,13 @@ async function sendPaidMessage(ctx, subscription) {
     "Выберите действие 👇",
     keyboards.replyMenu({ hasSubscription: true }),
   );
+  const body = accessRows.length
+    ? texts.paidForTariff(subscription.tariff)
+    : texts.paidNoLink;
   if (accessRows.length) {
-    await ctx.reply(texts.paid, keyboards.afterPayment(null, { accessRows }));
+    await ctx.reply(body, keyboards.afterPayment(null, { accessRows }));
   } else {
-    await ctx.reply(texts.paidNoLink, keyboards.afterPayment(null));
+    await ctx.reply(body, keyboards.afterPayment(null));
   }
 }
 
@@ -262,7 +270,7 @@ async function startStripeCheckout(ctx, user, tariff) {
 
 async function purchaseTariff(ctx, tariff) {
   if (await blockNewEnrollment(ctx)) return;
-  await applyStage3PricesIfDue();
+  await applyClubPricesIfDue();
   const user = await db.upsertUser(ctx.from);
   if (!user.payment_method) {
     const texts = await getTexts();
@@ -271,19 +279,18 @@ async function purchaseTariff(ctx, tariff) {
   }
   const current = await db.getActiveSubscription(user.telegram_id);
 
-  if (current) {
-    const currentRank = TARIFF_RANK[current.tariff] || 0;
-    const nextRank = TARIFF_RANK[tariff] || 0;
-    if (nextRank <= currentRank) {
-      const texts = await getTexts(user.payment_method);
-      await ctx.reply(
-        texts.tariffAlreadyActive(
-          TARIFF_LABELS[current.tariff] || current.tariff,
-        ),
-      );
-      await sendMembershipCard(ctx, bot, user.telegram_id);
-      return;
-    }
+  if (current && !canBuyTariff(current, tariff)) {
+    const texts = await getTexts(user.payment_method);
+    const addon = tariff === "month1" || tariff === "month2_3";
+    await ctx.reply(
+      addon
+        ? texts.addonAlreadyActive
+        : texts.tariffAlreadyActive(
+            TARIFF_LABELS[current.tariff] || current.tariff,
+          ),
+    );
+    await sendMembershipCard(ctx, bot, user.telegram_id);
+    return;
   }
 
   if (config.paymentMode === "mock") {
@@ -314,7 +321,7 @@ async function purchaseTariff(ctx, tariff) {
   );
 }
 
-bot.action(/^tariff:(trial|full|vip)$/, async (ctx) => {
+bot.action(/^tariff:(trial|full|vip|month1|month2_3)$/, async (ctx) => {
   await ctx.answerCbQuery();
   await purchaseTariff(ctx, ctx.match[1]);
 });
@@ -336,29 +343,52 @@ bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
 
 bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
   await ctx.answerCbQuery();
-  await applyStage3PricesIfDue();
+  await applyClubPricesIfDue();
   const tariff = ctx.match[1];
   const user = await db.upsertUser(ctx.from);
+  const sub =
+    (await db.getActiveSubscription(user.telegram_id)) ||
+    (await db.getChatAccessSubscription(user.telegram_id)) ||
+    (await db.getLatestSubscription(user.telegram_id));
+  const decision = evaluateRenewal(sub, tariff);
+  const texts = await getTexts(user.payment_method);
+  const prices = await getPriceLabels(user.payment_method);
+
+  if (!decision.ok) {
+    if (decision.reason === "use_month3") {
+      await ctx.reply(texts.renewalUseMonth3, keyboards.renewMonth3(prices));
+      return;
+    }
+    if (decision.reason === "need_month2") {
+      await ctx.reply(texts.renewalNeedMonth2, keyboards.renewTrial(prices));
+      return;
+    }
+    if (decision.reason === "already_complete") {
+      await ctx.reply(texts.renewalAlreadyComplete);
+      await sendMembershipCard(ctx, bot, user.telegram_id);
+      return;
+    }
+    await ctx.reply(texts.renewalNoMembership, keyboards.supportLink());
+    return;
+  }
 
   if (config.paymentMode === "mock") {
-    const sub = await grantAccess(
+    const granted = await grantAccess(
       bot,
       user.telegram_id,
       tariff,
       user.payment_method,
     );
-    await sendPaidMessage(ctx, sub);
+    await sendPaidMessage(ctx, granted);
     return;
   }
 
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
-      const texts = await getTexts("ru");
       const amount = texts.priceByTariff?.[tariff] || null;
       await ctx.reply(texts.payRu(amount), keyboards.ruPay());
       return;
     }
-    // Renewals: if method unknown, treat as foreign (Stripe)
     if (!user.payment_method) {
       await db.updateUser(user.telegram_id, { payment_method: "foreign" });
       user.payment_method = "foreign";

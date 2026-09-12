@@ -44,7 +44,21 @@ const CLUB_START = zonedInstant(2026, 8, 20, 0, 0, 0);
 const M1_ACCESS_ENDS = zonedInstant(2026, 9, 17, 0, 0, 0); // after 16.09
 const M2_ACCESS_ENDS = zonedInstant(2026, 10, 15, 0, 0, 0); // after 14.10
 const M3_ACCESS_ENDS = zonedInstant(2026, 11, 18, 0, 0, 0); // after 17.11
-const CLUB_CHAT_HARD_CAP = addDays(CLUB_START, CLUB_MAX_DAYS);
+/** Exclusive end = 00:00 Miami the day after 17 December (cohort start + 120 calendar days). */
+const CLUB_CHAT_HARD_CAP = zonedInstant(2026, 12, 18, 0, 0, 0);
+
+/** @param {Date} [now] */
+function programMonthAt(now = new Date()) {
+  if (now < M1_ACCESS_ENDS) return 1;
+  if (now < M2_ACCESS_ENDS) return 2;
+  return 3;
+}
+
+function accessEndsForProgramMonth(month) {
+  if (month <= 1) return new Date(M1_ACCESS_ENDS);
+  if (month === 2) return new Date(M2_ACCESS_ENDS);
+  return new Date(M3_ACCESS_ENDS);
+}
 
 /**
  * @param {string} tariff
@@ -59,7 +73,11 @@ function resolveAccessWindow(tariff, now = new Date()) {
 
   switch (tariff) {
     case "trial":
-      accessEndsAt = new Date(M1_ACCESS_ENDS);
+      accessEndsAt = accessEndsForProgramMonth(programMonthAt(now));
+      chatAccessEndsAt = addDays(accessEndsAt, CHAT_GRACE_DAYS);
+      break;
+    case "month1":
+      accessEndsAt = addDays(accessStartsAt, 30);
       chatAccessEndsAt = addDays(accessEndsAt, CHAT_GRACE_DAYS);
       break;
     case "month2":
@@ -77,7 +95,7 @@ function resolveAccessWindow(tariff, now = new Date()) {
       chatAccessEndsAt = new Date(CLUB_CHAT_HARD_CAP);
       break;
     default:
-      accessEndsAt = new Date(M1_ACCESS_ENDS);
+      accessEndsAt = accessEndsForProgramMonth(programMonthAt(now));
       chatAccessEndsAt = addDays(accessEndsAt, CHAT_GRACE_DAYS);
   }
 
@@ -100,6 +118,8 @@ module.exports = {
   CLUB_CHAT_HARD_CAP,
   CHAT_GRACE_DAYS,
   CLUB_MAX_DAYS,
+  programMonthAt,
+  accessEndsForProgramMonth,
   resolveAccessWindow,
   zonedInstant,
   addDays,

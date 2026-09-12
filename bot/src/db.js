@@ -321,6 +321,18 @@ async function getTariffPrices() {
   return data || [];
 }
 
+async function getLatestSubscription(telegramId) {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("telegram_id", telegramId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
 /** Promote landing tariffs to stage-3 list prices; clear strikethrough. */
 async function applyLandingStagePrices(pricesByTariff) {
   for (const [tariff, p] of Object.entries(pricesByTariff)) {
@@ -335,6 +347,32 @@ async function applyLandingStagePrices(pricesByTariff) {
         price_eur_was: null,
         updated_at: nowIso(),
       })
+      .eq("tariff", tariff);
+    if (error) throw error;
+  }
+}
+
+/** Renewal tariffs. `was` is the crossed-out sum of previous monthly prices. */
+async function applyRenewalPrices(pricesByTariff) {
+  for (const [tariff, p] of Object.entries(pricesByTariff)) {
+    const patch = {
+      price_rub: p.rub,
+      price_usd: p.usd,
+      price_eur: p.eur,
+      updated_at: nowIso(),
+    };
+    if (p.was) {
+      patch.price_rub_was = p.was.rub;
+      patch.price_usd_was = p.was.usd;
+      patch.price_eur_was = p.was.eur;
+    } else {
+      patch.price_rub_was = null;
+      patch.price_usd_was = null;
+      patch.price_eur_was = null;
+    }
+    const { error } = await supabase
+      .from("tariff_prices")
+      .update(patch)
       .eq("tariff", tariff);
     if (error) throw error;
   }
@@ -396,6 +434,7 @@ module.exports = {
   updateUser,
   createSubscription,
   getActiveSubscription,
+  getLatestSubscription,
   hasAnySubscription,
   getChatAccessSubscription,
   fetchSubscriptionsDueForKick,
@@ -414,6 +453,7 @@ module.exports = {
   setSetting,
   getTariffPrices,
   applyLandingStagePrices,
+  applyRenewalPrices,
   fetchPaidUngrantedPayments,
   claimPaidPayment,
   markPaymentGranted,

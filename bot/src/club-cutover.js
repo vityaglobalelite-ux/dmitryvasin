@@ -12,6 +12,36 @@ const STAGE3_PRICES = {
   vip: { rub: 60900, usd: 770, eur: 675 },
 };
 
+const ADDON_PRICES = {
+  month1: { rub: 14900, usd: 195, eur: 170 },
+  month2_3: { rub: 27800, usd: 360, eur: 320 },
+};
+
+/** Standard monthly list price (month 1 / month 2 / month 3 standalone). */
+const MONTH_LIST_PRICE = { rub: 14900, usd: 195, eur: 170 };
+
+/**
+ * Renewal tariffs. Bundle "was" is the sum of previous monthly prices (2 × month 2).
+ * Keep in sync with database-schema/migrations/015_renewal_prices.sql.
+ */
+const RENEWAL_PRICES = {
+  month2: { ...MONTH_LIST_PRICE },
+  month3: { ...MONTH_LIST_PRICE },
+  month2_3: {
+    rub: 27800,
+    usd: 360,
+    eur: 320,
+    was: {
+      rub: MONTH_LIST_PRICE.rub * 2,
+      usd: MONTH_LIST_PRICE.usd * 2,
+      eur: MONTH_LIST_PRICE.eur * 2,
+    },
+  },
+};
+
+const RENEWAL_PRICES_KEY = "renewal_prices_applied";
+const RENEWAL_PRICES_VERSION = "month2-2026-14900";
+
 const SALE_MESSAGE_KINDS = new Set([
   "tariff_nudge_10m",
   "tariff_nudge_24h",
@@ -91,13 +121,45 @@ async function applyStage3PricesIfDue() {
   return true;
 }
 
+function clearPriceLabelCache() {
+  try {
+    require("./price-labels").clearPriceCache();
+  } catch {
+    /* optional */
+  }
+}
+
+async function applyRenewalPricesIfNeeded() {
+  const db = require("./db");
+  const already = await db.getSetting(RENEWAL_PRICES_KEY);
+  if (already === RENEWAL_PRICES_VERSION) return false;
+
+  await db.applyRenewalPrices(RENEWAL_PRICES);
+  await db.setSetting(RENEWAL_PRICES_KEY, RENEWAL_PRICES_VERSION);
+  clearPriceLabelCache();
+  console.log("Applied renewal tariff prices (month2 / month2_3 / month3)");
+  return true;
+}
+
+async function applyClubPricesIfDue() {
+  const stage3 = await applyStage3PricesIfDue();
+  const renewal = await applyRenewalPricesIfNeeded();
+  return stage3 || renewal;
+}
+
 module.exports = {
   CLUB_CUTOVER_ISO,
   STAGE3_PRICES,
+  ADDON_PRICES,
+  MONTH_LIST_PRICE,
+  RENEWAL_PRICES,
+  RENEWAL_PRICES_VERSION,
   getSalesWindow,
   isSalesClosed,
   isNewEnrollmentBlocked,
   isSaleNudgeKind,
   applyStage3PricesIfDue,
+  applyRenewalPricesIfNeeded,
+  applyClubPricesIfDue,
   invalidateSalesWindowCache,
 };

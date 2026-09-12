@@ -174,7 +174,7 @@ function CountdownDesktop({
 
 export function CountdownSection() {
   const isMobile = useIsMobile();
-  const { target, active, closed, extra } = useCountdownTail();
+  const { target, active, closed, tailExtra } = useCountdownTail();
   const display = useCountdownDisplay(active ? target : null);
 
   const inner = closed ? (
@@ -194,7 +194,7 @@ export function CountdownSection() {
   return (
     <div
       className="absolute left-0 top-0 h-0 w-full"
-      style={{ transform: `translate3d(0, ${extra}px, 0)` }}
+      style={{ transform: `translate3d(0, ${tailExtra}px, 0)` }}
     >
       {inner}
     </div>

@@ -9,7 +9,10 @@ const { getTexts } = require("./texts");
 const { keyboards } = require("./keyboards");
 
 async function sendPaidToUser(bot, telegramId, subscription) {
-  const texts = await getTexts();
+  const user = await db.getUser(telegramId);
+  const texts = await getTexts(
+    user?.payment_method || subscription.payment_method,
+  );
 
   const invites =
     subscription._monthInvites?.length
@@ -43,7 +46,9 @@ async function sendPaidToUser(bot, telegramId, subscription) {
     console.error("sendPaid menu:", err.message);
   }
 
-  const body = accessRows.length ? texts.paid : texts.paidNoLink;
+  const body = accessRows.length
+    ? texts.paidForTariff(subscription.tariff)
+    : texts.paidNoLink;
   const kb = keyboards.afterPayment(null, { accessRows });
   try {
     await bot.telegram.sendMessage(telegramId, body, kb);

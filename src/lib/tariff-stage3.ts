@@ -12,3 +12,12 @@ export const STAGE3_PRICES = {
   full: { rub: 35900, usd: 460, eur: 405 },
   vip: { rub: 60900, usd: 770, eur: 675 },
 } as const;
+
+/**
+ * Landing add-ons under the main 3 cards.
+ * month1 list price matches trial until a separate archive price is set.
+ */
+export const ADDON_PRICES = {
+  month1: { rub: 14900, usd: 195, eur: 170 },
+  month2_3: { rub: 27800, usd: 360, eur: 320 },
+} as const;

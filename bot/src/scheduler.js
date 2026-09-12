@@ -4,7 +4,8 @@ const db = require("./db");
 const { config } = require("./config");
 const { processPaidPayments } = require("./payments");
 const { processExpiredChatAccess } = require("./access");
-const { applyStage3PricesIfDue, isSaleNudgeKind, isSalesClosed } = require("./club-cutover");
+const { applyClubPricesIfDue, isSaleNudgeKind, isSalesClosed } = require("./club-cutover");
+const { getPriceLabels } = require("./price-labels");
 
 async function sendSafe(bot, telegramId, text, extra) {
   try {
@@ -14,27 +15,57 @@ async function sendSafe(bot, telegramId, text, extra) {
   }
 }
 
-async function textsForUser(telegramId) {
+async function contextForUser(telegramId) {
   const user = await db.getUser(telegramId);
-  return getTexts(user?.payment_method);
+  const method = user?.payment_method;
+  const [texts, prices] = await Promise.all([
+    getTexts(method),
+    getPriceLabels(method),
+  ]);
+  return { texts, prices };
 }
 
 async function startVipFlow(bot, telegramId) {
-  const texts = await textsForUser(telegramId);
+  const texts = await contextForUser(telegramId).then((x) => x.texts);
   await db.upsertVipIntake(telegramId, { step: "q1" });
   await db.updateUser(telegramId, { state: "vip_q1" });
   await sendSafe(bot, telegramId, texts.vipIntro);
 }
 
 async function processDueMessages(bot) {
+  await applyClubPricesIfDue();
   const due = await db.fetchDueMessages(50);
+  const { evaluateRenewal } = require("./membership");
   for (const msg of due) {
     try {
-      const texts = await textsForUser(msg.telegram_id);
+      const { texts, prices } = await contextForUser(msg.telegram_id);
       if (isSaleNudgeKind(msg.kind) && (await isSalesClosed())) {
         await db.markMessageSent(msg.id);
         continue;
       }
+
+      const sub =
+        msg.kind.startsWith("renew_")
+          ? (await db.getActiveSubscription(msg.telegram_id)) ||
+            (await db.getChatAccessSubscription(msg.telegram_id)) ||
+            (await db.getLatestSubscription(msg.telegram_id))
+          : null;
+
+      if (msg.kind.startsWith("renew_trial_")) {
+        const canMonth2 = evaluateRenewal(sub, "month2").ok;
+        const canBundle = evaluateRenewal(sub, "month2_3").ok;
+        if (!canMonth2 && !canBundle) {
+          await db.markMessageSent(msg.id);
+          continue;
+        }
+      }
+      if (msg.kind.startsWith("renew_month2_")) {
+        if (!evaluateRenewal(sub, "month3").ok) {
+          await db.markMessageSent(msg.id);
+          continue;
+        }
+      }
+
       switch (msg.kind) {
         case "tariff_nudge_10m":
           await sendSafe(
@@ -60,7 +91,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewTrialD5,
-            keyboards.renewTrial(),
+            keyboards.renewTrial(prices),
           );
           break;
         case "renew_trial_d2":
@@ -68,7 +99,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewTrialD2,
-            keyboards.renewTrial(),
+            keyboards.renewTrial(prices),
           );
           break;
         case "renew_trial_d0":
@@ -76,7 +107,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewTrialD0,
-            keyboards.renewTrial(),
+            keyboards.renewTrial(prices),
           );
           break;
         case "renew_trial_p3":
@@ -84,7 +115,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewTrialP3,
-            keyboards.renewTrial(),
+            keyboards.renewTrial(prices),
           );
           break;
         case "renew_month2_d3":
@@ -92,7 +123,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewMonth2D3,
-            keyboards.renewMonth3(),
+            keyboards.renewMonth3(prices),
           );
           break;
         case "renew_month2_d0":
@@ -100,7 +131,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewMonth2D0,
-            keyboards.renewMonth3Alt(),
+            keyboards.renewMonth3Alt(prices),
           );
           break;
         case "renew_month2_p3":
@@ -108,7 +139,7 @@ async function processDueMessages(bot) {
             bot,
             msg.telegram_id,
             texts.renewMonth2P3,
-            keyboards.renewMonth3(),
+            keyboards.renewMonth3(prices),
           );
           break;
         default:
@@ -139,8 +170,8 @@ function startScheduler(bot) {
     );
   };
   const tickCutover = () => {
-    applyStage3PricesIfDue().catch((err) =>
-      console.error("Stage-3 cutover failed:", err),
+    applyClubPricesIfDue().catch((err) =>
+      console.error("Club prices tick failed:", err),
     );
   };
   tickMessages();

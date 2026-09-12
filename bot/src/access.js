@@ -7,6 +7,7 @@ const TARIFF_KINDS = new Set([
   "trial",
   "full",
   "vip",
+  "month1",
   "month2",
   "month2_3",
   "month3",
@@ -159,6 +160,38 @@ async function buildMonthAccessRows(bot, telegramId, unlockedMonths, invitesByMo
   return rows;
 }
 
+const TARIFF_STORE_RANK = {
+  trial: 1,
+  month1: 1,
+  month2: 1,
+  month3: 1,
+  month2_3: 2,
+  full: 2,
+  vip: 3,
+};
+
+const MAIN_TARIFFS = new Set(["trial", "full", "vip"]);
+
+function laterDate(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  return a.getTime() >= b.getTime() ? a : b;
+}
+
+function pickStoredTariff(previous, next) {
+  if (!previous) return next;
+  if (next === "vip" || previous === "vip") {
+    return next === "vip" ? "vip" : previous;
+  }
+  const pr = TARIFF_STORE_RANK[previous] || 0;
+  const nr = TARIFF_STORE_RANK[next] || 0;
+  if (nr > pr) return next;
+  if (nr < pr) return previous;
+  if (MAIN_TARIFFS.has(previous)) return previous;
+  if (MAIN_TARIFFS.has(next)) return next;
+  return next;
+}
+
 async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   if (!TARIFF_KINDS.has(tariff)) {
     throw new Error(`Unknown tariff: ${tariff}`);
@@ -166,18 +199,47 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
 
   await db.cancelMessages(telegramId, TARIFF_NUDGE_KINDS);
 
-  const active = await db.getActiveSubscription(telegramId);
-  const previousMonths = active?.unlocked_months || [];
-  if (active) {
-    await db.updateSubscription(active.id, { status: "replaced" });
+  const previous =
+    (await db.getActiveSubscription(telegramId)) ||
+    (await db.getChatAccessSubscription(telegramId)) ||
+    (await db.getLatestSubscription(telegramId));
+  const previousMonths = previous?.unlocked_months?.length
+    ? previous.unlocked_months
+    : previous
+      ? resolveUnlockedMonths(previous.tariff, [])
+      : [];
+  if (previous && previous.status !== "replaced") {
+    await db.updateSubscription(previous.id, { status: "replaced" });
   }
 
-  const { accessStartsAt, accessEndsAt, chatAccessEndsAt } =
-    resolveAccessWindow(tariff, new Date());
-  const unlockedMonths = resolveUnlockedMonths(tariff, previousMonths);
+  const window = resolveAccessWindow(tariff, new Date());
+  let accessStartsAt = window.accessStartsAt;
+  let accessEndsAt = window.accessEndsAt;
+  let chatAccessEndsAt = window.chatAccessEndsAt;
 
-  const previousInvites = active
-    ? await db.getInvitesBySubscription(active.id)
+  if (previous) {
+    const prevStart = previous.access_starts_at
+      ? new Date(previous.access_starts_at)
+      : null;
+    const prevEnd = previous.access_ends_at
+      ? new Date(previous.access_ends_at)
+      : null;
+    const prevChat = previous.chat_access_ends_at
+      ? new Date(previous.chat_access_ends_at)
+      : null;
+    if (prevStart && !Number.isNaN(prevStart.getTime())) {
+      accessStartsAt =
+        prevStart < accessStartsAt ? prevStart : accessStartsAt;
+    }
+    accessEndsAt = laterDate(accessEndsAt, prevEnd);
+    chatAccessEndsAt = laterDate(chatAccessEndsAt, prevChat);
+  }
+
+  const unlockedMonths = resolveUnlockedMonths(tariff, previousMonths);
+  const storedTariff = pickStoredTariff(previous?.tariff, tariff);
+
+  const previousInvites = previous
+    ? await db.getInvitesBySubscription(previous.id)
     : [];
   const monthInvites = await createMonthInvites(
     bot,
@@ -190,7 +252,7 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
 
   const sub = await db.createSubscription({
     telegram_id: telegramId,
-    tariff,
+    tariff: storedTariff,
     payment_method: paymentMethod || null,
     status: "active",
     access_starts_at: accessStartsAt.toISOString(),
@@ -213,28 +275,31 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   sub.unlocked_months = unlockedMonths;
 
   await db.updateUser(telegramId, {
-    state: tariff === "vip" ? "vip_pending" : "paid",
+    state: storedTariff === "vip" || tariff === "vip" ? "vip_pending" : "paid",
     payment_method: paymentMethod || undefined,
   });
 
-  await db.cancelMessages(telegramId, [
-    ...TRIAL_RENEW_KINDS,
-    ...MONTH2_RENEW_KINDS,
-    "vip_intro_5m",
-  ]);
-
-  if (tariff === "trial") {
-    await scheduleTrialRenewals(telegramId, accessEndsAt);
-  } else if (tariff === "month2") {
-    await scheduleMonth2Renewals(telegramId, accessEndsAt);
-  }
-
-  if (tariff === "vip") {
-    await db.scheduleMessage(
-      telegramId,
+  const isArchiveAddon = tariff === "month1";
+  if (!isArchiveAddon) {
+    await db.cancelMessages(telegramId, [
+      ...TRIAL_RENEW_KINDS,
+      ...MONTH2_RENEW_KINDS,
       "vip_intro_5m",
-      addMinutes(new Date(), config.vipIntroDelayMinutes),
-    );
+    ]);
+
+    if (tariff === "trial") {
+      await scheduleTrialRenewals(telegramId, accessEndsAt);
+    } else if (tariff === "month2") {
+      await scheduleMonth2Renewals(telegramId, accessEndsAt);
+    }
+
+    if (tariff === "vip") {
+      await db.scheduleMessage(
+        telegramId,
+        "vip_intro_5m",
+        addMinutes(new Date(), config.vipIntroDelayMinutes),
+      );
+    }
   }
 
   return sub;

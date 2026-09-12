@@ -62,6 +62,7 @@ async function getPriceLabels(paymentMethod = "ru") {
     trial: env.trial,
     full: env.full,
     vip: env.vip,
+    month1: env.month1,
     month2: env.month2,
     month2_3: env.month2_3,
     month2_3_was: env.month2_3_was,
@@ -79,22 +80,23 @@ async function getPriceLabels(paymentMethod = "ru") {
     }
   }
 
-  const { isSalesClosed, STAGE3_PRICES } = require("./club-cutover");
+  const { isSalesClosed, STAGE3_PRICES, ADDON_PRICES, RENEWAL_PRICES } = require("./club-cutover");
+  const currency = method === "foreign" ? "usd" : "rub";
   if (await isSalesClosed()) {
-    const currency = method === "foreign" ? "usd" : "rub";
     for (const tariff of Object.keys(STAGE3_PRICES)) {
       const p = STAGE3_PRICES[tariff];
       labels[tariff] = formatMajor(p[currency], currency);
     }
   }
-
-  const m23 = map.get("month2_3");
-  if (m23) {
-    const currency = pickCurrency(m23, method);
-    const was = amountFor(m23, currency, { was: true });
-    if (was != null) {
-      labels.month2_3_was = formatMajor(was, currency);
-    }
+  for (const [tariff, p] of Object.entries(ADDON_PRICES || {})) {
+    labels[tariff] = formatMajor(p[currency], currency);
+  }
+  for (const [tariff, p] of Object.entries(RENEWAL_PRICES || {})) {
+    labels[tariff] = formatMajor(p[currency], currency);
+  }
+  const bundleWas = RENEWAL_PRICES?.month2_3?.was;
+  if (bundleWas) {
+    labels.month2_3_was = formatMajor(bundleWas[currency], currency);
   }
 
   return labels;

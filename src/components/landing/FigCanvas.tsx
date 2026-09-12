@@ -30,13 +30,12 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
   const shellRef = useRef<HTMLDivElement>(null);
   const mode = useLandingMode();
   const { shift } = useProgramTail();
-  const { collapse: countdownCollapse, extra: tariffStatusExtra } =
-    useCountdownTail();
+  const { collapse: countdownCollapse, tailExtra } = useCountdownTail();
   const canvas = mode === "mobile" ? MOBILE_CANVAS : DESKTOP_CANVAS;
   /* shift < 0 when accordion collapses; countdownCollapse > 0 when banner hidden —
      must shrink canvas or empty gaps appear at the bottom.
-     tariffStatusExtra grows the canvas for join-status copy under tariffs. */
-  const height = canvas.h + shift - countdownCollapse + tariffStatusExtra;
+     tailExtra grows the canvas for join-status copy and the addon tariff row. */
+  const height = canvas.h + shift - countdownCollapse + tailExtra;
 
   const [zoom, setZoom] = useState(1);
   const [ready, setReady] = useState(false);

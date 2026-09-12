@@ -1,6 +1,12 @@
 const { Markup } = require("telegraf");
 const { config } = require("./config");
 
+function pricedLabel(label, price) {
+  if (!price) return label;
+  const text = `${label} — ${price}`;
+  return text.length <= 64 ? text : label;
+}
+
 const BTN = {
   START: "Старт",
   SUBSCRIBE: "Оформить участие",
@@ -54,6 +60,8 @@ const keyboards = {
       [Markup.button.callback("Тест-драйв | 1 месяц", "tariff:trial")],
       [Markup.button.callback("Полное исследование | 90 дней", "tariff:full")],
       [Markup.button.callback("VIP-исследование", "tariff:vip")],
+      [Markup.button.callback("Материалы 1-го месяца", "tariff:month1")],
+      [Markup.button.callback("2 + 3 месяц", "tariff:month2_3")],
     ]),
 
   /**
@@ -109,22 +117,32 @@ const keyboards = {
       [Markup.button.callback("Вечер", "vip_time:evening")],
     ]),
 
-  renewTrial: () =>
+  renewTrial: (prices = {}) =>
     Markup.inlineKeyboard([
-      [Markup.button.callback("2 месяц", "renew:month2")],
-      [Markup.button.callback("2 + 3 месяц", "renew:month2_3")],
+      [Markup.button.callback(pricedLabel("2 месяц", prices.month2), "renew:month2")],
+      [
+        Markup.button.callback(
+          pricedLabel("2 + 3 месяц", prices.month2_3),
+          "renew:month2_3",
+        ),
+      ],
     ]),
 
-  renewMonth3: () =>
-    Markup.inlineKeyboard([
-      [Markup.button.callback("Продлить участие", "renew:month3")],
-    ]),
-
-  renewMonth3Alt: () =>
+  renewMonth3: (prices = {}) =>
     Markup.inlineKeyboard([
       [
         Markup.button.callback(
-          "Продлить участие на 3-й месяц",
+          pricedLabel("Продлить участие", prices.month3),
+          "renew:month3",
+        ),
+      ],
+    ]),
+
+  renewMonth3Alt: (prices = {}) =>
+    Markup.inlineKeyboard([
+      [
+        Markup.button.callback(
+          pricedLabel("Продлить на 3-й месяц", prices.month3),
           "renew:month3",
         ),
       ],

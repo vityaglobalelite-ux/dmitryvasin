@@ -7,12 +7,13 @@ const {
   isPaidLive,
   isChatAccessLive,
 } = require("./access");
-const { resolveUnlockedMonths } = require("./channels");
+const { resolveUnlockedMonths, monthsAddedByTariff } = require("./channels");
 
 const TARIFF_LABELS = {
   trial: "Тест-драйв | 1 месяц",
   full: "Полное исследование | 90 дней",
   vip: "VIP-исследование",
+  month1: "Материалы первого месяца",
   month2: "2-й месяц",
   month2_3: "2 + 3 месяц",
   month3: "3-й месяц",
@@ -20,6 +21,7 @@ const TARIFF_LABELS = {
 
 const TARIFF_RANK = {
   trial: 1,
+  month1: 1,
   month2: 1,
   month3: 1,
   month2_3: 2,
@@ -47,6 +49,61 @@ function upgradeOptions(tariff) {
   if (rank < TARIFF_RANK.full) options.push("full");
   if (rank < TARIFF_RANK.vip) options.push("vip");
   return options;
+}
+
+function unlockedOf(sub) {
+  return sub.unlocked_months?.length
+    ? sub.unlocked_months
+    : resolveUnlockedMonths(sub.tariff, []);
+}
+
+/** Whether this user can buy `tariff` on top of an active subscription. */
+function canBuyTariff(current, tariff) {
+  if (!current) return true;
+  const unlocked = unlockedOf(current);
+
+  switch (tariff) {
+    case "month1":
+      return !unlocked.includes(1);
+    case "month2":
+      return !unlocked.includes(2);
+    case "month2_3":
+      return !unlocked.includes(2) && !unlocked.includes(3);
+    case "month3":
+      return unlocked.includes(2) && !unlocked.includes(3);
+    case "trial":
+      return !monthsAddedByTariff("trial").every((m) => unlocked.includes(m));
+    case "full":
+      return current.tariff !== "full" && current.tariff !== "vip";
+    case "vip":
+      return current.tariff !== "vip";
+    default:
+      return (TARIFF_RANK[tariff] || 0) > (TARIFF_RANK[current.tariff] || 0);
+  }
+}
+
+/** Eligibility for scheduled renewal buttons (month 2 / 2+3 / month 3). */
+function evaluateRenewal(sub, tariff) {
+  if (!sub) return { ok: false, reason: "no_membership" };
+  const unlocked = unlockedOf(sub);
+
+  if (tariff === "month2") {
+    if (unlocked.includes(2)) return { ok: false, reason: "already_complete" };
+    return { ok: true };
+  }
+  if (tariff === "month2_3") {
+    if (unlocked.includes(2) && unlocked.includes(3)) {
+      return { ok: false, reason: "already_complete" };
+    }
+    if (unlocked.includes(2)) return { ok: false, reason: "use_month3" };
+    return { ok: true };
+  }
+  if (tariff === "month3") {
+    if (unlocked.includes(3)) return { ok: false, reason: "already_complete" };
+    if (!unlocked.includes(2)) return { ok: false, reason: "need_month2" };
+    return { ok: true };
+  }
+  return { ok: false, reason: "unknown" };
 }
 
 function membershipText(sub, prices, accessRows = [], { inGrace = false } = {}) {
@@ -173,9 +230,9 @@ async function sendMembershipCard(ctx, bot, telegramId) {
 
   if (inGrace) {
     if (sub.tariff === "trial") {
-      await ctx.reply("⏬️Продлить участие:", keyboards.renewTrial());
+      await ctx.reply("⏬️Продлить участие:", keyboards.renewTrial(prices));
     } else if (sub.tariff === "month2") {
-      await ctx.reply("⏬️Продлить на 3-й месяц:", keyboards.renewMonth3());
+      await ctx.reply("⏬️Продлить на 3-й месяц:", keyboards.renewMonth3(prices));
     }
   }
 
@@ -187,6 +244,8 @@ module.exports = {
   TARIFF_RANK,
   isSubscriptionLive,
   upgradeOptions,
+  canBuyTariff,
+  evaluateRenewal,
   membershipText,
   sendMembershipCard,
   formatDateRu,

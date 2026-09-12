@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useCountdownTail } from "@/lib/countdown-tail";
-import { STAGE3_PRICES } from "@/lib/tariff-stage3";
+import { ADDON_PRICES, STAGE3_PRICES } from "@/lib/tariff-stage3";
 
 export type DisplayCurrency = "rub" | "usd" | "eur";
 
 export type TariffKey = "trial" | "full" | "vip";
+export type AddonKey = "month1" | "month2_3";
 
 export type DisplayPrice = {
   price: string;
@@ -216,18 +217,38 @@ async function fetchPriceRows(): Promise<PriceRow[] | null> {
   return null;
 }
 
+function moneyDisplay(
+  amount: number,
+  currency: DisplayCurrency,
+): DisplayPrice {
+  return { price: formatMoney(amount, currency), oldPrice: null };
+}
+
 function stage3Display(
   currency: DisplayCurrency,
 ): Record<TariffKey, DisplayPrice> {
   return Object.fromEntries(
     LANDING_TARIFFS.map((key) => [
       key,
-      {
-        price: formatMoney(STAGE3_PRICES[key][currency], currency),
-        oldPrice: null,
-      },
+      moneyDisplay(STAGE3_PRICES[key][currency], currency),
     ]),
   ) as Record<TariffKey, DisplayPrice>;
+}
+
+function addonFallbackDisplay(
+  currency: DisplayCurrency,
+): Record<AddonKey, DisplayPrice> {
+  return {
+    month1: moneyDisplay(ADDON_PRICES.month1[currency], currency),
+    month2_3: moneyDisplay(ADDON_PRICES.month2_3[currency], currency),
+  };
+}
+
+function addonStatusMap(label: string): Record<AddonKey, DisplayPrice> {
+  return {
+    month1: { price: label, oldPrice: null },
+    month2_3: { price: label, oldPrice: null },
+  };
 }
 
 function buildDisplay(
@@ -257,6 +278,7 @@ function buildDisplay(
 /** Prices for landing cards: live DB values + geo currency, never hardcoded money. */
 export function useLandingTariffPrices(): {
   prices: Record<TariffKey, DisplayPrice>;
+  addonPrices: Record<AddonKey, DisplayPrice>;
   currency: DisplayCurrency;
   ready: boolean;
   error: boolean;
@@ -265,6 +287,9 @@ export function useLandingTariffPrices(): {
   const [currency, setCurrency] = useState<DisplayCurrency>("rub");
   const [prices, setPrices] = useState<Record<TariffKey, DisplayPrice>>(() =>
     statusMap("Загрузка…"),
+  );
+  const [addonPrices, setAddonPrices] = useState<Record<AddonKey, DisplayPrice>>(
+    () => addonStatusMap("Загрузка…"),
   );
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
@@ -281,6 +306,7 @@ export function useLandingTariffPrices(): {
       const display = closed ? stage3Display(cur) : buildDisplay(rows, cur);
       setCurrency(cur);
       setPrices(display ?? statusMap("Цена недоступна"));
+      setAddonPrices(addonFallbackDisplay(cur));
       setError(!closed && !display);
       setReady(true);
     })();
@@ -289,7 +315,7 @@ export function useLandingTariffPrices(): {
     };
   }, [closed]);
 
-  return { prices, currency, ready, error };
+  return { prices, addonPrices, currency, ready, error };
 }
 
 export function tariffKeyForIndex(index: number): TariffKey {

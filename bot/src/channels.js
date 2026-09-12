@@ -1,3 +1,5 @@
+const { programMonthAt } = require("./club-calendar");
+
 const MONTH_LABELS = {
   1: "Уроки — месяц 1",
   2: "Уроки — месяц 2",
@@ -7,19 +9,21 @@ const MONTH_LABELS = {
 /** Months newly granted by this purchase (unioned with previous unlocked). */
 function monthsAddedByTariff(tariff) {
   switch (tariff) {
-    case "trial":
+    case "month1":
       return [1];
+    case "trial":
+      return [programMonthAt()];
     case "month2":
-      return [1, 2];
+      return [2];
     case "month2_3":
-      return [1, 2, 3];
+      return [2, 3];
     case "month3":
-      return [1, 2, 3];
+      return [3];
     case "full":
     case "vip":
       return [1, 2, 3];
     default:
-      return [1];
+      return [programMonthAt()];
   }
 }
 
