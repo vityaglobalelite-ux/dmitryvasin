@@ -174,22 +174,29 @@ function CountdownDesktop({
 
 export function CountdownSection() {
   const isMobile = useIsMobile();
-  const { target, active, closed } = useCountdownTail();
+  const { target, active, closed, extra } = useCountdownTail();
   const display = useCountdownDisplay(active ? target : null);
 
-  if (closed) {
-    return isMobile ? (
+  const inner = closed ? (
+    isMobile ? (
       <CountdownMobile display={display} closed />
     ) : (
       <CountdownDesktop display={display} closed />
-    );
-  }
-
-  if (!active || !target) return null;
-
-  return isMobile ? (
+    )
+  ) : !active || !target ? null : isMobile ? (
     <CountdownMobile display={display} closed={false} />
   ) : (
     <CountdownDesktop display={display} closed={false} />
+  );
+
+  if (!inner) return null;
+
+  return (
+    <div
+      className="absolute left-0 top-0 h-0 w-full"
+      style={{ transform: `translate3d(0, ${extra}px, 0)` }}
+    >
+      {inner}
+    </div>
   );
 }

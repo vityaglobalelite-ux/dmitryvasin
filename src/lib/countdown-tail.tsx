@@ -10,6 +10,16 @@ import { useIsMobile } from "@/lib/landing-mode";
 import { usePriceIncreaseTarget } from "@/lib/price-increase";
 
 /**
+ * Extra Figma-px inserted under the tariffs heading for join-status copy.
+ * Cards, countdown, payment stack, and canvas height all move by this amount
+ * so countdown↔payment gap and COUNTDOWN_COLLAPSE stay as in Figma.
+ */
+export const TARIFF_STATUS_EXTRA_Y = {
+  desktop: 52,
+  mobile: 108,
+} as const;
+
+/**
  * Figma space reserved for CountdownSection between tariffs and payment.
  * When countdown is inactive, shift Payment/Reviews/Footer up by this amount
  * and shrink FigCanvas height the same way ProgramTail does.
@@ -26,6 +36,8 @@ export const COUNTDOWN_COLLAPSE = {
 type CountdownTailCtx = {
   /** Positive px removed from canvas / applied as -translateY when banner hidden */
   collapse: number;
+  /** Positive px added for tariffs join-status copy */
+  extra: number;
   target: Date | null;
   /** Countdown still running (sales open) */
   active: boolean;
@@ -41,14 +53,17 @@ export function CountdownTailProvider({ children }: { children: ReactNode }) {
   const isMobile = useIsMobile();
   const { target, active, closed, salesOpen, ready } = usePriceIncreaseTarget();
   const showBanner = Boolean(target);
+  const extra = isMobile
+    ? TARIFF_STATUS_EXTRA_Y.mobile
+    : TARIFF_STATUS_EXTRA_Y.desktop;
   const collapse = showBanner
     ? 0
     : isMobile
       ? COUNTDOWN_COLLAPSE.mobile
       : COUNTDOWN_COLLAPSE.desktop;
   const value = useMemo(
-    () => ({ collapse, target, active, closed, salesOpen, ready }),
-    [collapse, target, active, closed, salesOpen, ready],
+    () => ({ collapse, extra, target, active, closed, salesOpen, ready }),
+    [collapse, extra, target, active, closed, salesOpen, ready],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
@@ -63,12 +78,12 @@ export function useCountdownTail() {
 
 /** Sections below countdown — pull up when price-increase banner is hidden */
 export function CountdownTail({ children }: { children: ReactNode }) {
-  const { collapse } = useCountdownTail();
+  const { collapse, extra } = useCountdownTail();
   return (
     <div
       className="absolute left-0 top-0 w-full"
       style={{
-        transform: `translate3d(0, ${-collapse}px, 0)`,
+        transform: `translate3d(0, ${extra - collapse}px, 0)`,
         /* No transition — FigCanvas height jumps with collapse; animating
            only transform left a 450ms gap/overlap under the footer. */
       }}

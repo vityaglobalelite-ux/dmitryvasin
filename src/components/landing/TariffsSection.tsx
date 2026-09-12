@@ -2,7 +2,8 @@
 
 import { landingAssets } from "@/lib/landing-assets";
 import { ClubCta } from "@/components/landing/ClubCta";
-import { tariffs } from "@/lib/landing-data";
+import { clubJoinStatus, tariffs } from "@/lib/landing-data";
+import { useCountdownTail } from "@/lib/countdown-tail";
 import { useIsMobile } from "@/lib/landing-mode";
 import {
   tariffKeyForIndex,
@@ -13,6 +14,77 @@ import {
 
 const cardX = [240, 727, 1213];
 const mobileCardY = [12395, 12913, 13431];
+
+const PLAQUE_GRADIENT =
+  "linear-gradient(148.81deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)";
+
+function ClubJoinPanel({
+  className,
+  kickerClassName,
+  headlineClassName,
+  stackedHeadline = false,
+}: {
+  className: string;
+  kickerClassName: string;
+  headlineClassName: string;
+  stackedHeadline?: boolean;
+}) {
+  const date = (
+    <span className="whitespace-nowrap font-bold text-white">
+      {clubJoinStatus.month2Date}
+    </span>
+  );
+  const range = (
+    <span className="whitespace-nowrap">{clubJoinStatus.month2Range}</span>
+  );
+
+  return (
+    <div className={className} style={{ backgroundImage: PLAQUE_GRADIENT }}>
+      <div className="mt-[1px] grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
+        <img
+          src={landingAssets.icons.stopwatchStart}
+          alt=""
+          className="size-[24px]"
+          width={24}
+          height={24}
+        />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className={kickerClassName}>
+          {clubJoinStatus.startedPrefix}{" "}
+          <span className="whitespace-nowrap font-bold text-white">
+            {clubJoinStatus.startedDate}
+          </span>
+        </p>
+        {stackedHeadline ? (
+          <>
+            <p className={headlineClassName}>{clubJoinStatus.month2Prefix}</p>
+            <p className={headlineClassName}>
+              {range} {clubJoinStatus.month2Verb} {date}
+            </p>
+          </>
+        ) : (
+          <p className={headlineClassName}>
+            {clubJoinStatus.month2Prefix} {range} {clubJoinStatus.month2Verb}{" "}
+            {date}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TariffCardsShift({ children }: { children: React.ReactNode }) {
+  const { extra } = useCountdownTail();
+  return (
+    <div
+      className="absolute left-0 top-0 h-0 w-full"
+      style={{ transform: `translate3d(0, ${extra}px, 0)` }}
+    >
+      {children}
+    </div>
+  );
+}
 
 function DurationLabel({
   duration,
@@ -72,21 +144,14 @@ function TariffsMobile() {
         Выбирайте тариф участия
       </h2>
 
-      <div className="absolute left-[20px] top-[12325px] flex h-[50px] w-fit max-w-[320px] items-center gap-[10px] rounded-[10px] bg-[image:var(--brand-gradient)] px-[15px] py-[8px]">
-        <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
-          <img
-            src={landingAssets.icons.stopwatchStart}
-            alt=""
-            className="size-[24px]"
-            width={24}
-            height={24}
-          />
-        </div>
-        <span className="whitespace-nowrap text-[16px] font-medium leading-[1.2] text-white">
-          Старт: 20 августа
-        </span>
-      </div>
+      <ClubJoinPanel
+        className="absolute left-[20px] top-[12320px] flex w-[320px] items-start gap-[10px] rounded-[10px] px-[15px] py-[15px]"
+        kickerClassName="text-[14px] font-medium leading-[1.4] text-white/85"
+        headlineClassName="mt-[4px] text-[18px] font-semibold leading-[1.25] text-white"
+        stackedHeadline
+      />
 
+      <TariffCardsShift>
       {tariffs.map((t, i) => {
         const isVip = i === 2;
         const display = prices[tariffKeyForIndex(i)];
@@ -160,6 +225,7 @@ function TariffsMobile() {
           </article>
         );
       })}
+      </TariffCardsShift>
     </section>
   );
 }
@@ -176,28 +242,14 @@ function TariffsDesktop() {
         Выбирайте тариф участия
       </h2>
 
-      <div
-        className="absolute right-[240px] top-[10354px] flex h-[62px] w-fit max-w-[480px] items-center gap-[10px] rounded-[20px] px-[20px] py-[10px]"
-        style={{
-          backgroundImage:
-            "linear-gradient(148.81deg, #db0c25 2.6%, #e04c29 36.63%, #efb991 105.73%)",
-        }}
-      >
-        <div className="grid size-[34px] shrink-0 place-items-center rounded-[17px] bg-white">
-          <img
-            src={landingAssets.icons.stopwatchStart}
-            alt=""
-            className="size-[24px]"
-            width={24}
-            height={24}
-          />
-        </div>
-        <span className="whitespace-nowrap text-[24px] leading-[1.2] text-white">
-          <span className="font-bold">Старт:</span>
-          <span className="font-medium"> 20 августа</span>
-        </span>
-      </div>
+      <ClubJoinPanel
+        className="absolute right-[240px] top-[10354px] flex w-fit max-w-[780px] items-start gap-[14px] rounded-[20px] px-[24px] py-[16px]"
+        kickerClassName="text-[16px] font-medium leading-[1.2] text-white/85"
+        headlineClassName="mt-[4px] text-[24px] font-semibold leading-[1.2] text-white"
+        stackedHeadline
+      />
 
+      <TariffCardsShift>
       {tariffs.map((t, i) => {
         const display = prices[tariffKeyForIndex(i)];
         return (
@@ -259,6 +311,7 @@ function TariffsDesktop() {
           </article>
         );
       })}
+      </TariffCardsShift>
     </section>
   );
 }

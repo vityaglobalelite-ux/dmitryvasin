@@ -773,6 +773,16 @@ export const outcomesChecklist: { parts: { t: string; bold?: boolean }[] }[] =
     },
   ];
 
+/** Join-now copy: club already running, month 2 is next. */
+export const clubJoinStatus = {
+  startedPrefix: "Закрытый клуб начал работу",
+  startedDate: "20 августа",
+  month2Prefix: "Второй месяц исследования",
+  month2Range: "(уроки 9 – 16)",
+  month2Verb: "стартует",
+  month2Date: "17 сентября",
+} as const;
+
 export const tariffs = [
   {
     id: 1,
@@ -794,7 +804,7 @@ export const tariffs = [
     title: "Полное исследование",
     duration: "90 дней участия",
     features: [
-      "Все материалы программы",
+      "Все материалы, включая уже вышедший первый месяц",
       "Закрытые Telegram-чаты по месяцам",
       "Возможность задавать вопросы",
       "Доступ к материалам ещё 30 дней после завершения",
@@ -808,7 +818,7 @@ export const tariffs = [
     title: "VIP-исследование",
     duration: "90 дней участия + 2 индивидуальных онлайн-занятия со мной",
     features: [
-      "Все материалы программы",
+      "Все материалы, включая уже вышедший первый месяц",
       "Закрытые Telegram-чаты по месяцам",
       "Возможность задавать вопросы",
       "Доступ к материалам ещё 30 дней после завершения",
