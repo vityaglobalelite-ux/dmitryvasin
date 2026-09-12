@@ -14,7 +14,16 @@ const STAGE3_PRICES = {
 
 const ADDON_PRICES = {
   month1: { rub: 14900, usd: 195, eur: 170 },
-  month2_3: { rub: 27800, usd: 360, eur: 320 },
+  month2_3: {
+    rub: 27800,
+    usd: 360,
+    eur: 320,
+    was: {
+      rub: 29800,
+      usd: 390,
+      eur: 340,
+    },
+  },
 };
 
 /** Standard monthly list price (month 1 / month 2 / month 3 standalone). */

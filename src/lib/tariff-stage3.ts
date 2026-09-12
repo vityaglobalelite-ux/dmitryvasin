@@ -15,9 +15,16 @@ export const STAGE3_PRICES = {
 
 /**
  * Landing add-ons under the main 3 cards.
+ * Keep in sync with tariff_prices (014/015) and bot/src/club-cutover.js.
  * month1 list price matches trial until a separate archive price is set.
+ * month2_3 "was" = 2 × monthly list (same as renewal bundle).
  */
 export const ADDON_PRICES = {
   month1: { rub: 14900, usd: 195, eur: 170 },
-  month2_3: { rub: 27800, usd: 360, eur: 320 },
+  month2_3: {
+    rub: 27800,
+    usd: 360,
+    eur: 320,
+    was: { rub: 29800, usd: 390, eur: 340 },
+  },
 } as const;

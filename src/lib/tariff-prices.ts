@@ -15,6 +15,8 @@ export type DisplayPrice = {
 };
 
 const LANDING_TARIFFS: TariffKey[] = ["trial", "full", "vip"];
+const LANDING_ADDONS: AddonKey[] = ["month1", "month2_3"];
+const LANDING_PRICE_KEYS = [...LANDING_TARIFFS, ...LANDING_ADDONS] as const;
 
 /** CIS / post-Soviet → RUB */
 const CIS = new Set([
@@ -191,7 +193,7 @@ async function fetchPriceRows(): Promise<PriceRow[] | null> {
     `${base}/rest/v1/tariff_prices` +
     `?select=tariff,price_rub,price_usd,price_eur,price_rub_was,price_usd_was,price_eur_was,active` +
     `&active=eq.true` +
-    `&tariff=in.(${LANDING_TARIFFS.join(",")})`;
+    `&tariff=in.(${LANDING_PRICE_KEYS.join(",")})`;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
@@ -217,11 +219,25 @@ async function fetchPriceRows(): Promise<PriceRow[] | null> {
   return null;
 }
 
-function moneyDisplay(
-  amount: number,
+function amountsToDisplay(
+  price: number,
+  was: number | null | undefined,
   currency: DisplayCurrency,
 ): DisplayPrice {
-  return { price: formatMoney(amount, currency), oldPrice: null };
+  return {
+    price: formatMoney(price, currency),
+    oldPrice:
+      was != null && was > price ? formatMoney(was, currency) : null,
+  };
+}
+
+function rowToDisplay(
+  row: PriceRow,
+  currency: DisplayCurrency,
+): DisplayPrice | null {
+  const price = pickAmount(row, currency, "price");
+  if (price == null || price <= 0) return null;
+  return amountsToDisplay(price, pickAmount(row, currency, "was"), currency);
 }
 
 function stage3Display(
@@ -230,7 +246,7 @@ function stage3Display(
   return Object.fromEntries(
     LANDING_TARIFFS.map((key) => [
       key,
-      moneyDisplay(STAGE3_PRICES[key][currency], currency),
+      amountsToDisplay(STAGE3_PRICES[key][currency], null, currency),
     ]),
   ) as Record<TariffKey, DisplayPrice>;
 }
@@ -239,8 +255,12 @@ function addonFallbackDisplay(
   currency: DisplayCurrency,
 ): Record<AddonKey, DisplayPrice> {
   return {
-    month1: moneyDisplay(ADDON_PRICES.month1[currency], currency),
-    month2_3: moneyDisplay(ADDON_PRICES.month2_3[currency], currency),
+    month1: amountsToDisplay(ADDON_PRICES.month1[currency], null, currency),
+    month2_3: amountsToDisplay(
+      ADDON_PRICES.month2_3[currency],
+      ADDON_PRICES.month2_3.was[currency],
+      currency,
+    ),
   };
 }
 
@@ -251,26 +271,22 @@ function addonStatusMap(label: string): Record<AddonKey, DisplayPrice> {
   };
 }
 
-function buildDisplay(
+function buildDisplay<K extends string>(
   rows: PriceRow[] | null,
+  keys: readonly K[],
   currency: DisplayCurrency,
-): Record<TariffKey, DisplayPrice> | null {
+): Record<K, DisplayPrice> | null {
   if (!rows?.length) return null;
 
   const byTariff = new Map(rows.map((r) => [r.tariff, r]));
-  const out = {} as Record<TariffKey, DisplayPrice>;
+  const out = {} as Record<K, DisplayPrice>;
 
-  for (const key of LANDING_TARIFFS) {
+  for (const key of keys) {
     const row = byTariff.get(key);
     if (!row) return null;
-    const price = pickAmount(row, currency, "price");
-    if (price == null || price <= 0) return null;
-    const was = pickAmount(row, currency, "was");
-    out[key] = {
-      price: formatMoney(price, currency),
-      oldPrice:
-        was != null && was > price ? formatMoney(was, currency) : null,
-    };
+    const display = rowToDisplay(row, currency);
+    if (!display) return null;
+    out[key] = display;
   }
   return out;
 }
@@ -303,11 +319,16 @@ export function useLandingTariffPrices(): {
       ]);
       if (cancelled) return;
       const cur = currencyForCountry(country);
-      const display = closed ? stage3Display(cur) : buildDisplay(rows, cur);
+      const display = closed
+        ? stage3Display(cur)
+        : buildDisplay(rows, LANDING_TARIFFS, cur);
+      const addons = closed
+        ? addonFallbackDisplay(cur)
+        : buildDisplay(rows, LANDING_ADDONS, cur);
       setCurrency(cur);
       setPrices(display ?? statusMap("Цена недоступна"));
-      setAddonPrices(addonFallbackDisplay(cur));
-      setError(!closed && !display);
+      setAddonPrices(addons ?? addonStatusMap("Цена недоступна"));
+      setError(!closed && (!display || !addons));
       setReady(true);
     })();
     return () => {
