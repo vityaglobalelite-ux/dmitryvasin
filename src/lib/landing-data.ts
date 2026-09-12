@@ -857,7 +857,7 @@ export const tariffAddons = [
 ] as const;
 
 export const tariffAddonsIntro = {
-  kicker: "Если исследование уже идёт",
+  kicker: "Исследование уже идёт",
   title: "Можно присоединиться точечно",
   subtitle:
     "Только архив первого месяца — или сразу 2-й и 3-й, без VIP и без первого.",
