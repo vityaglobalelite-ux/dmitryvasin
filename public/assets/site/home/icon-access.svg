@@ -1,0 +1,18 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2312">
+<circle id="Ellipse 2" cx="29" cy="29" r="28.5" fill="url(#paint0_linear_0_4)" fill-opacity="0.3" stroke="url(#paint1_linear_0_4)"/>
+<g id="uis:calendar">
+<path id="Vector" d="M19 36C19 37.7 20.3 39 22 39H36C37.7 39 39 37.7 39 36V28H19V36ZM36 21H34V20C34 19.4 33.6 19 33 19C32.4 19 32 19.4 32 20V21H26V20C26 19.4 25.6 19 25 19C24.4 19 24 19.4 24 20V21H22C20.3 21 19 22.3 19 24V26H39V24C39 22.3 37.7 21 36 21Z" fill="white"/>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="5.8" y1="10.6333" x2="48.3333" y2="49.3" gradientUnits="userSpaceOnUse">
+<stop offset="0.168269" stop-color="white"/>
+<stop offset="1" stop-color="#D9D9D9" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_4" x1="29" y1="0" x2="29" y2="58" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>

@@ -1,10 +1,11 @@
 "use client";
 
+import { Layer } from "@/components/site/home/HomeFrame";
+import { Button } from "@/components/site/ui/Button";
+import { catalogFilterHref } from "@/components/site/catalog/display";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
-import { HomePad } from "@/components/site/home/HomeFrame";
-import { Button } from "@/components/site/ui/Button";
 
 const photos = {
   catLifehack: homeAssets.catLifehack,
@@ -13,27 +14,35 @@ const photos = {
   catResearch: homeAssets.catResearch,
 } as const;
 
-export function HomeCategories() {
+const desktopCards = [
+  { x: 241, y: 3188, photoX: 281, photoY: 3134, photoW: 256, photoH: 256, textX: 261, textY: 3369, textH: 135, btnX: 261 },
+  { x: 605, y: 3188, photoX: 645, photoY: 3187, photoW: 221, photoH: 221, textX: 627, textY: 3369, textH: 111, btnX: 625 },
+  { x: 970, y: 3188, photoX: 1040, photoY: 3167, photoW: 190, photoH: 190, textX: 990, textY: 3369, textH: 135, btnX: 990 },
+  { x: 1334, y: 3188, photoX: 1418, photoY: 3177, photoW: 162, photoH: 163, textX: 1358, textY: 3369, textH: 135, btnX: 1354 },
+] as const;
+
+export function HomeCategoriesDesktop() {
   const locale = useLocale();
   const { copy, categories } = homeT(locale);
   const routes = useLocalizedRoutes();
+
   return (
-    <section className="pb-4 pt-16 max-[600px]:pt-10">
-      <HomePad>
-        <div className="relative mb-8 max-w-[839px] max-[600px]:mb-6">
-          <img
-            src={homeAssets.quoteOpen}
-            alt=""
-            width={102}
-            height={102}
-            className="absolute -left-1 -top-3 size-[102px] max-[600px]:size-[60px]"
-          />
-          <h2 className="relative pl-[110px] text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:pl-[72px] max-[600px]:text-[24px] max-[600px]:tracking-[-0.72px]">
-            {copy.requestTitleLead}
-            <span className="font-bold">{copy.requestTitleEm}</span>
-          </h2>
-        </div>
-        <p className="mb-10 max-w-[974px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:mb-6 max-[600px]:text-[13px] max-[600px]:font-normal max-[600px]:leading-[1.5]">
+    <>
+      <img
+        src={homeAssets.quoteOpen}
+        alt=""
+        width={102}
+        height={102}
+        className="absolute left-[240px] top-[3044px] z-[1] size-[102px]"
+      />
+      <Layer x={242} y={2966} w={839} h={55} z={2}>
+        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
+          {copy.requestTitleLead}
+          <span className="font-bold">{copy.requestTitleEm}</span>
+        </h2>
+      </Layer>
+      <Layer x={360} y={3052} w={974} h={87} z={2}>
+        <p className="text-[24px] font-medium leading-[1.2] text-text">
           {copy.requestBodyLead}
           <span className="font-bold">{copy.lifehackWord}</span>
           {copy.requestBodyMid}
@@ -43,78 +52,200 @@ export function HomeCategories() {
           {copy.requestBodyOr}
           <span className="font-bold">{copy.researchWord}</span>
         </p>
-        <img
-          src={homeAssets.quoteClose}
-          alt=""
-          width={35}
-          height={35}
-          className="mb-8 ml-auto hidden size-[35px] min-[601px]:block"
-        />
+      </Layer>
+      <img
+        src={homeAssets.quoteClose}
+        alt=""
+        width={35}
+        height={35}
+        className="absolute left-[1402px] top-[3099px] z-[1] size-[35px]"
+      />
 
-        <div className="grid grid-cols-1 gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-4">
-          {categories.map((cat) => (
-            <article
-              key={cat.type}
-              className="flex flex-col rounded-[30px] bg-light-gray p-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]"
-            >
-              <img
-                src={photos[cat.photo]}
-                alt=""
-                width={256}
-                height={256}
-                className="mx-auto h-[160px] w-auto object-contain max-[600px]:mx-0 max-[600px]:h-[87px]"
-              />
-              <h3 className="mt-4 text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px]">
+      {categories.map((cat, i) => {
+        const box = desktopCards[i];
+        return (
+          <div key={cat.type}>
+            <Layer
+              x={box.x}
+              y={box.y}
+              w={344}
+              h={414}
+              z={1}
+              className="rounded-[30px] bg-light-gray"
+            />
+            <img
+              src={photos[cat.photo]}
+              alt=""
+              width={box.photoW}
+              height={box.photoH}
+              className="pointer-events-none absolute z-[2] object-contain"
+              style={{
+                left: box.photoX,
+                top: box.photoY,
+                width: box.photoW,
+                height: box.photoH,
+              }}
+            />
+            <Layer x={box.textX} y={box.textY} w={i === 3 ? 316 : 307} h={box.textH} z={2}>
+              <h3 className="text-[24px] font-medium leading-[1.2] text-text">
                 {cat.title}
               </h3>
-              <p className="mt-2.5 flex-1 text-[16px] leading-[1.5] text-text max-[600px]:text-[13px]">
-                {cat.text}
-              </p>
+              <p className="mt-[10px] text-[16px] leading-[1.5] text-text">{cat.text}</p>
+            </Layer>
+            <Layer x={box.btnX} y={3522} w={304} h={60} z={3}>
               <Button
-                href={`${routes.catalog}?type=${cat.type}`}
-                className="mt-5 w-full px-0"
+                href={catalogFilterHref(cat.type, locale)}
+                className="h-[60px] w-[304px] px-0"
               >
                 {copy.choose}
               </Button>
-            </article>
-          ))}
-        </div>
-
-        <div className="relative mt-8 overflow-hidden rounded-[30px] bg-[image:var(--brand-gradient)] p-10 max-[600px]:mt-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
-          <img
-            src={homeAssets.percent3d}
-            alt=""
-            width={340}
-            height={340}
-            className="pointer-events-none absolute -right-6 -top-8 h-[280px] w-[280px] object-contain opacity-90 max-[600px]:-right-10 max-[600px]:top-16 max-[600px]:h-[220px] max-[600px]:w-[220px] max-[600px]:opacity-80"
-          />
-          <div className="relative z-[1] flex flex-wrap items-end justify-between gap-8 max-[600px]:flex-col max-[600px]:items-stretch max-[600px]:gap-20">
-            <div className="max-w-[662px]">
-              <p className="text-[24px] font-medium leading-[1.2] text-white max-[600px]:text-[13px] max-[600px]:font-normal max-[600px]:leading-[1.5]">
-                {copy.extraLead}
-              </p>
-              <div className="mt-5 flex items-center gap-5 max-[600px]:mt-20 max-[600px]:gap-2.5">
-                <img
-                  src={homeAssets.iconDiscount}
-                  alt=""
-                  width={58}
-                  height={58}
-                  className="size-[58px] max-[600px]:size-10"
-                />
-                <p className="max-w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white max-[600px]:text-[16px] max-[600px]:leading-[1.3] max-[600px]:tracking-normal">
-                  {copy.extraGain}
-                </p>
-              </div>
-            </div>
-            <Button
-              href={routes.catalog}
-              className="w-[309px] shrink-0 px-0 max-[600px]:w-full"
-            >
-              {copy.chooseVideos}
-            </Button>
+            </Layer>
           </div>
+        );
+      })}
+
+      <Layer
+        x={241}
+        y={3622}
+        w={1437}
+        h={224}
+        z={2}
+        className="overflow-hidden rounded-[30px] bg-[image:var(--brand-gradient)] p-10"
+      >
+        <img
+          src={homeAssets.percent3d}
+          alt=""
+          width={341}
+          height={341}
+          className="pointer-events-none absolute left-[1143px] top-[-33px] h-[341px] w-[341px] object-contain"
+        />
+        <div className="relative z-[1] flex h-full items-end justify-between">
+          <div className="max-w-[662px]">
+            <p className="text-[24px] font-medium leading-[1.2] text-white">
+              {copy.extraLead}
+            </p>
+            <div className="mt-5 flex items-center gap-5">
+              <img
+                src={homeAssets.iconDiscount}
+                alt=""
+                width={58}
+                height={58}
+                className="size-[58px]"
+              />
+              <p className="max-w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white">
+                {copy.extraGain}
+              </p>
+            </div>
+          </div>
+          <Button href={routes.catalog} className="h-[60px] w-[309px] shrink-0 px-0">
+            {copy.chooseVideos}
+          </Button>
         </div>
-      </HomePad>
-    </section>
+      </Layer>
+    </>
+  );
+}
+
+export function HomeCategoriesMobile() {
+  const locale = useLocale();
+  const { copy, categories } = homeT(locale);
+  const routes = useLocalizedRoutes();
+  const cardY = [3158, 3476, 3774, 4092] as const;
+  const cardH = [298, 278, 298, 318] as const;
+
+  return (
+    <>
+      <Layer x={20} y={2836} w={320} h={282} z={2}>
+        <img
+          src={homeAssets.quoteOpen}
+          alt=""
+          width={60}
+          height={60}
+          className="size-[60px]"
+        />
+        <h2 className="-mt-10 pl-[72px] text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
+          {copy.requestTitleLead}
+          <span className="font-bold">{copy.requestTitleEm}</span>
+        </h2>
+        <p className="mt-[10px] text-[13px] leading-[1.5] text-text">
+          {copy.requestBodyLead}
+          <span className="font-bold">{copy.lifehackWord}</span>
+          {copy.requestBodyMid}
+          <span className="font-bold">{copy.lessonWord}</span>
+          {copy.requestBodyMid2}
+          <span className="font-bold">{copy.courseWord}</span>
+          {copy.requestBodyOr}
+          <span className="font-bold">{copy.researchWord}</span>
+        </p>
+      </Layer>
+
+      {categories.map((cat, i) => (
+        <Layer
+          key={cat.type}
+          x={20}
+          y={cardY[i]}
+          w={320}
+          h={cardH[i]}
+          z={1}
+          className="rounded-[10px] bg-light-gray p-[15px]"
+        >
+          <img
+            src={photos[cat.photo]}
+            alt=""
+            width={99}
+            height={87}
+            className="h-[87px] w-[99px] object-contain"
+          />
+          <h3 className="mt-[20px] text-[16px] font-medium leading-[1.3] text-text">
+            {cat.title}
+          </h3>
+          <p className="mt-[10px] text-[13px] leading-[1.5] text-text">{cat.text}</p>
+          <Button
+            href={catalogFilterHref(cat.type, locale)}
+            className="mt-[20px] h-[50px] w-[259px] px-0 text-[13px]"
+          >
+            {copy.choose}
+          </Button>
+        </Layer>
+      ))}
+
+      <Layer
+        x={20}
+        y={4430}
+        w={320}
+        h={272}
+        z={2}
+        className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)] p-[15px]"
+      >
+        <img
+          src={homeAssets.percent3d}
+          alt=""
+          width={180}
+          height={180}
+          className="pointer-events-none absolute -right-8 top-8 h-[180px] w-[180px] object-contain opacity-80"
+        />
+        <p className="relative z-[1] text-[13px] leading-[1.5] text-white">
+          {copy.extraLead}
+        </p>
+        <div className="relative z-[1] mt-16 flex items-center gap-2.5">
+          <img
+            src={homeAssets.iconDiscount}
+            alt=""
+            width={40}
+            height={40}
+            className="size-10"
+          />
+          <p className="text-[16px] font-medium leading-[1.3] text-white">
+            {copy.extraGain}
+          </p>
+        </div>
+        <Button
+          href={routes.catalog}
+          className="relative z-[1] mt-6 h-[50px] w-full px-0 text-[13px]"
+        >
+          {copy.chooseVideos}
+        </Button>
+      </Layer>
+    </>
   );
 }

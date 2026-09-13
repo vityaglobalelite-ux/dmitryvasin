@@ -1,10 +1,10 @@
 "use client";
 
+import { Layer } from "@/components/site/home/HomeFrame";
+import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
-import { HomePad } from "@/components/site/home/HomeFrame";
-import { Button } from "@/components/site/ui/Button";
 
 const photos = {
   dirAwareness: homeAssets.dirAwareness,
@@ -14,121 +14,264 @@ const photos = {
   dirVariation: homeAssets.dirVariation,
 } as const;
 
-function DirectionCard({
-  title,
-  text,
-  photo,
-  align = "left",
-}: {
-  title: string;
-  text: string;
-  photo: string;
-  align?: "left" | "right";
-}) {
-  return (
-    <article
-      className={[
-        "relative min-h-[171px] overflow-hidden rounded-[20px] bg-light-gray p-[30px] max-[600px]:min-h-[121px] max-[600px]:p-[15px]",
-        align === "right" ? "pr-[150px] max-[600px]:pr-[110px]" : "pr-[150px] max-[600px]:pr-[110px]",
-      ].join(" ")}
-    >
-      <h3 className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-        {title}
-      </h3>
-      <p className="mt-2.5 max-w-[253px] text-[16px] leading-[1.5] text-text max-[600px]:mt-2 max-[600px]:max-w-[210px] max-[600px]:text-[13px]">
-        {text}
-      </p>
-      <img
-        src={photo}
-        alt=""
-        width={132}
-        height={160}
-        className="pointer-events-none absolute bottom-2 right-2 h-[142px] w-[124px] object-contain max-[600px]:h-[99px] max-[600px]:w-[92px]"
-      />
-    </article>
-  );
-}
-
-export function HomeDirections() {
-  const locale = useLocale();
-  const { copy, directions } = homeT(locale);
+export function HomeDirectionsDesktop() {
+  const { copy, directions } = homeT(useLocale());
   const routes = useLocalizedRoutes();
-  const left = directions.slice(0, 2);
-  const right = directions.slice(2);
 
   return (
-    <section className="relative mt-[72px] overflow-hidden pb-10 max-[600px]:mt-10">
+    <>
       <img
         src={homeAssets.heroBg}
         alt=""
-        className="absolute inset-0 h-full w-full object-cover opacity-80"
+        className="pointer-events-none absolute left-0 top-[1644px] z-0 h-[1120px] w-[1920px] object-cover"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-white via-white/80 to-white" />
-      <HomePad className="relative z-[1]">
-        <div className="grid items-start gap-x-6 gap-y-8 min-[601px]:grid-cols-[minmax(0,392px)_minmax(0,1fr)_minmax(0,392px)]">
-          <div className="flex flex-col gap-6 max-[600px]:order-1">
-            <div>
-              <h2 className="max-w-[588px] text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[24px] max-[600px]:tracking-[-0.72px]">
-                {copy.directionsTitle}
-              </h2>
-              <p className="mt-5 max-w-[519px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:mt-3 max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-                {copy.directionsSub}
-              </p>
-            </div>
-            {left.map((item) => (
-              <DirectionCard
-                key={item.title}
-                title={item.title}
-                text={item.text}
-                photo={photos[item.photo]}
-              />
-            ))}
-          </div>
 
-          <div className="relative mx-auto flex w-full max-w-[520px] flex-col items-center max-[600px]:order-3">
-            <img
-              src={homeAssets.directionsDmitry}
-              alt={copy.teacherName}
-              width={460}
-              height={620}
-              className="h-auto w-full max-w-[460px] object-contain object-top max-[600px]:max-w-[360px]"
-            />
-            <div className="absolute left-1/2 top-[14%] w-[min(409px,100%)] -translate-x-[8%] rounded-[20px] bg-[image:var(--brand-gradient)] p-[30px] max-[600px]:static max-[600px]:mt-4 max-[600px]:w-full max-[600px]:translate-x-0 max-[600px]:p-[15px]">
-              <p className="text-[24px] font-semibold leading-[1.2] text-white max-[600px]:text-[16px]">
-                {copy.teacherName}
-              </p>
-              <p className="mt-2.5 flex items-start gap-2.5 text-[16px] leading-[1.5] text-white max-[600px]:text-[13px]">
-                <img
-                  src={homeAssets.iconTrophy}
-                  alt=""
-                  width={21}
-                  height={21}
-                  className="mt-0.5 size-[21px] max-[600px]:size-[18px]"
-                />
-                {copy.teacherTitle}
-              </p>
-            </div>
-          </div>
+      <Layer x={240} y={1522} w={588} h={298} z={2}>
+        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
+          {copy.directionsTitle}
+        </h2>
+        <p className="mt-5 max-w-[519px] text-[24px] font-medium leading-[1.2] text-text">
+          {copy.directionsSub}
+        </p>
+      </Layer>
 
-          <div className="flex flex-col gap-6 max-[600px]:order-2">
-            {right.map((item) => (
-              <DirectionCard
-                key={item.title}
-                title={item.title}
-                text={item.text}
-                photo={photos[item.photo]}
-                align="right"
-              />
-            ))}
-          </div>
-        </div>
+      <img
+        src={homeAssets.directionsDmitry}
+        alt={copy.teacherName}
+        width={915}
+        height={1246}
+        className="pointer-events-none absolute left-[481px] top-[1518px] z-[1] h-[1246px] w-[915px] object-cover object-top"
+      />
 
-        <div className="mt-10 max-[600px]:mt-6">
-          <Button href={routes.catalog} className="w-[309px] px-0 max-[600px]:w-[260px]">
-            {copy.chooseVideos}
-          </Button>
-        </div>
-      </HomePad>
-    </section>
+      <Layer
+        x={1092}
+        y={1697}
+        w={409}
+        h={123}
+        z={3}
+        className="rounded-[20px] bg-[image:var(--brand-gradient)] p-[30px]"
+      >
+        <p className="text-[24px] font-semibold leading-[1.2] text-white">
+          {copy.teacherName}
+        </p>
+        <p className="mt-2.5 flex items-center gap-[10px] text-[16px] leading-[1.5] text-white">
+          <img
+            src={homeAssets.iconTrophy}
+            alt=""
+            width={21}
+            height={21}
+            className="size-[21px]"
+          />
+          {copy.teacherTitle}
+        </p>
+      </Layer>
+
+      <Layer
+        x={270}
+        y={1917}
+        w={392}
+        h={171}
+        z={2}
+        className="rounded-[20px] bg-light-gray p-[30px] pr-[140px]"
+      >
+        <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+          {directions[0].title}
+        </h3>
+        <p className="mt-[10px] max-w-[210px] text-[16px] leading-[1.5] text-text">
+          {directions[0].text}
+        </p>
+      </Layer>
+      <img
+        src={photos.dirAwareness}
+        alt=""
+        width={132}
+        height={142}
+        className="pointer-events-none absolute left-[535px] top-[1927px] z-[3] h-[142px] w-[132px] object-contain"
+      />
+
+      <Layer
+        x={242}
+        y={2182}
+        w={392}
+        h={195}
+        z={2}
+        className="rounded-[20px] bg-light-gray p-[30px] pr-[140px]"
+      >
+        <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+          {directions[1].title}
+        </h3>
+        <p className="mt-[10px] max-w-[234px] text-[16px] leading-[1.5] text-text">
+          {directions[1].text}
+        </p>
+      </Layer>
+      <img
+        src={photos.dirTechnique}
+        alt=""
+        width={124}
+        height={133}
+        className="pointer-events-none absolute left-[525px] top-[2200px] z-[3] h-[133px] w-[124px] object-contain"
+      />
+
+      <Layer
+        x={1217}
+        y={1921}
+        w={392}
+        h={195}
+        z={2}
+        className="rounded-[20px] bg-light-gray p-[30px] pr-[150px]"
+      >
+        <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+          {directions[2].title}
+        </h3>
+        <p className="mt-[10px] max-w-[228px] text-[16px] leading-[1.5] text-text">
+          {directions[2].text}
+        </p>
+      </Layer>
+      <img
+        src={photos.dirMusicality}
+        alt=""
+        width={149}
+        height={160}
+        className="pointer-events-none absolute left-[1467px] top-[1938px] z-[3] h-[160px] w-[149px] object-contain"
+      />
+
+      <Layer
+        x={1210}
+        y={2206}
+        w={392}
+        h={195}
+        z={2}
+        className="rounded-[20px] bg-light-gray p-[30px] pr-[150px]"
+      >
+        <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+          {directions[3].title}
+        </h3>
+        <p className="mt-[10px] max-w-[231px] text-[16px] leading-[1.5] text-text">
+          {directions[3].text}
+        </p>
+      </Layer>
+      <img
+        src={photos.dirInteraction}
+        alt=""
+        width={125}
+        height={135}
+        className="pointer-events-none absolute left-[1484px] top-[2236px] z-[3] h-[135px] w-[125px] object-contain"
+      />
+
+      <Layer
+        x={1288}
+        y={2459}
+        w={392}
+        h={195}
+        z={2}
+        className="rounded-[20px] bg-light-gray p-[30px] pr-[130px]"
+      >
+        <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+          {directions[4].title}
+        </h3>
+        <p className="mt-[10px] max-w-[253px] text-[16px] leading-[1.5] text-text">
+          {directions[4].text}
+        </p>
+      </Layer>
+      <img
+        src={photos.dirVariation}
+        alt=""
+        width={132}
+        height={160}
+        className="pointer-events-none absolute left-[1548px] top-[2474px] z-[3] h-[160px] w-[132px] object-contain"
+      />
+
+      <Layer x={240} y={2591} w={309} h={60} z={4}>
+        <Button href={routes.catalog} className="h-[60px] w-[309px] px-0">
+          {copy.chooseVideos}
+        </Button>
+      </Layer>
+    </>
+  );
+}
+
+export function HomeDirectionsMobile() {
+  const locale = useLocale();
+  const { copy, directions } = homeT(locale);
+  const cardY = [1651, 1780, 1909, 2038, 2167] as const;
+  const cardH = [121, 121, 121, 121, 141] as const;
+  const keys = [
+    "dirAwareness",
+    "dirTechnique",
+    "dirMusicality",
+    "dirInteraction",
+    "dirVariation",
+  ] as const;
+
+  return (
+    <>
+      <img
+        src={homeAssets.heroBgMobile}
+        alt=""
+        className="pointer-events-none absolute left-0 top-[1483px] z-0 h-[1273px] w-[360px] object-cover"
+      />
+      <Layer x={21} y={1454} w={305} h={177} z={2}>
+        <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
+          {copy.directionsTitle}
+        </h2>
+        <p className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text">
+          {copy.directionsSub}
+        </p>
+      </Layer>
+
+      {directions.map((item, i) => (
+        <Layer
+          key={item.title}
+          x={21}
+          y={cardY[i]}
+          w={320}
+          h={cardH[i]}
+          z={2}
+          className="overflow-hidden rounded-[10px] bg-light-gray p-[15px] pr-[110px]"
+        >
+          <h3 className="text-[16px] font-medium leading-[1.3] text-text">
+            {item.title}
+          </h3>
+          <p className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text">
+            {item.text}
+          </p>
+          <img
+            src={photos[keys[i]]}
+            alt=""
+            className="pointer-events-none absolute right-2 top-2 h-[99px] w-[88px] object-contain"
+          />
+        </Layer>
+      ))}
+
+      <img
+        src={homeAssets.directionsDmitry}
+        alt={copy.teacherName}
+        width={360}
+        height={436}
+        className="pointer-events-none absolute left-px top-[2320px] z-[1] h-[436px] w-[360px] object-cover object-top"
+      />
+      <Layer
+        x={20}
+        y={2615}
+        w={320}
+        h={81}
+        z={3}
+        className="rounded-[10px] bg-[image:var(--brand-gradient)] p-[15px]"
+      >
+        <p className="text-[16px] font-semibold leading-[1.3] text-white">
+          {copy.teacherName}
+        </p>
+        <p className="mt-[10px] flex items-center gap-2.5 text-[13px] leading-[1.5] text-white">
+          <img
+            src={homeAssets.iconTrophy}
+            alt=""
+            width={18}
+            height={18}
+            className="size-[18px]"
+          />
+          {copy.teacherTitle}
+        </p>
+      </Layer>
+    </>
   );
 }

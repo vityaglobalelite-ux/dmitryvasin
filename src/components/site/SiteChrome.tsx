@@ -1,21 +1,32 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteMain, SiteSkipLink } from "@/components/site/SiteSkipLink";
 import { SITE_MOBILE_MAX_WIDTH } from "@/lib/catalog/breakpoint";
 import { LocaleProvider } from "@/lib/catalog/locale-context";
 
+function isHomePath(pathname: string) {
+  return pathname === "/" || pathname === "/en" || pathname === "/en/";
+}
+
 export function SiteChrome({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname() ?? "/";
+  const hideChrome = isHomePath(pathname);
+
   return (
     <LocaleProvider>
       <div
         className="flex min-h-full flex-1 flex-col bg-white"
         data-site-chrome
         data-site-mobile-max={SITE_MOBILE_MAX_WIDTH}
+        data-site-home={hideChrome ? "true" : undefined}
       >
         <SiteSkipLink />
-        <SiteNav />
+        {hideChrome ? null : <SiteNav />}
         <SiteMain>{children}</SiteMain>
-        <SiteFooter />
+        {hideChrome ? null : <SiteFooter />}
       </div>
     </LocaleProvider>
   );
