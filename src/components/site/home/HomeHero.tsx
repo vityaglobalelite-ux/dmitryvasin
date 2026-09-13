@@ -209,15 +209,17 @@ export function HomeHeroMobile() {
         className="pointer-events-none absolute left-[-170.98px] top-0 z-[1] h-[618px] w-[665px] max-w-none"
       />
 
-      <p className="absolute left-5 top-[105.5px] z-[3] -translate-y-1/2 whitespace-nowrap bg-gradient-to-r from-[#4c0d32] to-[#762655] bg-clip-text text-[54.996px] font-semibold uppercase leading-none tracking-[-2.1998px] text-transparent">
-        {copy.look}
-      </p>
+      <div className="absolute left-5 top-[105.5px] z-[3] flex -translate-y-1/2 flex-col justify-center leading-[0]">
+        <p className="whitespace-nowrap bg-gradient-to-r from-[#4c0d32] to-[#762655] bg-clip-text text-[54.996px] font-semibold uppercase leading-[normal] tracking-[-2.1998px] text-transparent">
+          {copy.look}
+        </p>
+      </div>
       <img
         src={homeAssets.iconLook}
         alt=""
         width={23}
         height={23}
-        className="pointer-events-none absolute top-[100.5px] z-[4] size-[22.866px]"
+        className="pointer-events-none absolute top-[96px] z-[4] size-[22.866px]"
         style={{ left: ru ? 122.18 : 141.48 }}
       />
 
@@ -309,16 +311,20 @@ export function HomeHeroMobile() {
         </p>
       </div>
 
-      <div className="pointer-events-none absolute left-[13px] top-[514.46px] z-[4] h-[89.81px] w-[100.89px]">
-        <div className="absolute inset-[-1.83%_-6.28%_-3.2%_-1.07%]">
-          <img
-            src={`${homeAssets.decoArrowMobile}?v=rot`}
-            alt=""
-            className="block size-full max-w-none"
-          />
-        </div>
-      </div>
-      <Layer x={50} y={546} w={260} h={50} z={6}>
+      <img
+        src={`${homeAssets.decoArrowMobile}?v=m`}
+        alt=""
+        width={75}
+        height={84}
+        className="pointer-events-none absolute z-[6] max-w-none"
+        style={{
+          left: 30,
+          top: 478,
+          width: 68,
+          height: 76,
+        }}
+      />
+      <Layer x={50} y={546} w={260} h={50} z={7}>
         <Button href={routes.catalog} className="h-[50px] w-[260px] px-0 text-[13px] font-semibold">
           {copy.chooseVideos}
         </Button>
