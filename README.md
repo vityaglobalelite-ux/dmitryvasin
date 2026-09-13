@@ -11,9 +11,17 @@ Supabase подключается отдельно. В проекте зарез
 
 ```
 src/
-  app/              # страницы (App Router)
-  lib/              # утилиты (по мере роста проекта)
+  app/
+    (site)/         # публичный сайт — URL /
+    privateclub/    # закрытый клуб — URL /privateclub/
+  components/
+    landing/        # UI клуба
+    legal/          # юридические страницы клуба
+  lib/
+    site-config.ts  # идентичность публичного сайта
+    club-config.ts  # идентичность клуба
 docs/
+  catalog.md        # бриф сайта-каталога (Figma, ТЗ, Kinescope, БД)
   cloudflare.md     # DNS, SSL, кэш
 .github/workflows/  # деплой на GitHub Pages
 ```
@@ -26,20 +34,24 @@ npm install
 npm run dev
 ```
 
-[http://localhost:3000](http://localhost:3000)
+- Публичный сайт: [http://localhost:3000](http://localhost:3000) (пока редирект на клуб)
+- Закрытый клуб: [http://localhost:3000/privateclub/](http://localhost:3000/privateclub/)
 
 ## Production
 
-Продакшен: **https://dmitryvasin.com/privateclub** (статика на VPS, Caddy).
+Продакшен: **https://dmitryvasin.com** (статика на VPS, Caddy).
 
-Сборка с `NEXT_PUBLIC_BASE_PATH=/privateclub`. Артефакт из `out/` кладётся в `/var/www/dmitryvasin.com/privateclub` на сервере.
+- `https://dmitryvasin.com/` — публичный сайт (пока редирект на клуб)
+- `https://dmitryvasin.com/privateclub/` — лендинг закрытого клуба
+
+Сборка без `basePath`. Артефакт из `out/` кладётся в `/var/www/dmitryvasin.com/` на сервере.
 
 ```bash
-NEXT_PUBLIC_BASE_PATH=/privateclub npm run build
-scp -r out/* dmitryvasin-vps:/var/www/dmitryvasin.com/privateclub/
+npm run build
+scp -r out/* dmitryvasin-vps:/var/www/dmitryvasin.com/
 ```
 
-GitHub Pages workflow ([deploy-pages.yml](.github/workflows/deploy-pages.yml)) собирает без `basePath` как запасной деплой.
+GitHub Pages workflow ([deploy-pages.yml](.github/workflows/deploy-pages.yml)) собирает тот же `out/` как запасной деплой.
 
 ## Cloudflare
 

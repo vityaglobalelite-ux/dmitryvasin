@@ -1,3 +1,4 @@
+import { clubPath } from "./club-config";
 import { landingAssets } from "./landing-assets";
 
 /** CTA «Присоединиться» / «Оплатить» → Telegram-бот */
@@ -917,20 +918,18 @@ export const reviews = [
   },
 ] as const;
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
 export const footerLinks = [
   {
     label: "Политика конфиденциальности",
-    href: `${basePath}/privacy-policy/`,
+    href: clubPath("privacy-policy"),
   },
   {
     label: "Договор оферты",
-    href: `${basePath}/subscription-agreement/`,
+    href: clubPath("subscription-agreement"),
   },
   {
     label: "Политика DMCA (Сообщение о случаях нарушения авторских прав)",
-    href: `${basePath}/dmca-page/`,
+    href: clubPath("dmca-page"),
   },
 ] as const;
 

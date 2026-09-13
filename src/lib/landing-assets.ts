@@ -1,10 +1,7 @@
-const prefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
 /** Cache-bust after WebP optimization pass */
 const V = "opt1";
 
-export const landingAsset = (name: string) =>
-  `${prefix}/assets/landing/${name}`;
+export const landingAsset = (name: string) => `/assets/landing/${name}`;
 
 const asset = (name: string, v: string = V) =>
   `${landingAsset(name)}?v=${v}`;

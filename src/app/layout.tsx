@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { assets } from "@/lib/assets";
-import { siteConfig } from "@/lib/site-data";
+import { shareOpenGraph, shareTwitter, siteConfig } from "@/lib/site-config";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -12,17 +12,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: siteConfig.title,
   description: siteConfig.description,
-  metadataBase: new URL(siteConfig.url),
-  alternates: {
-    canonical: siteConfig.url,
-  },
-  openGraph: {
-    title: siteConfig.title,
-    description: siteConfig.description,
-    url: siteConfig.url,
-    type: "website",
-    images: [{ url: siteConfig.ogImage }],
-  },
+  applicationName: siteConfig.name,
+  authors: [{ name: siteConfig.name, url: siteConfig.canonical }],
+  creator: siteConfig.name,
+  publisher: siteConfig.publisher,
+  metadataBase: new URL(siteConfig.canonical),
   icons: {
     icon: assets.favicon32,
     apple: assets.favicon180,
@@ -30,6 +24,15 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
+  openGraph: shareOpenGraph({
+    title: siteConfig.ogTitle,
+    description: siteConfig.description,
+    url: siteConfig.canonical,
+  }),
+  twitter: shareTwitter({
+    title: siteConfig.ogTitle,
+    description: siteConfig.description,
+  }),
 };
 
 export default function RootLayout({
@@ -38,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="h-full">
+    <html lang={siteConfig.localeLang} className="h-full">
       <body className="min-h-full flex flex-col bg-white antialiased">
         {children}
       </body>

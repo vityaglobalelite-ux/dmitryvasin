@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { clubPath } from "@/lib/club-config";
 import type { LegalBlock, LegalDocMeta } from "@/lib/legal-docs";
 import { legalNav } from "@/lib/legal-docs";
 
@@ -26,7 +27,7 @@ function goBackOrHome() {
      If we didn't leave this page, fall back to home. */
   window.setTimeout(() => {
     if (window.location.href === here) {
-      window.location.assign("/");
+      window.location.assign(clubPath());
     }
   }, 250);
 }
@@ -92,7 +93,7 @@ export function LegalPage({ doc }: { doc: LegalDocMeta }) {
           </p>
           <ul className="mt-4 flex flex-col gap-3">
             {legalNav
-              .filter((l) => l.href !== `/${doc.slug}/`)
+              .filter((l) => l.href !== clubPath(doc.slug))
               .map((l) => (
                 <li key={l.href}>
                   <Link

@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+import dmcaBlocks from "@/content/legal/dmca.json";
+import privacyBlocks from "@/content/legal/privacy.json";
+import termsBlocks from "@/content/legal/terms.json";
+import { clubConfig, clubPath } from "@/lib/club-config";
+import { shareOpenGraph, shareTwitter } from "@/lib/site-config";
+
 export type LegalBlock = { type: "h2" | "p"; text: string };
 
 export type LegalDocMeta = {
@@ -9,10 +16,6 @@ export type LegalDocMeta = {
   description: string;
   blocks: LegalBlock[];
 };
-
-import dmcaBlocks from "@/content/legal/dmca.json";
-import privacyBlocks from "@/content/legal/privacy.json";
-import termsBlocks from "@/content/legal/terms.json";
 
 const blocks = {
   dmca: dmcaBlocks as LegalBlock[],
@@ -56,11 +59,33 @@ export const legalDocs: Record<string, LegalDocMeta> = {
 };
 
 export const legalNav = [
-  { href: "/privacy-policy/", label: "Политика конфиденциальности" },
-  { href: "/subscription-agreement/", label: "Договор оферты" },
-  {
-    href: "/dmca-page/",
-    label: "Политика DMCA",
-  },
-  { href: "/terms-and-conditions/", label: "Terms and Conditions" },
+  { href: clubPath("privacy-policy"), label: "Политика конфиденциальности" },
+  { href: clubPath("subscription-agreement"), label: "Договор оферты" },
+  { href: clubPath("dmca-page"), label: "Политика DMCA" },
+  { href: clubPath("terms-and-conditions"), label: "Terms and Conditions" },
 ] as const;
+
+export function legalMetadata(doc: LegalDocMeta): Metadata {
+  const title = `${doc.titleRu} — ${clubConfig.name}`;
+  const canonical = clubPath(doc.slug);
+  return {
+    title,
+    description: doc.description,
+    alternates: { canonical },
+    openGraph: shareOpenGraph(
+      {
+        title,
+        description: doc.description,
+        url: canonical,
+      },
+      clubConfig,
+    ),
+    twitter: shareTwitter(
+      {
+        title,
+        description: doc.description,
+      },
+      clubConfig,
+    ),
+  };
+}

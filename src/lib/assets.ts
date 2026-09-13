@@ -1,8 +1,6 @@
 /** Local copies of media from Tilda (see public/assets). Videos stream from Publit.io. */
 
-const assetPrefix = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
-const img = (name: string) => `${assetPrefix}/assets/images/${name}`;
+const img = (name: string) => `/assets/images/${name}`;
 
 const publitioVideo = (file: string) =>
   `https://media.publit.io/file/Lifehacks/freelifehacks/${file}`;
@@ -13,7 +11,7 @@ const publitioVideo = (file: string) =>
 // contact-photo → tild3361-3131-4162-b730-303738663962/_2-1.png
 
 export const assets = {
-  ogPhoto: img("og-photo.png"),
+  ogPhoto: img("og-share.png"),
   favicon32: img("favicon-32x32.png"),
   favicon180: img("favicon-180.png"),
   heroBadge: img("hero-badge.png"),
