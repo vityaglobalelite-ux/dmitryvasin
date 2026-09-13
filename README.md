@@ -21,8 +21,9 @@ src/
     site-config.ts  # идентичность публичного сайта
     club-config.ts  # идентичность клуба
 docs/
-  catalog.md        # бриф сайта-каталога (Figma, ТЗ, Kinescope, БД)
-  cloudflare.md     # DNS, SSL, кэш
+  catalog.md              # бриф сайта-каталога (Figma, ТЗ, Kinescope)
+  catalog-build-plan.md   # волны вёрстки + Supabase для агентов
+  cloudflare.md           # DNS, SSL, кэш
 .github/workflows/  # деплой на GitHub Pages
 ```
 
