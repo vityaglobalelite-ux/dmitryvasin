@@ -5,8 +5,10 @@ const db = require("./db");
 
 const bot = new Telegraf(config.token);
 
-/** adminTelegramId -> chatUuid */
+/** adminTelegramId -> telegram chats.id */
 const adminReplyTarget = new Map();
+/** adminTelegramId -> catalog_profiles.id (auth.users uuid, no telegram_id) */
+const adminCatalogReplyTarget = new Map();
 
 function log(...args) {
   const line = `[${new Date().toISOString()}] ${args
@@ -69,6 +71,7 @@ bot.start(async (ctx) => {
       [
         "Режим администратора поддержки.",
         "Когда пользователь напишет — придёт уведомление с кнопкой «Ответить».",
+        "Тикеты с сайта каталога приходят отдельно (кнопка «Ответить на сайте»).",
         "Либо: /reply <telegram_id> текст ответа",
       ].join("\n"),
       Markup.removeKeyboard(),
@@ -84,6 +87,7 @@ bot.start(async (ctx) => {
 
 bot.command("reply", async (ctx) => {
   if (!isAdmin(ctx)) return;
+  adminCatalogReplyTarget.delete(ctx.from.id);
   const rest = ctx.message.text.replace(/^\/reply(@\w+)?\s*/, "");
   const m = rest.match(/^(\d+)\s+([\s\S]+)$/);
   if (!m) {
@@ -102,10 +106,31 @@ bot.command("reply", async (ctx) => {
   await ctx.reply("Ответ отправлен.");
 });
 
+bot.action(/^catreply:([0-9a-f-]{36})$/i, async (ctx) => {
+  await ctx.answerCbQuery();
+  if (!isAdmin(ctx)) return;
+  const userId = ctx.match[1];
+  const profile = await db.getCatalogProfile(userId);
+  if (!profile) {
+    await ctx.reply("Пользователь каталога не найден.");
+    return;
+  }
+  adminReplyTarget.delete(ctx.from.id);
+  adminCatalogReplyTarget.set(ctx.from.id, profile.id);
+  const email = profile.email || "—";
+  await ctx.reply(
+    [
+      `Ответ уйдёт в чат на сайте (${email}).`,
+      "Введите текст одним сообщением (или /cancel чтобы отменить).",
+    ].join("\n"),
+  );
+});
+
 bot.action(/^reply:(.+)$/, async (ctx) => {
   await ctx.answerCbQuery();
   if (!isAdmin(ctx)) return;
   const chatId = ctx.match[1];
+  adminCatalogReplyTarget.delete(ctx.from.id);
   adminReplyTarget.set(ctx.from.id, chatId);
   await db.markReadForAdmin(chatId);
   await ctx.reply(
@@ -122,12 +147,42 @@ bot.action(/^read:(.+)$/, async (ctx) => {
 bot.command("cancel", async (ctx) => {
   if (!isAdmin(ctx)) return;
   adminReplyTarget.delete(ctx.from.id);
+  adminCatalogReplyTarget.delete(ctx.from.id);
   await ctx.reply("Ответ отменён.");
+});
+
+bot.on("message", async (ctx, next) => {
+  if (!isAdmin(ctx) || !adminCatalogReplyTarget.has(ctx.from.id)) {
+    return next();
+  }
+  const text = ctx.message.text?.trim() || "";
+  if (text && !text.startsWith("/")) return next();
+  if (text.startsWith("/")) return next();
+  await ctx.reply(
+    "Для ответа на тикет сайта отправьте текст одним сообщением (или /cancel).",
+  );
 });
 
 bot.on("text", async (ctx) => {
   const text = ctx.message.text?.trim() || "";
   if (text.startsWith("/")) return;
+
+  if (isAdmin(ctx) && adminCatalogReplyTarget.has(ctx.from.id)) {
+    const userId = adminCatalogReplyTarget.get(ctx.from.id);
+    adminCatalogReplyTarget.delete(ctx.from.id);
+    const profile = await db.getCatalogProfile(userId);
+    if (!profile) {
+      await ctx.reply("Пользователь каталога не найден.");
+      return;
+    }
+    await db.addCatalogAgentMessage({ userId: profile.id, body: text });
+    await db.addCatalogSupportReplyNotification({
+      userId: profile.id,
+      body: text,
+    });
+    await ctx.reply("Ответ отправлен в чат на сайте.");
+    return;
+  }
 
   if (isAdmin(ctx) && adminReplyTarget.has(ctx.from.id)) {
     const chatId = adminReplyTarget.get(ctx.from.id);

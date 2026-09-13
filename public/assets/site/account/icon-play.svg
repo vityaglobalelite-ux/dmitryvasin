@@ -1,0 +1,26 @@
+<svg preserveAspectRatio="xMidYMid meet" width="91.6381" height="91.6382" viewBox="0 0 91.6381 91.6382" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2349">
+<g id="Ellipse 25">
+<circle cx="45.8191" cy="45.8191" r="45.8191" fill="white"/>
+<circle cx="45.8191" cy="45.8191" r="45.8191" fill="url(#paint0_linear_0_4)"/>
+</g>
+<g id="Ellipse 26">
+<circle cx="45.8191" cy="45.8191" r="44.8191" fill="white"/>
+<circle cx="45.8191" cy="45.8191" r="44.8191" fill="url(#paint1_linear_0_4)"/>
+<circle cx="45.8191" cy="45.8191" r="44.8191" stroke="#C2461E" stroke-width="2"/>
+</g>
+<path id="Polygon 2" d="M61.0912 45.8191L38.1816 59.0459L38.1816 32.5923L61.0912 45.8191Z" fill="white"/>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_4" x1="-0.509549" y1="9.81391" x2="113.505" y2="54.2093" gradientUnits="userSpaceOnUse">
+<stop stop-color="#DB0C25"/>
+<stop offset="0.33" stop-color="#E04C29"/>
+<stop offset="1" stop-color="#EFB991"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_4" x1="-0.509549" y1="9.81391" x2="113.505" y2="54.2093" gradientUnits="userSpaceOnUse">
+<stop stop-color="#DB0C25"/>
+<stop offset="0.33" stop-color="#E04C29"/>
+<stop offset="1" stop-color="#EFB991"/>
+</linearGradient>
+</defs>
+</svg>

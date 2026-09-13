@@ -21,6 +21,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "media.publit.io",
       },
+      {
+        protocol: "https",
+        hostname: "api.betango.dance",
+      },
     ],
   },
 };

@@ -5,3 +5,15 @@ verify_jwt = false
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.catalog-create-checkout]
+verify_jwt = true
+
+[functions.catalog-stripe-webhook]
+verify_jwt = false
+
+[functions.kinescope-token]
+verify_jwt = true
+
+[functions.catalog-relay-support]
+verify_jwt = true

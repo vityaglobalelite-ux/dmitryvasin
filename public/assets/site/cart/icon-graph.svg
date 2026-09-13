@@ -1,0 +1,18 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2312">
+<circle id="Ellipse 2" cx="29" cy="29" r="28.5" fill="url(#cartGraphFill)" fill-opacity="0.3" stroke="url(#cartGraphStroke)"/>
+<g id="ic:baseline-auto-graph">
+<path id="Vector" d="M31.575 26.425L29 25.25L31.575 24.075L32.75 21.5L33.925 24.075L36.5 25.25L33.925 26.425L32.75 29L31.575 26.425ZM19 31.5L20.175 28.925L22.75 27.75L20.175 26.575L19 24L17.825 26.575L15.25 27.75L17.825 28.925L19 31.5ZM24.625 25.25L25.9875 22.2375L29 20.875L25.9875 19.5125L24.625 16.5L23.2625 19.5125L20.25 20.875L23.2625 22.2375L24.625 25.25ZM19.625 39.625L27.125 32.1125L32.125 37.1125L42.75 25.1625L40.9875 23.4L32.125 33.3625L27.125 28.3625L17.75 37.75L19.625 39.625Z" fill="white"/>
+</g>
+</g>
+<defs>
+<linearGradient id="cartGraphFill" x1="5.8" y1="10.6333" x2="48.3333" y2="49.3" gradientUnits="userSpaceOnUse">
+<stop offset="0.168269" stop-color="white"/>
+<stop offset="1" stop-color="#D9D9D9" stop-opacity="0"/>
+</linearGradient>
+<linearGradient id="cartGraphStroke" x1="29" y1="0" x2="29" y2="58" gradientUnits="userSpaceOnUse">
+<stop stop-color="white"/>
+<stop offset="1" stop-color="white" stop-opacity="0"/>
+</linearGradient>
+</defs>
+</svg>

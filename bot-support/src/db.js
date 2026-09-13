@@ -128,6 +128,49 @@ async function markReadForAdmin(chatId) {
   if (error) throw error;
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+async function getCatalogProfile(userId) {
+  if (!UUID_RE.test(String(userId || ""))) return null;
+  const { data, error } = await supabase
+    .from("catalog_profiles")
+    .select("id, email")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+async function addCatalogAgentMessage({ userId, body }) {
+  const { data, error } = await supabase
+    .from("catalog_support_messages")
+    .insert({
+      user_id: userId,
+      from_role: "agent",
+      body,
+      storage_path: null,
+    })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+async function addCatalogSupportReplyNotification({ userId, body }) {
+  const preview =
+    body.length > 240 ? `${body.slice(0, 240)}…` : body;
+  const { error } = await supabase.from("catalog_notifications").insert({
+    user_id: userId,
+    type: "support_reply",
+    title: "Ответ поддержки",
+    body: preview,
+    href: "/account/support/",
+    read: false,
+  });
+  if (error) throw error;
+}
+
 module.exports = {
   upsertUser,
   getOrCreateChat,
@@ -137,4 +180,7 @@ module.exports = {
   listMessages,
   markReadForUser,
   markReadForAdmin,
+  getCatalogProfile,
+  addCatalogAgentMessage,
+  addCatalogSupportReplyNotification,
 };

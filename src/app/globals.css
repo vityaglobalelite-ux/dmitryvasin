@@ -72,6 +72,30 @@ html {
   overflow-x: clip;
 }
 
+.site-skip-link {
+  position: absolute;
+  left: 16px;
+  top: 12px;
+  z-index: 80;
+  transform: translateY(-160%);
+  border-radius: 999px;
+  background: #4c0d32;
+  color: #fff;
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.site-skip-link:focus {
+  transform: none;
+}
+
+[data-site-chrome] :focus-visible {
+  outline: 2px solid var(--plum);
+  outline-offset: 3px;
+}
+
 body {
   overflow-x: clip;
   -webkit-text-size-adjust: 100%;
@@ -753,5 +777,33 @@ body {
   .quote-video-spinner {
     animation: none;
     border-top-color: rgba(255, 255, 255, 0.7);
+  }
+}
+
+/* Catalog skeleton — Figma light-gray + plum shimmer (Wave 1B) */
+@keyframes site-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.site-shimmer {
+  background-color: var(--light-gray);
+  background-image: linear-gradient(
+    90deg,
+    var(--light-gray) 0%,
+    color-mix(in srgb, var(--plum) 10%, var(--light-gray)) 50%,
+    var(--light-gray) 100%
+  );
+  background-size: 200% 100%;
+  animation: site-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-shimmer {
+    animation: none;
   }
 }

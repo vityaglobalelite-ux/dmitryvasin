@@ -63,11 +63,21 @@ flowchart TB
 - Не начинать UI экрана без Figma MCP: skill `figma-design-to-code` → `get_design_context` + screenshot **конкретной** node-id из [catalog.md](catalog.md).
 - Иконки — только экспорт из Figma в `public/assets/site/` (или `src/assets/site/`). Не рисовать, не icon pack, не просроченные MCP URL в репо.
 - Динамика только из Supabase. Пока грузится — скелетон в геометрии карточек. Никаких массивов «пример урока» в компонентах.
-- Перед миграциями и деплоем функций: это **тот** инстанс (`api.betango.dance` / URL из env). Не катить SQL на чужой проект. Схему смотреть по факту (`public-schema.sql` + live), не угадывать колонки ботов.
 - Таблицы ботов (`bot_users`, `subscriptions`, `payments`, …) **не переписывать**. Каталог — новые таблицы с префиксом `catalog_`.
 - Существующие `create-checkout` и `stripe-webhook` — для **Telegram-бота**. Каталог получает **свои** Edge Functions, ботовые не ломать.
 - `output: "export"` и клуб не ломать: секреты и вебхуки — **Supabase Edge Functions**, не Next API routes.
 - Не коммитить секреты. Клиенту — только `NEXT_PUBLIC_SUPABASE_URL` и `NEXT_PUBLIC_SUPABASE_ANON_KEY`. Service role — только скрипты и Edge Functions.
+
+### Деплой запрещён агентам
+
+Автовыкладки на прод **в этом плане нет**. Агент **не** делает сам:
+
+- `scp` / rsync на VPS, Caddy, `/var/www/dmitryvasin.com`
+- `supabase db push`, `functions deploy`, SQL на `api.betango.dance`
+- `git push` на `master` / `main` (там GitHub Pages — это не dmitryvasin.com, но тоже не трогать без просьбы)
+- Stripe webhook в Dashboard, сид в живую базу
+
+Писать миграции и код функций в репо — да. Накатывать на сервер и выкладывать сайт — только когда человек явно скажет.
 
 ---
 
@@ -281,7 +291,7 @@ catalog_notifications
 - Сид через service role. Пустая база допустима; UI не наполняет фейками.
 - `catalog_settings.wholesale_tiers` — jsonb-массив. Пороги % не выдумывать без человека (в dev можно один тестовый тир).
 
-**DoD:** на инстансе: signup → `catalog_profiles`; `select` пустых published products с anon; `select catalog_product_videos` с anon **падает**. Ботовый checkout не сломан.
+**DoD:** миграция в репо полная; локально или по SQL-ревью: signup → `catalog_profiles`; `select` published products с anon; `select catalog_product_videos` с anon **запрещён**. Ботовые функции в репо не изменены. На прод не накатывать.
 
 **Не трогает:** UI, `src/app`, `components/landing`, `supabase/functions/create-checkout`, `stripe-webhook` бота.
 
@@ -441,7 +451,7 @@ Figma: `650:4688` и mobile; курс `654:5359` `654:6052` `746:2298`; проф
 
 ## Wave 7 — сквозной приём (1 агент)
 
-На **этом** Supabase, не мок:
+На **этом** Supabase, не мок — **когда человек разрешил** накатить миграции на dev/staging. Не на dmitryvasin.com самовольно:
 
 1. Главная → каталог (скелетон, затем строки из Postgres).
 2. Продукт → корзина → модалка скидки.
