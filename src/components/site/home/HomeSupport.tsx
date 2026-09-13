@@ -1,14 +1,16 @@
 "use client";
 
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 export function HomeSupportDesktop() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <Layer
@@ -20,9 +22,17 @@ export function HomeSupportDesktop() {
       className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
     >
       <div className="absolute left-[60px] top-[60px] w-[934px]">
-        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-light-gray">
-          {copy.supportTitle}
-        </h2>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeDesktopBreaks.supportTitle}
+            className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-light-gray"
+          />
+        ) : (
+          <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-light-gray">
+            {copy.supportTitle}
+          </h2>
+        )}
         <Button href={routes.accountSupport} className="mt-[40px] h-[60px] w-[259px] px-0">
           {copy.supportCta}
         </Button>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const avatars = {
@@ -78,8 +78,10 @@ function ReviewCard({
 }
 
 export function HomeReviewsDesktop() {
-  const { copy, reviews } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy, reviews } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
   const scroller = useRef<HTMLDivElement>(null);
 
   const scrollBy = (dir: -1 | 1) => {
@@ -163,9 +165,16 @@ export function HomeReviewsDesktop() {
       </Layer>
 
       <Layer x={240} y={7467} w={1057} h={159} z={2}>
-        <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
-          {copy.reviewsResults}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDesktopBreaks.reviewsResults}
+            className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text"
+          />
+        ) : (
+          <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
+            {copy.reviewsResults}
+          </p>
+        )}
         <p className="mt-5 text-[24px] font-medium leading-[1.2] text-text">
           {copy.reviewsHint}
         </p>

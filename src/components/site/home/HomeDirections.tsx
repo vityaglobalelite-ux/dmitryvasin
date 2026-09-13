@@ -1,9 +1,14 @@
 "use client";
 
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import {
+  homeDirections,
+  homeDirectionsSubLines,
+  homeDirectionsTitleLines,
+  homeT,
+} from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const photos = {
@@ -15,8 +20,10 @@ const photos = {
 } as const;
 
 export function HomeDirectionsDesktop() {
-  const { copy, directions } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy, directions } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -27,28 +34,45 @@ export function HomeDirectionsDesktop() {
       />
 
       <Layer x={240} y={1522} w={588} h={298} z={2}>
-        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
-          {copy.directionsTitle}
-        </h2>
-        <p className="mt-5 max-w-[519px] text-[24px] font-medium leading-[1.2] text-text">
-          {copy.directionsSub}
-        </p>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeDirectionsTitleLines}
+            className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text"
+          />
+        ) : (
+          <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
+            {copy.directionsTitle}
+          </h2>
+        )}
+        {ru ? (
+          <FigLines
+            lines={homeDirectionsSubLines}
+            className="mt-5 w-[519px] text-[24px] font-medium leading-[1.2] text-text"
+          />
+        ) : (
+          <p className="mt-5 max-w-[519px] text-[24px] font-medium leading-[1.2] text-text">
+            {copy.directionsSub}
+          </p>
+        )}
       </Layer>
 
-      <img
-        src={homeAssets.directionsDmitry}
-        alt={copy.teacherName}
-        width={915}
-        height={1246}
-        className="pointer-events-none absolute left-[481px] top-[1518px] z-[1] h-[1246px] w-[915px] object-cover object-top"
-      />
+      <div className="pointer-events-none absolute left-[481px] top-[1518px] z-[5] h-[1246px] w-[915px] overflow-hidden">
+        <img
+          src={`${homeAssets.directionsDmitry}?v=raw`}
+          alt={copy.teacherName}
+          width={1536}
+          height={2302}
+          className="absolute left-[0.59%] top-0 h-[108.75%] w-[98.81%] max-w-none"
+        />
+      </div>
 
       <Layer
         x={1092}
         y={1697}
         w={409}
         h={123}
-        z={3}
+        z={6}
         className="rounded-[20px] bg-[image:var(--brand-gradient)] p-[30px]"
       >
         <p className="text-[24px] font-semibold leading-[1.2] text-white">
@@ -72,21 +96,28 @@ export function HomeDirectionsDesktop() {
         w={392}
         h={171}
         z={2}
-        className="rounded-[20px] bg-light-gray p-[30px] pr-[140px]"
+        className="rounded-[20px] bg-light-gray p-[30px]"
       >
         <h3 className="text-[24px] font-medium leading-[1.2] text-text">
           {directions[0].title}
         </h3>
-        <p className="mt-[10px] max-w-[210px] text-[16px] leading-[1.5] text-text">
-          {directions[0].text}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDirections[0].textLines}
+            className="mt-[10px] w-[210px] text-[16px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] max-w-[210px] text-[16px] leading-[1.5] text-text">
+            {directions[0].text}
+          </p>
+        )}
       </Layer>
       <img
-        src={photos.dirAwareness}
+        src={`${photos.dirAwareness}?v=fig`}
         alt=""
-        width={132}
-        height={142}
-        className="pointer-events-none absolute left-[535px] top-[1927px] z-[3] h-[142px] w-[132px] object-contain"
+        width={127}
+        height={170}
+        className="pointer-events-none absolute left-[535px] top-[1918px] z-[3] h-[170px] w-[127px] max-w-none"
       />
 
       <Layer
@@ -95,21 +126,28 @@ export function HomeDirectionsDesktop() {
         w={392}
         h={195}
         z={2}
-        className="rounded-[20px] bg-light-gray p-[30px] pr-[140px]"
+        className="rounded-[20px] bg-light-gray p-[30px]"
       >
         <h3 className="text-[24px] font-medium leading-[1.2] text-text">
           {directions[1].title}
         </h3>
-        <p className="mt-[10px] max-w-[234px] text-[16px] leading-[1.5] text-text">
-          {directions[1].text}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDirections[1].textLines}
+            className="mt-[10px] w-[234px] text-[16px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] max-w-[234px] text-[16px] leading-[1.5] text-text">
+            {directions[1].text}
+          </p>
+        )}
       </Layer>
       <img
-        src={photos.dirTechnique}
+        src={`${photos.dirTechnique}?v=fig`}
         alt=""
-        width={124}
-        height={133}
-        className="pointer-events-none absolute left-[525px] top-[2200px] z-[3] h-[133px] w-[124px] object-contain"
+        width={127}
+        height={170}
+        className="pointer-events-none absolute left-[507px] top-[2200px] z-[3] h-[170px] w-[127px] max-w-none"
       />
 
       <Layer
@@ -118,21 +156,28 @@ export function HomeDirectionsDesktop() {
         w={392}
         h={195}
         z={2}
-        className="rounded-[20px] bg-light-gray p-[30px] pr-[150px]"
+        className="rounded-[20px] bg-light-gray p-[30px]"
       >
         <h3 className="text-[24px] font-medium leading-[1.2] text-text">
           {directions[2].title}
         </h3>
-        <p className="mt-[10px] max-w-[228px] text-[16px] leading-[1.5] text-text">
-          {directions[2].text}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDirections[2].textLines}
+            className="mt-[10px] w-[228px] text-[16px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] max-w-[228px] text-[16px] leading-[1.5] text-text">
+            {directions[2].text}
+          </p>
+        )}
       </Layer>
       <img
-        src={photos.dirMusicality}
+        src={`${photos.dirMusicality}?v=fig`}
         alt=""
-        width={149}
-        height={160}
-        className="pointer-events-none absolute left-[1467px] top-[1938px] z-[3] h-[160px] w-[149px] object-contain"
+        width={153}
+        height={195}
+        className="pointer-events-none absolute left-[1456px] top-[1921px] z-[3] h-[195px] w-[153px] max-w-none"
       />
 
       <Layer
@@ -141,21 +186,28 @@ export function HomeDirectionsDesktop() {
         w={392}
         h={195}
         z={2}
-        className="rounded-[20px] bg-light-gray p-[30px] pr-[150px]"
+        className="rounded-[20px] bg-light-gray p-[30px]"
       >
         <h3 className="text-[24px] font-medium leading-[1.2] text-text">
           {directions[3].title}
         </h3>
-        <p className="mt-[10px] max-w-[231px] text-[16px] leading-[1.5] text-text">
-          {directions[3].text}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDirections[3].textLines}
+            className="mt-[10px] w-[231px] text-[16px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] max-w-[231px] text-[16px] leading-[1.5] text-text">
+            {directions[3].text}
+          </p>
+        )}
       </Layer>
       <img
-        src={photos.dirInteraction}
+        src={`${photos.dirInteraction}?v=fig`}
         alt=""
-        width={125}
-        height={135}
-        className="pointer-events-none absolute left-[1484px] top-[2236px] z-[3] h-[135px] w-[125px] object-contain"
+        width={153}
+        height={195}
+        className="pointer-events-none absolute left-[1449px] top-[2206px] z-[3] h-[195px] w-[153px] max-w-none"
       />
 
       <Layer
@@ -164,24 +216,31 @@ export function HomeDirectionsDesktop() {
         w={392}
         h={195}
         z={2}
-        className="rounded-[20px] bg-light-gray p-[30px] pr-[130px]"
+        className="rounded-[20px] bg-light-gray p-[30px]"
       >
         <h3 className="text-[24px] font-medium leading-[1.2] text-text">
           {directions[4].title}
         </h3>
-        <p className="mt-[10px] max-w-[253px] text-[16px] leading-[1.5] text-text">
-          {directions[4].text}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDirections[4].textLines}
+            className="mt-[10px] w-[253px] text-[16px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] max-w-[253px] text-[16px] leading-[1.5] text-text">
+            {directions[4].text}
+          </p>
+        )}
       </Layer>
       <img
-        src={photos.dirVariation}
+        src={`${photos.dirVariation}?v=fig`}
         alt=""
         width={132}
-        height={160}
-        className="pointer-events-none absolute left-[1548px] top-[2474px] z-[3] h-[160px] w-[132px] object-contain"
+        height={195}
+        className="pointer-events-none absolute left-[1548px] top-[2459px] z-[3] h-[195px] w-[132px] max-w-none"
       />
 
-      <Layer x={240} y={2591} w={309} h={60} z={4}>
+      <Layer x={240} y={2591} w={309} h={60} z={7}>
         <Button href={routes.catalog} className="h-[60px] w-[309px] px-0">
           {copy.chooseVideos}
         </Button>

@@ -1,12 +1,14 @@
 "use client";
 
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale } from "@/lib/catalog/locale-context";
 
 export function HomeTeacherDesktop() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
+  const ru = locale === "ru";
 
   return (
     <>
@@ -19,9 +21,17 @@ export function HomeTeacherDesktop() {
         className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
       />
       <Layer x={278} y={830} w={834} h={220} z={12}>
-        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white">
-          {copy.approach}
-        </h2>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeDesktopBreaks.approach}
+            className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white"
+          />
+        ) : (
+          <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white">
+            {copy.approach}
+          </h2>
+        )}
       </Layer>
       <Layer
         x={276}
@@ -31,10 +41,22 @@ export function HomeTeacherDesktop() {
         z={12}
         className="flex items-center overflow-hidden rounded-[20px] bg-white py-5 pl-[100px] pr-5 shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]"
       >
-        <p className="text-[16px] leading-[1.5] text-text">
-          {copy.peopleLead}
-          <span className="font-semibold">{copy.peopleRest}</span>
-        </p>
+        {ru ? (
+          <p className="w-[368px] text-[16px] leading-[1.5] text-text">
+            {homeDesktopBreaks.people[0]}
+            <br />
+            <span className="font-semibold">
+              {homeDesktopBreaks.people[1]}
+              <br />
+              {homeDesktopBreaks.people[2]}
+            </span>
+          </p>
+        ) : (
+          <p className="text-[16px] leading-[1.5] text-text">
+            {copy.peopleLead}
+            <span className="font-semibold">{copy.peopleRest}</span>
+          </p>
+        )}
       </Layer>
       <img
         src={`${homeAssets.idea}?v=alpha`}

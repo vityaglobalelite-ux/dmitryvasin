@@ -36,8 +36,10 @@ function LookHeadline({
 }
 
 export function HomeHeroDesktop() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -103,7 +105,15 @@ export function HomeHeroDesktop() {
       >
         <p className="text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleLookLead}</span>
-          {copy.bubbleLookRest}
+          {ru ? (
+            <>
+              {" из\u00a0любой точки мира,"}
+              <br />
+              {"с\u00a0любого гаджета и\u00a0разбирай движения вместе со\u00a0мной."}
+            </>
+          ) : (
+            copy.bubbleLookRest
+          )}
         </p>
       </div>
       <div
@@ -111,7 +121,15 @@ export function HomeHeroDesktop() {
       >
         <p className="text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleDoLead}</span>
-          {copy.bubbleDoRest}
+          {ru ? (
+            <>
+              {" шаг\u00a0за\u00a0шагом,"}
+              <br />
+              {"последовательно и\u00a0анализируя."}
+            </>
+          ) : (
+            copy.bubbleDoRest
+          )}
         </p>
       </div>
       <div
@@ -119,7 +137,15 @@ export function HomeHeroDesktop() {
       >
         <p className="text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleDanceLead}</span>
-          {copy.bubbleDanceRest}
+          {ru ? (
+            <>
+              {" и\u00a0двигайся"}
+              <br />
+              {"уверенно и\u00a0в\u00a0удовольствие!"}
+            </>
+          ) : (
+            copy.bubbleDanceRest
+          )}
         </p>
       </div>
 

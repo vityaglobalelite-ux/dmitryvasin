@@ -1,10 +1,10 @@
 "use client";
 
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeCategories, homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const photos = {
@@ -25,6 +25,7 @@ export function HomeCategoriesDesktop() {
   const locale = useLocale();
   const { copy, categories } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -42,16 +43,35 @@ export function HomeCategoriesDesktop() {
         </h2>
       </Layer>
       <Layer x={360} y={3052} w={974} h={87} z={2}>
-        <p className="text-[24px] font-medium leading-[1.2] text-text">
-          {copy.requestBodyLead}
-          <span className="font-bold">{copy.lifehackWord}</span>
-          {copy.requestBodyMid}
-          <span className="font-bold">{copy.lessonWord}</span>
-          {copy.requestBodyMid2}
-          <span className="font-bold">{copy.courseWord}</span>
-          {copy.requestBodyOr}
-          <span className="font-bold">{copy.researchWord}</span>
-        </p>
+        {ru ? (
+          <p className="text-[24px] font-medium leading-[1.2] text-text">
+            {"И\u00a0иногда достаточно простого "}
+            <span className="font-bold">{copy.lifehackWord}</span>
+            {" или\u00a0тематического "}
+            <span className="font-bold">{copy.lessonWord}</span>
+            {","}
+            <br />
+            {
+              "чтобы\u00a0иначе увидеть и\u00a0попрактиковать движение. А\u00a0иногда\u00a0— погрузиться"
+            }
+            <br />
+            {"в\u00a0тему целиком и\u00a0исследовать её\u00a0шаг за\u00a0шагом через\u00a0"}
+            <span className="font-bold">{copy.courseWord}</span>
+            {" или\u00a0"}
+            <span className="font-bold">{copy.researchWord}</span>
+          </p>
+        ) : (
+          <p className="text-[24px] font-medium leading-[1.2] text-text">
+            {copy.requestBodyLead}
+            <span className="font-bold">{copy.lifehackWord}</span>
+            {copy.requestBodyMid}
+            <span className="font-bold">{copy.lessonWord}</span>
+            {copy.requestBodyMid2}
+            <span className="font-bold">{copy.courseWord}</span>
+            {copy.requestBodyOr}
+            <span className="font-bold">{copy.researchWord}</span>
+          </p>
+        )}
       </Layer>
       <img
         src={homeAssets.quoteClose}
@@ -90,7 +110,14 @@ export function HomeCategoriesDesktop() {
               <h3 className="text-[24px] font-medium leading-[1.2] text-text">
                 {cat.title}
               </h3>
-              <p className="mt-[10px] text-[16px] leading-[1.5] text-text">{cat.text}</p>
+              {ru ? (
+                <FigLines
+                  lines={homeCategories[i].textLines}
+                  className={`mt-[10px] text-[16px] leading-[1.5] text-text ${i === 3 ? "w-[303px]" : "w-full"}`}
+                />
+              ) : (
+                <p className="mt-[10px] text-[16px] leading-[1.5] text-text">{cat.text}</p>
+              )}
             </Layer>
             <Layer x={box.btnX} y={3522} w={304} h={60} z={3}>
               <Button
@@ -121,9 +148,16 @@ export function HomeCategoriesDesktop() {
         />
         <div className="relative z-[1] flex h-full items-end justify-between">
           <div className="max-w-[662px]">
-            <p className="text-[24px] font-medium leading-[1.2] text-white">
-              {copy.extraLead}
-            </p>
+            {ru ? (
+              <FigLines
+                lines={homeDesktopBreaks.extraLead}
+                className="w-[662px] text-[24px] font-medium leading-[1.2] text-white"
+              />
+            ) : (
+              <p className="text-[24px] font-medium leading-[1.2] text-white">
+                {copy.extraLead}
+              </p>
+            )}
             <div className="mt-5 flex items-center gap-5">
               <img
                 src={homeAssets.iconDiscount}
@@ -132,9 +166,16 @@ export function HomeCategoriesDesktop() {
                 height={58}
                 className="size-[58px]"
               />
-              <p className="max-w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white">
-                {copy.extraGain}
-              </p>
+              {ru ? (
+                <FigLines
+                  lines={homeDesktopBreaks.extraGain}
+                  className="w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white"
+                />
+              ) : (
+                <p className="max-w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white">
+                  {copy.extraGain}
+                </p>
+              )}
             </div>
           </div>
           <Button href={routes.catalog} className="h-[60px] w-[309px] shrink-0 px-0">

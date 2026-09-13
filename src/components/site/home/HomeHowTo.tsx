@@ -1,14 +1,22 @@
 "use client";
 
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 export function HomeHowToDesktop() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
-  const steps = [copy.how1, copy.how2, copy.how3] as const;
+  const ru = locale === "ru";
+  const steps = ru
+    ? ([
+        homeDesktopBreaks.how1,
+        homeDesktopBreaks.how2,
+        homeDesktopBreaks.how3,
+      ] as const)
+    : ([copy.how1, copy.how2, copy.how3] as const);
 
   return (
     <>
@@ -21,18 +29,18 @@ export function HomeHowToDesktop() {
         className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
       />
       <img
-        src={homeAssets.macbook}
+        src={`${homeAssets.macbook}?v=alpha`}
         alt=""
         width={841}
         height={830}
-        className="pointer-events-none absolute left-[219.86px] top-[4951px] z-[2] h-[829.6px] w-[841.41px] max-w-none object-contain"
+        className="pointer-events-none absolute left-[219.86px] top-[4951px] z-[2] h-[829.6px] w-[841.41px] max-w-none"
       />
       <Layer
         x={299.91}
         y={5526.18}
         w={400}
         h={100}
-        z={3}
+        z={8}
         className="flex items-center gap-[15px] rounded-[20px] border border-white bg-white/20 px-2.5 py-5 backdrop-blur-[12px]"
       >
         <img
@@ -42,39 +50,61 @@ export function HomeHowToDesktop() {
           height={58}
           className="size-[58px]"
         />
-        <p className="text-[24px] font-medium leading-[1.2] text-white">
-          {copy.howAccess}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeDesktopBreaks.howAccess}
+            className="w-[305px] text-[24px] font-medium leading-[1.2] text-white"
+          />
+        ) : (
+          <p className="text-[24px] font-medium leading-[1.2] text-white">
+            {copy.howAccess}
+          </p>
+        )}
       </Layer>
-      <Layer x={965.91} y={5054.18} w={688} h={110} z={3}>
-        <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white">
-          {copy.howTitle}
-        </h2>
+      <Layer x={965.91} y={5054.18} w={688} h={110} z={8}>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeDesktopBreaks.howTitle}
+            className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white"
+          />
+        ) : (
+          <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white">
+            {copy.howTitle}
+          </h2>
+        )}
       </Layer>
-      <Layer x={965.91} y={5194.18} w={654} h={372} z={3} className="flex flex-col gap-2.5">
+      <Layer x={965.91} y={5194.18} w={654} h={372} z={8} className="flex flex-col gap-2.5">
         {steps.map((text, index) => (
           <div
-            key={text}
+            key={index}
             className="flex gap-[30px] rounded-[30px] bg-light-gray p-[30px]"
           >
             <span className="flex size-[50px] shrink-0 items-center justify-center rounded-full bg-[image:var(--brand-gradient)] text-[24px] font-medium text-white">
               {index + 1}
             </span>
-            <p className="text-[16px] leading-[1.5] text-text">{text}</p>
+            {typeof text === "string" ? (
+              <p className="text-[16px] leading-[1.5] text-text">{text}</p>
+            ) : (
+              <FigLines
+                lines={text}
+                className={`text-[16px] leading-[1.5] text-text ${index === 0 ? "w-[400px]" : "w-[514px]"}`}
+              />
+            )}
           </div>
         ))}
       </Layer>
-      <Layer x={982.91} y={5596.18} w={628} h={30} z={3} className="flex items-center gap-2.5">
+      <Layer x={982.91} y={5596.18} w={628} h={30} z={8} className="flex items-center gap-2.5">
         <img
           src={homeAssets.iconSupport}
           alt=""
           width={30}
           height={30}
-          className="size-[30px]"
+          className="size-[30px] shrink-0"
         />
         <a
           href={routes.accountSupport}
-          className="text-[24px] font-medium leading-[1.2] text-white transition-opacity hover:opacity-80"
+          className="whitespace-nowrap text-[24px] font-medium leading-[1.2] text-white transition-opacity hover:opacity-80"
         >
           {copy.howSupport}
         </a>
@@ -129,7 +159,7 @@ export function HomeHowToMobile() {
         </p>
       </Layer>
       <img
-        src={homeAssets.macbook}
+        src={`${homeAssets.macbook}?v=alpha`}
         alt=""
         width={320}
         height={315}

@@ -37,3 +37,25 @@ export function Layer({
     </div>
   );
 }
+
+/** Desktop RU line breaks locked to Figma — do not use on mobile. */
+export function FigLines({
+  lines,
+  className,
+  as: Tag = "p",
+}: {
+  lines: readonly string[];
+  className?: string;
+  as?: "p" | "h2";
+}) {
+  return (
+    <Tag className={className}>
+      {lines.map((line, i) => (
+        <span key={i}>
+          {i > 0 ? <br /> : null}
+          {line}
+        </span>
+      ))}
+    </Tag>
+  );
+}
