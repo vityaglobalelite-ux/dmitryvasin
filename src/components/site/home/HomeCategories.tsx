@@ -4,7 +4,7 @@ import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeCategories, homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
+import { homeCategories, homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const photos = {
@@ -191,33 +191,93 @@ export function HomeCategoriesMobile() {
   const locale = useLocale();
   const { copy, categories } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
   const cardY = [3158, 3476, 3774, 4092] as const;
   const cardH = [298, 278, 298, 318] as const;
+  const photoCrop = [
+    { width: 165.65, height: 165.65, left: -35.59, top: -36.24 },
+    { width: 130.23, height: 130.23, left: -21.8, top: -12.96 },
+    { width: 110.2, height: 110.2, left: -7.54, top: -11.02 },
+    { width: 110.11, height: 110.79, left: -10.88, top: -12.23 },
+  ] as const;
 
   return (
     <>
-      <Layer x={20} y={2836} w={320} h={282} z={2}>
+      <Layer
+        x={20}
+        y={2836}
+        w={320}
+        h={282}
+        z={2}
+        className="flex flex-col gap-5 leading-[0]"
+      >
         <img
           src={homeAssets.quoteOpen}
           alt=""
           width={60}
           height={60}
-          className="size-[60px]"
+          className="size-[60px] shrink-0"
         />
-        <h2 className="-mt-10 pl-[72px] text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
-          {copy.requestTitleLead}
-          <span className="font-bold">{copy.requestTitleEm}</span>
-        </h2>
-        <p className="mt-[10px] text-[13px] leading-[1.5] text-text">
-          {copy.requestBodyLead}
-          <span className="font-bold">{copy.lifehackWord}</span>
-          {copy.requestBodyMid}
-          <span className="font-bold">{copy.lessonWord}</span>
-          {copy.requestBodyMid2}
-          <span className="font-bold">{copy.courseWord}</span>
-          {copy.requestBodyOr}
-          <span className="font-bold">{copy.researchWord}</span>
-        </p>
+        {ru ? (
+          <div className="flex w-full shrink-0 flex-col gap-[10px]">
+            <h2 className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
+              <span className="whitespace-nowrap">{homeMobileBreaks.requestTitle[0]}</span>
+              <br />
+              <span className="whitespace-nowrap font-bold">
+                {homeMobileBreaks.requestTitle[1]}
+              </span>
+            </h2>
+            <p className="w-[319px] text-[13px] leading-[1.5] text-text">
+              <span className="whitespace-nowrap">
+                И{"\u00a0"}иногда достаточно простого{" "}
+                <span className="font-semibold">лайфхака</span>
+              </span>
+              <br />
+              <span className="whitespace-nowrap">
+                или{"\u00a0"}тематического{" "}
+                <span className="font-semibold">урока</span>, чтобы{"\u00a0"}иначе увидеть
+              </span>
+              <br />
+              <span className="whitespace-nowrap">
+                и{"\u00a0"}попрактиковать движение. А{"\u00a0"}иногда{"\u00a0"}—
+              </span>
+              <br />
+              <span className="whitespace-nowrap">
+                погрузиться в{"\u00a0"}тему целиком и{"\u00a0"}исследовать
+              </span>
+              <br />
+              <span className="whitespace-nowrap">
+                её{"\u00a0"}шаг за{"\u00a0"}шагом через{"\u00a0"}
+                <span className="font-semibold">курс</span> или{"\u00a0"}
+                <span className="font-semibold">исследование</span>.
+              </span>
+            </p>
+          </div>
+        ) : (
+          <div className="flex w-full shrink-0 flex-col gap-[10px]">
+            <h2 className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
+              {copy.requestTitleLead}
+              <span className="font-bold">{copy.requestTitleEm}</span>
+            </h2>
+            <p className="text-[13px] leading-[1.5] text-text">
+              {copy.requestBodyLead}
+              <span className="font-semibold">{copy.lifehackWord}</span>
+              {copy.requestBodyMid}
+              <span className="font-semibold">{copy.lessonWord}</span>
+              {copy.requestBodyMid2}
+              <span className="font-semibold">{copy.courseWord}</span>
+              {copy.requestBodyOr}
+              <span className="font-semibold">{copy.researchWord}</span>
+            </p>
+          </div>
+        )}
+        <img
+          src={homeAssets.quoteClose}
+          alt=""
+          width={20}
+          height={20}
+          className="size-5 shrink-0"
+        />
       </Layer>
 
       {categories.map((cat, i) => (
@@ -230,17 +290,25 @@ export function HomeCategoriesMobile() {
           z={1}
           className="rounded-[10px] bg-light-gray p-[15px]"
         >
-          <img
-            src={photos[cat.photo]}
-            alt=""
-            width={99}
-            height={87}
-            className="h-[87px] w-[99px] object-contain"
-          />
+          <div className="relative h-[87px] w-[99px]">
+            <img
+              src={photos[cat.photo]}
+              alt=""
+              className="absolute max-w-none"
+              style={photoCrop[i]}
+            />
+          </div>
           <h3 className="mt-[20px] text-[16px] font-medium leading-[1.3] text-text">
             {cat.title}
           </h3>
-          <p className="mt-[10px] text-[13px] leading-[1.5] text-text">{cat.text}</p>
+          {ru ? (
+            <FigLines
+              lines={homeMobileBreaks.catTexts[i]}
+              className="mt-[10px] text-[13px] leading-[1.5] text-text"
+            />
+          ) : (
+            <p className="mt-[10px] text-[13px] leading-[1.5] text-text">{cat.text}</p>
+          )}
           <Button
             href={catalogFilterHref(cat.type, locale)}
             className="mt-[20px] h-[50px] w-[259px] px-0 text-[13px]"
@@ -265,9 +333,16 @@ export function HomeCategoriesMobile() {
           height={180}
           className="pointer-events-none absolute -right-8 top-8 h-[180px] w-[180px] object-contain opacity-80"
         />
-        <p className="relative z-[1] text-[13px] leading-[1.5] text-white">
-          {copy.extraLead}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.extraLead}
+            className="relative z-[1] text-[13px] leading-[1.5] text-white"
+          />
+        ) : (
+          <p className="relative z-[1] text-[13px] leading-[1.5] text-white">
+            {copy.extraLead}
+          </p>
+        )}
         <div className="relative z-[1] mt-16 flex items-center gap-2.5">
           <img
             src={homeAssets.iconDiscount}
@@ -276,9 +351,16 @@ export function HomeCategoriesMobile() {
             height={40}
             className="size-10"
           />
-          <p className="text-[16px] font-medium leading-[1.3] text-white">
-            {copy.extraGain}
-          </p>
+          {ru ? (
+            <FigLines
+              lines={homeMobileBreaks.extraGain}
+              className="text-[16px] font-medium leading-[1.3] text-white"
+            />
+          ) : (
+            <p className="text-[16px] font-medium leading-[1.3] text-white">
+              {copy.extraGain}
+            </p>
+          )}
         </div>
         <Button
           href={routes.catalog}

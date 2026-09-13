@@ -177,7 +177,14 @@ export function HomeHowToMobile() {
             className="size-[30px] shrink-0"
           />
           <a href={routes.accountSupport} className="transition-opacity hover:opacity-80">
-            {copy.howSupport}
+            {ru ? (
+              <FigLines
+                lines={homeMobileBreaks.howSupport}
+                className="text-[13px] leading-[1.5] text-white"
+              />
+            ) : (
+              copy.howSupport
+            )}
           </a>
         </p>
       </Layer>

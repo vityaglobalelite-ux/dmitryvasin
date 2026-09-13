@@ -51,7 +51,7 @@ export function FigLines({
   return (
     <Tag className={className}>
       {lines.map((line, i) => (
-        <span key={i}>
+        <span key={i} className="whitespace-nowrap">
           {i > 0 ? <br /> : null}
           {line}
         </span>

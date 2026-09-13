@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const avatars = {
@@ -223,8 +223,10 @@ export function HomeReviewsDesktop() {
 }
 
 export function HomeReviewsMobile() {
-  const { copy, reviews } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy, reviews } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -241,7 +243,14 @@ export function HomeReviewsMobile() {
         <span className="inline-flex size-[34px] items-center justify-center rounded-[17px] bg-white">
           <img src={homeAssets.iconSwipe} alt="" width={16} height={16} className="size-4" />
         </span>
-        <p className="text-[13px] leading-[1.5] text-text-dark">{copy.reviewsSwipe}</p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.reviewsSwipe}
+            className="text-[13px] leading-[1.5] text-text-dark"
+          />
+        ) : (
+          <p className="text-[13px] leading-[1.5] text-text-dark">{copy.reviewsSwipe}</p>
+        )}
       </Layer>
 
       <div className="absolute left-5 top-[8048px] z-[1] flex w-[320px] gap-5 overflow-x-auto">
@@ -265,14 +274,28 @@ export function HomeReviewsMobile() {
       </Layer>
 
       <Layer x={20} y={8769} w={320} h={164} z={2}>
-        <p className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
-          {copy.reviewsResults}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.reviewsResults}
+            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text"
+          />
+        ) : (
+          <p className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
+            {copy.reviewsResults}
+          </p>
+        )}
         <div className="mt-5 flex items-center gap-2.5">
           <span className="inline-flex size-[34px] items-center justify-center rounded-[17px] bg-white">
             <img src={homeAssets.iconSwipe} alt="" width={16} height={16} className="size-4" />
           </span>
-          <p className="text-[13px] leading-[1.5] text-text-dark">{copy.reviewsSwipe}</p>
+          {ru ? (
+            <FigLines
+              lines={homeMobileBreaks.reviewsSwipe}
+              className="text-[13px] leading-[1.5] text-text-dark"
+            />
+          ) : (
+            <p className="text-[13px] leading-[1.5] text-text-dark">{copy.reviewsSwipe}</p>
+          )}
         </div>
       </Layer>
 

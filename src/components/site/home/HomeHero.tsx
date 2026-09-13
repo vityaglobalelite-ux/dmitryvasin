@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { Layer } from "@/components/site/home/HomeFrame";
+import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeT } from "@/lib/catalog/home-copy";
+import { homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 const bubbleShadow =
@@ -226,11 +226,14 @@ export function HomeHeroMobile() {
       <div
         className={`absolute left-5 top-[132px] z-[5] flex h-[71px] w-[249px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
-        <p className="text-[11px] leading-[1.5] text-text">
-          {ru
-            ? "Включай обучающие видео из\u00a0любой точки мира, с\u00a0любого гаджета и\u00a0разбирай движения вместе со\u00a0мной."
-            : copy.bubbleLook}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.bubbleLook}
+            className="text-[11px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="text-[11px] leading-[1.5] text-text">{copy.bubbleLook}</p>
+        )}
       </div>
 
       <div
@@ -284,11 +287,16 @@ export function HomeHeroMobile() {
       <div
         className={`absolute left-[79px] top-[300px] z-[5] flex h-[54px] w-[220px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
-        <p className="text-[11px] leading-[1.5] text-text">
-          {ru
-            ? "Выполняй движения шаг\u00a0за\u00a0шагом, последовательно и\u00a0анализируя."
-            : copy.bubbleDoLead + copy.bubbleDoRest}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.bubbleDo}
+            className="text-[11px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="text-[11px] leading-[1.5] text-text">
+            {copy.bubbleDoLead + copy.bubbleDoRest}
+          </p>
+        )}
       </div>
 
       <p
@@ -304,11 +312,16 @@ export function HomeHeroMobile() {
       <div
         className={`absolute left-[93px] top-[454px] z-[5] flex h-[54px] w-[247px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
-        <p className="text-[11px] leading-[1.5] text-text">
-          {ru
-            ? "Собирай движения в\u00a0танец и\u00a0двигайся уверенно и\u00a0в\u00a0удовольствие!"
-            : copy.bubbleDanceLead + copy.bubbleDanceRest}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.bubbleDance}
+            className="text-[11px] leading-[1.5] text-text"
+          />
+        ) : (
+          <p className="text-[11px] leading-[1.5] text-text">
+            {copy.bubbleDanceLead + copy.bubbleDanceRest}
+          </p>
+        )}
       </div>
 
       <img

@@ -256,6 +256,14 @@ export function HomeDirectionsMobile() {
   const ru = locale === "ru";
   const cardY = [1651, 1780, 1909, 2038, 2167] as const;
   const cardH = [121, 121, 121, 121, 141] as const;
+  const textW = [210, 234, 228, 231, 230] as const;
+  const iconBox = [
+    { w: 89, h: 119 },
+    { w: 89, h: 119 },
+    { w: 93, h: 119 },
+    { w: 93, h: 119 },
+    { w: 95, h: 140 },
+  ] as const;
   const keys = [
     "dirAwareness",
     "dirTechnique",
@@ -266,30 +274,39 @@ export function HomeDirectionsMobile() {
 
   return (
     <>
-      <img
-        src={homeAssets.heroBgMobile}
-        alt=""
-        className="pointer-events-none absolute left-0 top-[1483px] z-0 h-[1273px] w-[360px] object-cover"
-      />
-      <Layer x={21} y={1454} w={305} h={177} z={2}>
+      <Layer x={0} y={1483} w={360} h={1273} z={0} className="overflow-hidden">
+        <img
+          src={homeAssets.heroBgMobile}
+          alt=""
+          className="absolute inset-0 size-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white to-[17.589%] to-transparent" />
+      </Layer>
+      <Layer
+        x={21}
+        y={1454}
+        w={305}
+        z={2}
+        className="flex flex-col gap-[10px] leading-[0]"
+      >
         {ru ? (
           <FigLines
             as="h2"
             lines={homeMobileBreaks.dirTitle}
-            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text"
+            className="whitespace-nowrap text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text"
           />
         ) : (
-          <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
+          <h2 className="w-full text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
             {copy.directionsTitle}
           </h2>
         )}
         {ru ? (
           <FigLines
             lines={homeMobileBreaks.dirSub}
-            className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text"
+            className="w-[289px] whitespace-nowrap text-[16px] font-medium leading-[1.3] text-text"
           />
         ) : (
-          <p className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text">
+          <p className="w-[289px] text-[16px] font-medium leading-[1.3] text-text">
             {copy.directionsSub}
           </p>
         )}
@@ -303,7 +320,7 @@ export function HomeDirectionsMobile() {
           w={320}
           h={cardH[i]}
           z={2}
-          className="overflow-hidden rounded-[10px] bg-light-gray p-[15px] pr-[110px]"
+          className="flex flex-col gap-[10px] overflow-hidden rounded-[10px] bg-light-gray p-[15px] leading-[0]"
         >
           <h3 className="text-[16px] font-medium leading-[1.3] text-text">
             {item.title}
@@ -311,17 +328,21 @@ export function HomeDirectionsMobile() {
           {ru ? (
             <FigLines
               lines={homeMobileBreaks.dirTexts[i]}
-              className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text"
+              className="whitespace-nowrap text-[13px] leading-[1.5] text-text"
             />
           ) : (
-            <p className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text">
+            <p
+              className="text-[13px] leading-[1.5] text-text"
+              style={{ width: textW[i] }}
+            >
               {item.text}
             </p>
           )}
           <img
             src={photos[keys[i]]}
             alt=""
-            className="pointer-events-none absolute right-2 top-2 h-[99px] w-[88px] object-contain"
+            className="pointer-events-none absolute top-0 right-0 object-contain object-right"
+            style={{ width: iconBox[i].w, height: iconBox[i].h }}
           />
         </Layer>
       ))}

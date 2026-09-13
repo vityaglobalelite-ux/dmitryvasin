@@ -89,60 +89,82 @@ export function HomeTeacherMobile() {
         w={321}
         h={738}
         z={10}
-        className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)]"
-      />
-      <Layer x={35} y={651} w={290} h={278} z={12}>
-        {ru ? (
-          <FigLines
-            as="h2"
-            lines={homeMobileBreaks.approach}
-            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white"
+        className="overflow-hidden rounded-[20px]"
+        style={{
+          backgroundImage:
+            "linear-gradient(99.61deg, rgb(219, 12, 37) 2.6%, rgb(224, 76, 41) 36.63%, rgb(239, 185, 145) 105.73%)",
+        }}
+      >
+        <div className="absolute left-0 top-[422px] h-[316px] w-[320px] overflow-hidden">
+          <img
+            src={`${homeAssets.teacher}?v=knockout`}
+            alt=""
+            className="absolute top-[-27.91%] left-[-16.57%] h-[214.99%] w-[141.81%] max-w-none"
           />
-        ) : (
-          <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-white">
-            {copy.approach}
-          </h2>
-        )}
+        </div>
       </Layer>
       <Layer
         x={35}
-        y={949}
+        y={651}
         w={290}
-        h={90}
         z={12}
-        className="rounded-[10px] bg-white py-[15px] pl-[14px] pr-[82px] shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]"
+        className="flex flex-col gap-[20px] leading-[0]"
       >
-        {ru ? (
-          <p className="text-[13px] leading-[1.5] text-text">
-            {homeMobileBreaks.people[0]}
-            <br />
-            <span className="font-semibold">
-              {homeMobileBreaks.people[1]}
-              <br />
-              {homeMobileBreaks.people[2]}
-            </span>
-          </p>
-        ) : (
-          <p className="text-[13px] leading-[1.5] text-text">
-            {copy.peopleLead}
-            <span className="font-semibold">{copy.peopleRest}</span>
-          </p>
-        )}
+        <div className="flex w-full shrink-0 flex-col gap-[17px] font-medium text-white">
+          {ru ? (
+            <>
+              <FigLines
+                as="h2"
+                lines={homeMobileBreaks.approach}
+                className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white"
+              />
+              <FigLines
+                lines={homeMobileBreaks.approachMethod}
+                className="text-[16px] font-medium leading-[1.3] text-white"
+              />
+            </>
+          ) : (
+            <>
+              <h2 className="w-full text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white">
+                {copy.approach}
+              </h2>
+              <p className="w-full text-[16px] font-medium leading-[1.3] text-white">
+                {copy.approachMethod}
+              </p>
+            </>
+          )}
+        </div>
+        <div className="relative h-[90px] w-[290px] shrink-0">
+          <div className="flex h-[90px] w-[290px] items-center rounded-[10px] bg-white py-[15px] pl-[14px] pr-[15px] shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]">
+            {ru ? (
+              <p className="w-[261px] text-[13px] leading-[1.5] text-text">
+                <span className="whitespace-nowrap">{homeMobileBreaks.people[0]}</span>
+                <br />
+                <span className="whitespace-nowrap">
+                  ЛЮДИ:{" "}
+                  <span className="font-semibold">их{"\u00a0"}вопросы, открытия,</span>
+                </span>
+                <br />
+                <span className="whitespace-nowrap font-semibold">
+                  {homeMobileBreaks.people[2]}
+                </span>
+              </p>
+            ) : (
+              <p className="w-[261px] text-[13px] leading-[1.5] text-text">
+                {copy.peopleLead}
+                <span className="font-semibold">{copy.peopleRest}</span>
+              </p>
+            )}
+          </div>
+          <img
+            src={`${homeAssets.idea}?v=alpha`}
+            alt=""
+            width={67}
+            height={90}
+            className="absolute left-[241px] top-0 z-[1] h-[90px] w-[67px]"
+          />
+        </div>
       </Layer>
-      <img
-        src={`${homeAssets.idea}?v=alpha`}
-        alt=""
-        width={67}
-        height={90}
-        className="absolute left-[276px] top-[949px] z-[13] h-[90px] w-[67px]"
-      />
-      <img
-        src={homeAssets.teacherMobile}
-        alt=""
-        width={320}
-        height={316}
-        className="pointer-events-none absolute left-5 top-[1058px] z-[14] h-[316px] w-[320px] object-cover object-top"
-      />
     </>
   );
 }
