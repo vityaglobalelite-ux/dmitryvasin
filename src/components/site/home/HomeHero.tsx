@@ -16,9 +16,11 @@ const lookGradient =
 function LookHeadline({
   text,
   eyeSrc,
+  eyeLeft,
 }: {
   text: string;
   eyeSrc: string;
+  eyeLeft: number;
 }) {
   return (
     <p className="absolute left-[509px] top-[152px] z-[12] flex h-[145px] w-[475px] items-center whitespace-nowrap text-[109px] font-semibold uppercase leading-none tracking-[-4.36px]">
@@ -29,7 +31,7 @@ function LookHeadline({
         width={45}
         height={45}
         className="pointer-events-none absolute z-[1] size-[45.32px]"
-        style={{ left: 202.52, top: 52.34 }}
+        style={{ left: eyeLeft, top: 52.34 }}
       />
     </p>
   );
@@ -55,16 +57,23 @@ export function HomeHeroDesktop() {
       />
 
       <img
-        src={`${homeAssets.heroPhone}?v=cutout`}
+        src={`${homeAssets.heroPhone}?v=fingers`}
         alt=""
         width={901}
         height={1104}
         className="pointer-events-none absolute left-[35px] top-[79px] z-[9] h-[1104.5px] w-[901.5px] max-w-none"
       />
 
-      <LookHeadline text={copy.look} eyeSrc={homeAssets.iconLook} />
+      <LookHeadline
+        text={copy.look}
+        eyeSrc={homeAssets.iconLook}
+        eyeLeft={ru ? 202.52 : 239.66}
+      />
 
-      <div className="absolute left-[881.58px] top-[281.65px] z-[12] h-[174.84px] w-[592.85px]">
+      <div
+        className="absolute left-[881.58px] top-[281.65px] z-[12] h-[174.84px]"
+        style={{ width: ru ? 592.85 : 394.57 }}
+      >
         <p className="absolute left-[12.05px] top-[30.04px] origin-center rotate-[-0.18deg] whitespace-nowrap text-[109px] font-semibold uppercase leading-none tracking-[-4.36px] text-[rgba(76,13,50,0.6)] opacity-50">
           {copy.repeat}
         </p>
@@ -89,7 +98,8 @@ export function HomeHeroDesktop() {
           alt=""
           width={44}
           height={42}
-          className="absolute left-[538.9px] top-[-1.31px] z-[1] h-[42px] w-[44px] max-w-none"
+          className="absolute top-[-1.31px] z-[1] h-[42px] w-[44px] max-w-none"
+          style={{ left: ru ? 538.9 : 340.62 }}
         />
       </div>
 
@@ -181,8 +191,10 @@ export function HomeHeroDesktop() {
 }
 
 export function HomeHeroMobile() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -205,7 +217,8 @@ export function HomeHeroMobile() {
         alt=""
         width={23}
         height={23}
-        className="absolute left-[122.18px] top-[90.74px] z-[4] size-[22.87px]"
+        className="absolute top-[90.74px] z-[4] size-[22.87px]"
+        style={{ left: ru ? 122.18 : 141.48 }}
       />
       <div
         className={`absolute left-5 top-[132px] z-[5] h-[71px] w-[249px] rounded-[20px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}

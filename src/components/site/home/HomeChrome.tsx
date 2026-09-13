@@ -194,7 +194,7 @@ export function HomeHeaderMobile() {
 
 function Social({ size }: { size: 24 | 30 }) {
   const copy = useCatalogT();
-  const wrap = size === 24 ? "size-10 rounded-3xl" : "size-[34px] rounded-[30px]";
+  const wrap = size === 24 ? "size-10 rounded-3xl" : "size-[50px] rounded-[30px]";
   const items = [
     {
       href: "https://t.me/DmitryVasinTango",
@@ -219,13 +219,13 @@ function Social({ size }: { size: 24 | 30 }) {
         <a
           key={item.href}
           href={item.href}
-          className={`inline-flex items-center justify-center bg-[image:var(--brand-gradient)] transition-transform duration-150 hover:scale-105 active:scale-95 ${wrap}`}
+          className={`inline-flex shrink-0 items-center justify-center overflow-hidden bg-[image:var(--brand-gradient)] transition-transform duration-150 hover:scale-105 active:scale-95 ${wrap}`}
           aria-label={item.label}
           target={item.href.startsWith("mailto:") ? undefined : "_blank"}
           rel={item.href.startsWith("mailto:") ? undefined : "noreferrer"}
         >
           <img
-            src={item.icon}
+            src={`${item.icon}?v=fig`}
             alt=""
             width={size}
             height={size}
@@ -269,7 +269,7 @@ export function HomeFooterDesktop() {
           </a>
         ))}
       </nav>
-      <div className="absolute left-[1510px] top-[100px] flex items-center gap-[26px]">
+      <div className="absolute left-[1510px] top-[100px] flex items-center gap-[10px]">
         <Social size={30} />
       </div>
     </footer>

@@ -109,20 +109,20 @@ function SocialRow({
   }[];
   iconSize: 24 | 30;
 }) {
-  const wrap = iconSize === 24 ? "size-10 rounded-3xl" : "size-[34px] rounded-[30px]";
+  const wrap = iconSize === 24 ? "size-10 rounded-3xl" : "size-[50px] rounded-[30px]";
   return (
-    <div className="flex items-center gap-2.5">
+    <div className={`flex items-center ${iconSize === 24 ? "gap-2.5" : "gap-[10px]"}`}>
       {items.map((item) => (
         <a
           key={item.href}
           href={item.href}
-          className={`inline-flex items-center justify-center bg-[image:var(--brand-gradient)] transition-transform duration-150 hover:scale-105 active:scale-95 ${wrap}`}
+          className={`inline-flex shrink-0 items-center justify-center overflow-hidden bg-[image:var(--brand-gradient)] transition-transform duration-150 hover:scale-105 active:scale-95 ${wrap}`}
           aria-label={item.label}
           target={item.href.startsWith("mailto:") ? undefined : "_blank"}
           rel={item.href.startsWith("mailto:") ? undefined : "noreferrer"}
         >
           <img
-            src={item.icon}
+            src={`${item.icon}?v=fig`}
             alt=""
             width={iconSize}
             height={iconSize}
