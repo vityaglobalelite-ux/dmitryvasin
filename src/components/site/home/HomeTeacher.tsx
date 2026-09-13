@@ -2,7 +2,7 @@
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale } from "@/lib/catalog/locale-context";
 
 export function HomeTeacherDesktop() {
@@ -77,7 +77,9 @@ export function HomeTeacherDesktop() {
 }
 
 export function HomeTeacherMobile() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
+  const ru = locale === "ru";
 
   return (
     <>
@@ -90,9 +92,17 @@ export function HomeTeacherMobile() {
         className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)]"
       />
       <Layer x={35} y={651} w={290} h={278} z={12}>
-        <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-white">
-          {copy.approach}
-        </h2>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeMobileBreaks.approach}
+            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white"
+          />
+        ) : (
+          <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-white">
+            {copy.approach}
+          </h2>
+        )}
       </Layer>
       <Layer
         x={35}
@@ -102,10 +112,22 @@ export function HomeTeacherMobile() {
         z={12}
         className="rounded-[10px] bg-white py-[15px] pl-[14px] pr-[82px] shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]"
       >
-        <p className="text-[13px] leading-[1.5] text-text">
-          {copy.peopleLead}
-          <span className="font-semibold">{copy.peopleRest}</span>
-        </p>
+        {ru ? (
+          <p className="text-[13px] leading-[1.5] text-text">
+            {homeMobileBreaks.people[0]}
+            <br />
+            <span className="font-semibold">
+              {homeMobileBreaks.people[1]}
+              <br />
+              {homeMobileBreaks.people[2]}
+            </span>
+          </p>
+        ) : (
+          <p className="text-[13px] leading-[1.5] text-text">
+            {copy.peopleLead}
+            <span className="font-semibold">{copy.peopleRest}</span>
+          </p>
+        )}
       </Layer>
       <img
         src={`${homeAssets.idea}?v=alpha`}

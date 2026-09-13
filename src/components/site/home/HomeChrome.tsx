@@ -133,7 +133,7 @@ export function HomeHeaderMobile() {
         <div className="absolute left-0 top-0">
           <AuthChip compact />
         </div>
-        <div className="absolute left-[185px] top-0">
+        <div className="absolute left-[185px] top-0 flex h-8 w-[45px] items-center justify-center">
           <LangMobile />
         </div>
         <Link

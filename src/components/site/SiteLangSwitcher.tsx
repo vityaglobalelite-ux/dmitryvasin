@@ -62,7 +62,7 @@ function LangMobileInner() {
     <Link
       href={href}
       hrefLang={other}
-      className="inline-flex h-8 items-center justify-center gap-0.5 rounded-[20px] border border-[#c9c9c9] px-5 text-[13px] leading-[1.5] text-text transition-opacity hover:opacity-80"
+      className="inline-flex h-8 items-center justify-center gap-0.5 rounded-[20px] border border-[#c9c9c9] bg-white px-2.5 text-[13px] leading-[1.5] text-[#252525] transition-opacity hover:opacity-80"
       aria-label={t.a11y.language}
     >
       {locale === "en" ? t.nav.langEn : t.nav.langRu}
@@ -85,7 +85,7 @@ const desktopFallback = (
 );
 
 const mobileFallback = (
-  <span className="inline-flex h-8 items-center justify-center gap-0.5 rounded-[20px] border border-[#c9c9c9] px-5 text-[13px] leading-[1.5] text-text">
+  <span className="inline-flex h-8 items-center justify-center gap-0.5 rounded-[20px] border border-[#c9c9c9] bg-white px-2.5 text-[13px] leading-[1.5] text-[#252525]">
     Ru
     <img
       src={siteAssets.langChevron}

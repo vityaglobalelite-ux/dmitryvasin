@@ -38,7 +38,7 @@ export function Layer({
   );
 }
 
-/** Desktop RU line breaks locked to Figma — do not use on mobile. */
+/** Locked Figma line breaks. */
 export function FigLines({
   lines,
   className,

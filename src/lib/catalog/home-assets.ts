@@ -8,6 +8,7 @@ export const homeAssets = {
   decoQuote: "/assets/site/home/deco-quote.svg",
   decoQuoteTr: "/assets/site/home/deco-quote-tr.svg",
   decoArrow: "/assets/site/home/deco-arrow.png",
+  decoArrowMobile: "/assets/site/home/deco-arrow-mobile.svg",
   btnPlay: "/assets/site/home/btn-play.svg",
   teacher: "/assets/site/home/teacher.png",
   teacherMobile: "/assets/site/home/teacher-mobile.png",

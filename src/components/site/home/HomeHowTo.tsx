@@ -2,7 +2,7 @@
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 export function HomeHowToDesktop() {
@@ -114,9 +114,17 @@ export function HomeHowToDesktop() {
 }
 
 export function HomeHowToMobile() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
-  const steps = [copy.how1, copy.how2, copy.how3] as const;
+  const ru = locale === "ru";
+  const steps = ru
+    ? ([
+        homeMobileBreaks.how1,
+        homeMobileBreaks.how2,
+        homeMobileBreaks.how3,
+      ] as const)
+    : ([copy.how1, copy.how2, copy.how3] as const);
 
   return (
     <>
@@ -128,20 +136,35 @@ export function HomeHowToMobile() {
         z={1}
         className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)]"
       />
-      <Layer x={35} y={6588} w={290} h={462} z={3}>
-        <h2 className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white">
-          {copy.howTitle}
-        </h2>
+      <Layer x={35} y={6588} w={290} h={462} z={8}>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeMobileBreaks.howTitle}
+            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white"
+          />
+        ) : (
+          <h2 className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-white">
+            {copy.howTitle}
+          </h2>
+        )}
         <ol className="mt-[20px] flex flex-col gap-2.5">
           {steps.map((text, index) => (
             <li
-              key={text}
+              key={index}
               className="flex gap-[10px] rounded-[10px] bg-light-gray p-[15px]"
             >
               <span className="flex size-[35px] shrink-0 items-center justify-center rounded-full bg-[image:var(--brand-gradient)] text-[16px] font-medium text-white">
                 {index + 1}
               </span>
-              <p className="text-[13px] leading-[1.5] text-text">{text}</p>
+              {typeof text === "string" ? (
+                <p className="text-[13px] leading-[1.5] text-text">{text}</p>
+              ) : (
+                <FigLines
+                  lines={text}
+                  className="text-[13px] leading-[1.5] text-text"
+                />
+              )}
             </li>
           ))}
         </ol>
@@ -170,7 +193,7 @@ export function HomeHowToMobile() {
         y={7314}
         w={290}
         h={72}
-        z={3}
+        z={8}
         className="flex items-center gap-[10px] rounded-[10px] border border-white bg-white/20 px-4 py-[16px] backdrop-blur-[12px]"
       >
         <img
@@ -180,9 +203,16 @@ export function HomeHowToMobile() {
           height={35}
           className="size-[35px]"
         />
-        <p className="text-[13px] font-medium leading-[1.5] text-white">
-          {copy.howAccess}
-        </p>
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.howAccess}
+            className="text-[13px] font-medium leading-[1.5] text-white"
+          />
+        ) : (
+          <p className="text-[13px] font-medium leading-[1.5] text-white">
+            {copy.howAccess}
+          </p>
+        )}
       </Layer>
     </>
   );

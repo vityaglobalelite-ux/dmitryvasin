@@ -3,7 +3,7 @@
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
-import { homeDesktopBreaks, homeT } from "@/lib/catalog/home-copy";
+import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 export function HomeSupportDesktop() {
@@ -49,8 +49,10 @@ export function HomeSupportDesktop() {
 }
 
 export function HomeSupportMobile() {
-  const { copy } = homeT(useLocale());
+  const locale = useLocale();
+  const { copy } = homeT(locale);
   const routes = useLocalizedRoutes();
+  const ru = locale === "ru";
 
   return (
     <>
@@ -62,12 +64,20 @@ export function HomeSupportMobile() {
         z={2}
         className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)]"
       >
-        <h2 className="absolute left-[15px] top-5 w-[290px] text-[24px] font-medium leading-[1.2] text-white">
-          {copy.supportTitle}
-        </h2>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeMobileBreaks.supportTitle}
+            className="absolute left-[15px] top-5 w-[290px] text-[24px] font-medium leading-[1.2] text-white"
+          />
+        ) : (
+          <h2 className="absolute left-[15px] top-5 w-[290px] text-[24px] font-medium leading-[1.2] text-white">
+            {copy.supportTitle}
+          </h2>
+        )}
         <Button
           href={routes.accountSupport}
-          className="absolute left-[15px] top-[138px] h-[50px] w-[259px] px-0 text-[13px]"
+          className="absolute left-[15px] top-[138px] h-[50px] w-[259px] px-0 text-[13px] whitespace-nowrap"
         >
           {copy.supportCta}
         </Button>

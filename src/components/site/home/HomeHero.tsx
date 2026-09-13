@@ -209,7 +209,7 @@ export function HomeHeroMobile() {
         className="pointer-events-none absolute left-[-170.98px] top-0 z-[1] h-[618px] w-[665px] max-w-none"
       />
 
-      <p className="absolute left-5 top-[69px] z-[3] bg-gradient-to-r from-plum to-[#762655] bg-clip-text text-[55px] font-semibold uppercase leading-none tracking-[-2.2px] text-transparent">
+      <p className="absolute left-5 top-[105.5px] z-[3] -translate-y-1/2 whitespace-nowrap bg-gradient-to-r from-[#4c0d32] to-[#762655] bg-clip-text text-[54.996px] font-semibold uppercase leading-none tracking-[-2.1998px] text-transparent">
         {copy.look}
       </p>
       <img
@@ -217,61 +217,109 @@ export function HomeHeroMobile() {
         alt=""
         width={23}
         height={23}
-        className="absolute top-[90.74px] z-[4] size-[22.87px]"
+        className="pointer-events-none absolute top-[100.5px] z-[4] size-[22.866px]"
         style={{ left: ru ? 122.18 : 141.48 }}
       />
+
       <div
-        className={`absolute left-5 top-[132px] z-[5] h-[71px] w-[249px] rounded-[20px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+        className={`absolute left-5 top-[132px] z-[5] flex h-[71px] w-[249px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
-        <p className="text-[13px] leading-[1.3] text-text">
-          <span className="font-bold">{copy.bubbleLookLead}</span>
-          {copy.bubbleLookRest}
+        <p className="text-[11px] leading-[1.5] text-text">
+          {ru
+            ? "Включай обучающие видео из\u00a0любой точки мира, с\u00a0любого гаджета и\u00a0разбирай движения вместе со\u00a0мной."
+            : copy.bubbleLook}
         </p>
       </div>
 
-      <div className="absolute left-[30px] top-[225px] z-[3] h-[88.08px] w-[299.5px]">
-        <p className="absolute left-[8.36px] top-[7.11px] text-[55px] font-semibold uppercase leading-none tracking-[-2.2px] text-plum/50">
-          {copy.repeat}
-        </p>
-        <p
-          className="absolute left-[6.08px] top-[15.18px] -rotate-3 bg-clip-text text-[55px] font-semibold uppercase leading-none tracking-[-2.2px] text-transparent"
-          style={{ backgroundImage: "linear-gradient(90deg, #762655, #4c0d32)" }}
-        >
-          {copy.repeat}
-        </p>
+      <div
+        className="absolute left-[38.36px] top-[268.15px] z-[3] flex h-[73.914px] -translate-y-1/2 items-center justify-center"
+        style={{ width: ru ? 290.229 : 189.3 }}
+      >
+        <div className="rotate-[-0.18deg]">
+          <p className="whitespace-nowrap text-[54.996px] font-semibold uppercase leading-none tracking-[-2.1998px] text-[rgba(76,13,50,0.6)] opacity-50">
+            {copy.repeat}
+          </p>
+        </div>
       </div>
       <div
-        className={`absolute left-[79px] top-[300px] z-[5] h-[54px] w-[220px] rounded-[20px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+        className="absolute left-[36.08px] top-[269.04px] z-[3] flex h-[88.077px] -translate-y-1/2 items-center justify-center"
+        style={{ width: ru ? 293.423 : 191.4 }}
       >
-        <p className="text-[13px] leading-[1.3] text-text">
-          <span className="font-bold">{copy.bubbleDoLead}</span>
-          {copy.bubbleDoRest}
+        <div className="-rotate-3">
+          <p
+            className="whitespace-nowrap bg-clip-text text-[54.996px] font-semibold uppercase leading-none tracking-[-2.1998px] text-transparent"
+            style={{
+              backgroundImage:
+                "linear-gradient(90deg, rgb(118, 38, 85) 0%, rgb(76, 13, 50) 100%), linear-gradient(90deg, rgb(76, 13, 50) 0%, rgb(76, 13, 50) 100%)",
+            }}
+          >
+            {copy.repeat}
+          </p>
+        </div>
+      </div>
+      <div className="absolute left-[30px] top-[284.75px] z-[4] flex size-[19.662px] items-center justify-center">
+        <img
+          src={homeAssets.decoQuote}
+          alt=""
+          width={19}
+          height={19}
+          className="size-[18.708px] -rotate-3"
+        />
+      </div>
+      <div
+        className="absolute top-[226.54px] z-[4] flex size-[19.662px] items-center justify-center"
+        style={{ left: ru ? 302.01 : 201.41 }}
+      >
+        <img
+          src={`${homeAssets.decoQuoteTr}?v=figma`}
+          alt=""
+          width={20}
+          height={20}
+          className="size-[18.708px] max-w-none"
+        />
+      </div>
+
+      <div
+        className={`absolute left-[79px] top-[300px] z-[5] flex h-[54px] w-[220px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+      >
+        <p className="text-[11px] leading-[1.5] text-text">
+          {ru
+            ? "Выполняй движения шаг\u00a0за\u00a0шагом, последовательно и\u00a0анализируя."
+            : copy.bubbleDoLead + copy.bubbleDoRest}
         </p>
       </div>
 
       <p
-        className="absolute left-[121px] top-[386px] z-[3] bg-clip-text text-[55px] font-bold uppercase leading-none tracking-[-2.2px] text-transparent"
-        style={{ backgroundImage: "var(--brand-gradient)" }}
+        className="absolute left-[121px] top-[386px] z-[3] whitespace-nowrap bg-clip-text text-[54.996px] font-bold uppercase leading-none tracking-[-2.1998px] text-transparent"
+        style={{
+          backgroundImage:
+            "linear-gradient(139.43deg, rgb(219, 12, 37) 2.6%, rgb(224, 76, 41) 36.63%, rgb(239, 185, 145) 105.73%), linear-gradient(90deg, rgb(76, 13, 50) 0%, rgb(76, 13, 50) 100%)",
+        }}
       >
         {copy.dance}
       </p>
+
       <div
-        className={`absolute left-[93px] top-[454px] z-[5] h-[54px] w-[247px] rounded-[20px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+        className={`absolute left-[93px] top-[454px] z-[5] flex h-[54px] w-[247px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
-        <p className="text-[13px] leading-[1.3] text-text">
-          <span className="font-bold">{copy.bubbleDanceLead}</span>
-          {copy.bubbleDanceRest}
+        <p className="text-[11px] leading-[1.5] text-text">
+          {ru
+            ? "Собирай движения в\u00a0танец и\u00a0двигайся уверенно и\u00a0в\u00a0удовольствие!"
+            : copy.bubbleDanceLead + copy.bubbleDanceRest}
         </p>
       </div>
-      <img
-        src={homeAssets.decoArrow}
-        alt=""
-        width={101}
-        height={90}
-        className="pointer-events-none absolute left-[13px] top-[514.46px] z-[4] h-[89.81px] w-[100.89px]"
-      />
+
+      <div className="pointer-events-none absolute left-[13px] top-[514.46px] z-[4] h-[89.81px] w-[100.89px]">
+        <div className="absolute inset-[-1.83%_-6.28%_-3.2%_-1.07%]">
+          <img
+            src={`${homeAssets.decoArrowMobile}?v=rot`}
+            alt=""
+            className="block size-full max-w-none"
+          />
+        </div>
+      </div>
       <Layer x={50} y={546} w={260} h={50} z={6}>
-        <Button href={routes.catalog} className="h-[50px] w-[260px] px-0 text-[13px]">
+        <Button href={routes.catalog} className="h-[50px] w-[260px] px-0 text-[13px] font-semibold">
           {copy.chooseVideos}
         </Button>
       </Layer>

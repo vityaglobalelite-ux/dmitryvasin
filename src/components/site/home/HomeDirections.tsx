@@ -7,6 +7,7 @@ import {
   homeDirections,
   homeDirectionsSubLines,
   homeDirectionsTitleLines,
+  homeMobileBreaks,
   homeT,
 } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
@@ -252,6 +253,7 @@ export function HomeDirectionsDesktop() {
 export function HomeDirectionsMobile() {
   const locale = useLocale();
   const { copy, directions } = homeT(locale);
+  const ru = locale === "ru";
   const cardY = [1651, 1780, 1909, 2038, 2167] as const;
   const cardH = [121, 121, 121, 121, 141] as const;
   const keys = [
@@ -270,12 +272,27 @@ export function HomeDirectionsMobile() {
         className="pointer-events-none absolute left-0 top-[1483px] z-0 h-[1273px] w-[360px] object-cover"
       />
       <Layer x={21} y={1454} w={305} h={177} z={2}>
-        <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
-          {copy.directionsTitle}
-        </h2>
-        <p className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text">
-          {copy.directionsSub}
-        </p>
+        {ru ? (
+          <FigLines
+            as="h2"
+            lines={homeMobileBreaks.dirTitle}
+            className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text"
+          />
+        ) : (
+          <h2 className="text-[24px] font-medium leading-[1.3] tracking-[-0.72px] text-text">
+            {copy.directionsTitle}
+          </h2>
+        )}
+        {ru ? (
+          <FigLines
+            lines={homeMobileBreaks.dirSub}
+            className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text"
+          />
+        ) : (
+          <p className="mt-[10px] text-[16px] font-medium leading-[1.3] text-text">
+            {copy.directionsSub}
+          </p>
+        )}
       </Layer>
 
       {directions.map((item, i) => (
@@ -291,9 +308,16 @@ export function HomeDirectionsMobile() {
           <h3 className="text-[16px] font-medium leading-[1.3] text-text">
             {item.title}
           </h3>
-          <p className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text">
-            {item.text}
-          </p>
+          {ru ? (
+            <FigLines
+              lines={homeMobileBreaks.dirTexts[i]}
+              className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text"
+            />
+          ) : (
+            <p className="mt-[10px] max-w-[210px] text-[13px] leading-[1.5] text-text">
+              {item.text}
+            </p>
+          )}
           <img
             src={photos[keys[i]]}
             alt=""
