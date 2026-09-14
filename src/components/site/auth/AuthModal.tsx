@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type PointerEvent,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -28,10 +29,7 @@ import {
   mapResetError,
   mapSignupError,
 } from "@/components/site/auth/mapError";
-import {
-  isCatalogAuthPath,
-  safeReturnUrl,
-} from "@/components/site/auth/returnUrl";
+import { safeReturnUrl } from "@/components/site/auth/returnUrl";
 import { Button } from "@/components/site/ui/Button";
 import { mergeGuestCartOnLogin } from "@/lib/catalog/cart";
 import { useAuthUser } from "@/lib/catalog/hooks";
@@ -59,35 +57,11 @@ type AuthModalContextValue = {
   setMode: (mode: AuthMode) => void;
 };
 
-const STORAGE_KEY = "catalog.auth-modal.v1";
 const CLOSE_MS = 280;
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 const AuthModalContext = createContext<AuthModalContextValue | null>(null);
-
-function isAuthMode(value: unknown): value is AuthMode {
-  return value === "login" || value === "signup" || value === "forgot";
-}
-
-export function queueAuthModal(mode: AuthMode): void {
-  if (typeof window === "undefined") return;
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ mode }));
-}
-
-function consumeQueuedAuthMode(): AuthMode | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    sessionStorage.removeItem(STORAGE_KEY);
-    const parsed = JSON.parse(raw) as { mode?: unknown };
-    return isAuthMode(parsed.mode) ? parsed.mode : null;
-  } catch {
-    sessionStorage.removeItem(STORAGE_KEY);
-    return null;
-  }
-}
 
 export function useAuthModal(): AuthModalContextValue {
   const ctx = useContext(AuthModalContext);
@@ -98,7 +72,6 @@ export function useAuthModal(): AuthModalContextValue {
 }
 
 export function AuthModalProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [mode, setMode] = useState<AuthMode>("login");
@@ -108,15 +81,12 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const closingRef = useRef(false);
   const openRef = useRef(false);
 
-  openRef.current = open;
-  closingRef.current = closing;
-
   const openAuth = useCallback((next: AuthMode = "login", options?: OpenAuthOptions) => {
     dismissRef.current = options?.onDismiss;
     closeReasonRef.current = "dismiss";
     setMode(next);
-    setClosing(false);
     closingRef.current = false;
+    setClosing(false);
     if (!openRef.current) setSession((value) => value + 1);
     openRef.current = true;
     setOpen(true);
@@ -139,17 +109,12 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   }, [closeAuth, user]);
 
   useEffect(() => {
-    if (isCatalogAuthPath(pathname)) return;
-    const queued = consumeQueuedAuthMode();
-    if (queued) openAuth(queued);
-  }, [openAuth, pathname]);
-
-  useEffect(() => {
     if (!closing) return;
     const timer = window.setTimeout(() => {
       const dismiss = dismissRef.current;
       const reason = closeReasonRef.current;
       dismissRef.current = undefined;
+      openRef.current = false;
       closingRef.current = false;
       setOpen(false);
       setClosing(false);
@@ -202,6 +167,28 @@ function AuthDialog({
   const copy = authT(useLocale());
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const backdropPressRef = useRef(false);
+
+  function isInsideDialog(target: EventTarget | null): boolean {
+    return target instanceof Node && Boolean(panelRef.current?.contains(target));
+  }
+
+  function onBackdropPointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    backdropPressRef.current = !isInsideDialog(event.target);
+  }
+
+  function onBackdropPointerUp(event: PointerEvent<HTMLDivElement>) {
+    const startedOnBackdrop = backdropPressRef.current;
+    backdropPressRef.current = false;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    if (!startedOnBackdrop || isInsideDialog(event.target)) return;
+    onDismiss();
+  }
+
+  function onBackdropPointerCancel() {
+    backdropPressRef.current = false;
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -224,14 +211,16 @@ function AuthDialog({
   }, [onDismiss, open]);
 
   useEffect(() => {
-    if (!open || closing) return;
+    if (!open) return;
     const root = panelRef.current;
     if (!root) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const focusables = () =>
-      [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
-        (el) => el.offsetParent !== null || el === document.activeElement,
-      );
+      [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => {
+        if (el.tabIndex < 0) return false;
+        if (el.hasAttribute("disabled")) return false;
+        return true;
+      });
     const initial =
       root.querySelector<HTMLElement>("input:not([type='hidden'])") ??
       focusables()[0];
@@ -259,7 +248,7 @@ function AuthDialog({
       document.removeEventListener("keydown", onKeyDown);
       previouslyFocused?.focus();
     };
-  }, [closing, open, session]);
+  }, [open, session]);
 
   useEffect(() => {
     if (!open || closing) return;
@@ -268,28 +257,27 @@ function AuthDialog({
     next?.focus();
   }, [closing, mode, open]);
 
+  useEffect(() => {
+    if (open) return;
+    backdropPressRef.current = false;
+  }, [open]);
+
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
     <div
       className={`fixed inset-0 z-[200] overflow-y-auto bg-black/30 ${closing ? "auth-backdrop-out" : "auth-backdrop-in"}`}
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onDismiss();
-      }}
+      onPointerDownCapture={onBackdropPointerDown}
+      onPointerUp={onBackdropPointerUp}
+      onPointerCancel={onBackdropPointerCancel}
     >
-      <div
-        className="flex min-h-full items-center justify-center p-5"
-        onMouseDown={(event) => {
-          if (event.target === event.currentTarget) onDismiss();
-        }}
-      >
+      <div className="flex min-h-full items-center justify-center p-5">
         <div
           ref={panelRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
           className={`w-full max-w-[462px] max-[600px]:max-w-[320px] ${closing ? "auth-panel-out" : "auth-panel-in"}`}
-          onMouseDown={(event) => event.stopPropagation()}
         >
           <button type="button" className="sr-only" onClick={onDismiss}>
             {copy.closeAria}
@@ -661,6 +649,7 @@ export function AuthDeepLink({ mode }: { mode: AuthMode }) {
   const searchParams = useSearchParams();
   const locale = useLocale();
   const routes = useLocalizedRoutes();
+  const { openAuth } = useAuthModal();
   const { data: user, loading } = useAuthUser();
   const started = useRef(false);
 
@@ -671,10 +660,10 @@ export function AuthDeepLink({ mode }: { mode: AuthMode }) {
       router.replace(safeReturnUrl(searchParams.get("returnUrl"), locale));
       return;
     }
-    queueAuthModal(mode);
+    openAuth(mode);
     const raw = searchParams.get("returnUrl");
     router.replace(raw ? safeReturnUrl(raw, locale, routes.home) : routes.home);
-  }, [loading, locale, mode, router, routes.home, searchParams, user]);
+  }, [loading, locale, mode, openAuth, router, routes.home, searchParams, user]);
 
   return (
     <AuthScreenSkeleton
