@@ -14,6 +14,7 @@ import {
   skillIconSrc,
   typeBadgeIcon,
 } from "@/components/site/catalog/display";
+import { productAssets } from "@/components/site/product/assets";
 import { Button } from "@/components/site/ui/Button";
 import { productCopy } from "@/lib/catalog/locale";
 import {
@@ -28,6 +29,7 @@ type ProductCardProps = {
   product: Product;
   onAdd?: (product: Product) => void;
   adding?: boolean;
+  inCart?: boolean;
 };
 
 /** Column count follows the grid width, not the viewport — 3-up only when ~467px cards still fit. */
@@ -51,7 +53,12 @@ export function CatalogProductGrid({
  * Public product card. Wave 2B restyles 1:1 to Figma `677:819` / `676:510`.
  * Keep this export signature stable.
  */
-export function ProductCard({ product, onAdd, adding = false }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onAdd,
+  adding = false,
+  inCart = false,
+}: ProductCardProps) {
   const routes = useLocalizedRoutes();
   const href = routes.product(product.id);
   const compact = product.type === "research";
@@ -62,9 +69,21 @@ export function ProductCard({ product, onAdd, adding = false }: ProductCardProps
       onClick={rememberReturnTo}
     >
       {compact ? (
-        <CompactBody product={product} href={href} onAdd={onAdd} adding={adding} />
+        <CompactBody
+          product={product}
+          href={href}
+          onAdd={onAdd}
+          adding={adding}
+          inCart={inCart}
+        />
       ) : (
-        <CoverBody product={product} href={href} onAdd={onAdd} adding={adding} />
+        <CoverBody
+          product={product}
+          href={href}
+          onAdd={onAdd}
+          adding={adding}
+          inCart={inCart}
+        />
       )}
     </article>
   );
@@ -75,11 +94,13 @@ function CoverBody({
   href,
   onAdd,
   adding,
+  inCart,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
   adding: boolean;
+  inCart: boolean;
 }) {
   const locale = useLocale();
   const t = useCatalogT();
@@ -112,7 +133,7 @@ function CoverBody({
       </Link>
       <div className="flex min-h-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
         <MetaRow product={product} />
-        <Link href={href} className="flex flex-col gap-2.5">
+        <Link href={href} className="flex min-h-0 flex-1 flex-col gap-2.5">
           <h2 className="line-clamp-2 min-h-[calc(1.2em*2)] overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-black transition-opacity duration-150 group-hover:opacity-90 max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
             {copy.title}
           </h2>
@@ -120,7 +141,13 @@ function CoverBody({
             {copy.short}
           </p>
         </Link>
-        <PriceRow product={product} href={href} onAdd={onAdd} adding={adding} />
+        <PriceRow
+          product={product}
+          href={href}
+          onAdd={onAdd}
+          adding={adding}
+          inCart={inCart}
+        />
       </div>
     </>
   );
@@ -131,11 +158,13 @@ function CompactBody({
   href,
   onAdd,
   adding,
+  inCart,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
   adding: boolean;
+  inCart: boolean;
 }) {
   const locale = useLocale();
   const t = useCatalogT();
@@ -175,7 +204,13 @@ function CompactBody({
         {copy.short}
       </p>
       <MetaRow product={product} />
-      <PriceRow product={product} href={href} onAdd={onAdd} adding={adding} />
+      <PriceRow
+        product={product}
+        href={href}
+        onAdd={onAdd}
+        adding={adding}
+        inCart={inCart}
+      />
     </div>
   );
 }
@@ -228,7 +263,7 @@ function MetaRow({ product }: { product: Product }) {
   const difficulty = parseDifficulty(product.level);
 
   return (
-    <div className="flex flex-wrap items-center gap-3.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-1.5">
+    <div className="flex min-h-[calc(40px*2+14px)] flex-wrap content-start items-start gap-3.5 max-[600px]:min-h-0 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-1.5">
       <div className="flex flex-wrap items-center gap-3.5 max-[600px]:gap-1.5">
         {skills.map((skill) => {
           const icon = skillIconSrc(skill);
@@ -268,11 +303,13 @@ function PriceRow({
   href,
   onAdd,
   adding,
+  inCart,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
   adding: boolean;
+  inCart: boolean;
 }) {
   const t = useCatalogT();
   return (
@@ -293,23 +330,62 @@ function PriceRow({
         >
           {t.catalog.details}
         </Button>
-        <button
-          type="button"
-          onClick={() => onAdd?.(product)}
-          disabled={!onAdd || adding}
-          aria-label={t.catalog.addToCart}
-          aria-busy={adding}
-          className="size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50 @max-[466px]:size-[50px] max-[600px]:size-[50px]"
-        >
-          <img
-            src={catalogCardAssets.cartAdd}
-            alt=""
-            width={60}
-            height={60}
-            className="size-[60px] @max-[466px]:size-[50px] max-[600px]:size-[50px]"
-          />
-        </button>
+        <CartButton product={product} onAdd={onAdd} adding={adding} inCart={inCart} />
       </div>
     </div>
+  );
+}
+
+function CartButton({
+  product,
+  onAdd,
+  adding,
+  inCart,
+}: {
+  product: Product;
+  onAdd?: (product: Product) => void;
+  adding: boolean;
+  inCart: boolean;
+}) {
+  const t = useCatalogT();
+  const routes = useLocalizedRoutes();
+  const frame =
+    "size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 @max-[466px]:size-[50px] max-[600px]:size-[50px]";
+
+  if (inCart) {
+    return (
+      <Link
+        href={routes.cart}
+        aria-label={t.product.inCart}
+        className={`${frame} grid place-items-center bg-[image:var(--brand-gradient)]`}
+      >
+        <img
+          src={productAssets.checkWhite}
+          alt=""
+          width={17}
+          height={17}
+          className="size-[17px]"
+        />
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => onAdd?.(product)}
+      disabled={!onAdd || adding}
+      aria-label={t.catalog.addToCart}
+      aria-busy={adding}
+      className={`${frame} disabled:pointer-events-none disabled:opacity-50`}
+    >
+      <img
+        src={catalogCardAssets.cartAdd}
+        alt=""
+        width={60}
+        height={60}
+        className="size-[60px] @max-[466px]:size-[50px] max-[600px]:size-[50px]"
+      />
+    </button>
   );
 }

@@ -2,14 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {
-  useCallback,
-  useEffect,
-  useId,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { useCallback, useId, useMemo, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import {
@@ -31,7 +24,6 @@ import {
   ProductSkeleton,
 } from "@/components/site/product/ProductStates";
 import { SiteTrail } from "@/components/site/SiteTrail";
-import { getGuestCart } from "@/lib/catalog/cart";
 import { formatDuration, formatPriceMinor } from "@/lib/catalog/format";
 import { useAuthUser, useProduct, useProducts } from "@/lib/catalog/hooks";
 import { catalogT } from "@/lib/catalog/i18n";
@@ -42,12 +34,11 @@ import {
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
 import { CATALOG_STATIC_PARAM_STUB } from "@/lib/catalog/static-params";
-import { listCartItems } from "@/lib/catalog/repo/cart";
 import {
   isHomeHref,
   useCatalogReturnHref,
 } from "@/lib/catalog/return-to";
-import { useAddToCart } from "@/lib/catalog/use-add-to-cart";
+import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
 import type { Locale, Product, ProductType } from "@/lib/catalog/types";
 
 const SKILL_ICONS = [productAssets.brain, productAssets.foot] as const;
@@ -102,7 +93,6 @@ export function ProductPageView() {
     <ProductLoaded
       key={productQuery.data.id}
       product={productQuery.data}
-      signedIn={Boolean(auth.data)}
       authReady={!auth.loading}
     />
   );
@@ -110,11 +100,9 @@ export function ProductPageView() {
 
 function ProductLoaded({
   product,
-  signedIn,
   authReady,
 }: {
   product: Product;
-  signedIn: boolean;
   authReady: boolean;
 }) {
   const locale = useLocale();
@@ -131,7 +119,7 @@ function ProductLoaded({
       : layout !== "course" &&
         Boolean(copy.description) &&
         copy.description !== copy.short;
-  const cart = useProductCart(product.id, signedIn, authReady);
+  const cart = useProductCart(product.id, authReady);
 
   return (
     <main className="relative flex flex-1 flex-col overflow-x-clip bg-white">
@@ -174,6 +162,7 @@ function ProductLoaded({
 
         <RelatedProducts
           currentId={product.id}
+          pendingId={cart.pendingId}
           onAdd={(item) => {
             void cart.add(item.id);
           }}
@@ -389,6 +378,7 @@ function MetaChip({ children }: { children: ReactNode }) {
 type ProductCart = {
   added: boolean;
   pending: boolean;
+  pendingId: string | null;
   ready: boolean;
   buy: () => Promise<void>;
   add: (productId: string) => Promise<void>;
@@ -398,52 +388,18 @@ type ProductCart = {
 
 function useProductCart(
   productId: string,
-  signedIn: boolean,
   authReady: boolean,
 ): ProductCart {
   const addToCart = useAddToCart();
-  const [added, setAdded] = useState(false);
-  const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (!authReady) return;
-    let cancelled = false;
-    const mark = (value: boolean) => {
-      if (!cancelled) setAdded(value);
-    };
-
-    if (signedIn) {
-      listCartItems()
-        .then((items) => mark(items.some((item) => item.productId === productId)))
-        .catch(() => mark(getGuestCart().some((item) => item.productId === productId)));
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    const timer = window.setTimeout(() => {
-      mark(getGuestCart().some((item) => item.productId === productId));
-    }, 0);
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [authReady, productId, signedIn]);
+  const inCartIds = useCartProductIds();
+  const added = inCartIds.has(productId);
 
   const add = useCallback(
     async (id: string) => {
-      if (pending || !authReady) return;
-      setPending(true);
-      try {
-        const result = await addToCart.add(id);
-        if (id === productId && (result === "added" || result === "exists")) {
-          setAdded(true);
-        }
-      } finally {
-        setPending(false);
-      }
+      if (addToCart.pendingId || !authReady) return;
+      await addToCart.add(id);
     },
-    [addToCart, authReady, pending, productId],
+    [addToCart, authReady],
   );
 
   const buy = useCallback(async () => {
@@ -452,7 +408,8 @@ function useProductCart(
 
   return {
     added,
-    pending,
+    pending: addToCart.pendingId === productId,
+    pendingId: addToCart.pendingId,
     ready: authReady && addToCart.ready,
     buy,
     add,
@@ -497,23 +454,39 @@ function BuyRow({
           </div>
         ) : null}
         <div className="flex flex-wrap items-center gap-5 max-[600px]:gap-2.5">
-          <Button
-            type="button"
-            onClick={() => {
-              void cart.buy();
-            }}
-            disabled={!cart.ready || cart.pending}
-            className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
-          >
-            {label}
-            <img
-              src={productAssets.cart}
-              alt=""
-              width={27}
-              height={26}
-              className="h-[26px] w-[27px] max-[600px]:h-4 max-[600px]:w-[17px]"
-            />
-          </Button>
+          {cart.added ? (
+            <Button
+              href={routes.cart}
+              className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
+            >
+              {label}
+              <img
+                src={productAssets.checkWhite}
+                alt=""
+                width={17}
+                height={17}
+                className="size-[17px]"
+              />
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => {
+                void cart.buy();
+              }}
+              disabled={!cart.ready || cart.pending}
+              className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
+            >
+              {label}
+              <img
+                src={productAssets.cart}
+                alt=""
+                width={27}
+                height={26}
+                className="h-[26px] w-[27px] max-[600px]:h-4 max-[600px]:w-[17px]"
+              />
+            </Button>
+          )}
           {secondary ? (
             <Button
               type="button"
@@ -661,11 +634,14 @@ function ProductDescription({
 function RelatedProducts({
   currentId,
   onAdd,
+  pendingId = null,
 }: {
   currentId: string;
   onAdd?: (product: Product) => void;
+  pendingId?: string | null;
 }) {
   const t = useCatalogT();
+  const inCartIds = useCartProductIds();
   const { data, loading } = useProducts();
   const related = useMemo(
     () => data.filter((item) => item.id !== currentId).slice(0, 3),
@@ -685,7 +661,13 @@ function RelatedProducts({
               <ProductCardSkeleton key={index} />
             ))
           : related.map((item) => (
-              <ProductCard key={item.id} product={item} onAdd={onAdd} />
+              <ProductCard
+                key={item.id}
+                product={item}
+                onAdd={onAdd}
+                adding={pendingId === item.id}
+                inCart={inCartIds.has(item.id)}
+              />
             ))}
       </CatalogProductGrid>
     </section>

@@ -24,7 +24,7 @@ export function ProductCardSkeleton() {
     >
       <Skeleton className="aspect-[467/263] w-full rounded-none max-[600px]:aspect-[320/180]" />
       <div className="flex flex-col gap-4 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
-        <div className="flex gap-2">
+        <div className="flex min-h-[calc(40px*2+14px)] flex-wrap content-start items-start gap-2 max-[600px]:min-h-0">
           <Skeleton className="h-10 w-[144px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[104px]" />
           <Skeleton className="h-10 w-[102px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[74px]" />
         </div>

@@ -126,7 +126,7 @@ export function useCart() {
       } else {
         removeGuestItem(productId);
       }
-      emitCartChanged();
+      emitCartChanged({ removed: productId });
       setItems((current) => current.filter((item) => item.productId !== productId));
     },
     [auth.data],

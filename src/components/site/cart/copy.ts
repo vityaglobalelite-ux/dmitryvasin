@@ -31,6 +31,7 @@ const ru = {
   modalBody:
     "Добавьте ещё обучающие видео в заказ — скидка считается по числу разных позиций.",
   modalClose: "Закрыть",
+  modalContinue: "Продолжить выбор",
   checkoutTitle: "Оформление заказа",
   checkoutSubtitle: "Проверьте состав заказа и перейдите к оплате",
   checkoutEmptyTitle: "В заказе пока ничего нет",
@@ -82,6 +83,7 @@ const en = {
   modalBody:
     "Add more training videos to the order — the discount is based on the number of different items.",
   modalClose: "Close",
+  modalContinue: "Keep browsing",
   checkoutTitle: "Checkout",
   checkoutSubtitle: "Review the order and continue to payment",
   checkoutEmptyTitle: "There is nothing in the order yet",

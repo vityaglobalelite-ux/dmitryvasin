@@ -10,7 +10,7 @@ import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { homeT } from "@/lib/catalog/home-copy";
 import { useProducts } from "@/lib/catalog/hooks";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
-import { useAddToCart } from "@/lib/catalog/use-add-to-cart";
+import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
 import type { Product, ProductType } from "@/lib/catalog/types";
 
 const DESKTOP_COUNT = 3;
@@ -33,6 +33,7 @@ function useHomeCatalogRail(count: number) {
   const routes = useLocalizedRoutes();
   const { data, loading, error } = useProducts();
   const addToCart = useAddToCart();
+  const inCartIds = useCartProductIds();
   const [selectedType, setSelectedType] = useState<HomeFilter>(DEFAULT_FILTER);
   const [displayedType, setDisplayedType] = useState<HomeFilter>(DEFAULT_FILTER);
   const [cardsVisible, setCardsVisible] = useState(true);
@@ -87,6 +88,7 @@ function useHomeCatalogRail(count: number) {
     cardsVisible,
     onAdd,
     pendingId: addToCart.pendingId,
+    inCartIds,
     modalOpen: addToCart.modalOpen,
     closeModal: addToCart.closeModal,
   };
@@ -188,6 +190,7 @@ export function HomeCatalogRailDesktop() {
                   product={product}
                   onAdd={rail.onAdd}
                   adding={rail.pendingId === product.id}
+                  inCart={rail.inCartIds.has(product.id)}
                 />
               </div>
             ))}
@@ -290,6 +293,7 @@ export function HomeCatalogRailMobile() {
                     product={product}
                     onAdd={rail.onAdd}
                     adding={rail.pendingId === product.id}
+                    inCart={rail.inCartIds.has(product.id)}
                   />
                 </Layer>
               ))}

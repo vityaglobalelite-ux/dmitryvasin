@@ -29,7 +29,7 @@ import {
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
 import { listPublishedProducts } from "@/lib/catalog/repo/products";
-import { useAddToCart } from "@/lib/catalog/use-add-to-cart";
+import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
 import type { Product, ProductType } from "@/lib/catalog/types";
 
 const SKELETON_COUNT = 6;
@@ -54,6 +54,7 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
   const type = parseProductType(searchParams.get("type"));
   const products = useProducts(type ? { type } : {});
   const addToCart = useAddToCart();
+  const inCartIds = useCartProductIds();
   const [presentTypes, setPresentTypes] = useState<Set<ProductType>>(
     () => new Set(),
   );
@@ -90,6 +91,7 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
         error={products.error}
         products={products.data}
         pendingId={addToCart.pendingId}
+        inCartIds={inCartIds}
         onAdd={(product) => {
           void addToCart.add(product.id);
         }}
@@ -107,6 +109,7 @@ function CatalogFrame({
   error = null,
   products = [],
   pendingId = null,
+  inCartIds,
   onAdd,
   onRetry,
 }: {
@@ -116,6 +119,7 @@ function CatalogFrame({
   error?: Error | null;
   products?: Product[];
   pendingId?: string | null;
+  inCartIds?: Set<string>;
   onAdd?: (product: Product) => void;
   onRetry?: () => void;
 }) {
@@ -175,6 +179,7 @@ function CatalogFrame({
               product={product}
               onAdd={onAdd}
               adding={pendingId === product.id}
+              inCart={inCartIds?.has(product.id)}
             />
           ))}
         </CatalogProductGrid>
