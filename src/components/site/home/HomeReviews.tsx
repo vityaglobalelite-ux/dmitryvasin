@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef, useState } from "react";
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
@@ -22,15 +21,12 @@ function ReviewCard({
   avatar,
   compact,
 }: ReviewItem & { compact?: boolean }) {
-  const [open, setOpen] = useState(false);
-  const { copy } = homeT(useLocale());
-
   return (
     <article
       className={
         compact
-          ? "flex h-full flex-col rounded-[10px] bg-white p-[15px]"
-          : "flex h-full flex-col rounded-[30px] bg-white px-[30px] pb-8 pt-[30px]"
+          ? "flex w-full flex-col items-start gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
+          : "flex w-full flex-col rounded-[30px] bg-light-gray px-[30px] pb-8 pt-[30px]"
       }
     >
       <img
@@ -38,41 +34,23 @@ function ReviewCard({
         alt=""
         width={compact ? 60 : 206}
         height={compact ? 60 : 206}
-        className={compact ? "size-[60px] rounded-full object-cover" : "size-[206px] rounded-full object-cover"}
+        className={compact ? "size-[60px] shrink-0 rounded-full object-cover" : "size-[206px] rounded-full object-cover"}
       />
-      <h3
-        className={
-          compact
-            ? "mt-[30px] text-[16px] font-medium leading-[1.3] text-text"
-            : "mt-[30px] text-[24px] font-medium leading-[1.2] text-text"
-        }
-      >
-        {name}
-      </h3>
-      <p className={compact ? "mt-2.5 text-[13px] leading-[1.5] text-text/60" : "mt-2.5 text-[14px] leading-[1.5] text-text/60"}>
-        {role}
+      {compact ? (
+        <div className="flex w-full flex-col gap-2.5 text-text">
+          <h3 className="text-[16px] font-medium leading-[1.3]">{name}</h3>
+          <p className="text-[13px] leading-[1.5] text-text/60">{role}</p>
+        </div>
+      ) : (
+        <>
+          <h3 className="mt-[30px] text-[24px] font-medium leading-[1.2] text-text">{name}</h3>
+          <p className="mt-2.5 text-[14px] leading-[1.5] text-text/60">{role}</p>
+        </>
+      )}
+      <p className={compact ? "text-[13px] leading-[1.5] text-text" : "mt-[30px] text-[16px] leading-[1.5] text-text"}>
+        {compact ? "„" : "“"}
+        {quote}
       </p>
-      <p
-        className={[
-          compact
-            ? "mt-6 text-[13px] leading-[1.5] text-text"
-            : "mt-[30px] text-[16px] leading-[1.5] text-text",
-          open ? "" : "line-clamp-6",
-        ].join(" ")}
-      >
-        “{quote}
-      </p>
-      <button
-        type="button"
-        className={
-          compact
-            ? "mt-2.5 self-start text-[13px] font-medium leading-[1.5] text-accent-orange underline underline-offset-2"
-            : "mt-2.5 self-start text-[16px] font-medium leading-[1.5] text-accent-orange underline underline-offset-2 transition-opacity hover:opacity-70"
-        }
-        onClick={() => setOpen((v) => !v)}
-      >
-        {open ? copy.readLess : copy.readMore}
-      </button>
     </article>
   );
 }
@@ -82,13 +60,6 @@ export function HomeReviewsDesktop() {
   const { copy, reviews } = homeT(locale);
   const routes = useLocalizedRoutes();
   const ru = locale === "ru";
-  const scroller = useRef<HTMLDivElement>(null);
-
-  const scrollBy = (dir: -1 | 1) => {
-    const el = scroller.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * 487, behavior: "smooth" });
-  };
 
   return (
     <>
@@ -175,45 +146,11 @@ export function HomeReviewsDesktop() {
             {copy.reviewsResults}
           </p>
         )}
-        <p className="mt-5 text-[24px] font-medium leading-[1.2] text-text">
-          {copy.reviewsHint}
-        </p>
       </Layer>
-      <button
-        type="button"
-        className="absolute left-[1620px] top-[7576px] z-[3] size-[50px] transition-transform hover:scale-105 active:scale-95"
-        aria-label="Предыдущие отзывы"
-        onClick={() => scrollBy(-1)}
-      >
-        <img
-          src={homeAssets.arrowReviews}
-          alt=""
-          width={50}
-          height={50}
-          className="size-[50px] -scale-x-100"
-        />
-      </button>
-      <button
-        type="button"
-        className="absolute left-[1680px] top-[7576px] z-[3] size-[50px] transition-transform hover:scale-105 active:scale-95"
-        aria-label="Следующие отзывы"
-        onClick={() => scrollBy(1)}
-      >
-        <img
-          src={homeAssets.arrowReviews}
-          alt=""
-          width={50}
-          height={50}
-          className="size-[50px]"
-        />
-      </button>
 
-      <div
-        ref={scroller}
-        className="absolute left-[240px] top-[7666px] z-[2] flex w-[1440px] gap-5 overflow-hidden"
-      >
+      <div className="absolute left-[240px] top-[7666px] z-[2] flex w-[1440px] items-start gap-5">
         {reviews.map((review) => (
-          <div key={review.name} className="h-[614px] w-[467px] shrink-0">
+          <div key={review.name} className="w-[467px] shrink-0">
             <ReviewCard {...review} />
           </div>
         ))}
@@ -284,24 +221,11 @@ export function HomeReviewsMobile() {
             {copy.reviewsResults}
           </p>
         )}
-        <div className="mt-5 flex items-center gap-2.5">
-          <span className="inline-flex size-[34px] items-center justify-center rounded-[17px] bg-white">
-            <img src={homeAssets.iconSwipe} alt="" width={16} height={16} className="size-4" />
-          </span>
-          {ru ? (
-            <FigLines
-              lines={homeMobileBreaks.reviewsSwipe}
-              className="text-[13px] leading-[1.5] text-text-dark"
-            />
-          ) : (
-            <p className="text-[13px] leading-[1.5] text-text-dark">{copy.reviewsSwipe}</p>
-          )}
-        </div>
       </Layer>
 
-      <div className="absolute left-5 top-[8953px] z-[2] flex w-[320px] gap-5 overflow-x-auto">
+      <div className="absolute left-5 top-[8953px] z-[2] flex w-[320px] items-start gap-5 overflow-x-auto">
         {reviews.map((review) => (
-          <div key={review.name} className="h-[492px] w-[290px] shrink-0">
+          <div key={review.name} className="w-[290px] shrink-0">
             <ReviewCard {...review} compact />
           </div>
         ))}
