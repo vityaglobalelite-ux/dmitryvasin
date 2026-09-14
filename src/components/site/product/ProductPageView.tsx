@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useId, useMemo, type ReactNode } from "react";
+import { useCallback, useId, useLayoutEffect, useMemo, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import {
@@ -33,6 +33,7 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
+import { scrollWindowToTop } from "@/lib/catalog/scroll-top";
 import { CATALOG_STATIC_PARAM_STUB } from "@/lib/catalog/static-params";
 import {
   isHomeHref,
@@ -85,6 +86,11 @@ export function ProductPageView() {
   const productQuery = useProduct(id);
   const auth = useAuthUser();
 
+  useLayoutEffect(() => {
+    if (!id) return;
+    scrollWindowToTop();
+  }, [id, productQuery.loading]);
+
   if (!id) return <ProductNotFound />;
   if (productQuery.loading) return <ProductSkeleton />;
   if (productQuery.error || !productQuery.data) return <ProductNotFound />;
@@ -122,7 +128,7 @@ function ProductLoaded({
   const cart = useProductCart(product.id, authReady);
 
   return (
-    <main className="relative flex flex-1 flex-col overflow-x-clip bg-white">
+    <main className="relative flex flex-1 flex-col overflow-x-clip bg-white [overflow-anchor:none]">
       <WholesaleModal open={cart.modalOpen} onClose={cart.closeModal} />
       <ProductHeroWash />
       <article className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">

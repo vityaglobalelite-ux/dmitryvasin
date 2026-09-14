@@ -7,6 +7,7 @@ import { SiteNav } from "@/components/site/SiteNav";
 import { SiteMain, SiteSkipLink } from "@/components/site/SiteSkipLink";
 import { SITE_MOBILE_MAX_WIDTH } from "@/lib/catalog/breakpoint";
 import { LocaleProvider } from "@/lib/catalog/locale-context";
+import { useRouteScrollTop } from "@/lib/catalog/scroll-top";
 
 function isHomePath(pathname: string) {
   return pathname === "/" || pathname === "/en" || pathname === "/en/";
@@ -15,6 +16,7 @@ function isHomePath(pathname: string) {
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
   const hideChrome = isHomePath(pathname);
+  useRouteScrollTop();
 
   return (
     <LocaleProvider>

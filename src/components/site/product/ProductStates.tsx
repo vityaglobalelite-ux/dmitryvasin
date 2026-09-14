@@ -26,7 +26,7 @@ export function ProductHeroWash() {
 /** Cover + text-column geometry matching Figma 607:399 / 678:1913. */
 export function ProductSkeleton() {
   return (
-    <main className="relative flex flex-1 flex-col overflow-x-clip bg-white">
+    <main className="relative flex flex-1 flex-col overflow-x-clip bg-white [overflow-anchor:none]">
       <ProductHeroWash />
       <div className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
         <div className="grid items-start gap-x-[8%] gap-y-10 min-[601px]:grid-cols-[minmax(0,588px)_minmax(0,710px)] min-[601px]:justify-between">
