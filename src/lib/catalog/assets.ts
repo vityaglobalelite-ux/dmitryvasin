@@ -14,4 +14,6 @@ export const siteAssets = {
   eye: "/assets/site/icon-eye.svg",
   eyeOff: "/assets/site/icon-eye-off.svg",
   langChevron: "/assets/site/icon-lang-chevron.svg",
+  back: "/assets/site/product/icon-back.svg",
+  breadcrumb: "/assets/site/product/icon-breadcrumb.svg",
 } as const;

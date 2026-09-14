@@ -77,6 +77,8 @@ export function SiteFigCanvas({
       const useTransform =
         prefersTransformCanvasScale() || !supportsCssZoom();
 
+      el.dataset.canvasScale = String(next);
+
       if (useTransform) {
         el.style.zoom = "";
         el.style.transform = `scale(${next})`;
@@ -121,7 +123,13 @@ export function SiteFigCanvas({
         style={{ width: canvas.w, height: canvas.h }}
         data-site-canvas={mode}
       >
-        {children(mode)}
+        <div className="relative z-0">
+          {children(mode)}
+        </div>
+        <div
+          id="site-canvas-overlay-host"
+          className="pointer-events-none absolute inset-0 z-[200]"
+        />
       </div>
     </div>
   );

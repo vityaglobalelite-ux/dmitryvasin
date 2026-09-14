@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { stripLocalePrefix } from "@/lib/catalog/locale";
 
 const STORAGE_KEY = "catalog:return-to";
@@ -43,9 +44,10 @@ export function isHomeHref(href: string): boolean {
 }
 
 export function useCatalogReturnHref(fallback: string): string {
+  const pathname = usePathname() ?? "/";
   const [href, setHref] = useState(fallback);
   useEffect(() => {
     setHref(readReturnTo(fallback));
-  }, [fallback]);
+  }, [fallback, pathname]);
   return href;
 }

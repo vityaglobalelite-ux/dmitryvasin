@@ -1,5 +1,6 @@
 "use client";
 
+import { Fragment } from "react";
 import { cartAssets } from "@/components/site/cart/assets";
 import {
   CartBackLink,
@@ -10,6 +11,7 @@ import {
   CartLine,
   TotalsCard,
   WholesaleBanner,
+  cartColumnsClassName,
 } from "@/components/site/cart/CartPieces";
 import { cartT } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
@@ -23,26 +25,27 @@ export function CartView() {
   const checkoutLabel = cart.signedIn
     ? copy.checkoutSigned
     : copy.checkoutGuest;
+  const empty = !cart.loading && !cart.error && cart.items.length === 0;
 
   return (
     <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
       <header className="flex flex-col gap-10 max-[600px]:gap-2.5">
         <CartBreadcrumb />
-        <div className="flex items-start justify-between gap-6 max-[600px]:items-center">
-          <div className="flex min-w-0 flex-col gap-2.5">
-            <h1 className="text-[55px] font-medium leading-[1.1] tracking-[-1.65px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-6">
+            <h1 className="min-w-0 text-[55px] font-medium leading-[1.1] tracking-[-1.65px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
               {copy.title}
             </h1>
-            <p className="max-w-[702px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:max-w-[246px] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-              {copy.subtitle}
-            </p>
+            <CartBackLink />
           </div>
-          <CartBackLink />
+          <p className="max-w-[702px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:max-w-[246px] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
+            {copy.subtitle}
+          </p>
         </div>
       </header>
 
-      <div className="mt-[60px] flex items-start gap-5 max-[1100px]:flex-col max-[600px]:mt-8">
-        <CartPanel>
+      <div className={cartColumnsClassName}>
+        <CartPanel variant={empty ? "empty" : "default"}>
           {cart.loading ? (
             <CartLinesSkeleton />
           ) : cart.error ? (
@@ -55,14 +58,16 @@ export function CartView() {
                 </Button>
               }
             />
-          ) : cart.items.length === 0 ? (
+          ) : empty ? (
             <EmptyCart />
           ) : (
             <>
               <WholesaleBanner />
               {cart.items.map((item, index) => (
-                <div key={item.productId} className="flex w-full flex-col gap-[30px] max-[600px]:gap-5">
-                  {index > 0 ? <div className="h-px w-full bg-[#d9d9d9]" /> : null}
+                <Fragment key={item.productId}>
+                  {index > 0 ? (
+                    <div className="h-px w-full bg-[#d9d9d9]" />
+                  ) : null}
                   <CartLine
                     item={item}
                     percent={cart.totals.percent}
@@ -70,32 +75,30 @@ export function CartView() {
                       void cart.remove(id);
                     }}
                   />
-                </div>
+                </Fragment>
               ))}
             </>
           )}
         </CartPanel>
 
-        <div className="w-full min-[1101px]:w-[467px] min-[1101px]:shrink-0">
-          <TotalsCard totals={cart.totals}>
-            {cart.items.length === 0 ? (
-              <Button
-                type="button"
-                disabled
-                className="h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
-              >
-                {checkoutLabel}
-              </Button>
-            ) : (
-              <Button
-                href={routes.checkout}
-                className="h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
-              >
-                {checkoutLabel}
-              </Button>
-            )}
-          </TotalsCard>
-        </div>
+        <TotalsCard totals={cart.totals}>
+          {empty ? (
+            <Button
+              type="button"
+              disabled
+              className="mt-auto h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
+            >
+              {checkoutLabel}
+            </Button>
+          ) : (
+            <Button
+              href={routes.checkout}
+              className="mt-auto h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
+            >
+              {checkoutLabel}
+            </Button>
+          )}
+        </TotalsCard>
       </div>
     </main>
   );
@@ -104,14 +107,16 @@ export function CartView() {
 function EmptyCart() {
   const copy = cartT(useLocale());
   return (
-    <div className="flex flex-col items-center gap-10 py-2 max-[600px]:gap-5">
-      <img
-        src={cartAssets.empty}
-        alt=""
-        width={104}
-        height={125}
-        className="h-[125px] w-[104px] object-contain max-[600px]:h-24 max-[600px]:w-20"
-      />
+    <>
+      <div className="relative h-[125px] w-[104px] shrink-0 overflow-hidden max-[600px]:h-24 max-[600px]:w-20">
+        <img
+          src={cartAssets.empty}
+          alt=""
+          width={104}
+          height={125}
+          className="size-full object-contain"
+        />
+      </div>
       <div className="flex flex-col items-center gap-2.5 text-center">
         <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[30px] max-[600px]:tracking-[-0.9px]">
           {copy.emptyTitle}
@@ -120,7 +125,7 @@ function EmptyCart() {
           {copy.emptyBody}
         </p>
       </div>
-      <WholesaleBanner cta="always" />
-    </div>
+      <WholesaleBanner cta="always" className="max-w-[842px]" />
+    </>
   );
 }

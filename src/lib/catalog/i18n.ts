@@ -4,6 +4,8 @@ export const defaultLocale: Locale = "ru";
 
 const ru = {
   nav: {
+    home: "Главная",
+    back: "Назад",
     catalog: "Каталог",
     support: "Поддержка",
     reviews: "Отзывы",
@@ -149,6 +151,8 @@ const ru = {
 
 const en = {
   nav: {
+    home: "Home",
+    back: "Back",
     catalog: "Catalog",
     support: "Support",
     reviews: "Reviews",

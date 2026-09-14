@@ -20,6 +20,9 @@ import type { CartItem, Product } from "@/lib/catalog/types";
 import type { CartTotals } from "@/components/site/cart/totals";
 import { discountedPriceMinor } from "@/components/site/cart/totals";
 
+export const cartColumnsClassName =
+  "mt-[60px] grid w-full grid-cols-1 items-start gap-5 min-[1200px]:grid-cols-[minmax(0,1fr)_minmax(280px,467px)] max-[600px]:mt-8";
+
 export function CartBreadcrumb({
   checkout = false,
 }: {
@@ -34,7 +37,7 @@ export function CartBreadcrumb({
     >
       <Link
         href={routes.home}
-        className="text-text/50 transition-opacity hover:opacity-80"
+        className="text-text/50 underline-offset-4 transition-[color,opacity] hover:text-text hover:underline"
       >
         {copy.breadcrumbHome}
       </Link>
@@ -43,13 +46,13 @@ export function CartBreadcrumb({
         alt=""
         width={18}
         height={7}
-        className="h-[7px] w-[18px] opacity-70"
+        className="h-[7px] w-[18px] shrink-0 opacity-70"
       />
       {checkout ? (
         <>
           <Link
             href={routes.cart}
-            className="text-text/50 transition-opacity hover:opacity-80"
+            className="text-text/50 underline-offset-4 transition-[color,opacity] hover:text-text hover:underline"
           >
             {copy.breadcrumbCart}
           </Link>
@@ -58,7 +61,7 @@ export function CartBreadcrumb({
             alt=""
             width={18}
             height={7}
-            className="h-[7px] w-[18px] opacity-70"
+            className="h-[7px] w-[18px] shrink-0 opacity-70"
           />
           <span className="text-text">{copy.breadcrumbCheckout}</span>
         </>
@@ -76,7 +79,7 @@ export function CartBackLink() {
     <Button
       href={routes.catalog}
       variant="secondary"
-      className="gap-2.5 px-10 max-[600px]:h-auto max-[600px]:gap-2.5 max-[600px]:px-5 max-[600px]:py-2.5 max-[600px]:text-[11px] max-[600px]:font-normal max-[600px]:leading-[1.5]"
+      className="shrink-0 gap-2.5 px-10 max-[600px]:h-auto max-[600px]:gap-2.5 max-[600px]:px-5 max-[600px]:py-2.5 max-[600px]:text-[11px] max-[600px]:font-normal max-[600px]:leading-[1.5]"
     >
       <img
         src={cartAssets.back}
@@ -93,8 +96,10 @@ export function CartBackLink() {
 
 export function WholesaleBanner({
   cta = "desktop",
+  className,
 }: {
   cta?: "desktop" | "always";
+  className?: string;
 }) {
   const copy = cartT(useLocale());
   const routes = useLocalizedRoutes();
@@ -103,9 +108,12 @@ export function WholesaleBanner({
       className={[
         "flex w-full items-center justify-between gap-5 rounded-[20px] bg-[image:var(--brand-gradient)] p-5 max-[600px]:gap-2.5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]",
         cta === "always"
-          ? "max-[600px]:flex-col max-[600px]:items-stretch"
+          ? "max-[600px]:flex-col max-[600px]:items-stretch max-[600px]:gap-2.5"
           : "",
-      ].join(" ")}
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       <div className="flex min-w-0 items-center gap-5 max-[600px]:gap-2.5">
         <img
@@ -115,7 +123,7 @@ export function WholesaleBanner({
           height={58}
           className="size-[58px] shrink-0 max-[600px]:size-10"
         />
-        <p className="min-w-0 text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white max-[600px]:text-[16px] max-[600px]:leading-[1.3] max-[600px]:tracking-normal">
+        <p className="min-w-0 max-w-[456px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white max-[600px]:max-w-none max-[600px]:text-[16px] max-[600px]:leading-[1.3] max-[600px]:tracking-normal">
           <span className="max-[600px]:hidden">{copy.bannerDesktop}</span>
           <span className="hidden max-[600px]:inline">{copy.bannerMobile}</span>
         </p>
@@ -124,7 +132,7 @@ export function WholesaleBanner({
         href={routes.catalog}
         className={[
           "h-[60px] shrink-0 px-10 max-[600px]:h-[50px] max-[600px]:w-full max-[600px]:text-[13px] max-[600px]:font-medium",
-          cta === "desktop" ? "max-[600px]:hidden" : "",
+          cta === "desktop" ? "max-[899px]:hidden" : "",
         ].join(" ")}
       >
         {copy.chooseVideos}
@@ -143,8 +151,21 @@ export function CartLine({
   onRemove: (productId: string) => void;
 }) {
   const locale = useLocale();
+  const copy = cartT(locale);
   const product = item.product;
-  if (!product) return null;
+  const remove = () => onRemove(item.productId);
+
+  if (!product) {
+    return (
+      <article className="flex w-full items-center justify-between gap-5">
+        <h3 className="text-[16px] font-medium leading-[1.3] text-text min-[900px]:text-[24px] min-[900px]:leading-[1.2]">
+          {copy.unavailableTitle}
+        </h3>
+        <RemoveControl onClick={remove} />
+      </article>
+    );
+  }
+
   const title = productCopy(product, locale).title;
   const original = formatCatalogPrice(product.priceMinor, product.currency);
   const sale =
@@ -156,38 +177,50 @@ export function CartLine({
       : original;
 
   return (
-    <article className="flex w-full items-start justify-between gap-6 max-[600px]:flex-col max-[600px]:gap-5">
-      <div className="flex min-w-0 items-center gap-5 max-[600px]:w-full max-[600px]:flex-col max-[600px]:items-stretch max-[600px]:gap-5">
-        <div className="flex items-start justify-between gap-4 max-[600px]:w-full">
-          <LineCover product={product} title={title} />
-          <RemoveControl
-            className="hidden max-[600px]:inline-flex"
-            onClick={() => onRemove(item.productId)}
-          />
-        </div>
-        <div className="flex min-w-0 flex-col gap-[30px] max-[600px]:gap-2.5">
-          <div className="flex flex-col gap-2.5 max-[600px]:flex-col-reverse">
-            <h3 className="max-w-[285px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:max-w-none max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-              {title}
-            </h3>
-            <TypeChip type={product.type} />
-          </div>
-          <div className="hidden max-[600px]:flex max-[600px]:items-center max-[600px]:gap-2.5">
-            <LinePrices original={original} sale={sale} discounted={percent > 0} />
-          </div>
-        </div>
+    <article className="grid w-full min-w-0 grid-cols-[auto_1fr] gap-x-5 gap-y-5 min-[900px]:min-h-[162px] min-[900px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[900px]:grid-rows-[auto_1fr] min-[900px]:gap-y-0">
+      <LineCover
+        product={product}
+        title={title}
+        className="col-start-1 row-start-1 min-[900px]:row-span-2 min-[900px]:self-center"
+      />
+      <RemoveControl
+        onClick={remove}
+        className="col-start-2 row-start-1 self-start justify-self-end min-[900px]:col-start-3 min-[900px]:row-start-2 min-[900px]:self-end"
+      />
+      <div className="col-span-2 col-start-1 row-start-2 flex flex-col gap-2.5 min-[900px]:col-span-1 min-[900px]:col-start-2 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:max-w-[285px] min-[900px]:justify-center min-[900px]:gap-[30px] min-[900px]:self-center">
+        <h3 className="order-2 text-[16px] font-medium leading-[1.3] text-text min-[900px]:order-1 min-[900px]:text-[24px] min-[900px]:leading-[1.2]">
+          {title}
+        </h3>
+        <TypeChip type={product.type} className="order-1 min-[900px]:order-2" />
       </div>
-      <div className="flex h-[162px] w-[118px] shrink-0 flex-col items-end justify-between max-[600px]:hidden">
-        <LinePrices original={original} sale={sale} discounted={percent > 0} align="end" />
-        <RemoveControl onClick={() => onRemove(item.productId)} />
-      </div>
+      <LinePrices
+        original={original}
+        sale={sale}
+        discounted={percent > 0}
+        className="col-span-2 col-start-1 row-start-3 min-[900px]:col-span-1 min-[900px]:col-start-3 min-[900px]:row-start-1 min-[900px]:justify-self-end min-[900px]:self-start"
+      />
     </article>
   );
 }
 
-function LineCover({ product, title }: { product: Product; title: string }) {
+function LineCover({
+  product,
+  title,
+  className,
+}: {
+  product: Product;
+  title: string;
+  className?: string;
+}) {
   return (
-    <div className="relative h-[162px] w-[236px] shrink-0 overflow-hidden rounded-[20px] bg-white max-[600px]:h-[72px] max-[600px]:w-[104px] max-[600px]:rounded-[10px]">
+    <div
+      className={[
+        "relative h-[72px] w-[104px] shrink-0 overflow-hidden rounded-[10px] bg-white min-[900px]:h-[162px] min-[900px]:w-[236px] min-[900px]:rounded-[20px]",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {product.coverUrl ? (
         <img
           src={product.coverUrl}
@@ -201,21 +234,34 @@ function LineCover({ product, title }: { product: Product; title: string }) {
   );
 }
 
-function TypeChip({ type }: { type: Product["type"] }) {
+function TypeChip({
+  type,
+  className,
+}: {
+  type: Product["type"];
+  className?: string;
+}) {
   const locale = useLocale();
   const icon = typeBadgeIcon(type);
   return (
-    <span className="inline-flex h-[45px] w-fit items-center gap-2.5 rounded-[30px] bg-white px-5 py-2.5 max-[600px]:h-[22px] max-[600px]:gap-1.5 max-[600px]:px-1.5 max-[600px]:py-0">
+    <span
+      className={[
+        "inline-flex h-[22px] w-fit items-center gap-1.5 rounded-[30px] bg-white px-1.5 min-[900px]:h-[45px] min-[900px]:gap-2.5 min-[900px]:px-5 min-[900px]:py-2.5",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       {icon ? (
         <img
           src={icon}
           alt=""
           width={25}
           height={25}
-          className="size-[25px] object-cover max-[600px]:size-4"
+          className="size-4 object-cover min-[900px]:size-[25px]"
         />
       ) : null}
-      <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[10px]">
+      <span className="text-[10px] font-medium leading-normal text-text-dark min-[900px]:text-[14px]">
         {catalogTypeLabel(type, locale)}
       </span>
     </span>
@@ -226,26 +272,28 @@ function LinePrices({
   original,
   sale,
   discounted,
-  align = "start",
+  className,
 }: {
   original: string;
   sale: string;
   discounted: boolean;
-  align?: "start" | "end";
+  className?: string;
 }) {
   return (
     <div
       className={[
-        "flex flex-col gap-2.5 whitespace-nowrap max-[600px]:flex-row max-[600px]:items-center max-[600px]:gap-2.5",
-        align === "end" ? "items-end" : "items-start",
-      ].join(" ")}
+        "flex flex-row items-center gap-2.5 whitespace-nowrap min-[900px]:flex-col min-[900px]:items-end",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {discounted ? (
-        <p className="text-[24px] font-medium leading-[1.2] text-text/60 line-through max-[600px]:text-[13px]">
+        <p className="text-[13px] font-medium leading-[1.2] text-text/60 line-through min-[900px]:text-[24px]">
           {original}
         </p>
       ) : null}
-      <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent max-[600px]:text-[24px]">
+      <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[24px] font-bold leading-[1.2] text-transparent min-[900px]:text-[30px]">
         {sale}
       </p>
     </div>
@@ -265,7 +313,7 @@ function RemoveControl({
       type="button"
       onClick={onClick}
       className={[
-        "inline-flex items-center gap-1 text-[16px] font-medium leading-[1.2] text-text underline decoration-solid underline-offset-2 transition-opacity hover:opacity-70 max-[600px]:text-[13px] max-[600px]:font-normal max-[600px]:leading-[1.5] max-[600px]:no-underline",
+        "inline-flex shrink-0 items-center gap-1 text-[13px] font-normal leading-[1.5] text-text transition-opacity hover:opacity-70 min-[900px]:text-[16px] min-[900px]:font-medium min-[900px]:leading-[1.2] min-[900px]:underline min-[900px]:decoration-solid min-[900px]:underline-offset-2",
         className,
       ]
         .filter(Boolean)
@@ -295,7 +343,7 @@ export function TotalsCard({
     formatCatalogPrice(minor, totals.currency);
 
   return (
-    <aside className="flex w-full flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10 text-white max-[600px]:gap-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
+    <aside className="flex w-full flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10 text-white min-[1200px]:min-h-[463px] max-[600px]:gap-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
       <h2 className="text-[30px] font-medium leading-[1.2] max-[600px]:text-[20px] max-[600px]:leading-[1.3]">
         {copy.totalsTitle}
       </h2>
@@ -342,25 +390,34 @@ export function CartLinesSkeleton() {
 
 function CartLineSkeleton() {
   return (
-    <div className="flex items-start justify-between gap-6 max-[600px]:flex-col">
-      <div className="flex items-center gap-5 max-[600px]:w-full max-[600px]:flex-col max-[600px]:items-stretch">
-        <Skeleton className="h-[162px] w-[236px] rounded-[20px] max-[600px]:h-[72px] max-[600px]:w-[104px] max-[600px]:rounded-[10px]" />
-        <div className="flex flex-col gap-[30px] max-[600px]:gap-2.5">
-          <Skeleton className="h-[58px] w-[285px] max-[600px]:h-10 max-[600px]:w-full" />
-          <Skeleton className="h-[45px] w-[110px] rounded-[30px] max-[600px]:h-[22px] max-[600px]:w-[72px]" />
-        </div>
+    <div className="grid w-full grid-cols-[auto_1fr] gap-x-5 gap-y-5 min-[900px]:min-h-[162px] min-[900px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[900px]:grid-rows-[auto_1fr] min-[900px]:gap-y-0">
+      <Skeleton className="col-start-1 row-start-1 h-[72px] w-[104px] rounded-[10px] min-[900px]:row-span-2 min-[900px]:h-[162px] min-[900px]:w-[236px] min-[900px]:self-center min-[900px]:rounded-[20px]" />
+      <Skeleton className="col-start-2 row-start-1 h-5 w-[72px] justify-self-end min-[900px]:col-start-3 min-[900px]:row-start-2 min-[900px]:self-end" />
+      <div className="col-span-2 col-start-1 row-start-2 flex flex-col gap-2.5 min-[900px]:col-span-1 min-[900px]:col-start-2 min-[900px]:row-span-2 min-[900px]:row-start-1 min-[900px]:max-w-[285px] min-[900px]:justify-center min-[900px]:gap-[30px] min-[900px]:self-center">
+        <Skeleton className="order-2 h-10 w-full min-[900px]:order-1 min-[900px]:h-[58px]" />
+        <Skeleton className="order-1 h-[22px] w-[72px] rounded-[30px] min-[900px]:order-2 min-[900px]:h-[45px] min-[900px]:w-[110px]" />
       </div>
-      <div className="flex h-[162px] flex-col items-end justify-between max-[600px]:h-auto max-[600px]:w-full max-[600px]:flex-row">
-        <Skeleton className="h-9 w-[118px]" />
-        <Skeleton className="h-5 w-[84px]" />
-      </div>
+      <Skeleton className="col-span-2 col-start-1 row-start-3 h-7 w-[100px] min-[900px]:col-span-1 min-[900px]:col-start-3 min-[900px]:row-start-1 min-[900px]:h-9 min-[900px]:w-[118px] min-[900px]:justify-self-end" />
     </div>
   );
 }
 
-export function CartPanel({ children }: { children: ReactNode }) {
+export function CartPanel({
+  children,
+  variant = "default",
+}: {
+  children: ReactNode;
+  variant?: "default" | "empty";
+}) {
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-[30px] rounded-[30px] bg-light-gray p-10 max-[600px]:gap-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
+    <section
+      className={[
+        "flex min-w-0 w-full flex-col rounded-[30px] bg-light-gray max-[600px]:rounded-[10px]",
+        variant === "empty"
+          ? "min-[1200px]:min-h-[463px] items-center justify-center gap-10 px-[55px] py-[30px] max-[600px]:gap-5 max-[600px]:p-[15px]"
+          : "gap-[30px] p-10 max-[600px]:gap-5 max-[600px]:p-[15px]",
+      ].join(" ")}
+    >
       {children}
     </section>
   );

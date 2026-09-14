@@ -17,6 +17,7 @@ import {
 } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import { Button } from "@/components/site/ui/Button";
+import { SiteTrail } from "@/components/site/SiteTrail";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { useProducts } from "@/lib/catalog/hooks";
 import {
@@ -122,9 +123,19 @@ function CatalogFrame({
   const routes = useLocalizedRoutes();
   return (
     <main className="mx-auto w-full flex-1 px-[12.5%] py-16 max-[600px]:px-5 max-[600px]:py-10">
-      <h1 className="max-w-[833px] text-[50px] font-medium leading-[55px] tracking-[-1.5px] text-text max-[600px]:text-[24px] max-[600px]:leading-[1.1] max-[600px]:tracking-[-0.72px]">
-        {copy.pages.catalog}
-      </h1>
+      <header className="flex flex-col gap-10 max-[600px]:gap-5">
+        <SiteTrail
+          backHref={routes.home}
+          backDesktop={copy.catalog.toHome}
+          crumbs={[
+            { href: routes.home, label: copy.nav.home },
+            { label: copy.nav.catalog },
+          ]}
+        />
+        <h1 className="max-w-[833px] text-[50px] font-medium leading-[55px] tracking-[-1.5px] text-text max-[600px]:text-[24px] max-[600px]:leading-[1.1] max-[600px]:tracking-[-0.72px]">
+          {copy.pages.catalog}
+        </h1>
+      </header>
       <CatalogFilters type={type} extraTypes={extraTypes} />
       {loading ? (
         <div className={GRID_CLASS}>

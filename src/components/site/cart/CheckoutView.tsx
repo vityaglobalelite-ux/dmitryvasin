@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CartBackLink,
@@ -10,6 +10,7 @@ import {
   CartMessage,
   CartPanel,
   TotalsCard,
+  cartColumnsClassName,
 } from "@/components/site/cart/CartPieces";
 import { cartT } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
@@ -46,16 +47,16 @@ export function CheckoutView() {
     <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
       <header className="flex flex-col gap-10 max-[600px]:gap-2.5">
         <CartBreadcrumb checkout />
-        <div className="flex items-start justify-between gap-6 max-[600px]:items-center">
-          <div className="flex min-w-0 flex-col gap-2.5">
-            <h1 className="text-[55px] font-medium leading-[1.1] tracking-[-1.65px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
+        <div className="flex flex-col gap-2.5">
+          <div className="flex items-center justify-between gap-6">
+            <h1 className="min-w-0 text-[55px] font-medium leading-[1.1] tracking-[-1.65px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
               {copy.checkoutTitle}
             </h1>
-            <p className="max-w-[702px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:max-w-[246px] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-              {copy.checkoutSubtitle}
-            </p>
+            <CartBackLink />
           </div>
-          <CartBackLink />
+          <p className="max-w-[702px] text-[24px] font-medium leading-[1.2] text-text max-[600px]:max-w-[246px] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
+            {copy.checkoutSubtitle}
+          </p>
         </div>
       </header>
 
@@ -64,7 +65,7 @@ export function CheckoutView() {
       ) : null}
 
       {showCart ? (
-        <div className="mt-[60px] flex items-start gap-5 max-[1100px]:flex-col max-[600px]:mt-8">
+        <div className={cartColumnsClassName}>
           <CartPanel>
             {cart.loading ? (
               <CartLinesSkeleton />
@@ -88,10 +89,7 @@ export function CheckoutView() {
               />
             ) : (
               cart.items.map((item, index) => (
-                <div
-                  key={item.productId}
-                  className="flex w-full flex-col gap-[30px] max-[600px]:gap-5"
-                >
+                <Fragment key={item.productId}>
                   {index > 0 ? <div className="h-px w-full bg-[#d9d9d9]" /> : null}
                   <CartLine
                     item={item}
@@ -100,12 +98,12 @@ export function CheckoutView() {
                       void cart.remove(id);
                     }}
                   />
-                </div>
+                </Fragment>
               ))
             )}
           </CartPanel>
 
-          <div className="flex w-full flex-col gap-5 min-[1101px]:w-[467px] min-[1101px]:shrink-0">
+          <div className="flex w-full flex-col gap-5">
             {cart.loading || cart.items.length > 0 ? <PayMethodCard /> : null}
             <TotalsCard totals={cart.totals}>
               <CheckoutPayButton

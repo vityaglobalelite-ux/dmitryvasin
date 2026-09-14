@@ -7,8 +7,10 @@ import {
   useContext,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type FormEvent,
   type PointerEvent,
   type ReactNode,
@@ -60,6 +62,53 @@ type AuthModalContextValue = {
 const CLOSE_MS = 280;
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getAuthOverlayHost(): HTMLElement {
+  return (
+    document.getElementById("site-canvas-overlay-host") ?? document.body
+  );
+}
+
+function getCanvasScale(canvas: HTMLElement): number {
+  const named = Number(canvas.dataset.canvasScale);
+  if (Number.isFinite(named) && named > 0) return named;
+  const zoom = Number(canvas.style.zoom);
+  if (Number.isFinite(zoom) && zoom > 0) return zoom;
+  const width = canvas.offsetWidth;
+  return width > 0 ? canvas.getBoundingClientRect().width / width : 1;
+}
+
+function syncDialogToVisibleFrame(node: HTMLDialogElement, host: HTMLElement) {
+  const canvas = host.closest<HTMLElement>("[data-site-canvas]");
+  const vv = window.visualViewport;
+  const viewH = vv?.height ?? window.innerHeight;
+  node.toggleAttribute("data-compact", viewH < 620);
+
+  if (!canvas || host === document.body) {
+    if (!vv) {
+      node.style.top = "";
+      node.style.left = "";
+      node.style.width = "";
+      node.style.height = "";
+      return;
+    }
+    node.style.top = `${vv.offsetTop}px`;
+    node.style.left = `${vv.offsetLeft}px`;
+    node.style.width = `${Math.max(window.innerWidth, vv.width)}px`;
+    node.style.height = `${vv.height}px`;
+    return;
+  }
+
+  const scale = getCanvasScale(canvas);
+  const canvasRect = canvas.getBoundingClientRect();
+  const viewTop = vv?.offsetTop ?? 0;
+  const viewLeft = vv?.offsetLeft ?? 0;
+  const viewW = vv?.width ?? window.innerWidth;
+  node.style.top = `${(viewTop - canvasRect.top) / scale}px`;
+  node.style.left = `${(viewLeft - canvasRect.left) / scale}px`;
+  node.style.width = `${viewW / scale}px`;
+  node.style.height = `${viewH / scale}px`;
+}
 
 const AuthModalContext = createContext<AuthModalContextValue | null>(null);
 
@@ -166,6 +215,11 @@ function AuthDialog({
 }) {
   const copy = authT(useLocale());
   const titleId = useId();
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const backdropPressRef = useRef(false);
@@ -191,42 +245,89 @@ function AuthDialog({
     backdropPressRef.current = false;
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const node = dialogRef.current;
     if (!open || !node) return;
-    if (!node.open) node.showModal();
 
-    const syncViewport = () => {
-      const vv = window.visualViewport;
-      if (!vv) {
-        node.style.height = "";
-        node.style.width = "";
-        node.style.top = "";
-        node.style.left = "";
-        node.removeAttribute("data-compact");
-        return;
+    const host = getAuthOverlayHost();
+    const inCanvas = host !== document.body;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    if (inCanvas) {
+      if (node.open) node.close();
+      node.show();
+    } else if (!node.matches(":modal")) {
+      if (node.open) node.close();
+      node.showModal();
+    }
+
+    const inerted: Element[] = [];
+    const canvas = host.closest("[data-site-canvas]");
+    if (canvas) {
+      for (const child of canvas.children) {
+        if (child !== host) {
+          child.setAttribute("inert", "");
+          inerted.push(child);
+        }
       }
-      node.style.height = `${vv.height}px`;
-      node.style.width = `${vv.width}px`;
-      node.style.top = `${vv.offsetTop}px`;
-      node.style.left = `${vv.offsetLeft}px`;
-      node.toggleAttribute("data-compact", vv.height < 620);
-    };
+    }
 
-    syncViewport();
-    window.visualViewport?.addEventListener("resize", syncViewport);
-    window.visualViewport?.addEventListener("scroll", syncViewport);
-    return () => {
-      window.visualViewport?.removeEventListener("resize", syncViewport);
-      window.visualViewport?.removeEventListener("scroll", syncViewport);
+    const clearViewport = () => {
       node.style.height = "";
       node.style.width = "";
       node.style.top = "";
       node.style.left = "";
       node.removeAttribute("data-compact");
+    };
+
+    const syncViewport = () => syncDialogToVisibleFrame(node, host);
+    syncViewport();
+    window.visualViewport?.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("scroll", syncViewport);
+    window.addEventListener("resize", syncViewport);
+    window.addEventListener("scroll", syncViewport, true);
+
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onDismiss();
+        return;
+      }
+      if (!inCanvas || event.key !== "Tab") return;
+      const root = panelRef.current;
+      if (!root) return;
+      const items = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
+        (el) => el.tabIndex >= 0 && !el.hasAttribute("disabled"),
+      );
+      if (items.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+
+    return () => {
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+      window.visualViewport?.removeEventListener("scroll", syncViewport);
+      window.removeEventListener("resize", syncViewport);
+      window.removeEventListener("scroll", syncViewport, true);
+      window.removeEventListener("keydown", onKey);
+      inerted.forEach((el) => el.removeAttribute("inert"));
+      document.body.style.overflow = previousOverflow;
+      clearViewport();
       if (node.open) node.close();
     };
-  }, [open]);
+  }, [onDismiss, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -252,16 +353,17 @@ function AuthDialog({
     backdropPressRef.current = false;
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!mounted || !open) return null;
 
   return createPortal(
     <dialog
       ref={dialogRef}
+      aria-modal="true"
       aria-labelledby={titleId}
       className={`auth-dialog ${closing ? "auth-backdrop-out" : "auth-backdrop-in"}`}
       onCancel={(event) => {
         event.preventDefault();
-        onDismiss();
+        if (!closing) onDismiss();
       }}
       onPointerDownCapture={onBackdropPointerDown}
       onPointerUp={onBackdropPointerUp}
@@ -287,7 +389,7 @@ function AuthDialog({
         </div>
       </div>
     </dialog>,
-    document.body,
+    getAuthOverlayHost(),
   );
 }
 

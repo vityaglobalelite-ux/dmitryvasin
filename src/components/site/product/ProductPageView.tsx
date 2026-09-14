@@ -27,6 +27,7 @@ import {
   ProductNotFound,
   ProductSkeleton,
 } from "@/components/site/product/ProductStates";
+import { SiteTrail } from "@/components/site/SiteTrail";
 import { getGuestCart } from "@/lib/catalog/cart";
 import { formatDuration, formatPriceMinor } from "@/lib/catalog/format";
 import { useAuthUser, useProduct, useProducts } from "@/lib/catalog/hooks";
@@ -343,63 +344,19 @@ function ProductBackNav({ title }: { title: string }) {
   const t = useCatalogT();
   const routes = useLocalizedRoutes();
   const backHref = useCatalogReturnHref(routes.catalog);
-  const desktopLabel = isHomeHref(backHref)
+  const backDesktop = isHomeHref(backHref)
     ? t.product.backToHome
     : t.product.backToCatalog;
 
   return (
-    <div className="flex flex-col gap-2.5 max-[600px]:gap-1.5">
-      <Link
-        href={backHref}
-        className="inline-flex min-h-11 w-fit items-center gap-2.5 text-[16px] font-semibold leading-normal text-plum transition-opacity duration-150 hover:opacity-80 max-[600px]:min-h-10 max-[600px]:gap-1.5 max-[600px]:text-[13px] max-[600px]:leading-[1.5] min-[601px]:min-h-0"
-      >
-        <span className="flex h-2.5 w-[5px] shrink-0 items-center justify-center" aria-hidden>
-          <img
-            src={productAssets.back}
-            alt=""
-            width={10}
-            height={5}
-            className="h-[5px] w-2.5 -rotate-90"
-          />
-        </span>
-        <span className="hidden min-[601px]:inline">{desktopLabel}</span>
-        <span className="min-[601px]:hidden">{t.product.back}</span>
-      </Link>
-      <nav
-        aria-label={t.product.breadcrumbAria}
-        className="flex min-w-0 items-center gap-5 text-[14px] max-[600px]:gap-2.5 max-[600px]:text-[10px]"
-      >
-        <Link
-          href={routes.home}
-          className="shrink-0 text-[rgba(37,37,37,0.5)] underline-offset-4 transition-[color,opacity] duration-150 hover:text-text hover:underline"
-        >
-          {t.product.home}
-        </Link>
-        <img
-          src={productAssets.breadcrumb}
-          alt=""
-          width={18}
-          height={7}
-          className="h-[7px] w-[18px] shrink-0"
-        />
-        <Link
-          href={routes.catalog}
-          className="shrink-0 text-[rgba(37,37,37,0.5)] underline-offset-4 transition-[color,opacity] duration-150 hover:text-text hover:underline"
-        >
-          {t.nav.catalog}
-        </Link>
-        <img
-          src={productAssets.breadcrumb}
-          alt=""
-          width={18}
-          height={7}
-          className="h-[7px] w-[18px] shrink-0"
-        />
-        <span className="truncate text-text" aria-current="page">
-          {title}
-        </span>
-      </nav>
-    </div>
+    <SiteTrail
+      backHref={backHref}
+      backDesktop={backDesktop}
+      crumbs={[
+        { href: routes.home, label: t.nav.home },
+        { label: title },
+      ]}
+    />
   );
 }
 

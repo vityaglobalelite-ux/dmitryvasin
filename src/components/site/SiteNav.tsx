@@ -10,7 +10,6 @@ import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useCatalogReturnHref } from "@/lib/catalog/return-to";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { NotificationBell } from "@/components/site/notifications/NotificationBell";
-import { productAssets } from "@/components/site/product/assets";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
 
 function CartMark({ className }: { className?: string }) {
@@ -52,15 +51,31 @@ function CartMark({ className }: { className?: string }) {
   );
 }
 
+function innerBackHref(
+  pathname: string,
+  routes: ReturnType<typeof useLocalizedRoutes>,
+  productReturn: string,
+): string | null {
+  const stripped = stripLocalePrefix(pathname);
+  if (stripped === "/") return null;
+  if (stripped.startsWith("/product/")) return productReturn;
+  if (stripped.startsWith("/catalog/")) return routes.home;
+  if (stripped.startsWith("/cart/") || stripped.startsWith("/checkout/")) {
+    return routes.catalog;
+  }
+  return routes.home;
+}
+
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const copy = useCatalogT();
   const routes = useLocalizedRoutes();
   const pathname = usePathname() ?? "/";
-  const onProduct = stripLocalePrefix(pathname).startsWith("/product/");
-  const productBackHref = useCatalogReturnHref(routes.catalog);
+  const productReturn = useCatalogReturnHref(routes.catalog);
+  const backHref = innerBackHref(pathname, routes, productReturn);
 
   const navItems = [
+    { href: routes.home, label: copy.nav.home },
     { href: routes.catalog, label: copy.nav.catalog },
     { href: routes.accountSupport, label: copy.nav.support },
     { href: `${routes.home}#reviews`, label: copy.nav.reviews },
@@ -86,19 +101,19 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-5 max-[600px]:w-full max-[600px]:gap-3">
-          {onProduct ? (
+          {backHref ? (
             <Link
-              href={productBackHref}
-              className="relative hidden size-8 shrink-0 items-center justify-center transition-opacity duration-150 hover:opacity-70 max-[600px]:flex"
-              aria-label={copy.product.back}
+              href={backHref}
+              className="relative hidden size-8 shrink-0 items-center justify-center rounded-full transition-opacity duration-150 hover:opacity-70 max-[600px]:flex"
+              aria-label={copy.nav.back}
             >
-              <span className="flex h-2.5 w-[5px] items-center justify-center" aria-hidden>
+              <span className="flex h-[11px] w-[7px] items-center justify-center" aria-hidden>
                 <img
-                  src={productAssets.back}
+                  src={siteAssets.back}
                   alt=""
-                  width={10}
-                  height={5}
-                  className="h-[5px] w-2.5 -rotate-90"
+                  width={11}
+                  height={7}
+                  className="h-[7px] w-[11px] -rotate-90"
                 />
               </span>
             </Link>
