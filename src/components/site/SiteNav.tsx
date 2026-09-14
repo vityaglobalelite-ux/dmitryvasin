@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { AuthEntryChip } from "@/components/site/auth/AuthModal";
 import { siteAssets } from "@/lib/catalog/assets";
+import { stripLocalePrefix } from "@/lib/catalog/locale";
 import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import { useCatalogReturnHref } from "@/lib/catalog/return-to";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { NotificationBell } from "@/components/site/notifications/NotificationBell";
+import { productAssets } from "@/components/site/product/assets";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
 
 function CartMark({ className }: { className?: string }) {
@@ -52,6 +56,9 @@ export function SiteNav() {
   const [open, setOpen] = useState(false);
   const copy = useCatalogT();
   const routes = useLocalizedRoutes();
+  const pathname = usePathname() ?? "/";
+  const onProduct = stripLocalePrefix(pathname).startsWith("/product/");
+  const productBackHref = useCatalogReturnHref(routes.catalog);
 
   const navItems = [
     { href: routes.catalog, label: copy.nav.catalog },
@@ -79,6 +86,23 @@ export function SiteNav() {
         </nav>
 
         <div className="flex items-center gap-5 max-[600px]:w-full max-[600px]:gap-3">
+          {onProduct ? (
+            <Link
+              href={productBackHref}
+              className="relative hidden size-8 shrink-0 items-center justify-center transition-opacity duration-150 hover:opacity-70 max-[600px]:flex"
+              aria-label={copy.product.back}
+            >
+              <span className="flex h-2.5 w-[5px] items-center justify-center" aria-hidden>
+                <img
+                  src={productAssets.back}
+                  alt=""
+                  width={10}
+                  height={5}
+                  className="h-[5px] w-2.5 -rotate-90"
+                />
+              </span>
+            </Link>
+          ) : null}
           <div className="max-[600px]:mr-auto min-[601px]:order-2">
             <AuthEntryChip />
           </div>

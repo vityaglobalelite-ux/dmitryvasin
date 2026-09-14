@@ -11,6 +11,7 @@ export const productAssets = {
   stars: "/assets/site/product/icon-stars.svg",
   cart: "/assets/site/product/icon-cart.svg",
   breadcrumb: "/assets/site/product/icon-breadcrumb.svg",
+  back: "/assets/site/product/icon-back.svg",
   check: "/assets/site/product/icon-check.svg",
   checkWhite: "/assets/site/product/icon-check-white.svg",
 } as const;

@@ -31,7 +31,8 @@ export function ProductSkeleton() {
       <div className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
         <div className="grid items-start gap-x-[8%] gap-y-10 min-[601px]:grid-cols-[minmax(0,588px)_minmax(0,710px)] min-[601px]:justify-between">
           <div className="flex flex-col gap-5">
-            <Skeleton className="h-4 w-48 rounded-[8px] max-[600px]:h-3 max-[600px]:w-40" />
+            <Skeleton className="h-6 w-36 rounded-[8px] max-[600px]:h-5 max-[600px]:w-20" />
+            <Skeleton className="h-4 w-64 rounded-[8px] max-[600px]:h-3 max-[600px]:w-48" />
             <div className="flex flex-wrap gap-2.5">
               <Skeleton className="h-[45px] w-[120px] rounded-[30px] max-[600px]:h-6 max-[600px]:w-[84px]" />
               <Skeleton className="h-[45px] w-[140px] rounded-[30px] max-[600px]:h-6 max-[600px]:w-[96px]" />

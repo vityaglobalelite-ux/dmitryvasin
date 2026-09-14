@@ -20,6 +20,7 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
+import { rememberReturnTo } from "@/lib/catalog/return-to";
 import type { Product } from "@/lib/catalog/types";
 
 type ProductCardProps = {
@@ -38,7 +39,10 @@ export function ProductCard({ product, onAdd, adding = false }: ProductCardProps
   const compact = product.type === "research";
 
   return (
-    <article className="group flex h-full w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]">
+    <article
+      className="group flex h-full w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]"
+      onClick={rememberReturnTo}
+    >
       {compact ? (
         <CompactBody product={product} href={href} onAdd={onAdd} adding={adding} />
       ) : (

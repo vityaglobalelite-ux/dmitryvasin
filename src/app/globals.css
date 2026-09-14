@@ -490,6 +490,46 @@ body {
   animation: auth-form-in 0.22s ease-out both;
 }
 
+.auth-dialog {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  overflow: auto;
+  overscroll-behavior: contain;
+  outline: none;
+  color: inherit;
+}
+
+.auth-dialog[open] {
+  display: block;
+}
+
+.auth-dialog::backdrop {
+  background: transparent;
+}
+
+.auth-dialog-frame {
+  display: flex;
+  min-height: 100%;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  padding-top: max(20px, env(safe-area-inset-top));
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  padding-left: max(20px, env(safe-area-inset-left));
+  padding-right: max(20px, env(safe-area-inset-right));
+}
+
+.auth-dialog[data-compact="true"] .auth-dialog-frame {
+  align-items: flex-start;
+}
+
 /* Mobile nav menu — Figma 343:1098 */
 @keyframes mobile-menu-backdrop-in {
   from {

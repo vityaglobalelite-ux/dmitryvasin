@@ -105,6 +105,9 @@ const ru = {
   product: {
     breadcrumbAria: "Навигация",
     home: "Главная",
+    back: "Назад",
+    backToCatalog: "К каталогу",
+    backToHome: "На главную",
     viewProgram: "Смотреть программу",
     viewDescription: "Смотреть описание",
     difficulty: "Сложность",
@@ -247,6 +250,9 @@ const en = {
   product: {
     breadcrumbAria: "Breadcrumb",
     home: "Home",
+    back: "Back",
+    backToCatalog: "To catalog",
+    backToHome: "To home",
     viewProgram: "View program",
     viewDescription: "View description",
     difficulty: "Difficulty",

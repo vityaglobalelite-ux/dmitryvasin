@@ -166,23 +166,24 @@ function AuthDialog({
 }) {
   const copy = authT(useLocale());
   const titleId = useId();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const backdropPressRef = useRef(false);
 
-  function isInsideDialog(target: EventTarget | null): boolean {
+  function isInsideCard(target: EventTarget | null): boolean {
     return target instanceof Node && Boolean(panelRef.current?.contains(target));
   }
 
-  function onBackdropPointerDown(event: PointerEvent<HTMLDivElement>) {
+  function onBackdropPointerDown(event: PointerEvent<HTMLDialogElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    backdropPressRef.current = !isInsideDialog(event.target);
+    backdropPressRef.current = !isInsideCard(event.target);
   }
 
-  function onBackdropPointerUp(event: PointerEvent<HTMLDivElement>) {
+  function onBackdropPointerUp(event: PointerEvent<HTMLDialogElement>) {
     const startedOnBackdrop = backdropPressRef.current;
     backdropPressRef.current = false;
     if (event.pointerType === "mouse" && event.button !== 0) return;
-    if (!startedOnBackdrop || isInsideDialog(event.target)) return;
+    if (!startedOnBackdrop || isInsideCard(event.target)) return;
     onDismiss();
   }
 
@@ -191,61 +192,50 @@ function AuthDialog({
   }
 
   useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const chrome = document.querySelector("[data-site-chrome]");
-    chrome?.setAttribute("inert", "");
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onDismiss();
+    const node = dialogRef.current;
+    if (!open || !node) return;
+    if (!node.open) node.showModal();
+
+    const syncViewport = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        node.style.height = "";
+        node.style.width = "";
+        node.style.top = "";
+        node.style.left = "";
+        node.removeAttribute("data-compact");
+        return;
       }
+      node.style.height = `${vv.height}px`;
+      node.style.width = `${vv.width}px`;
+      node.style.top = `${vv.offsetTop}px`;
+      node.style.left = `${vv.offsetLeft}px`;
+      node.toggleAttribute("data-compact", vv.height < 620);
     };
-    window.addEventListener("keydown", onKey);
+
+    syncViewport();
+    window.visualViewport?.addEventListener("resize", syncViewport);
+    window.visualViewport?.addEventListener("scroll", syncViewport);
     return () => {
-      document.body.style.overflow = previous;
-      chrome?.removeAttribute("inert");
-      window.removeEventListener("keydown", onKey);
+      window.visualViewport?.removeEventListener("resize", syncViewport);
+      window.visualViewport?.removeEventListener("scroll", syncViewport);
+      node.style.height = "";
+      node.style.width = "";
+      node.style.top = "";
+      node.style.left = "";
+      node.removeAttribute("data-compact");
+      if (node.open) node.close();
     };
-  }, [onDismiss, open]);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     const root = panelRef.current;
     if (!root) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const focusables = () =>
-      [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter((el) => {
-        if (el.tabIndex < 0) return false;
-        if (el.hasAttribute("disabled")) return false;
-        return true;
-      });
-    const initial =
-      root.querySelector<HTMLElement>("input:not([type='hidden'])") ??
-      focusables()[0];
+    const initial = root.querySelector<HTMLElement>("input:not([type='hidden'])");
     initial?.focus();
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Tab") return;
-      const items = focusables();
-      if (items.length === 0) {
-        event.preventDefault();
-        return;
-      }
-      const first = items[0];
-      const last = items[items.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
     return () => {
-      document.removeEventListener("keydown", onKeyDown);
       previouslyFocused?.focus();
     };
   }, [open, session]);
@@ -265,18 +255,21 @@ function AuthDialog({
   if (!open || typeof document === "undefined") return null;
 
   return createPortal(
-    <div
-      className={`fixed inset-0 z-[200] overflow-y-auto bg-black/30 ${closing ? "auth-backdrop-out" : "auth-backdrop-in"}`}
+    <dialog
+      ref={dialogRef}
+      aria-labelledby={titleId}
+      className={`auth-dialog ${closing ? "auth-backdrop-out" : "auth-backdrop-in"}`}
+      onCancel={(event) => {
+        event.preventDefault();
+        onDismiss();
+      }}
       onPointerDownCapture={onBackdropPointerDown}
       onPointerUp={onBackdropPointerUp}
       onPointerCancel={onBackdropPointerCancel}
     >
-      <div className="flex min-h-full items-center justify-center p-5">
+      <div className="auth-dialog-frame">
         <div
           ref={panelRef}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={titleId}
           className={`w-full max-w-[462px] max-[600px]:max-w-[320px] ${closing ? "auth-panel-out" : "auth-panel-in"}`}
         >
           <button type="button" className="sr-only" onClick={onDismiss}>
@@ -293,7 +286,7 @@ function AuthDialog({
           </AuthCard>
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body,
   );
 }
