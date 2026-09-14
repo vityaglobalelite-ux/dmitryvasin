@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AuthEntryChip } from "@/components/site/auth/AuthModal";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
-import { Button } from "@/components/site/ui/Button";
 import { siteAssets } from "@/lib/catalog/assets";
 import { clubPath } from "@/lib/club-config";
-import { useAuthUser } from "@/lib/catalog/hooks";
 import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
 function CartMark({ size = 35 }: { size?: 32 | 35 }) {
@@ -49,30 +48,6 @@ function CartMark({ size = 35 }: { size?: 32 | 35 }) {
   );
 }
 
-function AuthChip({ compact }: { compact?: boolean }) {
-  const { data: user } = useAuthUser();
-  const signedIn = Boolean(user);
-  const copy = useCatalogT();
-  const routes = useLocalizedRoutes();
-
-  return (
-    <Button
-      href={signedIn ? routes.account : routes.login}
-      variant="chip"
-      className={compact ? "h-8 px-[15px] text-[13px] font-normal" : undefined}
-    >
-      {signedIn ? copy.nav.account : copy.nav.login}
-      <img
-        src={siteAssets.user}
-        alt=""
-        width={15}
-        height={15}
-        className="size-[15px]"
-      />
-    </Button>
-  );
-}
-
 function useHomeNav() {
   const copy = useCatalogT();
   const routes = useLocalizedRoutes();
@@ -107,7 +82,7 @@ export function HomeHeaderDesktop() {
       </nav>
       <div className="absolute right-[242px] top-0 flex h-[35px] items-center gap-5">
         <LangDesktop />
-        <AuthChip />
+        <AuthEntryChip />
         <Link
           href={routes.cart}
           className="relative size-[35px] transition-transform duration-150 hover:scale-[1.04] active:scale-95"
@@ -131,7 +106,7 @@ export function HomeHeaderMobile() {
     <>
       <header className="absolute left-5 top-2.5 z-50 h-8 w-[320px]">
         <div className="absolute left-0 top-0">
-          <AuthChip compact />
+          <AuthEntryChip compact />
         </div>
         <div className="absolute left-[185px] top-0 flex h-8 w-[45px] items-center justify-center">
           <LangMobile />

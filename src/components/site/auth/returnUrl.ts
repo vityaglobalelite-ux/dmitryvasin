@@ -33,31 +33,37 @@ function withTrailingSlashKeepQuery(path: string): string {
  * Only same-origin relative paths. Reject protocol-relative (`//`),
  * schemes, and auth loops so login cannot bounce onto itself.
  */
+export function isCatalogAuthPath(pathname: string): boolean {
+  const pathOnly = stripLocalePrefix(stripQuery(pathname));
+  return AUTH_PATHS.has(withTrailingSlash(pathOnly));
+}
+
 export function safeReturnUrl(
   raw: string | null | undefined,
   locale: Locale = "ru",
+  fallback?: string,
 ): string {
-  const fallback = localizedSiteRoutes(locale).account;
-  if (!raw) return fallback;
+  const resolvedFallback = fallback ?? localizedSiteRoutes(locale).account;
+  if (!raw) return resolvedFallback;
   const value = raw.trim();
   if (!value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
-    return fallback;
+    return resolvedFallback;
   }
   let decoded = value;
   try {
     decoded = decodeURIComponent(value);
   } catch {
-    return fallback;
+    return resolvedFallback;
   }
   if (
     decoded.startsWith("//") ||
     decoded.includes("://") ||
     decoded.includes("\\")
   ) {
-    return fallback;
+    return resolvedFallback;
   }
   const pathOnly = stripLocalePrefix(stripQuery(decoded));
-  if (AUTH_PATHS.has(pathOnly)) return fallback;
+  if (AUTH_PATHS.has(pathOnly)) return resolvedFallback;
   return withTrailingSlashKeepQuery(decoded);
 }
 

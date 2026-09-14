@@ -15,7 +15,7 @@ import { cartT } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
 import { Button } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
-import { hrefWithReturnUrl } from "@/components/site/auth/returnUrl";
+import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { listMyOrders } from "@/lib/catalog/repo/orders";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import {
@@ -339,6 +339,7 @@ function CheckoutPayButton({
 }) {
   const copy = cartT(useLocale());
   const routes = useLocalizedRoutes();
+  const { openAuth } = useAuthModal();
   const [pending, setPending] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
 
@@ -382,8 +383,9 @@ function CheckoutPayButton({
   if (!signedIn) {
     return (
       <Button
-        href={hrefWithReturnUrl(routes.login, routes.checkout)}
+        type="button"
         className={className}
+        onClick={() => openAuth("login")}
       >
         {copy.checkoutGuest}
       </Button>

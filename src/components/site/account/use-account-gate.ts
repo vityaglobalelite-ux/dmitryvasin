@@ -1,32 +1,38 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { hrefWithReturnUrl } from "@/components/site/auth/returnUrl";
+import { useEffect, useRef } from "react";
+import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { useAuthUser } from "@/lib/catalog/hooks";
 import { localeFromPathname, localizedSiteRoutes } from "@/lib/catalog/locale";
 import type { AuthUser } from "@/lib/catalog/types";
-
-function withTrailingSlash(pathname: string): string {
-  return pathname.endsWith("/") ? pathname : `${pathname}/`;
-}
 
 export function useAccountGate(): {
   user: AuthUser | null;
   pending: boolean;
 } {
   const { data: user, loading } = useAuthUser();
+  const { openAuth } = useAuthModal();
   const router = useRouter();
   const pathname = usePathname();
+  const requested = useRef(false);
 
   useEffect(() => {
-    if (loading || user) return;
+    if (loading) return;
+    if (user) {
+      requested.current = false;
+      return;
+    }
+    if (requested.current) return;
+    requested.current = true;
     const locale = localeFromPathname(pathname);
     const routes = localizedSiteRoutes(locale);
-    router.replace(
-      hrefWithReturnUrl(routes.login, withTrailingSlash(pathname)),
-    );
-  }, [loading, pathname, router, user]);
+    openAuth("login", {
+      onDismiss: () => {
+        router.replace(routes.home);
+      },
+    });
+  }, [loading, openAuth, pathname, router, user]);
 
   return { user, pending: loading || !user };
 }

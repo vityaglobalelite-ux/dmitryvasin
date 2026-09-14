@@ -179,6 +179,8 @@ export function PrivacyConsent({
           </label>
           <Link
             href={clubPath("privacy-policy")}
+            target="_blank"
+            rel="noreferrer"
             className="text-plum underline-offset-2 hover:underline"
           >
             {copy.privacyPolicy}
@@ -213,34 +215,53 @@ export function AuthCard({
   );
 }
 
-export function AuthTitle({ children }: { children: ReactNode }) {
+export function AuthTitle({
+  children,
+  id,
+  as: Tag = "h1",
+}: {
+  children: ReactNode;
+  id?: string;
+  as?: "h1" | "h2";
+}) {
   return (
-    <h1 className="w-full text-center text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
+    <Tag
+      id={id}
+      className="w-full text-center text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px] max-[600px]:leading-[1.3]"
+    >
       {children}
-    </h1>
+    </Tag>
   );
 }
 
+const switchActionClass =
+  "font-semibold text-plum underline underline-offset-2";
+
 export function AuthSwitch({
   prompt,
-  href,
   action,
+  href,
+  onAction,
 }: {
   prompt: string;
-  href: string;
   action: string;
+  href?: string;
+  onAction?: () => void;
 }) {
   return (
     <div className="flex w-full flex-col gap-[30px] max-[600px]:gap-5">
       <div className="h-px w-full bg-[#d9d9d9]" />
       <p className="text-center text-[16px] leading-[1.5] text-text max-[600px]:text-[13px]">
         {prompt}{" "}
-        <Link
-          href={href}
-          className="font-semibold text-plum underline underline-offset-2"
-        >
-          {action}
-        </Link>
+        {onAction ? (
+          <button type="button" className={switchActionClass} onClick={onAction}>
+            {action}
+          </button>
+        ) : (
+          <Link href={href ?? "#"} className={switchActionClass}>
+            {action}
+          </Link>
+        )}
       </p>
     </div>
   );

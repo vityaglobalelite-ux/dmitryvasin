@@ -31,13 +31,17 @@ type ButtonAsLink = CommonProps & {
 export type SiteButtonProps = ButtonAsButton | ButtonAsLink;
 
 function buttonClassName(variant: SiteButtonVariant, className?: string) {
-  const hasPx = Boolean(className && /\bpx-/.test(className));
-  const variantCls = hasPx
-    ? variants[variant]
-        .replace(/\bpx-10\b/g, "")
-        .replace(/\bpx-\[15px\]\b/g, "")
-        .replace(/\bmax-\[600px\]:px-8\b/g, "")
-    : variants[variant];
+  const hasPx = Boolean(className && /(?:^|\s)px-/.test(className));
+  const hasMobilePx = Boolean(className && /max-\[600px\]:px-/.test(className));
+  let variantCls = variants[variant];
+  if (hasPx) {
+    variantCls = variantCls
+      .replace(/\bpx-10\b/g, "")
+      .replace(/\bpx-\[15px\]\b/g, "");
+  }
+  if (hasPx || hasMobilePx) {
+    variantCls = variantCls.replace(/\bmax-\[600px\]:px-8\b/g, "");
+  }
 
   return [
     "inline-flex items-center justify-center whitespace-nowrap font-[inherit] leading-normal transition-[filter,transform,opacity] duration-200 ease-out",

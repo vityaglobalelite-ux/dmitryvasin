@@ -2,13 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { AuthEntryChip } from "@/components/site/auth/AuthModal";
 import { siteAssets } from "@/lib/catalog/assets";
-import { useAuthUser } from "@/lib/catalog/hooks";
 import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { NotificationBell } from "@/components/site/notifications/NotificationBell";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
-import { Button } from "@/components/site/ui/Button";
 
 function CartMark({ className }: { className?: string }) {
   return (
@@ -49,26 +48,6 @@ function CartMark({ className }: { className?: string }) {
   );
 }
 
-function AuthChip() {
-  const { data: user } = useAuthUser();
-  const signedIn = Boolean(user);
-  const copy = useCatalogT();
-  const routes = useLocalizedRoutes();
-
-  return (
-    <Button href={signedIn ? routes.account : routes.login} variant="chip">
-      {signedIn ? copy.nav.account : copy.nav.login}
-      <img
-        src={siteAssets.user}
-        alt=""
-        width={15}
-        height={15}
-        className="size-[15px]"
-      />
-    </Button>
-  );
-}
-
 export function SiteNav() {
   const [open, setOpen] = useState(false);
   const copy = useCatalogT();
@@ -101,7 +80,7 @@ export function SiteNav() {
 
         <div className="flex items-center gap-5 max-[600px]:w-full max-[600px]:gap-3">
           <div className="max-[600px]:mr-auto min-[601px]:order-2">
-            <AuthChip />
+            <AuthEntryChip />
           </div>
           <div className="hidden min-[601px]:order-1 min-[601px]:block">
             <LangDesktop />

@@ -1,18 +1,16 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { catalogT } from "@/lib/catalog/i18n";
-import {
-  hrefWithReturnUrl,
-  safeReturnUrl,
-} from "@/components/site/auth/returnUrl";
+import { useAuthModal } from "@/components/site/auth/AuthModal";
 import {
   fetchKinescopeEmbed,
   isOfficialKinescopeEmbed,
   KinescopeTokenError,
 } from "@/lib/catalog/kinescope";
+import { useAuthUser } from "@/lib/catalog/hooks";
 import { useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import type { Locale } from "@/lib/catalog/types";
 
@@ -81,10 +79,13 @@ export function KinescopePlayer({
 }: KinescopePlayerProps) {
   const t = catalogT(locale);
   const routes = useLocalizedRoutes();
+  const { openAuth } = useAuthModal();
+  const auth = useAuthUser();
   const [retryTick, setRetryTick] = useState(0);
   const [state, setState] = useState<PlayerState>({ kind: "loading" });
   const [iframeReady, setIframeReady] = useState(false);
   const [applied, setApplied] = useState({ productId, locale, retryTick });
+  const retriedUser = useRef<string | null>(null);
 
   if (
     productId !== applied.productId ||
@@ -126,20 +127,25 @@ export function KinescopePlayer({
     })();
 
     return () => controller.abort();
-  }, [productId, locale, retryTick]);
+  }, [locale, productId, retryTick, t.player.errorTitle]);
+
+  useEffect(() => {
+    const id = auth.data?.id;
+    if (
+      !id ||
+      auth.loading ||
+      state.kind !== "forbidden" ||
+      !state.needsLogin ||
+      retriedUser.current === id
+    ) {
+      return;
+    }
+    retriedUser.current = id;
+    setRetryTick((n) => n + 1);
+  }, [auth.data?.id, auth.loading, state]);
 
   const compactBtn =
     "max-[600px]:h-10 max-[600px]:px-6 max-[600px]:text-[13px]";
-  const loginHref =
-    typeof window === "undefined"
-      ? routes.login
-      : hrefWithReturnUrl(
-          routes.login,
-          safeReturnUrl(
-            `${window.location.pathname}${window.location.search}`,
-            locale,
-          ),
-        );
 
   if (state.kind === "forbidden") {
     return (
@@ -151,7 +157,11 @@ export function KinescopePlayer({
           actions={
             <>
               {state.needsLogin ? (
-                <Button href={loginHref} className={compactBtn}>
+                <Button
+                  type="button"
+                  className={compactBtn}
+                  onClick={() => openAuth("login")}
+                >
                   {t.player.loginCta}
                 </Button>
               ) : null}

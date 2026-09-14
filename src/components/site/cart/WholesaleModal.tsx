@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cartAssets } from "@/components/site/cart/assets";
 import { cartModalTier, cartT } from "@/components/site/cart/copy";
 import { Button } from "@/components/site/ui/Button";
@@ -48,9 +49,9 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || typeof document === "undefined") return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center bg-[rgba(37,37,37,0.45)] p-5"
       role="dialog"
@@ -111,6 +112,7 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

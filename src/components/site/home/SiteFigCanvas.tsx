@@ -6,49 +6,26 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { SITE_MOBILE_MAX_WIDTH } from "@/lib/catalog/breakpoint";
+import {
+  getSiteCanvasZoom,
+  invalidateSiteZoomViewportLock,
+  isSiteMobileViewport,
+  prefersTransformCanvasScale,
+  supportsCssZoom,
+  type SiteCanvasMode,
+} from "@/lib/catalog/breakpoint";
 
 /** Figma «Главная десктоп» 572:1864 */
 export const SITE_DESKTOP_CANVAS = { w: 1920, h: 8704 } as const;
 /** Figma «Главная_360» 722:4311 */
 export const SITE_MOBILE_CANVAS = { w: 360, h: 10116 } as const;
 
-/** Desktop: Figma 1920 1:1. Scale only when the window is narrower. */
-const MAX_ZOOM = 1;
-const VIEWPORT_WIDTH_RELOCK_PX = 48;
-
-export type SiteCanvasMode = "desktop" | "mobile";
-
-type LockedViewport = {
-  w: number;
-  h: number;
-  aspect: "portrait" | "landscape";
-};
-
-function viewportSize() {
-  const w =
-    window.visualViewport?.width ?? document.documentElement.clientWidth;
-  const h =
-    window.visualViewport?.height ?? document.documentElement.clientHeight;
-  return { w, h };
-}
-
-function supportsCssZoom() {
-  return typeof CSS !== "undefined" && CSS.supports("zoom", "1");
-}
-
-function prefersTransformCanvasScale() {
-  if (typeof window === "undefined") return false;
-  try {
-    if (navigator.maxTouchPoints > 0) return true;
-    return window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-  } catch {
-    return false;
-  }
-}
+export type { SiteCanvasMode };
 
 /**
  * Locked Figma artboard scaled from the top-left.
+ * Mode and zoom are split the same way as privateclub FigCanvas:
+ * pick 360 vs 1920 first, then scale the current artboard.
  * Never combine left:50% + translateX(-50%) with scale — that shifts origin.
  */
 export function SiteFigCanvas({
@@ -58,12 +35,27 @@ export function SiteFigCanvas({
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
-  const lockRef = useRef<LockedViewport | null>(null);
   const [mode, setMode] = useState<SiteCanvasMode>("desktop");
   const [ready, setReady] = useState(false);
 
   const canvas =
     mode === "mobile" ? SITE_MOBILE_CANVAS : SITE_DESKTOP_CANVAS;
+
+  useLayoutEffect(() => {
+    const applyMode = () => {
+      const next: SiteCanvasMode = isSiteMobileViewport() ? "mobile" : "desktop";
+      setMode((prev) => (prev === next ? prev : next));
+    };
+    applyMode();
+    window.addEventListener("resize", applyMode);
+    window.addEventListener("orientationchange", applyMode);
+    window.visualViewport?.addEventListener("resize", applyMode);
+    return () => {
+      window.removeEventListener("resize", applyMode);
+      window.removeEventListener("orientationchange", applyMode);
+      window.visualViewport?.removeEventListener("resize", applyMode);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     const el = canvasRef.current;
@@ -72,35 +64,14 @@ export function SiteFigCanvas({
 
     let lastZoom = -1;
 
-    const lockedViewport = () => {
-      const raw = viewportSize();
-      const aspect = raw.h >= raw.w ? "portrait" : "landscape";
-      const prev = lockRef.current;
-      if (
-        !prev ||
-        prev.aspect !== aspect ||
-        Math.abs(raw.w - prev.w) >= VIEWPORT_WIDTH_RELOCK_PX
-      ) {
-        lockRef.current = { w: raw.w, h: raw.h, aspect };
-      }
-      return lockRef.current!;
-    };
-
     const apply = (opts?: { relock?: boolean }) => {
-      const nextMode: SiteCanvasMode =
-        viewportSize().w <= SITE_MOBILE_MAX_WIDTH ? "mobile" : "desktop";
-      setMode((prev) => (prev === nextMode ? prev : nextMode));
+      if (opts?.relock) invalidateSiteZoomViewportLock();
 
-      const size = nextMode === "mobile" ? SITE_MOBILE_CANVAS : SITE_DESKTOP_CANVAS;
-      if (opts?.relock) lockRef.current = null;
-      const vp = lockedViewport();
-
-      const next =
-        nextMode === "mobile"
-          ? vp.w / size.w
-          : Math.min(vp.w / size.w, MAX_ZOOM);
-
-      if (Math.abs(next - lastZoom) < 0.0005 && ready) return;
+      const next = getSiteCanvasZoom(canvas.w, mode);
+      if (Math.abs(next - lastZoom) < 0.0005) {
+        setReady(true);
+        return;
+      }
       lastZoom = next;
 
       const useTransform =
@@ -110,8 +81,8 @@ export function SiteFigCanvas({
         el.style.zoom = "";
         el.style.transform = `scale(${next})`;
         el.style.transformOrigin = "top left";
-        shell.style.width = `${size.w * next}px`;
-        shell.style.height = `${size.h * next}px`;
+        shell.style.width = `${canvas.w * next}px`;
+        shell.style.height = `${canvas.h * next}px`;
         shell.style.overflow = "hidden";
       } else {
         el.style.zoom = String(next);
@@ -136,7 +107,7 @@ export function SiteFigCanvas({
       window.removeEventListener("orientationchange", onOrientation);
       window.visualViewport?.removeEventListener("resize", onResize);
     };
-  }, [mode, ready]);
+  }, [canvas.h, canvas.w, mode]);
 
   return (
     <div

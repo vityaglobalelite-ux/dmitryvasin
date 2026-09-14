@@ -459,6 +459,37 @@ body {
   animation: review-modal-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+.auth-backdrop-in {
+  animation: review-backdrop-in 0.28s ease-out both;
+}
+
+.auth-backdrop-out {
+  animation: review-backdrop-out 0.24s ease-in both;
+}
+
+.auth-panel-in {
+  animation: review-modal-in 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.auth-panel-out {
+  animation: review-modal-out 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes auth-form-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-form-in {
+  animation: auth-form-in 0.22s ease-out both;
+}
+
 /* Mobile nav menu — Figma 343:1098 */
 @keyframes mobile-menu-backdrop-in {
   from {

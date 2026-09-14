@@ -25,23 +25,24 @@ import type { Product } from "@/lib/catalog/types";
 type ProductCardProps = {
   product: Product;
   onAdd?: (product: Product) => void;
+  adding?: boolean;
 };
 
 /**
  * Public product card. Wave 2B restyles 1:1 to Figma `677:819` / `676:510`.
  * Keep this export signature stable.
  */
-export function ProductCard({ product, onAdd }: ProductCardProps) {
+export function ProductCard({ product, onAdd, adding = false }: ProductCardProps) {
   const routes = useLocalizedRoutes();
   const href = routes.product(product.id);
   const compact = product.type === "research";
 
   return (
-    <article className="group flex w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)]">
+    <article className="group flex h-full w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]">
       {compact ? (
-        <CompactBody product={product} href={href} onAdd={onAdd} />
+        <CompactBody product={product} href={href} onAdd={onAdd} adding={adding} />
       ) : (
-        <CoverBody product={product} href={href} onAdd={onAdd} />
+        <CoverBody product={product} href={href} onAdd={onAdd} adding={adding} />
       )}
     </article>
   );
@@ -51,10 +52,12 @@ function CoverBody({
   product,
   href,
   onAdd,
+  adding,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
+  adding: boolean;
 }) {
   const locale = useLocale();
   const t = useCatalogT();
@@ -68,7 +71,7 @@ function CoverBody({
 
   return (
     <>
-      <Link href={href} className="relative block h-[263px] overflow-hidden rounded-[20px] bg-light-gray max-[600px]:h-[180px]">
+      <Link href={href} className="relative block h-[263px] shrink-0 overflow-hidden rounded-[20px] bg-light-gray max-[600px]:h-[180px] max-[600px]:rounded-[10px]">
         {product.coverUrl ? (
           <Image
             src={product.coverUrl}
@@ -85,19 +88,17 @@ function CoverBody({
           {access ? <OverlayChip dim>{access}</OverlayChip> : null}
         </div>
       </Link>
-      <div className="flex flex-1 flex-col gap-5 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
         <MetaRow product={product} />
         <Link href={href} className="flex flex-col gap-2.5">
-          <h2 className="text-[24px] font-medium leading-[1.2] text-black transition-opacity duration-150 group-hover:opacity-90 max-[600px]:text-[20px]">
+          <h2 className="line-clamp-2 min-h-[calc(1.2em*2)] overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-black transition-opacity duration-150 group-hover:opacity-90 max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
             {copy.title}
           </h2>
-          {copy.short ? (
-            <p className="line-clamp-3 text-[16px] leading-[1.5] text-text max-[600px]:text-[14px]">
-              {copy.short}
-            </p>
-          ) : null}
+          <p className="line-clamp-5 min-h-[calc(1.5em*5)] overflow-hidden break-words text-[16px] leading-[1.5] text-text max-[600px]:min-h-[calc(20px*5)] max-[600px]:text-[13px] max-[600px]:leading-5">
+            {copy.short}
+          </p>
         </Link>
-        <PriceRow product={product} href={href} onAdd={onAdd} />
+        <PriceRow product={product} href={href} onAdd={onAdd} adding={adding} />
       </div>
     </>
   );
@@ -107,10 +108,12 @@ function CompactBody({
   product,
   href,
   onAdd,
+  adding,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
+  adding: boolean;
 }) {
   const locale = useLocale();
   const t = useCatalogT();
@@ -138,23 +141,19 @@ function CompactBody({
               alt={coverAlt}
               width={60}
               height={60}
-              className="size-full object-cover"
+              className="size-[60px] object-cover"
             />
           ) : null}
         </span>
-        <h2 className="min-w-0 flex-1 text-[24px] font-medium leading-[1.2] text-text-dark max-[600px]:text-[20px]">
+        <h2 className="min-h-[calc(1.2em*2)] min-w-0 flex-1 line-clamp-2 overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-text-dark max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
           {copy.title}
         </h2>
       </Link>
-      {copy.short ? (
-        <Link href={href}>
-          <p className="line-clamp-4 text-[16px] leading-[1.5] text-text-dark max-[600px]:text-[14px]">
-            {copy.short}
-          </p>
-        </Link>
-      ) : null}
+      <p className="line-clamp-5 min-h-[calc(1.5em*5)] overflow-hidden break-words text-[16px] leading-[1.5] text-text-dark max-[600px]:min-h-[calc(20px*5)] max-[600px]:text-[13px] max-[600px]:leading-5">
+        {copy.short}
+      </p>
       <MetaRow product={product} />
-      <PriceRow product={product} href={href} onAdd={onAdd} />
+      <PriceRow product={product} href={href} onAdd={onAdd} adding={adding} />
     </div>
   );
 }
@@ -207,25 +206,27 @@ function MetaRow({ product }: { product: Product }) {
   const difficulty = parseDifficulty(product.level);
 
   return (
-    <div className="flex flex-wrap items-center gap-3.5">
-      {skills.map((skill) => {
-        const icon = skillIconSrc(skill);
-        return (
-          <span
-            key={skill}
-            className="inline-flex items-center gap-1.5 rounded-[10px] bg-white p-2.5"
-          >
-            {icon ? (
-              <img src={icon} alt="" width={20} height={20} className="size-5" />
-            ) : null}
-            <span className="text-[14px] font-medium leading-normal text-text-dark">
-              {skill}
+    <div className="flex flex-wrap items-center gap-3.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-1.5">
+      <div className="flex flex-wrap items-center gap-3.5 max-[600px]:gap-1.5">
+        {skills.map((skill) => {
+          const icon = skillIconSrc(skill);
+          return (
+            <span
+              key={skill}
+              className="inline-flex items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
+            >
+              {icon ? (
+                <img src={icon} alt="" width={20} height={20} className="size-5 max-[600px]:size-4" />
+              ) : null}
+              <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
+                {skill}
+              </span>
             </span>
-          </span>
-        );
-      })}
-      <span className="inline-flex items-center gap-1.5">
-        <span className="text-[14px] font-medium leading-normal text-text-dark">
+          );
+        })}
+      </div>
+      <span className="inline-flex items-center gap-1.5 max-[600px]:order-first max-[600px]:gap-1">
+        <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
           {t.catalog.difficulty}
         </span>
         <img
@@ -233,7 +234,7 @@ function MetaRow({ product }: { product: Product }) {
           alt=""
           width={72}
           height={18}
-          className="h-[18px] w-[72px]"
+          className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
         />
       </span>
     </div>
@@ -244,42 +245,48 @@ function PriceRow({
   product,
   href,
   onAdd,
+  adding,
 }: {
   product: Product;
   href: string;
   onAdd?: (product: Product) => void;
+  adding: boolean;
 }) {
   const t = useCatalogT();
   return (
-    <div className="mt-auto flex items-center justify-between gap-3">
+    <div className="mt-auto flex items-center justify-between gap-2.5">
       <div className="flex min-w-0 flex-col gap-[3px]">
         <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60">
           {t.catalog.cost}
         </p>
-        <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent max-[600px]:text-[24px]">
+        <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent max-[600px]:text-[22px]">
           {formatCatalogPrice(product.priceMinor, product.currency)}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2.5">
-        <Button href={href} variant="secondary" className="max-[600px]:px-6">
+      <div className="flex shrink-0 items-center gap-2.5 max-[600px]:gap-2">
+        <Button
+          href={href}
+          variant="secondary"
+          className="shrink-0 max-[600px]:h-[50px] max-[600px]:px-5 max-[600px]:text-[13px]"
+        >
           {t.catalog.details}
         </Button>
-        {onAdd ? (
-          <button
-            type="button"
-            onClick={() => onAdd(product)}
-            aria-label={t.catalog.addToCart}
-            className="size-[60px] shrink-0 rounded-full transition-transform duration-200 ease-out hover:scale-105 active:scale-95 max-[600px]:size-[50px]"
-          >
-            <img
-              src={catalogCardAssets.cartAdd}
-              alt=""
-              width={60}
-              height={60}
-              className="size-full"
-            />
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={() => onAdd?.(product)}
+          disabled={!onAdd || adding}
+          aria-label={t.catalog.addToCart}
+          aria-busy={adding}
+          className="size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50 max-[600px]:size-[50px]"
+        >
+          <img
+            src={catalogCardAssets.cartAdd}
+            alt=""
+            width={60}
+            height={60}
+            className="size-[60px] max-[600px]:size-[50px]"
+          />
+        </button>
       </div>
     </div>
   );

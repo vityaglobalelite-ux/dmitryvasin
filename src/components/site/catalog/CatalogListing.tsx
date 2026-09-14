@@ -29,7 +29,7 @@ import { useAddToCart } from "@/lib/catalog/use-add-to-cart";
 import type { Product, ProductType } from "@/lib/catalog/types";
 
 const GRID_CLASS =
-  "mt-10 grid grid-cols-1 justify-items-center gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-3";
+  "mt-10 grid grid-cols-1 items-stretch justify-items-center gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-3";
 
 const SKELETON_COUNT = 6;
 
@@ -88,6 +88,7 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
         loading={products.loading}
         error={products.error}
         products={products.data}
+        pendingId={addToCart.pendingId}
         onAdd={(product) => {
           void addToCart.add(product.id);
         }}
@@ -104,6 +105,7 @@ function CatalogFrame({
   loading = false,
   error = null,
   products = [],
+  pendingId = null,
   onAdd,
   onRetry,
 }: {
@@ -112,6 +114,7 @@ function CatalogFrame({
   loading?: boolean;
   error?: Error | null;
   products?: Product[];
+  pendingId?: string | null;
   onAdd?: (product: Product) => void;
   onRetry?: () => void;
 }) {
@@ -158,7 +161,12 @@ function CatalogFrame({
       ) : (
         <div className={GRID_CLASS}>
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} onAdd={onAdd} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onAdd={onAdd}
+              adding={pendingId === product.id}
+            />
           ))}
         </div>
       )}

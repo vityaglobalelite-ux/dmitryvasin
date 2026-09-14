@@ -20,7 +20,7 @@ export function ProductCardSkeleton() {
   return (
     <article
       aria-hidden
-      className="flex w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-white"
+      className="flex h-full w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-white"
     >
       <Skeleton className="aspect-[467/263] w-full rounded-none max-[600px]:aspect-[320/180]" />
       <div className="flex flex-col gap-4 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
@@ -29,7 +29,7 @@ export function ProductCardSkeleton() {
           <Skeleton className="h-10 w-[102px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[74px]" />
         </div>
         <Skeleton className="h-[58px] w-full max-[600px]:h-[42px]" />
-        <Skeleton className="h-[96px] w-full max-[600px]:h-[80px]" />
+        <Skeleton className="h-[120px] w-full max-[600px]:h-[105px]" />
         <div className="flex items-end justify-between gap-4 pt-2">
           <div className="flex flex-col gap-2">
             <Skeleton className="h-[21px] w-[90px]" />
