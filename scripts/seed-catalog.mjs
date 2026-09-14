@@ -6,6 +6,7 @@
  * Requires a real SUPABASE_SERVICE_ROLE_KEY (JWT). Does not touch bot_* tables.
  * Re-runs upsert by stable ids — will not duplicate rows.
  * Does not insert kinescope ids (player needs real Kinescope videos).
+ * VPS apply path: scripts/seed-catalog.sql (keep product ids/covers in sync).
  */
 const supabaseUrl = (
   process.env.SUPABASE_URL ||
@@ -41,7 +42,7 @@ const PRODUCTS = [
     price_minor: 49000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/home/review-shot-37.png",
+    cover_url: "/assets/site/catalog/covers/yt-technique.png",
     duration_sec: 8 * 60 + 20,
     level: "1",
     skills: ["Осознавание", "Ось"],
@@ -67,7 +68,7 @@ const PRODUCTS = [
     price_minor: 59000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/home/review-shot-38.png",
+    cover_url: "/assets/site/catalog/covers/studio-dmitry.png",
     duration_sec: 12 * 60 + 5,
     level: "2",
     skills: ["Техника", "Стопы"],
@@ -93,7 +94,7 @@ const PRODUCTS = [
     price_minor: 149000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/home/review-shot-39.png",
+    cover_url: "/assets/site/catalog/covers/couple-gold.png",
     duration_sec: 42 * 60,
     level: "2",
     skills: ["Техника", "Очо"],
@@ -119,7 +120,7 @@ const PRODUCTS = [
     price_minor: 169000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/home/review-shot-41.png",
+    cover_url: "/assets/site/catalog/covers/silhouette.png",
     duration_sec: 38 * 60 + 12,
     level: "3",
     skills: ["Музыкальность", "Осознавание"],
@@ -145,7 +146,7 @@ const PRODUCTS = [
     price_minor: 990000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/home/review-shot-42.png",
+    cover_url: "/assets/site/catalog/covers/studio-lesson.webp",
     duration_sec: 6 * 3600,
     level: "2",
     skills: ["Техника", "Взаимодействие", "Осознавание"],
@@ -175,7 +176,7 @@ const PRODUCTS = [
     price_minor: 79000,
     currency: "rub",
     access_days: 60,
-    cover_url: "/assets/site/home/review-shot-40.png",
+    cover_url: "/assets/site/catalog/covers/photo-dance.webp",
     duration_sec: 22 * 60,
     level: "1",
     skills: ["Осознавание"],
@@ -201,7 +202,7 @@ const PRODUCTS = [
     price_minor: 249000,
     currency: "rub",
     access_days: 120,
-    cover_url: "/assets/site/home/review-shot-44.png",
+    cover_url: "/assets/site/catalog/covers/silhouette.png",
     duration_sec: 58 * 60,
     level: "4",
     skills: ["Осознавание", "Вариативность"],
@@ -227,7 +228,7 @@ const PRODUCTS = [
     price_minor: 199000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/home/review-shot-45.png",
+    cover_url: "/assets/site/catalog/covers/studio-lesson.webp",
     duration_sec: 54 * 60 + 30,
     level: "3",
     skills: ["Взаимодействие", "Техника"],
@@ -244,6 +245,455 @@ const PRODUCTS = [
         short: "A recording of real work with a couple — not staged for the camera.",
         description:
           "A peek lesson: how I take a dancer through a block in the embrace. You see the mistakes, the pauses, and the exact wording. Useful for both leaders and followers.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000009",
+    type: "lifehack",
+    price_minor: 45000,
+    currency: "rub",
+    access_days: 30,
+    cover_url: "/assets/site/catalog/covers/yt-interaction.png",
+    duration_sec: 380,
+    level: "1",
+    skills: ["Осознавание", "Объятие"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Тонус в объятии",
+        short: "Как держать объятие живым, не превращая его в зажим.",
+        description:
+          "Короткий лайфхак: где в объятии появляется лишний тонус и как его отпустить, не теряя ясности ведения.",
+      },
+      en: {
+        title: "Tone in the embrace",
+        short: "How to keep the embrace alive without turning it into a clamp.",
+        description:
+          "A short lifehack: where extra tone shows up in the embrace and how to release it without losing the lead.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000010",
+    type: "lifehack",
+    price_minor: 55000,
+    currency: "rub",
+    access_days: 30,
+    cover_url: "/assets/site/catalog/covers/yt-variability.png",
+    duration_sec: 640,
+    level: "2",
+    skills: ["Техника", "Ось"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Колени смотрят в шаг",
+        short: "Один ориентир, который сразу собирает траекторию.",
+        description:
+          "Лайфхак про направление коленей: куда они смотрят в шаге и почему от этого «ломается» ось.",
+      },
+      en: {
+        title: "Knees face the step",
+        short: "One cue that immediately organizes the path.",
+        description:
+          "A lifehack about knee direction: where they point in the walk and why the axis breaks when they don’t.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000011",
+    type: "lifehack",
+    price_minor: 52000,
+    currency: "rub",
+    access_days: 30,
+    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    duration_sec: 510,
+    level: "1",
+    skills: ["Музыкальность"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Акцент, который слышно телом",
+        short: "Как ответить на удар оркестра шагом, а не плечами.",
+        description:
+          "Музыкальный лайфхак: куда уходит вес на акценте и как не дёргать корпус.",
+      },
+      en: {
+        title: "An accent the body can hear",
+        short: "How to answer the orchestra with the step, not the shoulders.",
+        description:
+          "A musical lifehack: where the weight goes on the accent and how not to jerk the torso.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000012",
+    type: "lesson",
+    price_minor: 139000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/stage-feet.png",
+    duration_sec: 2100,
+    level: "1",
+    skills: ["Техника", "Шаг"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Простой шаг без спешки",
+        short: "Базовый урок ходьбы: перенос веса и длина шага.",
+        description:
+          "Разбираем обычный шаг так, чтобы он стал понятным партнёру. Медленно, с зеркалом и под музыку.",
+      },
+      en: {
+        title: "A simple walk without hurry",
+        short: "A fundamental walking lesson: weight transfer and step length.",
+        description:
+          "We break down the basic walk so the partner can read it. Slow, with a mirror, and with music.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000013",
+    type: "lesson",
+    price_minor: 159000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/photo-dance.webp",
+    duration_sec: 2460,
+    level: "2",
+    skills: ["Техника", "Поворот"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Выход в поворот",
+        short: "Как начать поворот из шага, не теряя оси.",
+        description:
+          "Урок про вход в поворот: куда смотрит корпус, что делает свободная нога и как не завалиться внутрь.",
+      },
+      en: {
+        title: "Entering a turn",
+        short: "How to start a turn from the walk without losing the axis.",
+        description:
+          "A lesson on entering the turn: where the torso faces, what the free leg does, and how not to fall inward.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000014",
+    type: "lesson",
+    price_minor: 179000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/studio-lesson.webp",
+    duration_sec: 2640,
+    level: "3",
+    skills: ["Техника", "Сакада"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Сакада без толчка",
+        short: "Точное место и момент, чтобы сакада не стала ударом.",
+        description:
+          "Разбор сакады: геометрия ног, момент в музыке и как не толкать партнёра корпусом.",
+      },
+      en: {
+        title: "Sacada without a shove",
+        short: "The exact place and timing so a sacada is not a hit.",
+        description:
+          "A sacada breakdown: leg geometry, the moment in the music, and how not to push the partner with the torso.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000015",
+    type: "lesson",
+    price_minor: 155000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/photo-liza.webp",
+    duration_sec: 2340,
+    level: "2",
+    skills: ["Взаимодействие", "Объятие"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Объятие, в котором удобно обоим",
+        short: "Урок про тонус, дистанцию и ясность в паре.",
+        description:
+          "Как собрать объятие так, чтобы ведущему было ясно, а ведомому — безопасно. Много сравнений «до / после».",
+      },
+      en: {
+        title: "An embrace comfortable for both",
+        short: "A lesson on tone, distance, and clarity in the couple.",
+        description:
+          "How to build an embrace the leader can read and the follower can trust. Lots of before / after comparisons.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000016",
+    type: "lesson",
+    price_minor: 165000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/teacher-hero.webp",
+    duration_sec: 2580,
+    level: "3",
+    skills: ["Техника", "Ведение"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Ведение в простом шаге",
+        short: "Как пригласить шаг, а не тащить человека за собой.",
+        description:
+          "Урок ведения: импульс, пауза и то, что происходит в груди. Для тех, кто уже ходит, но пара «не едет».",
+      },
+      en: {
+        title: "Leading in a simple walk",
+        short: "How to invite the step instead of dragging the person along.",
+        description:
+          "A leading lesson: impulse, pause, and what happens in the chest. For dancers who already walk, but the couple doesn’t travel.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000017",
+    type: "course",
+    price_minor: 1290000,
+    currency: "rub",
+    access_days: 180,
+    cover_url: "/assets/site/catalog/covers/og-dmitry.png",
+    duration_sec: 28800,
+    level: "3",
+    skills: ["Музыкальность", "Осознавание"],
+    lesson_count: 8,
+    i18n: {
+      ru: {
+        title: "Музыкальность на 8 уроков",
+        short: "Курс: фраза, пауза, акцент и как не танцевать «мимо оркестра».",
+        description:
+          "Последовательная система музыкальности. От простого шага в ритме до паузы и акцента, которые пара слышит вместе.",
+        program:
+          "Урок 1. Где в теле живёт пульс\nУрок 2. Шаг в четвертях\nУрок 3. Фраза, а не счёт\nУрок 4. Пауза внутри музыки\nУрок 5. Акцент без дёрганья\nУрок 6. Замедление\nУрок 7. Пара слышит одно и то же\nУрок 8. Сборка на милонге",
+      },
+      en: {
+        title: "Musicality in 8 lessons",
+        short: "A course: phrase, pause, accent — and how not to dance past the orchestra.",
+        description:
+          "A sequential musicality system. From a simple walk in time to pauses and accents the couple hears together.",
+        program:
+          "Lesson 1. Where the pulse lives in the body\nLesson 2. Walking in quarters\nLesson 3. Phrase, not counting\nLesson 4. Pause inside the music\nLesson 5. Accent without jerking\nLesson 6. Slowing down\nLesson 7. The couple hears the same thing\nLesson 8. Putting it together at the milonga",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000018",
+    type: "course",
+    price_minor: 1190000,
+    currency: "rub",
+    access_days: 180,
+    cover_url: "/assets/site/catalog/covers/couple-gold.png",
+    duration_sec: 25200,
+    level: "2",
+    skills: ["Техника", "Ось", "Шаг"],
+    lesson_count: 7,
+    i18n: {
+      ru: {
+        title: "Техника шага: 7 уроков",
+        short: "Курс про стопы, колени и то, почему шаг «уезжает».",
+        description:
+          "Разбираем технику ходьбы слой за слоем. После курса шаг становится тише, короче или длиннее — по выбору, а не случайно.",
+        program:
+          "Урок 1. Стопа и пол\nУрок 2. Перенос веса\nУрок 3. Колени\nУрок 4. Длина шага\nУрок 5. Смена направления\nУрок 6. Ошибки «уезжающего» шага\nУрок 7. Сборка под разную музыку",
+      },
+      en: {
+        title: "Walk technique: 7 lessons",
+        short: "A course on feet, knees, and why the step drifts.",
+        description:
+          "We build walking technique layer by layer. After the course the step gets quieter, shorter or longer — by choice, not by accident.",
+        program:
+          "Lesson 1. Foot and floor\nLesson 2. Weight transfer\nLesson 3. Knees\nLesson 4. Step length\nLesson 5. Changing direction\nLesson 6. The drifting-step mistakes\nLesson 7. Putting it together with different music",
+      },
+    },
+  },
+  {
+    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    duration_sec: 32400,
+    level: "3",
+    skills: ["Взаимодействие", "Техника"],
+    lesson_count: 10,
+    i18n: {
+      ru: {
+        title: "Пара: 10 уроков взаимодействия",
+        short: "Курс про ведение, следование и то, что происходит между двумя людьми.",
+        description:
+          "Не набор фигур, а система общения в паре. Полезно и ведущим, и ведомым — можно проходить вместе.",
+        program:
+          "Урок 1. Кто начинает шаг\nУрок 2. Приглашение, а не толчок\nУрок 3. Как отвечать телом\nУрок 4. Дистанция\nУрок 5. Поворот вдвоём\nУрок 6. Ошибки «я веду сильнее»\nУрок 7. Ошибки «я угадываю»\nУрок 8. Пауза в паре\nУрок 9. Смена ролей в упражнении\nУрок 10. Сборка на музыке",
+      },
+      en: {
+        title: "The couple: 10 lessons on connection",
+        short: "A course on leading, following, and what happens between two people.",
+        description:
+          "Not a pile of figures — a system of conversation in the couple. Useful for both leaders and followers; you can take it together.",
+        program:
+          "Lesson 1. Who starts the step\nLesson 2. Invitation, not a shove\nLesson 3. How to answer with the body\nLesson 4. Distance\nLesson 5. Turning together\nLesson 6. The “I lead harder” mistakes\nLesson 7. The “I guess” mistakes\nLesson 8. Pause in the couple\nLesson 9. Switching roles in an exercise\nLesson 10. Putting it together with music",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000020",
+    type: "extra",
+    price_minor: 69000,
+    currency: "rub",
+    access_days: 60,
+    cover_url: "/assets/site/catalog/covers/couple-stage.jpg",
+    duration_sec: 900,
+    level: "1",
+    skills: ["Взаимодействие"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Этикет милонги за 15 минут",
+        short: "Как приглашать, как отказывать и куда смотреть в зале.",
+        description:
+          "Короткий доп. материал, чтобы зал не был стрессом. Без морали — конкретные привычки.",
+      },
+      en: {
+        title: "Milonga etiquette in 15 minutes",
+        short: "How to invite, how to decline, and where to look in the room.",
+        description:
+          "A short extra so the floor is not stressful. No lectures — concrete habits.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000021",
+    type: "extra",
+    price_minor: 89000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/photo-dmitry.webp",
+    duration_sec: 1500,
+    level: "2",
+    skills: ["Техника"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Домашние связки на 25 минут",
+        short: "Набор коротких повторений, если нет партнёра рядом.",
+        description:
+          "Доп. материал для тех, кто учится один: ось, шаг, оче у стены и зеркала.",
+      },
+      en: {
+        title: "25 minutes of homework drills",
+        short: "A set of short repeats when you don’t have a partner nearby.",
+        description:
+          "Extra for people who study alone: axis, walk, ochos at the wall and the mirror.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000022",
+    type: "research",
+    price_minor: 229000,
+    currency: "rub",
+    access_days: 120,
+    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    duration_sec: 3300,
+    level: "4",
+    skills: ["Осознавание", "Объятие"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Исследование: объём объятия",
+        short: "Почему пара «сплющивается» и где на самом деле живёт пространство.",
+        description:
+          "Час наблюдений за объёмом: грудная клетка, локти, то, что происходит между двумя спинами.",
+      },
+      en: {
+        title: "Research: volume of the embrace",
+        short: "Why the couple flattens — and where the space actually lives.",
+        description:
+          "An hour of observing volume: ribcage, elbows, and what happens between two backs.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000023",
+    type: "research",
+    price_minor: 259000,
+    currency: "rub",
+    access_days: 120,
+    cover_url: "/assets/site/catalog/covers/studio-dmitry.png",
+    duration_sec: 3600,
+    level: "3",
+    skills: ["Вариативность", "Техника"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Исследование: вариации одного шага",
+        short: "Один шаг — много продолжений. Смотрим, где выбор появляется.",
+        description:
+          "Не набор фигур, а исследование: в какой момент шаг ещё можно повернуть, ускорить или остановить.",
+      },
+      en: {
+        title: "Research: variations of one step",
+        short: "One step, many continuations. We watch where the choice appears.",
+        description:
+          "Not a pile of figures — research: at which moment the step can still turn, speed up, or stop.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000024",
+    type: "peek",
+    price_minor: 189000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/photo-liza.webp",
+    duration_sec: 3120,
+    level: "2",
+    skills: ["Взаимодействие", "Осознавание"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Подсмотр: работа с начинающими",
+        short: "Реальный урок, где пара ещё ищет шаг. Без монтажа «красиво».",
+        description:
+          "Подсмотр за тем, как я ставлю простую ходьбу двум людям, которые только входят в танго.",
+      },
+      en: {
+        title: "Peek: working with beginners",
+        short: "A real lesson where the couple is still looking for the walk. No “pretty” edit.",
+        description:
+          "A peek at how I set up a simple walk for two people just entering tango.",
+      },
+    },
+  },
+  {
+    id: "c0a7a109-0001-4000-8000-000000000025",
+    type: "peek",
+    price_minor: 219000,
+    currency: "rub",
+    access_days: 90,
+    cover_url: "/assets/site/catalog/covers/teacher-hero.webp",
+    duration_sec: 3540,
+    level: "3",
+    skills: ["Техника", "Объятие"],
+    lesson_count: null,
+    i18n: {
+      ru: {
+        title: "Подсмотр: разбор затыка в оче",
+        short: "Индивидуалка, где оче не получается. Смотрим, что я меняю в формулировках.",
+        description:
+          "Подсмотр полезен преподавателям и тем, кто застрял в оче: видно не приём, а ход мысли.",
+      },
+      en: {
+        title: "Peek: an ocho that’s stuck",
+        short: "A private lesson where the ocho isn’t working. Watch what I change in the wording.",
+        description:
+          "Useful for teachers and anyone stuck on ochos: you see the thinking, not just a trick.",
       },
     },
   },
