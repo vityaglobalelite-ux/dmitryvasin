@@ -168,7 +168,7 @@ export function HomeHowToMobile() {
             </li>
           ))}
         </ol>
-        <p className="mt-5 flex items-start gap-2.5 text-[13px] leading-[1.5] text-white">
+        <div className="mt-5 flex items-start gap-2.5 text-[13px] leading-[1.5] text-white">
           <img
             src={homeAssets.iconSupport}
             alt=""
@@ -186,7 +186,7 @@ export function HomeHowToMobile() {
               copy.howSupport
             )}
           </a>
-        </p>
+        </div>
       </Layer>
       <img
         src={`${homeAssets.macbook}?v=alpha`}

@@ -12,7 +12,10 @@ import {
 } from "react";
 import { useParams } from "next/navigation";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
-import { ProductCard } from "@/components/site/catalog/ProductCard";
+import {
+  CatalogProductGrid,
+  ProductCard,
+} from "@/components/site/catalog/ProductCard";
 import {
   catalogTypeLabel,
   formatAccessLabel,
@@ -676,7 +679,7 @@ function RelatedProducts({
       <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[24px] max-[600px]:tracking-[-0.72px]">
         {t.product.related}
       </h2>
-      <div className="mt-10 grid grid-cols-1 justify-items-stretch gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-3 max-[600px]:mt-5">
+      <CatalogProductGrid className="mt-10 max-[600px]:mt-5">
         {loading
           ? Array.from({ length: 3 }, (_, index) => (
               <ProductCardSkeleton key={index} />
@@ -684,7 +687,7 @@ function RelatedProducts({
           : related.map((item) => (
               <ProductCard key={item.id} product={item} onAdd={onAdd} />
             ))}
-      </div>
+      </CatalogProductGrid>
     </section>
   );
 }

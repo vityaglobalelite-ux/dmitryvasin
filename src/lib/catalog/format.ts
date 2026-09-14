@@ -18,7 +18,7 @@ export function formatPriceMinor(
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-  return `${amount} ${currencySuffix[currency]}`;
+  return `${amount}\u00A0${currencySuffix[currency]}`;
 }
 
 export function formatDuration(durationSec: number, locale: Locale = "ru"): string {

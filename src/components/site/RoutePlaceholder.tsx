@@ -1,5 +1,6 @@
 "use client";
 
+import { CatalogProductGrid } from "@/components/site/catalog/ProductCard";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { useCatalogT } from "@/lib/catalog/locale-context";
 
@@ -26,17 +27,19 @@ export function RoutePlaceholder({
         {body}
       </p>
       {count > 0 ? (
-        <div
-          className={
-            variant === "catalog"
-              ? "mt-10 grid grid-cols-1 justify-items-center gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-3"
-              : "mt-10 max-w-[467px]"
-          }
-        >
-          {Array.from({ length: count }, (_, i) => (
-            <ProductCardSkeleton key={i} />
-          ))}
-        </div>
+        variant === "catalog" ? (
+          <CatalogProductGrid className="mt-10">
+            {Array.from({ length: count }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </CatalogProductGrid>
+        ) : (
+          <div className="mt-10 max-w-[467px]">
+            {Array.from({ length: count }, (_, i) => (
+              <ProductCardSkeleton key={i} />
+            ))}
+          </div>
+        )
       ) : null}
     </main>
   );

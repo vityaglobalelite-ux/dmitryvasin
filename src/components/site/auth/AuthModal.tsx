@@ -10,7 +10,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type FormEvent,
   type PointerEvent,
   type ReactNode,
@@ -20,11 +19,14 @@ import {
   AuthBanner,
   AuthCard,
   AuthField,
-  AuthScreenSkeleton,
   AuthSwitch,
   AuthTitle,
   PrivacyConsent,
 } from "@/components/site/auth/AuthPrimitives";
+import {
+  OverlayHostProvider,
+  useOverlayHost,
+} from "@/components/site/auth/overlay-host";
 import { authT } from "@/components/site/auth/copy";
 import {
   mapLoginError,
@@ -63,12 +65,6 @@ const CLOSE_MS = 280;
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function getAuthOverlayHost(): HTMLElement {
-  return (
-    document.getElementById("site-canvas-overlay-host") ?? document.body
-  );
-}
-
 function getCanvasScale(canvas: HTMLElement): number {
   const named = Number(canvas.dataset.canvasScale);
   if (Number.isFinite(named) && named > 0) return named;
@@ -81,33 +77,45 @@ function getCanvasScale(canvas: HTMLElement): number {
 function syncDialogToVisibleFrame(node: HTMLDialogElement, host: HTMLElement) {
   const canvas = host.closest<HTMLElement>("[data-site-canvas]");
   const vv = window.visualViewport;
+  const viewTop = vv?.offsetTop ?? 0;
+  const viewLeft = vv?.offsetLeft ?? 0;
+  const viewW = vv?.width ?? window.innerWidth;
   const viewH = vv?.height ?? window.innerHeight;
-  node.toggleAttribute("data-compact", viewH < 620);
 
-  if (!canvas || host === document.body) {
-    if (!vv) {
-      node.style.top = "";
-      node.style.left = "";
-      node.style.width = "";
-      node.style.height = "";
-      return;
-    }
-    node.style.top = `${vv.offsetTop}px`;
-    node.style.left = `${vv.offsetLeft}px`;
-    node.style.width = `${Math.max(window.innerWidth, vv.width)}px`;
-    node.style.height = `${vv.height}px`;
+  if (!canvas) {
+    node.style.top = `${viewTop}px`;
+    node.style.left = `${viewLeft}px`;
+    node.style.width = `${viewW}px`;
+    node.style.height = `${viewH}px`;
     return;
   }
 
   const scale = getCanvasScale(canvas);
   const canvasRect = canvas.getBoundingClientRect();
-  const viewTop = vv?.offsetTop ?? 0;
-  const viewLeft = vv?.offsetLeft ?? 0;
-  const viewW = vv?.width ?? window.innerWidth;
   node.style.top = `${(viewTop - canvasRect.top) / scale}px`;
   node.style.left = `${(viewLeft - canvasRect.left) / scale}px`;
   node.style.width = `${viewW / scale}px`;
   node.style.height = `${viewH / scale}px`;
+}
+
+function inertBackground(host: HTMLElement): Element[] {
+  const inerted: Element[] = [];
+  const canvas = host.closest("[data-site-canvas]");
+  if (canvas) {
+    for (const child of canvas.children) {
+      if (child !== host) {
+        child.setAttribute("inert", "");
+        inerted.push(child);
+      }
+    }
+    return inerted;
+  }
+  const chrome = document.querySelector("[data-site-chrome]");
+  if (chrome && !chrome.contains(host)) {
+    chrome.setAttribute("inert", "");
+    inerted.push(chrome);
+  }
+  return inerted;
 }
 
 const AuthModalContext = createContext<AuthModalContextValue | null>(null);
@@ -181,18 +189,20 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthModalContext.Provider value={value}>
-      {children}
-      <AuthDialog
-        open={open}
-        closing={closing}
-        mode={mode}
-        session={session}
-        setMode={setMode}
-        onDismiss={dismissAuth}
-        onSuccess={succeedAuth}
-      />
-    </AuthModalContext.Provider>
+    <OverlayHostProvider>
+      <AuthModalContext.Provider value={value}>
+        {children}
+        <AuthDialog
+          open={open}
+          closing={closing}
+          mode={mode}
+          session={session}
+          setMode={setMode}
+          onDismiss={dismissAuth}
+          onSuccess={succeedAuth}
+        />
+      </AuthModalContext.Provider>
+    </OverlayHostProvider>
   );
 }
 
@@ -215,11 +225,7 @@ function AuthDialog({
 }) {
   const copy = authT(useLocale());
   const titleId = useId();
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  );
+  const host = useOverlayHost();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const backdropPressRef = useRef(false);
@@ -247,38 +253,19 @@ function AuthDialog({
 
   useLayoutEffect(() => {
     const node = dialogRef.current;
-    if (!open || !node) return;
+    if (!open || !node || !host) return;
 
-    const host = getAuthOverlayHost();
-    const inCanvas = host !== document.body;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
-    if (inCanvas) {
-      if (node.open) node.close();
-      node.show();
-    } else if (!node.matches(":modal")) {
-      if (node.open) node.close();
-      node.showModal();
-    }
-
-    const inerted: Element[] = [];
-    const canvas = host.closest("[data-site-canvas]");
-    if (canvas) {
-      for (const child of canvas.children) {
-        if (child !== host) {
-          child.setAttribute("inert", "");
-          inerted.push(child);
-        }
-      }
-    }
+    if (node.open) node.close();
+    node.show();
+    const inerted = inertBackground(host);
 
     const clearViewport = () => {
       node.style.height = "";
       node.style.width = "";
       node.style.top = "";
       node.style.left = "";
-      node.removeAttribute("data-compact");
     };
 
     const syncViewport = () => syncDialogToVisibleFrame(node, host);
@@ -294,7 +281,7 @@ function AuthDialog({
         onDismiss();
         return;
       }
-      if (!inCanvas || event.key !== "Tab") return;
+      if (event.key !== "Tab") return;
       const root = panelRef.current;
       if (!root) return;
       const items = [...root.querySelectorAll<HTMLElement>(FOCUSABLE)].filter(
@@ -327,7 +314,7 @@ function AuthDialog({
       clearViewport();
       if (node.open) node.close();
     };
-  }, [onDismiss, open]);
+  }, [host, onDismiss, open]);
 
   useEffect(() => {
     if (!open) return;
@@ -353,7 +340,7 @@ function AuthDialog({
     backdropPressRef.current = false;
   }, [open]);
 
-  if (!mounted || !open) return null;
+  if (!open || !host) return null;
 
   return createPortal(
     <dialog
@@ -389,7 +376,7 @@ function AuthDialog({
         </div>
       </div>
     </dialog>,
-    getAuthOverlayHost(),
+    host,
   );
 }
 
@@ -760,9 +747,5 @@ export function AuthDeepLink({ mode }: { mode: AuthMode }) {
     router.replace(raw ? safeReturnUrl(raw, locale, routes.home) : routes.home);
   }, [loading, locale, mode, openAuth, router, routes.home, searchParams, user]);
 
-  return (
-    <AuthScreenSkeleton
-      fields={mode === "signup" ? 3 : mode === "forgot" ? 1 : 2}
-    />
-  );
+  return null;
 }

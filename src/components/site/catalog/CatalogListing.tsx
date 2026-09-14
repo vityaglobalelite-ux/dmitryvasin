@@ -9,7 +9,10 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { ProductCard } from "@/components/site/catalog/ProductCard";
+import {
+  CatalogProductGrid,
+  ProductCard,
+} from "@/components/site/catalog/ProductCard";
 import {
   catalogFilterHref,
   catalogFilterLabel,
@@ -28,9 +31,6 @@ import {
 import { listPublishedProducts } from "@/lib/catalog/repo/products";
 import { useAddToCart } from "@/lib/catalog/use-add-to-cart";
 import type { Product, ProductType } from "@/lib/catalog/types";
-
-const GRID_CLASS =
-  "mt-10 grid grid-cols-1 items-stretch justify-items-center gap-5 min-[900px]:grid-cols-2 min-[1440px]:grid-cols-3";
 
 const SKELETON_COUNT = 6;
 
@@ -138,11 +138,11 @@ function CatalogFrame({
       </header>
       <CatalogFilters type={type} extraTypes={extraTypes} />
       {loading ? (
-        <div className={GRID_CLASS}>
+        <CatalogProductGrid className="mt-10">
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
             <ProductCardSkeleton key={index} />
           ))}
-        </div>
+        </CatalogProductGrid>
       ) : error ? (
         <CatalogMessage
           title={copy.catalog.errorTitle}
@@ -170,7 +170,7 @@ function CatalogFrame({
           }
         />
       ) : (
-        <div className={GRID_CLASS}>
+        <CatalogProductGrid className="mt-10">
           {products.map((product) => (
             <ProductCard
               key={product.id}
@@ -179,7 +179,7 @@ function CatalogFrame({
               adding={pendingId === product.id}
             />
           ))}
-        </div>
+        </CatalogProductGrid>
       )}
     </main>
   );

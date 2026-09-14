@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
@@ -29,6 +30,23 @@ type ProductCardProps = {
   adding?: boolean;
 };
 
+/** Column count follows the grid width, not the viewport — 3-up only when ~467px cards still fit. */
+export function CatalogProductGrid({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={["@container", className].filter(Boolean).join(" ")}>
+      <div className="grid grid-cols-1 items-stretch justify-items-center gap-5 @[640px]:grid-cols-2 @[1140px]:grid-cols-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /**
  * Public product card. Wave 2B restyles 1:1 to Figma `677:819` / `676:510`.
  * Keep this export signature stable.
@@ -40,7 +58,7 @@ export function ProductCard({ product, onAdd, adding = false }: ProductCardProps
 
   return (
     <article
-      className="group flex h-full w-full max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]"
+      className="@container group flex h-full w-full min-w-0 max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]"
       onClick={rememberReturnTo}
     >
       {compact ? (
@@ -258,20 +276,20 @@ function PriceRow({
 }) {
   const t = useCatalogT();
   return (
-    <div className="mt-auto flex items-center justify-between gap-2.5">
-      <div className="flex min-w-0 flex-col gap-[3px]">
+    <div className="mt-auto flex flex-nowrap items-center justify-between gap-2.5">
+      <div className="flex shrink-0 flex-col gap-[3px]">
         <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60">
           {t.catalog.cost}
         </p>
-        <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent max-[600px]:text-[22px]">
+        <p className="whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[439px]:text-[22px] max-[600px]:text-[22px]">
           {formatCatalogPrice(product.priceMinor, product.currency)}
         </p>
       </div>
-      <div className="flex shrink-0 items-center gap-2.5 max-[600px]:gap-2">
+      <div className="flex shrink-0 items-center gap-2.5 @max-[439px]:gap-2 max-[600px]:gap-2">
         <Button
           href={href}
           variant="secondary"
-          className="shrink-0 max-[600px]:h-[50px] max-[600px]:px-5 max-[600px]:text-[13px]"
+          className="shrink-0 @max-[439px]:h-[50px] @max-[439px]:px-4 @max-[439px]:text-[13px] max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
         >
           {t.catalog.details}
         </Button>
@@ -281,14 +299,14 @@ function PriceRow({
           disabled={!onAdd || adding}
           aria-label={t.catalog.addToCart}
           aria-busy={adding}
-          className="size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50 max-[600px]:size-[50px]"
+          className="size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-50 @max-[439px]:size-[50px] max-[600px]:size-[50px]"
         >
           <img
             src={catalogCardAssets.cartAdd}
             alt=""
             width={60}
             height={60}
-            className="size-[60px] max-[600px]:size-[50px]"
+            className="size-[60px] @max-[439px]:size-[50px] max-[600px]:size-[50px]"
           />
         </button>
       </div>

@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useRegisterCanvasOverlayHost } from "@/components/site/auth/overlay-host";
 import {
   getSiteCanvasZoom,
   invalidateSiteZoomViewportLock,
@@ -35,6 +36,7 @@ export function SiteFigCanvas({
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
+  const overlayHostRef = useRegisterCanvasOverlayHost();
   const [mode, setMode] = useState<SiteCanvasMode>("desktop");
   const [ready, setReady] = useState(false);
 
@@ -123,12 +125,10 @@ export function SiteFigCanvas({
         style={{ width: canvas.w, height: canvas.h }}
         data-site-canvas={mode}
       >
-        <div className="relative z-0">
-          {children(mode)}
-        </div>
+        <div className="relative z-0">{children(mode)}</div>
         <div
-          id="site-canvas-overlay-host"
-          className="pointer-events-none absolute inset-0 z-[200]"
+          ref={overlayHostRef}
+          className="pointer-events-none absolute inset-0 z-[200] has-[dialog]:pointer-events-auto"
         />
       </div>
     </div>
