@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { addGuestItem, getGuestCart } from "@/lib/catalog/cart";
 import { useAuthUser } from "@/lib/catalog/hooks";
 import { listCartItems, upsertCartItem } from "@/lib/catalog/repo/cart";
@@ -97,10 +97,12 @@ export function useAddToCart() {
   const { data: user, loading: authLoading } = useAuthUser();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const pendingRef = useRef<string | null>(null);
 
   const add = useCallback(
     async (productId: string): Promise<AddToCartResult> => {
-      if (pendingId) return "error";
+      if (pendingRef.current) return "error";
+      pendingRef.current = productId;
       setPendingId(productId);
       try {
         const existing = user ? await listCartItems() : getGuestCart();
@@ -133,20 +135,23 @@ export function useAddToCart() {
         emitCartChanged({ added: productId });
         return "exists";
       } finally {
+        pendingRef.current = null;
         setPendingId(null);
       }
     },
-    [pendingId, user],
+    [user],
   );
+
+  const closeModal = useCallback(() => {
+    markWholesaleModalSeen();
+    setModalOpen(false);
+  }, []);
 
   return {
     add,
     pendingId,
     ready: !authLoading,
     modalOpen,
-    closeModal: () => {
-      markWholesaleModalSeen();
-      setModalOpen(false);
-    },
+    closeModal,
   };
 }
