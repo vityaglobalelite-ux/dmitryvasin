@@ -125,8 +125,6 @@ function CatalogFrame({
     <main className="mx-auto w-full flex-1 px-[12.5%] py-16 max-[600px]:px-5 max-[600px]:py-10">
       <header className="flex flex-col gap-10 max-[600px]:gap-5">
         <SiteTrail
-          backHref={routes.home}
-          backDesktop={copy.catalog.toHome}
           crumbs={[
             { href: routes.home, label: copy.nav.home },
             { label: copy.nav.catalog },
