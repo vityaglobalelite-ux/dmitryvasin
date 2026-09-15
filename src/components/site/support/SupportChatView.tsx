@@ -10,6 +10,7 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from "react";
+import { AuthBanner } from "@/components/site/auth/AuthPrimitives";
 import {
   AccountShell,
   AccountShellSkeleton,
@@ -24,24 +25,28 @@ import {
   isSupportCompressibleImage,
   prepareSupportAttachment,
 } from "@/lib/catalog/prepare-support-attachment";
+import { AuthRequiredError } from "@/lib/catalog/repo/internal";
 import {
   createSupportAttachmentSignedUrl,
   isSupportImageFile,
   isSupportImagePath,
   listSupportMessages,
-  relaySupportMessage,
+  relaySupportMessageReliable,
   sendSupportMessage,
   SUPPORT_MAX_BYTES,
   SUPPORT_PREVIEW_TRANSFORM,
   supportFilename,
   uploadSupportAttachment,
 } from "@/lib/catalog/repo/support";
-import { getSupabase } from "@/lib/supabase/client";
 import type { SupportMessage } from "@/lib/catalog/types";
+import { getSupabase } from "@/lib/supabase/client";
 
 const POLL_MS = 5000;
 const SIGNED_TTL_MS = 50 * 60 * 1000;
 const LOCAL_PREVIEW_MS = 2 * 60 * 1000;
+
+type DeliveryState = "pending" | "failed";
+type DeliveryMap = Record<string, DeliveryState>;
 
 type SignedEntry = {
   preview: string;
@@ -377,13 +382,28 @@ function SupportThread({
   onPreviewError: (path: string) => void;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const [delivery, setDelivery] = useState<DeliveryMap>({});
   const empty = messages.length === 0;
 
   useEffect(() => {
     const node = scrollerRef.current;
     if (!node) return;
     node.scrollTo({ top: node.scrollHeight, behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages.length, delivery]);
+
+  const deliver = useCallback(async (messageId: string) => {
+    setDelivery((prev) => ({ ...prev, [messageId]: "pending" }));
+    try {
+      await relaySupportMessageReliable(messageId);
+      setDelivery((prev) => {
+        const next = { ...prev };
+        delete next[messageId];
+        return next;
+      });
+    } catch {
+      setDelivery((prev) => ({ ...prev, [messageId]: "failed" }));
+    }
+  }, []);
 
   return (
     <div className="flex min-h-[min(56vh,620px)] flex-1 flex-col overflow-hidden rounded-[30px] bg-light-gray max-[600px]:rounded-[10px]">
@@ -396,15 +416,23 @@ function SupportThread({
           <SupportBubble
             key={message.id}
             message={message}
+            delivery={delivery[message.id]}
             signedUrl={
               message.storagePath ? signed[message.storagePath] : undefined
             }
             onOpenPhoto={onOpenPhoto}
             onPreviewError={onPreviewError}
+            onRetryDelivery={() => void deliver(message.id)}
           />
         ))}
       </div>
-      <SupportComposer onSent={onSent} onLocalFile={onLocalFile} />
+      <SupportComposer
+        onLocalFile={onLocalFile}
+        onSaved={(saved) => {
+          onSent();
+          if (saved?.id) void deliver(saved.id);
+        }}
+      />
     </div>
   );
 }
@@ -436,13 +464,17 @@ function SupportEmpty() {
 function SupportBubble({
   message,
   signedUrl,
+  delivery,
   onOpenPhoto,
   onPreviewError,
+  onRetryDelivery,
 }: {
   message: SupportMessage;
   signedUrl?: string;
+  delivery?: DeliveryState;
   onOpenPhoto: (path: string, filename: string, previewUrl: string) => void;
   onPreviewError: (path: string) => void;
+  onRetryDelivery: () => void;
 }) {
   const mine = message.fromRole === "user";
   const filename = message.storagePath
@@ -480,6 +512,8 @@ function SupportBubble({
           imagePath && !showBody
             ? "p-1.5"
             : "px-5 py-4 max-[600px]:px-4 max-[600px]:py-3",
+          delivery === "failed" ? "ring-2 ring-accent-red/35" : "",
+          delivery === "pending" ? "opacity-90" : "",
         ].join(" ")}
       >
         {showBody ? (
@@ -499,25 +533,44 @@ function SupportBubble({
             }}
           />
         ) : null}
-        {!imagePath && signedUrl && filename ? (
+        {!imagePath && message.storagePath && signedUrl ? (
           <a
             href={signedUrl}
             download={filename}
             className={[
-              "inline-flex items-center gap-2 underline-offset-2 hover:underline",
-              showBody ? "mt-3" : "",
-              mine ? "text-white" : "text-plum",
+              "mt-3 inline-flex items-center gap-2 text-[14px] font-medium underline-offset-2 hover:underline",
+              mine ? "text-white/90" : "text-plum",
             ].join(" ")}
           >
             {supportCopy.download} {filename}
           </a>
         ) : null}
         {!imagePath && message.storagePath && !signedUrl ? (
-          <Skeleton
-            className={["h-5 w-40", showBody ? "mt-3" : ""].join(" ")}
-          />
+          <Skeleton className="mt-3 h-5 w-40 rounded-md" />
         ) : null}
       </div>
+      {mine && delivery === "pending" ? (
+        <p
+          role="status"
+          className="mt-1.5 text-right text-[12px] leading-[1.3] text-text/45"
+        >
+          {supportCopy.deliveryPending}
+        </p>
+      ) : null}
+      {mine && delivery === "failed" ? (
+        <div className="mt-1.5 flex items-center justify-end gap-2">
+          <p role="alert" className="text-[12px] leading-[1.3] text-accent-red">
+            {supportCopy.deliveryFailed}
+          </p>
+          <button
+            type="button"
+            onClick={onRetryDelivery}
+            className="text-[12px] font-semibold leading-[1.3] text-plum underline-offset-2 transition-opacity hover:underline hover:opacity-80"
+          >
+            {supportCopy.deliveryRetry}
+          </button>
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -593,11 +646,20 @@ function SupportPhoto({
   );
 }
 
+function mapSendError(err: unknown): string {
+  if (err instanceof AuthRequiredError) return supportCopy.sendErrorAuth;
+  const code = err instanceof Error ? err.message : "";
+  if (code === "file_too_large") return supportCopy.fileTooLarge;
+  if (code === "empty_file") return supportCopy.sendErrorEmpty;
+  if (/invalid key/i.test(code)) return supportCopy.sendError;
+  return supportCopy.sendError;
+}
+
 function SupportComposer({
-  onSent,
+  onSaved,
   onLocalFile,
 }: {
-  onSent: () => void;
+  onSaved: (message: SupportMessage | null) => void;
   onLocalFile: (path: string, file: File) => void;
 }) {
   const fileId = useId();
@@ -607,8 +669,8 @@ function SupportComposer({
   const [busy, setBusy] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
   const pickId = useRef(0);
+  const textRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!file || !isSupportImageFile(file)) {
@@ -674,7 +736,6 @@ function SupportComposer({
     }
     setBusy(true);
     setError(null);
-    setWarning(null);
     try {
       let storagePath: string | null = null;
       if (file) {
@@ -684,21 +745,10 @@ function SupportComposer({
       const saved = await sendSupportMessage(body, storagePath);
       setText("");
       setFile(null);
-      onSent();
-      if (saved?.id) {
-        try {
-          await relaySupportMessage(saved.id);
-        } catch {
-          setWarning(supportCopy.relayWarning);
-        }
-      }
+      onSaved(saved);
+      queueMicrotask(() => textRef.current?.focus());
     } catch (err) {
-      const code = err instanceof Error ? err.message : "";
-      setError(
-        code === "file_too_large"
-          ? supportCopy.fileTooLarge
-          : supportCopy.sendError,
-      );
+      setError(mapSendError(err));
     } finally {
       setBusy(false);
     }
@@ -764,7 +814,11 @@ function SupportComposer({
       <div className="flex items-end gap-3 max-[600px]:gap-2">
         <label
           htmlFor={fileId}
-          className="inline-flex h-[60px] shrink-0 cursor-pointer items-center justify-center rounded-[20px] border border-[#d9d9d9] bg-white px-4 text-[16px] font-medium text-text transition-opacity hover:opacity-80 max-[600px]:h-[50px] max-[600px]:px-3 max-[600px]:text-[13px]"
+          className={[
+            "inline-flex h-[60px] shrink-0 cursor-pointer items-center justify-center rounded-[20px] border bg-white px-4 text-[16px] font-medium text-text transition-[border-color,opacity] duration-150 hover:opacity-80 max-[600px]:h-[50px] max-[600px]:px-3 max-[600px]:text-[13px]",
+            error ? "border-accent-red/50" : "border-[#d9d9d9]",
+            locked ? "pointer-events-none opacity-50" : "",
+          ].join(" ")}
         >
           {supportCopy.attach}
           <input
@@ -776,34 +830,50 @@ function SupportComposer({
           />
         </label>
         <textarea
+          ref={textRef}
           value={text}
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => {
+            setText(event.target.value);
+            if (error) setError(null);
+          }}
           onKeyDown={onKeyDown}
           placeholder={supportCopy.placeholder}
           rows={1}
           disabled={locked}
-          className="min-h-[60px] min-w-0 flex-1 resize-none rounded-[20px] border border-[#d9d9d9] bg-white px-5 py-4 text-[16px] leading-[1.5] text-text outline-none transition-colors duration-150 placeholder:text-[#d9d9d9] focus:border-[rgba(76,13,50,0.4)] max-[600px]:min-h-[50px] max-[600px]:px-4 max-[600px]:py-3 max-[600px]:text-[13px]"
+          aria-invalid={error ? true : undefined}
+          className={[
+            "min-h-[60px] min-w-0 flex-1 resize-none rounded-[20px] border bg-white px-5 py-4 text-[16px] leading-[1.5] text-text outline-none transition-colors duration-150 placeholder:text-[#d9d9d9] max-[600px]:min-h-[50px] max-[600px]:px-4 max-[600px]:py-3 max-[600px]:text-[13px]",
+            error
+              ? "border-accent-red focus:border-accent-red"
+              : "border-[#d9d9d9] focus:border-[rgba(76,13,50,0.4)]",
+          ].join(" ")}
         />
         <button
           type="submit"
           disabled={locked}
           aria-label={busy ? supportCopy.sending : supportCopy.send}
-          className="grid size-[60px] shrink-0 place-items-center rounded-full bg-[image:var(--cta-gradient)] text-white transition-[filter,transform] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 max-[600px]:size-[50px]"
+          className="grid size-[60px] shrink-0 place-items-center rounded-full bg-[image:var(--cta-gradient)] text-white transition-[filter,transform,opacity] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 max-[600px]:size-[50px]"
         >
-          <img
-            src={supportAssets.send}
-            alt=""
-            width={24}
-            height={24}
-            className="size-6 max-[600px]:size-5"
-          />
+          {busy ? (
+            <span
+              aria-hidden
+              className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white"
+            />
+          ) : (
+            <img
+              src={supportAssets.send}
+              alt=""
+              width={24}
+              height={24}
+              className="size-6 max-[600px]:size-5"
+            />
+          )}
         </button>
       </div>
       {error ? (
-        <p className="mt-2 text-[13px] leading-[1.4] text-accent-red">{error}</p>
-      ) : null}
-      {warning ? (
-        <p className="mt-2 text-[13px] leading-[1.4] text-text/70">{warning}</p>
+        <div className="mt-3">
+          <AuthBanner tone="error">{error}</AuthBanner>
+        </div>
       ) : null}
     </form>
   );

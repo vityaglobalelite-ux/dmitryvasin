@@ -110,14 +110,67 @@ export async function sendSupportMessage(
   return mapSupportMessageRow(data as SupportMessageRow);
 }
 
+/** Storage object keys must be ASCII; Cyrillic etc. → InvalidKey. */
+const CYR_TO_LAT: Record<string, string> = {
+  а: "a",
+  б: "b",
+  в: "v",
+  г: "g",
+  д: "d",
+  е: "e",
+  ё: "e",
+  ж: "zh",
+  з: "z",
+  и: "i",
+  й: "y",
+  к: "k",
+  л: "l",
+  м: "m",
+  н: "n",
+  о: "o",
+  п: "p",
+  р: "r",
+  с: "s",
+  т: "t",
+  у: "u",
+  ф: "f",
+  х: "h",
+  ц: "ts",
+  ч: "ch",
+  ш: "sh",
+  щ: "sch",
+  ъ: "",
+  ы: "y",
+  ь: "",
+  э: "e",
+  ю: "yu",
+  я: "ya",
+};
+
+function transliterateForStorageKey(value: string): string {
+  let out = "";
+  for (const ch of value) {
+    const lower = ch.toLowerCase();
+    const mapped = CYR_TO_LAT[lower];
+    if (mapped !== undefined) {
+      out += ch === lower ? mapped : mapped.toUpperCase();
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+
 function sanitizeFilename(name: string): string {
   const trimmed = name.trim().slice(0, 80);
-  const cleaned = trimmed
+  const cleaned = transliterateForStorageKey(trimmed)
     .replace(/[/\\]+/g, "")
     .replace(/\.\.+/g, ".")
-    .replace(/[^\w.\-а-яА-ЯёЁ ]+/gi, "_")
-    .replace(/^\.+/, "")
-    .trim();
+    // Storage keys: ASCII only (Cyrillic → InvalidKey on supabase/storage-api).
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^[._-]+/, "")
+    .replace(/[._-]+$/, "");
   return cleaned || "file";
 }
 
@@ -246,4 +299,28 @@ export async function relaySupportMessage(messageId: string): Promise<void> {
     const code = typeof data.error === "string" ? data.error : "relay_failed";
     throw new SupportRelayError(502, code, code);
   }
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/** Retries transient relay failures before surfacing to the UI. */
+export async function relaySupportMessageReliable(
+  messageId: string,
+  attempts = 3,
+): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      await relaySupportMessage(messageId);
+      return;
+    } catch (err) {
+      last = err;
+      if (i < attempts - 1) await wait(350 * 2 ** i);
+    }
+  }
+  throw last instanceof Error ? last : new Error("relay_failed");
 }

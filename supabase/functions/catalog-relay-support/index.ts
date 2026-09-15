@@ -84,11 +84,15 @@ function previewText(value: string, limit: number): string {
   return `${trimmed.slice(0, limit)}…`;
 }
 
+const UUID_FILE_PREFIX_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-/i;
+
 function filenameFromPath(storagePath: string): string {
   const last = storagePath.split("/").pop() ?? "file";
-  const dash = last.indexOf("-");
-  if (dash <= 0 || dash === last.length - 1) return last;
-  return last.slice(dash + 1);
+  if (UUID_FILE_PREFIX_RE.test(last)) {
+    return last.replace(UUID_FILE_PREFIX_RE, "") || last;
+  }
+  return last;
 }
 
 function replyKeyboard(userId: string): string {
