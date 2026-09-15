@@ -54,7 +54,7 @@ export const directions = [
   {
     title: "Техника",
     description:
-      "Разбираемся, почему одни движения получаются легко, а другие требуют лишних усилий",
+      "Разбираемся, почему одни движения получаются легко, а другие требуют лишних усилий.",
     icon: landingAssets.icons.directionTechnique,
     position: "left-bottom" as const,
   },

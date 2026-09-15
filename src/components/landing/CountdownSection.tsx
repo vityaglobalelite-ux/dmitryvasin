@@ -79,19 +79,19 @@ function CountdownMobile({
           subtitleClassName="absolute left-[15px] top-[118px] z-[1] w-[250px] text-[16px] font-medium leading-[1.3] text-white/90"
         />
       ) : (
-        <>
-          <h2 className="absolute left-[15px] top-[20px] z-[1] w-[290px] text-[24px] font-medium leading-[1.2] text-white">
+        <div className="relative z-[1] flex w-full flex-col px-[15px] pt-[20px]">
+          <h2 className="text-[24px] font-medium leading-[1.2] text-white">
             Закрытие
             <br />
             доступа через:
           </h2>
-          <p className="absolute left-[15px] top-[59px] z-[1] w-[284px] text-[57px] font-medium leading-[1.1] tracking-[-1.71px] text-white tabular-nums">
+          <p className="mt-[8px] text-[57px] font-medium leading-none tracking-[-1.71px] text-white tabular-nums">
             {display}
           </p>
-          <ClubCta className="btn-primary absolute left-[15px] top-[152px] z-[1]">
+          <ClubCta className="btn-primary-mobile mt-[16px]">
             Выбрать тариф и оплатить
           </ClubCta>
-        </>
+        </div>
       )}
 
       <div className="pointer-events-none absolute left-[142px] top-[212px] z-0 h-[139px] w-[178px] overflow-hidden">

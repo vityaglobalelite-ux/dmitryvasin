@@ -30,7 +30,7 @@ function MyViewMobile() {
       {/* Frame 2422 — 35,3175 (2937+238) */}
       <div className="absolute left-[35px] top-[3175px] z-[3] flex h-[110px] w-[290px] items-center rounded-[10px] bg-white py-[15px] pl-[14px] pr-[15px] shadow-[0px_4px_21.5px_rgba(0,0,0,0.09)]">
         <p className="w-[249px] text-[13px] font-normal leading-[1.5] text-text">
-          За 25+ лет моей практики многие из этих наблюдений постепенно
+          За годы моей практики многие из этих наблюдений постепенно
           сложились в идеи, которыми мне захотелось поделиться.
         </p>
       </div>
@@ -138,7 +138,7 @@ function MyViewDesktop() {
           className="absolute left-0 top-0 h-[112px] w-[83px] object-contain object-left"
         />
         <p className="w-[368px] whitespace-pre text-[16px] font-normal leading-[1.5] text-text">
-          {`За 25+ лет моей практики многие из этих
+          {`За годы моей практики многие из этих
 наблюдений постепенно сложились в идеи,
 которыми мне захотелось поделиться.`}
         </p>

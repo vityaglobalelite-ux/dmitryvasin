@@ -291,34 +291,29 @@ function CoverWatchMeter({
   const caption = progress.completed
     ? watchedLabel
     : left > 0
-      ? leftLabel.replace("{time}", formatWatchClock(left))
+      ? `${percent}% · ${leftLabel.replace("{time}", formatWatchClock(left))}`
       : `${percent}%`;
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
-      <div className="absolute inset-x-0 bottom-0 h-[72px] bg-gradient-to-t from-black/70 via-black/25 to-transparent max-[600px]:h-14" />
-      <div className="relative flex items-end justify-between gap-3 px-3 pb-2 max-[600px]:px-2 max-[600px]:pb-1.5">
-        <p className="text-[12px] font-medium leading-none tracking-[0.01em] text-white max-[600px]:text-[10px]">
+      <div className="absolute inset-x-0 bottom-0 h-[88px] bg-gradient-to-t from-black/80 via-black/35 to-transparent max-[600px]:h-[72px]" />
+      <div className="relative flex flex-col gap-2 px-2.5 pb-2.5 max-[600px]:gap-1.5 max-[600px]:px-2 max-[600px]:pb-2">
+        <span className="w-fit rounded-[20px] bg-black/70 px-2.5 py-1.5 text-[12px] font-medium leading-none text-white backdrop-blur-[12px] [font-variant-numeric:tabular-nums] max-[600px]:px-2 max-[600px]:py-1 max-[600px]:text-[11px]">
           {caption}
-        </p>
-        {progress.completed ? null : (
-          <p className="text-[12px] font-semibold leading-none text-white/90 [font-variant-numeric:tabular-nums] max-[600px]:text-[10px]">
-            {percent}%
-          </p>
-        )}
-      </div>
-      <div
-        className="relative h-[3px] w-full bg-white/20 max-[600px]:h-[2px]"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-label={caption}
-      >
-        <span
-          className="absolute inset-y-0 left-0 bg-[image:var(--brand-gradient)] shadow-[0_0_12px_rgba(219,12,37,0.45)] transition-[width] duration-500 ease-out"
-          style={{ width: `${percent}%` }}
-        />
+        </span>
+        <div
+          className="relative h-1.5 w-full overflow-hidden rounded-full bg-white/40"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={percent}
+          aria-label={caption}
+        >
+          <span
+            className="absolute inset-y-0 left-0 rounded-full bg-[image:var(--brand-gradient)] transition-[width] duration-500 ease-out"
+            style={{ width: `${percent}%` }}
+          />
+        </div>
       </div>
     </div>
   );

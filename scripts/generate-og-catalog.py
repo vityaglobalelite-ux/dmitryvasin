@@ -168,14 +168,37 @@ def main() -> int:
     blob = Image.open(blob_png).convert("RGBA")
     canvas.alpha_composite(blob, (px(-80), px(-40)))
 
+    # Opaque crop of the mockup: the file has hundreds of px of empty
+    # padding, so scaling the full canvas left a severed wrist in mid-air.
+    # Pin the hand to the bottom edge — same crop language as the home hero.
     phone = Image.open(HOME / "hero-phone.webp").convert("RGBA")
-    phone_h = px(800)
-    phone_scale = phone_h / phone.height
-    phone = phone.resize(
-        (round(phone.width * phone_scale), phone_h),
-        Image.Resampling.LANCZOS,
+    box = phone.split()[-1].getbbox()
+    if box is None:
+        raise RuntimeError("hero-phone.webp has no opaque pixels")
+    phone = phone.crop(box)
+    phone_h = H + px(18)
+    phone_w = round(phone.width * phone_h / phone.height)
+    phone = phone.resize((phone_w, phone_h), Image.Resampling.LANCZOS)
+    phone_x = px(28)
+    phone_y = H - phone_h + px(50)
+
+    shadow_blur = px(24)
+    shadow_off = (px(8), px(18))
+    pad = shadow_blur * 2
+    shadow_layer = Image.new(
+        "RGBA",
+        (
+            phone.width + pad * 2 + shadow_off[0],
+            phone.height + pad * 2 + shadow_off[1],
+        ),
+        (0, 0, 0, 0),
     )
-    canvas.alpha_composite(phone, (px(-110), H - phone_h + px(36)))
+    shade = Image.new("RGBA", phone.size, (20, 8, 16, 0))
+    shade.putalpha(phone.split()[-1].point(lambda a: int(a * 0.18)))
+    shadow_layer.paste(shade, (pad + shadow_off[0], pad + shadow_off[1]), shade)
+    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(shadow_blur))
+    shadow_layer.alpha_composite(phone, (pad, pad))
+    canvas.alpha_composite(shadow_layer, (phone_x - pad, phone_y - pad))
 
     veil_px = np.zeros((H, W, 4), dtype=np.uint8)
     start = px(480)
