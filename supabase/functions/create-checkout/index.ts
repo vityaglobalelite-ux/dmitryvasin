@@ -5,7 +5,10 @@ import {
   isTariff,
   resolvePriceFromDb,
   resolvePriceFromEnv,
+  toMinorUnits,
 } from "../_shared/tariffs.ts";
+import { isSalesClosedAt } from "../_shared/sales-window.ts";
+import { LEGACY_PRICES } from "../_shared/legacy-prices.ts";
 
 function assertCheckoutAuth(req: Request): void {
   const secret = Deno.env.get("CHECKOUT_SECRET");
@@ -76,6 +79,23 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "user not found" }, 404);
     }
 
+    const { count: subCount, error: subErr } = await supabase
+      .from("subscriptions")
+      .select("id", { count: "exact", head: true })
+      .eq("telegram_id", telegramId);
+    if (subErr) throw subErr;
+    const isMember = (subCount ?? 0) > 0;
+
+    const { data: settingRow, error: settingErr } = await supabase
+      .from("bot_settings")
+      .select("value")
+      .eq("key", "price_increase_at")
+      .maybeSingle();
+    if (settingErr) throw settingErr;
+    if (isSalesClosedAt(settingRow?.value) && !isMember) {
+      return jsonResponse({ error: "sales_closed" }, 403);
+    }
+
     // Close previous unfinished checkouts for this user
     await supabase
       .from("payments")
@@ -92,8 +112,26 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (priceErr) throw priceErr;
 
-    const price =
+    let price =
       resolvePriceFromDb(tariff, priceRow) || resolvePriceFromEnv(tariff);
+
+    if (isMember) {
+      const legacy = LEGACY_PRICES[tariff];
+      const major =
+        price.currency === "usd"
+          ? legacy.usd
+          : price.currency === "eur"
+            ? legacy.eur
+            : legacy.rub;
+      price = {
+        ...price,
+        priceId: undefined,
+        amountCents: toMinorUnits(major),
+        priceRub: legacy.rub,
+        priceUsd: legacy.usd,
+        priceEur: legacy.eur,
+      };
+    }
 
     const stripe = new Stripe(stripeKey, {
       apiVersion: "2024-06-20",
@@ -111,7 +149,7 @@ Deno.serve(async (req) => {
         currency: price.currency,
         metadata: {
           source: "create-checkout",
-          price_source: priceRow ? "db" : "env",
+          price_source: isMember ? "legacy" : priceRow ? "db" : "env",
           price_rub: price.priceRub,
           price_usd: price.priceUsd,
           price_eur: price.priceEur,

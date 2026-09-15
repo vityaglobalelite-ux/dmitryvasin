@@ -19,8 +19,8 @@ async function contextForUser(telegramId) {
   const user = await db.getUser(telegramId);
   const method = user?.payment_method;
   const [texts, prices] = await Promise.all([
-    getTexts(method),
-    getPriceLabels(method),
+    getTexts(method, telegramId),
+    getPriceLabels(method, telegramId),
   ]);
   return { texts, prices };
 }

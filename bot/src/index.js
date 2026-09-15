@@ -63,6 +63,7 @@ async function sendPaidMessage(ctx, subscription) {
   const user = ctx.from?.id ? await db.getUser(ctx.from.id) : null;
   const texts = await getTexts(
     user?.payment_method || subscription.payment_method,
+    ctx.from?.id,
   );
   const accessRows = await accessRowsForSubscription(
     bot,
@@ -102,7 +103,11 @@ async function blockNewEnrollment(ctx) {
 }
 
 async function startPurchaseFlow(ctx, userId) {
-  const texts = await getTexts();
+  if (await isNewEnrollmentBlocked(userId)) {
+    await replyClubClosed(ctx);
+    return;
+  }
+  const texts = await getTexts(undefined, userId);
   await db.updateUser(userId, {
     state: "awaiting_payment_method",
     payment_method: null,
@@ -234,12 +239,15 @@ bot.action(/^pay:(ru|foreign)$/, async (ctx) => {
     state: "awaiting_tariff",
   });
   await scheduleTariffNudges(ctx.from.id);
-  const texts = await getTexts(method);
+  const texts = await getTexts(method, ctx.from.id);
   await ctx.reply(texts.chooseTariff, keyboards.tariffs());
 });
 
 async function startStripeCheckout(ctx, user, tariff) {
-  const texts = await getTexts(user.payment_method || "foreign");
+  const texts = await getTexts(
+    user.payment_method || "foreign",
+    user.telegram_id,
+  );
   try {
     const session = await createCheckoutSession({
       telegramId: user.telegram_id,
@@ -270,14 +278,14 @@ async function purchaseTariff(ctx, tariff) {
   await applyClubPricesIfDue();
   const user = await db.upsertUser(ctx.from);
   if (!user.payment_method) {
-    const texts = await getTexts();
+    const texts = await getTexts(undefined, user.telegram_id);
     await ctx.reply(texts.needPaymentMethod);
     return;
   }
   const current = await db.getActiveSubscription(user.telegram_id);
 
   if (current && !canBuyTariff(current, tariff)) {
-    const texts = await getTexts(user.payment_method);
+    const texts = await getTexts(user.payment_method, user.telegram_id);
     const addon = isPointJoinTariff(tariff);
     await ctx.reply(
       addon
@@ -303,7 +311,7 @@ async function purchaseTariff(ctx, tariff) {
 
   if (config.paymentMode === "stripe") {
     if (user.payment_method === "ru") {
-      const texts = await getTexts("ru");
+      const texts = await getTexts("ru", user.telegram_id);
       const amount = texts.priceByTariff?.[tariff] || null;
       await ctx.reply(texts.payRu(amount), keyboards.ruPay());
       return;
@@ -330,7 +338,7 @@ bot.action(/^upgrade:(full|vip)$/, async (ctx) => {
   const current = await db.getActiveSubscription(user.telegram_id);
   const allowed = current ? upgradeOptions(current.tariff) : [];
   if (!current || !allowed.includes(tariff)) {
-    const texts = await getTexts();
+    const texts = await getTexts(undefined, user.telegram_id);
     await ctx.reply(texts.upgradeUnavailable);
     await sendMembershipCard(ctx, bot, user.telegram_id);
     return;
@@ -348,8 +356,8 @@ bot.action(/^renew:(month2|month2_3|month3)$/, async (ctx) => {
     (await db.getChatAccessSubscription(user.telegram_id)) ||
     (await db.getLatestSubscription(user.telegram_id));
   const decision = evaluateRenewal(sub, tariff);
-  const texts = await getTexts(user.payment_method);
-  const prices = await getPriceLabels(user.payment_method);
+  const texts = await getTexts(user.payment_method, user.telegram_id);
+  const prices = await getPriceLabels(user.payment_method, user.telegram_id);
 
   if (!decision.ok) {
     if (decision.reason === "use_month3") {
@@ -459,7 +467,7 @@ bot.on("text", async (ctx) => {
   if (text.startsWith("/")) return;
 
   const user = (await db.getUser(ctx.from.id)) || (await db.upsertUser(ctx.from));
-  const texts = await getTexts(user.payment_method);
+  const texts = await getTexts(user.payment_method, user.telegram_id);
 
   // Свободные ответы VIP-анкеты важнее кнопок меню
   if (user.state === "vip_q1") {

@@ -409,9 +409,9 @@ async function getPriceUntilLabel() {
 }
 
 /** Texts with prices from tariff_prices (fallback: env PRICE_*). */
-async function getTexts(paymentMethod = "ru") {
+async function getTexts(paymentMethod = "ru", telegramId = null) {
   const [p, priceUntil] = await Promise.all([
-    getPriceLabels(paymentMethod),
+    getPriceLabels(paymentMethod, telegramId),
     getPriceUntilLabel(),
   ]);
   return buildTexts({ ...p, priceUntil });

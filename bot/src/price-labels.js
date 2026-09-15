@@ -50,11 +50,24 @@ async function loadRows(force = false) {
   return map;
 }
 
+function overlayAmounts(labels, amountsByTariff, currency) {
+  for (const [tariff, p] of Object.entries(amountsByTariff || {})) {
+    if (!p || p[currency] == null) continue;
+    labels[tariff] = formatMajor(p[currency], currency);
+  }
+  const bundleWas = amountsByTariff?.month2_3?.was;
+  if (bundleWas?.[currency] != null) {
+    labels.month2_3_was = formatMajor(bundleWas[currency], currency);
+  }
+}
+
 /**
  * Labels for bot copy. foreign → USD; ru → RUB.
+ * New buyers → tariff_prices. Anyone who already had a subscription → LEGACY_PRICES.
  * @param {string|null|undefined} paymentMethod
+ * @param {number|null|undefined} telegramId
  */
-async function getPriceLabels(paymentMethod = "ru") {
+async function getPriceLabels(paymentMethod = "ru", telegramId = null) {
   const method = paymentMethod === "foreign" ? "foreign" : "ru";
   const map = await loadRows();
   const env = config.prices;
@@ -80,23 +93,21 @@ async function getPriceLabels(paymentMethod = "ru") {
     }
   }
 
-  const { isSalesClosed, STAGE3_PRICES, ADDON_PRICES, RENEWAL_PRICES } = require("./club-cutover");
   const currency = method === "foreign" ? "usd" : "rub";
-  if (await isSalesClosed()) {
-    for (const tariff of Object.keys(STAGE3_PRICES)) {
-      const p = STAGE3_PRICES[tariff];
-      labels[tariff] = formatMajor(p[currency], currency);
+  const bundle = map.get("month2_3");
+  if (bundle) {
+    const was = amountFor(bundle, currency, { was: true });
+    if (was != null) {
+      labels.month2_3_was = formatMajor(was, currency);
     }
   }
-  for (const [tariff, p] of Object.entries(ADDON_PRICES || {})) {
-    labels[tariff] = formatMajor(p[currency], currency);
-  }
-  for (const [tariff, p] of Object.entries(RENEWAL_PRICES || {})) {
-    labels[tariff] = formatMajor(p[currency], currency);
-  }
-  const bundleWas = RENEWAL_PRICES?.month2_3?.was;
-  if (bundleWas) {
-    labels.month2_3_was = formatMajor(bundleWas[currency], currency);
+
+  if (telegramId) {
+    const member = await db.hasAnySubscription(telegramId);
+    if (member) {
+      const { LEGACY_PRICES } = require("./club-cutover");
+      overlayAmounts(labels, LEGACY_PRICES, currency);
+    }
   }
 
   return labels;

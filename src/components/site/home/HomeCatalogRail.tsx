@@ -15,12 +15,11 @@ import type { Product, ProductType } from "@/lib/catalog/types";
 
 const DESKTOP_COUNT = 3;
 const MOBILE_COUNT = 3;
-const DEFAULT_FILTER: ProductType = "course";
 const SWAP_MS = 180;
 
-type HomeFilter = (typeof homeCatalogFilterTypes)[number];
-
 const homeCatalogFilterTypes = ["lifehack", "lesson", "course", "peek"] as const;
+type HomeFilter = (typeof homeCatalogFilterTypes)[number];
+const DEFAULT_FILTER: HomeFilter = "course";
 
 function isHomeFilter(type: ProductType): type is HomeFilter {
   return (homeCatalogFilterTypes as readonly string[]).includes(type);
@@ -37,9 +36,7 @@ function useHomeCatalogRail(count: number) {
   const [selectedType, setSelectedType] = useState<HomeFilter>(DEFAULT_FILTER);
   const [displayedType, setDisplayedType] = useState<HomeFilter>(DEFAULT_FILTER);
   const [cardsVisible, setCardsVisible] = useState(true);
-  const swapTimer = useRef<ReturnType<typeof window.setTimeout> | undefined>(
-    undefined,
-  );
+  const swapTimer = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     return () => {

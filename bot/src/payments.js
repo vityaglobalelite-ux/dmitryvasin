@@ -12,6 +12,7 @@ async function sendPaidToUser(bot, telegramId, subscription) {
   const user = await db.getUser(telegramId);
   const texts = await getTexts(
     user?.payment_method || subscription.payment_method,
+    telegramId,
   );
 
   const invites =

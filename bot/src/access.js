@@ -440,7 +440,7 @@ async function processExpiredChatAccess(bot, limit = 20) {
 
       const { getTexts } = require("./texts");
       const user = await db.getUser(sub.telegram_id);
-      const texts = await getTexts(user?.payment_method);
+      const texts = await getTexts(user?.payment_method, sub.telegram_id);
       try {
         await bot.telegram.sendMessage(
           sub.telegram_id,

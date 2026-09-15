@@ -207,7 +207,7 @@ async function sendMembershipCard(ctx, bot, telegramId) {
   if (!sub) return false;
 
   const user = await db.getUser(telegramId);
-  const prices = await getPriceLabels(user?.payment_method);
+  const prices = await getPriceLabels(user?.payment_method, telegramId);
 
   const invites = await ensureMonthInvites(bot, sub);
   const invitesByMonth = new Map(invites.map((r) => [r.month, r.invite_link]));

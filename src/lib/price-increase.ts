@@ -60,13 +60,14 @@ async function fetchPriceIncreaseAt(): Promise<Date | null | undefined> {
 
 function phaseFor(target: Date | null, now: number): SalesPhase {
   if (!target) return "open";
-  return target.getTime() > now ? "countdown" : "open";
+  return target.getTime() > now ? "countdown" : "closed";
 }
 
 /**
- * Cutover from bot_settings.price_increase_at (fallback: 21 Aug 2026 00:00 Miami).
- * countdown — promo timer still running
- * open — sales open (including after cutover: stage-3 prices, no closed gate)
+ * Cutover from bot_settings.price_increase_at (fallback: 22 Sep 2026 00:00 Miami).
+ * countdown — access still open, timer running
+ * closed — new enrollment stopped
+ * open — no deadline in settings
  */
 export function usePriceIncreaseTarget(): {
   target: Date | null;
