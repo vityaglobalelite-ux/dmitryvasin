@@ -3,7 +3,6 @@
 import { load } from "@kinescope/player-iframe-api-loader";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/site/ui/Button";
-import { Skeleton } from "@/components/site/ui/Skeleton";
 import { catalogT } from "@/lib/catalog/i18n";
 import { useAuthModal } from "@/components/site/auth/AuthModal";
 import {
@@ -24,9 +23,13 @@ import {
   resumeSeekSeconds,
 } from "@/lib/catalog/watch-progress";
 
+const PLAY_MARK = "/assets/site/account/icon-play.svg";
+
 export type KinescopePlayerProps = {
   productId: string;
   locale?: Locale;
+  /** Lesson cover — cinematic loading stage, not a gray box. */
+  posterUrl?: string | null;
 };
 
 type PlayerState =
@@ -55,11 +58,55 @@ function PlayerFrame({
       className={
         tone === "message"
           ? "relative aspect-video w-full min-w-0 overflow-hidden rounded-[inherit] bg-light-gray"
-          : "relative aspect-video w-full min-w-0 overflow-hidden rounded-[inherit] bg-black"
+          : "relative aspect-video w-full min-w-0 overflow-hidden rounded-[inherit] bg-[var(--player-stage-bg,#0a0608)]"
       }
       aria-busy={busy || undefined}
     >
       {children}
+    </div>
+  );
+}
+
+function PlayerLoading({
+  posterUrl,
+  label,
+}: {
+  posterUrl?: string | null;
+  label: string;
+}) {
+  return (
+    <div
+      className="player-stage relative flex h-full w-full flex-col overflow-hidden"
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
+      {posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- blurred poster only; not LCP content
+        <img
+          src={posterUrl}
+          alt=""
+          draggable={false}
+          className="player-stage-poster pointer-events-none absolute inset-0 h-full w-full select-none object-cover"
+        />
+      ) : null}
+      <div className="player-stage-veil absolute inset-0" aria-hidden />
+      <div className="relative z-[1] flex flex-1 flex-col items-center justify-center gap-5 px-6 text-center">
+        <div className="player-stage-orb relative grid size-[88px] place-items-center max-[600px]:size-[72px]">
+          <span className="player-stage-ring" aria-hidden />
+          {/* eslint-disable-next-line @next/next/no-img-element -- local Figma SVG mark */}
+          <img
+            src={PLAY_MARK}
+            alt=""
+            draggable={false}
+            className="relative h-[72px] w-[72px] select-none max-[600px]:h-[60px] max-[600px]:w-[60px]"
+          />
+        </div>
+        <p className="text-[14px] font-medium tracking-[0.02em] text-white/78 max-[600px]:text-[13px]">
+          {label}
+        </p>
+      </div>
+      <div className="player-stage-bar relative z-[1] w-full shrink-0" aria-hidden />
     </div>
   );
 }
@@ -319,6 +366,7 @@ function KinescopeFrame({
 export function KinescopePlayer({
   productId,
   locale = "ru",
+  posterUrl = null,
 }: KinescopePlayerProps) {
   const t = catalogT(locale);
   const routes = useLocalizedRoutes();
@@ -327,6 +375,7 @@ export function KinescopePlayer({
   const [retryTick, setRetryTick] = useState(0);
   const [state, setState] = useState<PlayerState>({ kind: "loading" });
   const [iframeReady, setIframeReady] = useState(false);
+  const [overlayGone, setOverlayGone] = useState(false);
   const [applied, setApplied] = useState({ productId, locale, retryTick });
   const retriedUser = useRef<string | null>(null);
 
@@ -338,6 +387,7 @@ export function KinescopePlayer({
     setApplied({ productId, locale, retryTick });
     setState({ kind: "loading" });
     setIframeReady(false);
+    setOverlayGone(false);
   }
 
   useEffect(() => {
@@ -394,6 +444,17 @@ export function KinescopePlayer({
     retriedUser.current = id;
     setRetryTick((n) => n + 1);
   }, [auth.data?.id, auth.loading, state]);
+
+  useEffect(() => {
+    if (state.kind !== "ready" || !iframeReady || overlayGone) return;
+    if (typeof window === "undefined") return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setOverlayGone(true);
+      return;
+    }
+    const id = window.setTimeout(() => setOverlayGone(true), 800);
+    return () => window.clearTimeout(id);
+  }, [iframeReady, overlayGone, state.kind]);
 
   const compactBtn =
     "max-[600px]:h-10 max-[600px]:px-6 max-[600px]:text-[13px]";
@@ -458,10 +519,11 @@ export function KinescopePlayer({
     );
   }
 
-  const showSkeleton = state.kind === "loading" || !iframeReady;
+  const showOverlay = !overlayGone;
+  const overlayFading = state.kind === "ready" && iframeReady;
 
   return (
-    <PlayerFrame busy={showSkeleton}>
+    <PlayerFrame busy={showOverlay && !overlayFading}>
       {state.kind === "ready" ? (
         <KinescopeFrame
           embedUrl={state.embedUrl}
@@ -475,8 +537,25 @@ export function KinescopePlayer({
           }
         />
       ) : null}
-      {showSkeleton ? (
-        <Skeleton className="absolute inset-0 h-full w-full rounded-none" />
+      {showOverlay ? (
+        <div
+          className={
+            overlayFading
+              ? "pointer-events-none absolute inset-0 z-[2] opacity-0 transition-opacity duration-700 ease-out"
+              : "absolute inset-0 z-[2] opacity-100 transition-opacity duration-700 ease-out"
+          }
+          onTransitionEnd={(event) => {
+            if (
+              event.propertyName === "opacity" &&
+              overlayFading &&
+              event.target === event.currentTarget
+            ) {
+              setOverlayGone(true);
+            }
+          }}
+        >
+          <PlayerLoading posterUrl={posterUrl} label={t.player.loadingLabel} />
+        </div>
       ) : null}
     </PlayerFrame>
   );

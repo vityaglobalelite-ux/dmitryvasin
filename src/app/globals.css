@@ -865,6 +865,116 @@ body {
   }
 }
 
+/* Account watch — cinematic player loading stage */
+.player-stage {
+  --player-stage-bg: #0a0608;
+  background: var(--player-stage-bg);
+}
+
+.player-stage-poster {
+  transform: scale(1.08);
+  filter: blur(22px) saturate(1.05);
+  opacity: 0.55;
+}
+
+.player-stage-veil {
+  background:
+    radial-gradient(
+      ellipse 72% 58% at 50% 42%,
+      color-mix(in srgb, #e04c29 28%, transparent) 0%,
+      transparent 68%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(10 6 8 / 0.28) 0%,
+      rgb(10 6 8 / 0.62) 48%,
+      rgb(10 6 8 / 0.9) 100%
+    );
+}
+
+.player-stage-orb {
+  filter: drop-shadow(0 16px 42px rgb(219 12 37 / 0.38));
+  animation: player-stage-breathe 2.6s ease-in-out infinite;
+}
+
+.player-stage-ring {
+  position: absolute;
+  inset: -14px;
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 0.18);
+  animation: player-stage-ring 2.6s ease-in-out infinite;
+}
+
+.player-stage-bar {
+  height: 2px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.08);
+}
+
+.player-stage-bar::after {
+  content: "";
+  display: block;
+  height: 100%;
+  width: 38%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #db0c25 18%,
+    #e04c29 52%,
+    #efb991 100%
+  );
+  animation: player-stage-sweep 1.35s ease-in-out infinite;
+}
+
+@keyframes player-stage-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.045);
+  }
+}
+
+@keyframes player-stage-ring {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.96);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+}
+
+@keyframes player-stage-sweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-stage-orb,
+  .player-stage-ring,
+  .player-stage-bar::after {
+    animation: none;
+  }
+
+  .player-stage-ring {
+    opacity: 0.55;
+  }
+
+  .player-stage-bar::after {
+    width: 100%;
+    transform: none;
+    opacity: 0.7;
+  }
+}
+
 /* Catalog skeleton — Figma light-gray + plum shimmer (Wave 1B) */
 @keyframes site-shimmer {
   0% {

@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { AccountPlayer } from "@/components/site/account/AccountPlayer";
@@ -71,21 +70,13 @@ export function AccountWatchView() {
     <AccountShell email={gate.user?.email} active="materials">
       <div className="flex w-full min-w-0 flex-col gap-[39px] max-[600px]:gap-5">
         <div
-          className={`relative w-full min-w-0 overflow-hidden rounded-[30px] bg-black ${accountMediaBleedClass}`}
+          className={`relative w-full min-w-0 overflow-hidden rounded-[30px] bg-[var(--player-stage-bg,#0a0608)] ${accountMediaBleedClass}`}
         >
-          {product.coverUrl ? (
-            <Image
-              src={product.coverUrl}
-              alt={copy.title || product.id}
-              width={1280}
-              height={720}
-              className="pointer-events-none absolute inset-0 h-full w-full object-cover"
-              unoptimized
-            />
-          ) : null}
-          <div className="relative w-full min-w-0">
-            <AccountPlayer productId={product.id} locale={locale} />
-          </div>
+          <AccountPlayer
+            productId={product.id}
+            locale={locale}
+            posterUrl={product.coverUrl}
+          />
         </div>
         <div className="flex flex-col gap-5">
           <AccountBackLink />

@@ -179,9 +179,25 @@ function AccountContentSkeleton({
     <div className="flex min-w-0 w-full flex-1 flex-col gap-5">
       {variant === "player" ? (
         <>
-          <Skeleton
-            className={`aspect-video w-full rounded-[30px] ${accountMediaBleedClass}`}
-          />
+          <div
+            aria-hidden
+            className={`player-stage relative aspect-video w-full overflow-hidden rounded-[30px] ${accountMediaBleedClass}`}
+          >
+            <div className="player-stage-veil absolute inset-0" />
+            <div className="relative z-[1] flex h-full flex-col items-center justify-center gap-5">
+              <div className="player-stage-orb relative grid size-[88px] place-items-center max-[600px]:size-[72px]">
+                <span className="player-stage-ring" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- local Figma SVG mark */}
+                <img
+                  src={accountAssets.play}
+                  alt=""
+                  draggable={false}
+                  className="relative h-[72px] w-[72px] select-none max-[600px]:h-[60px] max-[600px]:w-[60px]"
+                />
+              </div>
+            </div>
+            <div className="player-stage-bar absolute inset-x-0 bottom-0" />
+          </div>
           <Skeleton className="h-4 w-[160px] rounded-[8px] max-[600px]:h-3.5" />
           <Skeleton className="h-[22px] w-[min(90%,520px)] rounded-[8px] max-[600px]:h-[18px]" />
           <Skeleton className="h-4 w-[min(70%,360px)] rounded-[8px] max-[600px]:h-3.5" />

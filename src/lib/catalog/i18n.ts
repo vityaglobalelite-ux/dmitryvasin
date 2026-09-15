@@ -147,6 +147,7 @@ const ru = {
     errorTitle: "Не удалось загрузить видео",
     retryCta: "Попробовать снова",
     iframeTitle: "Видео",
+    loadingLabel: "Загрузка видео…",
   },
 } as const;
 
@@ -295,6 +296,7 @@ const en = {
     errorTitle: "Couldn’t load the video",
     retryCta: "Try again",
     iframeTitle: "Video",
+    loadingLabel: "Loading video…",
   },
 } as const;
 
