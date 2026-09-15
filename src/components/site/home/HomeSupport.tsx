@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
@@ -37,7 +38,7 @@ export function HomeSupportDesktop() {
           {copy.supportCta}
         </Button>
       </div>
-      <img
+      <HomeImg
         src={homeAssets.question}
         alt=""
         width={318}
@@ -81,7 +82,7 @@ export function HomeSupportMobile() {
         >
           {copy.supportCta}
         </Button>
-        <img
+        <HomeImg
           src={homeAssets.question}
           alt=""
           width={209}

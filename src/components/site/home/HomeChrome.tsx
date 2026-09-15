@@ -52,6 +52,7 @@ function useHomeNav() {
   const copy = useCatalogT();
   const routes = useLocalizedRoutes();
   return [
+    { href: routes.home, label: copy.nav.home },
     { href: routes.catalog, label: copy.nav.catalog },
     { href: routes.accountSupport, label: copy.nav.support },
     { href: `${routes.home}#reviews`, label: copy.nav.reviews },

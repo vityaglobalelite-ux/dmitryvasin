@@ -5,6 +5,7 @@ import { getSupabase } from "@/lib/supabase/client";
 export type StartCatalogCheckoutOptions = {
   successUrl?: string;
   cancelUrl?: string;
+  currency?: "rub" | "usd" | "eur";
 };
 
 export type StartCatalogCheckoutResult = {
@@ -76,8 +77,8 @@ function messageForServerError(
   if (errorCode === "empty_cart") {
     return "Корзина пуста. Добавьте уроки и повторите оплату.";
   }
-  if (errorCode === "mixed_currencies") {
-    return "В корзине товары в разных валютах. Уберите лишние и повторите.";
+  if (errorCode === "mixed_currencies" || errorCode === "invalid_currency") {
+    return "Не удалось определить валюту оплаты. Обновите страницу и повторите.";
   }
   if (errorCode === "unpublished_product") {
     return "Один из товаров больше недоступен. Обновите корзину и повторите.";
@@ -99,6 +100,7 @@ function codeForServerError(
   if (
     errorCode === "empty_cart" ||
     errorCode === "mixed_currencies" ||
+    errorCode === "invalid_currency" ||
     errorCode === "unpublished_product"
   ) {
     return "cart";
@@ -159,6 +161,7 @@ export async function startCatalogCheckout(
       body: {
         success_url: successUrl,
         cancel_url: cancelUrl,
+        ...(opts?.currency ? { currency: opts.currency } : {}),
       },
     },
   );

@@ -250,6 +250,12 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
   const primaryLink =
     monthInvites.find((x) => x.inviteLink)?.inviteLink || null;
 
+  const cutoffIso = await db.getLegacyPriceCutoffIso();
+  const hadLegacyEraSub = await db.hasSubscriptionCreatedBefore(
+    telegramId,
+    cutoffIso,
+  );
+
   const sub = await db.createSubscription({
     telegram_id: telegramId,
     tariff: storedTariff,
@@ -263,6 +269,11 @@ async function grantAccess(bot, telegramId, tariff, paymentMethod) {
     invite_created_at: primaryLink ? new Date().toISOString() : null,
     unlocked_months: unlockedMonths,
   });
+
+  await db.lockPricingCohort(
+    telegramId,
+    hadLegacyEraSub ? "legacy" : "current",
+  );
 
   await db.replaceSubscriptionInvites(
     sub.id,

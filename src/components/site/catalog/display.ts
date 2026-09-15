@@ -116,9 +116,7 @@ export function lessonNoun(count: number, locale: Locale = "ru"): string {
 }
 
 export function formatCatalogPrice(minor: number, currency: Currency): string {
-  return formatPriceMinor(minor, currency)
-    .replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1\u00A0")
-    .replace(/ /g, "\u00A0");
+  return formatPriceMinor(minor, currency);
 }
 
 export function parseDifficulty(level: string): 1 | 2 | 3 | 4 {

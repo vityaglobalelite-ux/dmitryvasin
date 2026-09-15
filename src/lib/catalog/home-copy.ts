@@ -66,6 +66,8 @@ export const homeCopy = {
   reviewsSwipe: "Листайте вправо-влево, чтобы посмотреть отзывы",
   readMore: "Читать далее",
   readLess: "Свернуть",
+  reviewsPrev: "Предыдущие отзывы",
+  reviewsNext: "Следующие отзывы",
   joinNow: "Присоединиться сейчас",
 } as const;
 
@@ -481,6 +483,8 @@ const enCopy = {
   reviewsSwipe: "Swipe left and right to see reviews",
   readMore: "Read more",
   readLess: "Show less",
+  reviewsPrev: "Previous reviews",
+  reviewsNext: "Next reviews",
   joinNow: "Join now",
 } as const;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
@@ -28,7 +29,7 @@ export function HomeHowToDesktop() {
         z={1}
         className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
       />
-      <img
+      <HomeImg
         src={`${homeAssets.macbook}?v=alpha`}
         alt=""
         width={841}
@@ -43,7 +44,7 @@ export function HomeHowToDesktop() {
         z={8}
         className="flex items-center gap-[15px] rounded-[20px] border border-white bg-white/20 px-2.5 py-5 backdrop-blur-[12px]"
       >
-        <img
+        <HomeImg
           src={homeAssets.iconAccess}
           alt=""
           width={58}
@@ -95,7 +96,7 @@ export function HomeHowToDesktop() {
         ))}
       </Layer>
       <Layer x={982.91} y={5596.18} w={628} h={30} z={8} className="flex items-center gap-2.5">
-        <img
+        <HomeImg
           src={homeAssets.iconSupport}
           alt=""
           width={30}
@@ -169,7 +170,7 @@ export function HomeHowToMobile() {
           ))}
         </ol>
         <div className="mt-5 flex items-start gap-2.5 text-[13px] leading-[1.5] text-white">
-          <img
+          <HomeImg
             src={homeAssets.iconSupport}
             alt=""
             width={30}
@@ -188,7 +189,7 @@ export function HomeHowToMobile() {
           </a>
         </div>
       </Layer>
-      <img
+      <HomeImg
         src={`${homeAssets.macbook}?v=alpha`}
         alt=""
         width={320}
@@ -203,7 +204,7 @@ export function HomeHowToMobile() {
         z={8}
         className="flex items-center gap-[10px] rounded-[10px] border border-white bg-white/20 px-4 py-[16px] backdrop-blur-[12px]"
       >
-        <img
+        <HomeImg
           src={homeAssets.iconAccess}
           alt=""
           width={35}

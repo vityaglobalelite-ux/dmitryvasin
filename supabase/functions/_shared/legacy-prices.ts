@@ -1,6 +1,9 @@
 import type { Tariff } from "./tariffs.ts";
 
-/** Same numbers as bot/src/club-cutover.js LEGACY_PRICES. */
+/**
+ * Frozen pre-raise amounts. Canonical copy lives in tariff_prices.price_list = 'legacy'.
+ * Checkout charges that row, not this object. Keep in sync with club-cutover.js.
+ */
 export const LEGACY_PRICES: Record<
   Tariff,
   { rub: number; usd: number; eur: number }

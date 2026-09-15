@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
@@ -29,7 +30,7 @@ function ReviewCard({
           : "flex w-full flex-col rounded-[30px] bg-light-gray px-[30px] pb-8 pt-[30px]"
       }
     >
-      <img
+      <HomeImg
         src={avatars[avatar]}
         alt=""
         width={compact ? 60 : 206}
@@ -73,57 +74,57 @@ export function HomeReviewsDesktop() {
         </h2>
       </Layer>
 
-      <img
+      <HomeImg
         src={homeAssets.shot37}
         alt=""
         className="absolute left-[339px] top-[6522px] z-[1] h-[632px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot35}
         alt=""
         className="absolute left-[704px] top-[6522px] z-[1] h-[73px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot36}
         alt=""
         className="absolute left-[704px] top-[6615px] z-[1] h-[156px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot39}
         alt=""
         className="absolute left-[704px] top-[6791px] z-[1] h-[180px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot41}
         alt=""
         className="absolute left-[704px] top-[6991px] z-[1] h-[106px] w-[344px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot38}
         alt=""
         className="absolute left-[1069px] top-[6522px] z-[1] h-[265px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot43}
         alt=""
         className="absolute left-[1069px] top-[6807px] z-[1] h-[98px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot44}
         alt=""
         className="absolute left-[1069px] top-[6925px] z-[1] h-[222px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot40}
         alt=""
         className="absolute left-[1434px] top-[6522px] z-[1] h-[173px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot42}
         alt=""
         className="absolute left-[1434px] top-[6715px] z-[1] h-[309px] w-[345px] rounded-[10px] object-cover"
       />
-      <img
+      <HomeImg
         src={homeAssets.shot45}
         alt=""
         className="absolute left-[1434px] top-[7044px] z-[1] h-[82px] w-[343px] rounded-[10px] object-cover"
@@ -178,7 +179,7 @@ export function HomeReviewsMobile() {
       </Layer>
       <Layer x={20} y={7988} w={298} h={40} z={2} className="flex items-center gap-2.5">
         <span className="inline-flex size-[34px] items-center justify-center rounded-[17px] bg-white">
-          <img src={homeAssets.iconSwipe} alt="" width={16} height={16} className="size-4" />
+          <HomeImg src={homeAssets.iconSwipe} alt="" width={16} height={16} className="size-4" />
         </span>
         {ru ? (
           <FigLines
@@ -191,16 +192,16 @@ export function HomeReviewsMobile() {
       </Layer>
 
       <div className="absolute left-5 top-[8048px] z-[1] flex w-[320px] gap-5 overflow-x-auto">
-        <img
+        <HomeImg
           src={homeAssets.shot37}
           alt=""
           className="h-[531px] w-[290px] shrink-0 rounded-[5px] object-cover"
         />
         <div className="flex w-[290px] shrink-0 flex-col gap-[10px]">
-          <img src={homeAssets.shot35} alt="" className="h-[61px] rounded-[5px] object-cover" />
-          <img src={homeAssets.shot36} alt="" className="h-[131px] rounded-[5px] object-cover" />
-          <img src={homeAssets.shot39} alt="" className="h-[151px] rounded-[5px] object-cover" />
-          <img src={homeAssets.shot41} alt="" className="h-[89px] rounded-[5px] object-cover" />
+          <HomeImg src={homeAssets.shot35} alt="" className="h-[61px] rounded-[5px] object-cover" />
+          <HomeImg src={homeAssets.shot36} alt="" className="h-[131px] rounded-[5px] object-cover" />
+          <HomeImg src={homeAssets.shot39} alt="" className="h-[151px] rounded-[5px] object-cover" />
+          <HomeImg src={homeAssets.shot41} alt="" className="h-[89px] rounded-[5px] object-cover" />
         </div>
       </div>
 

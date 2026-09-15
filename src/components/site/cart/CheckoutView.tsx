@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { listMyOrders } from "@/lib/catalog/repo/orders";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 import {
   CatalogCheckoutError,
   clearPendingCheckoutOrderId,
@@ -337,6 +338,7 @@ function CheckoutPayButton({
 }) {
   const copy = cartT(useLocale());
   const routes = useLocalizedRoutes();
+  const { currency, ready } = useCatalogCurrency();
   const { openAuth } = useAuthModal();
   const [pending, setPending] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
@@ -353,7 +355,11 @@ function CheckoutPayButton({
       const successUrl = `${origin}${routes.checkout}?checkout=1`;
       const cancelUrl = `${origin}${routes.checkout}`;
 
-      const result = await startCatalogCheckout({ successUrl, cancelUrl });
+      const result = await startCatalogCheckout({
+        successUrl,
+        cancelUrl,
+        currency,
+      });
       if (result.orderId) {
         rememberPendingCheckoutOrderId(result.orderId);
       }
@@ -368,9 +374,9 @@ function CheckoutPayButton({
       }
       setPending(false);
     }
-  }, [copy.payErrorFallback, routes.checkout]);
+  }, [copy.payErrorFallback, currency, routes.checkout]);
 
-  if (disabled) {
+  if (disabled || !ready) {
     return (
       <Button type="button" disabled className={className}>
         {signedIn ? copy.paySigned : copy.checkoutGuest}
@@ -400,7 +406,7 @@ function CheckoutPayButton({
       <Button
         type="button"
         className={className}
-        disabled={pending}
+        disabled={pending || !ready}
         aria-busy={pending}
         onClick={() => void handlePay()}
       >

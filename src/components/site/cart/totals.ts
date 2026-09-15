@@ -1,4 +1,5 @@
 import type { CartItem, Currency, WholesaleTier } from "@/lib/catalog/types";
+import { catalogPriceMinor } from "@/lib/catalog/money";
 
 export type CartTotals = {
   subtotalMinor: number;
@@ -23,11 +24,12 @@ export function pickWholesalePercent(
 export function computeCartTotals(
   items: CartItem[],
   tiers: WholesaleTier[],
+  currency: Currency,
 ): CartTotals {
   const priced = items.filter((item) => item.product);
-  const currency = priced[0]?.product?.currency ?? "rub";
   const subtotalMinor = priced.reduce(
-    (sum, item) => sum + (item.product?.priceMinor ?? 0),
+    (sum, item) =>
+      sum + (item.product ? catalogPriceMinor(item.product, currency) : 0),
     0,
   );
   const percent = pickWholesalePercent(priced.length, tiers);

@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import {
@@ -28,7 +29,7 @@ export function HomeDirectionsDesktop() {
 
   return (
     <>
-      <img
+      <HomeImg
         src={homeAssets.heroBg}
         alt=""
         className="pointer-events-none absolute left-0 top-[1644px] z-0 h-[1120px] w-[1920px] object-cover"
@@ -59,7 +60,7 @@ export function HomeDirectionsDesktop() {
       </Layer>
 
       <div className="pointer-events-none absolute left-[481px] top-[1518px] z-[5] h-[1246px] w-[915px] overflow-hidden">
-        <img
+        <HomeImg
           src={`${homeAssets.directionsDmitry}?v=raw`}
           alt={copy.teacherName}
           width={1536}
@@ -80,7 +81,7 @@ export function HomeDirectionsDesktop() {
           {copy.teacherName}
         </p>
         <p className="mt-2.5 flex items-center gap-[10px] text-[16px] leading-[1.5] text-white">
-          <img
+          <HomeImg
             src={homeAssets.iconTrophy}
             alt=""
             width={21}
@@ -113,7 +114,7 @@ export function HomeDirectionsDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${photos.dirAwareness}?v=fig`}
         alt=""
         width={127}
@@ -143,7 +144,7 @@ export function HomeDirectionsDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${photos.dirTechnique}?v=fig`}
         alt=""
         width={127}
@@ -173,7 +174,7 @@ export function HomeDirectionsDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${photos.dirMusicality}?v=fig`}
         alt=""
         width={153}
@@ -203,7 +204,7 @@ export function HomeDirectionsDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${photos.dirInteraction}?v=fig`}
         alt=""
         width={153}
@@ -233,7 +234,7 @@ export function HomeDirectionsDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${photos.dirVariation}?v=fig`}
         alt=""
         width={132}
@@ -275,7 +276,7 @@ export function HomeDirectionsMobile() {
   return (
     <>
       <Layer x={0} y={1483} w={360} h={1273} z={0} className="overflow-hidden">
-        <img
+        <HomeImg
           src={homeAssets.heroBgMobile}
           alt=""
           className="absolute inset-0 size-full object-cover"
@@ -338,7 +339,7 @@ export function HomeDirectionsMobile() {
               {item.text}
             </p>
           )}
-          <img
+          <HomeImg
             src={photos[keys[i]]}
             alt=""
             className="pointer-events-none absolute top-0 right-0 object-contain object-right"
@@ -347,7 +348,7 @@ export function HomeDirectionsMobile() {
         </Layer>
       ))}
 
-      <img
+      <HomeImg
         src={homeAssets.directionsDmitry}
         alt={copy.teacherName}
         width={360}
@@ -366,7 +367,7 @@ export function HomeDirectionsMobile() {
           {copy.teacherName}
         </p>
         <p className="mt-[10px] flex items-center gap-2.5 text-[13px] leading-[1.5] text-white">
-          <img
+          <HomeImg
             src={homeAssets.iconTrophy}
             alt=""
             width={18}

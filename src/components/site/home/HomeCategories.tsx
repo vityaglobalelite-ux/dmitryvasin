@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { Button } from "@/components/site/ui/Button";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { homeAssets } from "@/lib/catalog/home-assets";
@@ -29,7 +30,7 @@ export function HomeCategoriesDesktop() {
 
   return (
     <>
-      <img
+      <HomeImg
         src={homeAssets.quoteOpen}
         alt=""
         width={102}
@@ -73,7 +74,7 @@ export function HomeCategoriesDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={homeAssets.quoteClose}
         alt=""
         width={35}
@@ -93,7 +94,7 @@ export function HomeCategoriesDesktop() {
               z={1}
               className="rounded-[30px] bg-light-gray"
             />
-            <img
+            <HomeImg
               src={photos[cat.photo]}
               alt=""
               width={box.photoW}
@@ -139,7 +140,7 @@ export function HomeCategoriesDesktop() {
         z={2}
         className="overflow-hidden rounded-[30px] bg-[image:var(--brand-gradient)] p-10"
       >
-        <img
+        <HomeImg
           src={homeAssets.percent3d}
           alt=""
           width={341}
@@ -159,7 +160,7 @@ export function HomeCategoriesDesktop() {
               </p>
             )}
             <div className="mt-5 flex items-center gap-5">
-              <img
+              <HomeImg
                 src={homeAssets.iconDiscount}
                 alt=""
                 width={58}
@@ -211,7 +212,7 @@ export function HomeCategoriesMobile() {
         z={2}
         className="flex flex-col gap-5 leading-[0]"
       >
-        <img
+        <HomeImg
           src={homeAssets.quoteOpen}
           alt=""
           width={60}
@@ -271,7 +272,7 @@ export function HomeCategoriesMobile() {
             </p>
           </div>
         )}
-        <img
+        <HomeImg
           src={homeAssets.quoteClose}
           alt=""
           width={20}
@@ -291,7 +292,7 @@ export function HomeCategoriesMobile() {
           className="rounded-[10px] bg-light-gray p-[15px]"
         >
           <div className="relative h-[87px] w-[99px]">
-            <img
+            <HomeImg
               src={photos[cat.photo]}
               alt=""
               className="absolute max-w-none"
@@ -326,7 +327,7 @@ export function HomeCategoriesMobile() {
         z={2}
         className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)] p-[15px]"
       >
-        <img
+        <HomeImg
           src={homeAssets.percent3d}
           alt=""
           width={180}
@@ -344,7 +345,7 @@ export function HomeCategoriesMobile() {
           </p>
         )}
         <div className="relative z-[1] mt-16 flex items-center gap-2.5">
-          <img
+          <HomeImg
             src={homeAssets.iconDiscount}
             alt=""
             width={40}

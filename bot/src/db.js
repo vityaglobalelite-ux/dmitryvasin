@@ -312,13 +312,67 @@ async function setSetting(key, value) {
   if (error) throw error;
 }
 
-async function getTariffPrices() {
+async function getTariffPrices(priceList = "current") {
+  const list = priceList === "legacy" ? "legacy" : "current";
   const { data, error } = await supabase
     .from("tariff_prices")
     .select("*")
-    .eq("active", true);
+    .eq("active", true)
+    .eq("price_list", list);
   if (error) throw error;
   return data || [];
+}
+
+const LEGACY_PRICE_CUTOFF_FALLBACK = "2026-09-15T15:05:00.000Z";
+
+async function getLegacyPriceCutoffIso() {
+  const raw = await getSetting("pricing_legacy_cutoff");
+  if (raw?.trim()) {
+    const d = new Date(raw.trim());
+    if (Number.isFinite(d.getTime())) return d.toISOString();
+  }
+  return LEGACY_PRICE_CUTOFF_FALLBACK;
+}
+
+async function hasSubscriptionCreatedBefore(telegramId, iso) {
+  if (!telegramId || !iso) return false;
+  const { count, error } = await supabase
+    .from("subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("telegram_id", telegramId)
+    .lt("created_at", iso);
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Lock this person to a price list once. Never overwrites legacy/current. */
+async function lockPricingCohort(telegramId, cohort) {
+  if (cohort !== "legacy" && cohort !== "current") {
+    throw new Error(`Invalid pricing cohort: ${cohort}`);
+  }
+  const { data, error } = await supabase
+    .from("bot_users")
+    .update({ pricing_cohort: cohort, updated_at: nowIso() })
+    .eq("telegram_id", telegramId)
+    .is("pricing_cohort", null)
+    .select("pricing_cohort");
+  if (error) throw error;
+  return data?.[0]?.pricing_cohort || null;
+}
+
+async function getPricingCohort(telegramId) {
+  if (!telegramId) return null;
+  const { data, error } = await supabase
+    .from("bot_users")
+    .select("pricing_cohort")
+    .eq("telegram_id", telegramId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.pricing_cohort || null;
+}
+
+function priceListForCohort(cohort) {
+  return cohort === "legacy" ? "legacy" : "current";
 }
 
 async function getLatestSubscription(telegramId) {
@@ -347,7 +401,8 @@ async function applyLandingStagePrices(pricesByTariff) {
         price_eur_was: null,
         updated_at: nowIso(),
       })
-      .eq("tariff", tariff);
+      .eq("tariff", tariff)
+      .eq("price_list", "current");
     if (error) throw error;
   }
 }
@@ -373,7 +428,8 @@ async function applyRenewalPrices(pricesByTariff) {
     const { error } = await supabase
       .from("tariff_prices")
       .update(patch)
-      .eq("tariff", tariff);
+      .eq("tariff", tariff)
+      .eq("price_list", "current");
     if (error) throw error;
   }
 }
@@ -452,6 +508,12 @@ module.exports = {
   getSetting,
   setSetting,
   getTariffPrices,
+  getPricingCohort,
+  lockPricingCohort,
+  priceListForCohort,
+  getLegacyPriceCutoffIso,
+  hasSubscriptionCreatedBefore,
+  LEGACY_PRICE_CUTOFF_FALLBACK,
   applyLandingStagePrices,
   applyRenewalPrices,
   fetchPaidUngrantedPayments,

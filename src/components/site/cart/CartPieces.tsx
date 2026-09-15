@@ -6,12 +6,14 @@ import { cartAssets } from "@/components/site/cart/assets";
 import { cartT } from "@/components/site/cart/copy";
 import {
   catalogTypeLabel,
-  formatCatalogPrice,
   typeBadgeIcon,
 } from "@/components/site/catalog/display";
 import { Button } from "@/components/site/ui/Button";
+import { CatalogMoney, CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { productCopy } from "@/lib/catalog/locale";
+import { catalogPriceMinor } from "@/lib/catalog/money";
+import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 import {
   useLocale,
   useLocalizedRoutes,
@@ -167,14 +169,6 @@ export function CartLine({
   }
 
   const title = productCopy(product, locale).title;
-  const original = formatCatalogPrice(product.priceMinor, product.currency);
-  const sale =
-    percent > 0
-      ? formatCatalogPrice(
-          discountedPriceMinor(product.priceMinor, percent),
-          product.currency,
-        )
-      : original;
 
   return (
     <article className="grid w-full min-w-0 grid-cols-[auto_1fr] gap-x-5 gap-y-5 min-[900px]:min-h-[162px] min-[900px]:grid-cols-[auto_minmax(0,1fr)_auto] min-[900px]:grid-rows-[auto_1fr] min-[900px]:gap-y-0">
@@ -194,9 +188,8 @@ export function CartLine({
         <TypeChip type={product.type} className="order-1 min-[900px]:order-2" />
       </div>
       <LinePrices
-        original={original}
-        sale={sale}
-        discounted={percent > 0}
+        product={product}
+        percent={percent}
         className="col-span-2 col-start-1 row-start-3 min-[900px]:col-span-1 min-[900px]:col-start-3 min-[900px]:row-start-1 min-[900px]:justify-self-end min-[900px]:self-start"
       />
     </article>
@@ -269,16 +262,17 @@ function TypeChip({
 }
 
 function LinePrices({
-  original,
-  sale,
-  discounted,
+  product,
+  percent,
   className,
 }: {
-  original: string;
-  sale: string;
-  discounted: boolean;
+  product: Product;
+  percent: number;
   className?: string;
 }) {
+  const { currency } = useCatalogCurrency();
+  const unit = catalogPriceMinor(product, currency);
+  const discounted = percent > 0;
   return (
     <div
       className={[
@@ -290,11 +284,15 @@ function LinePrices({
     >
       {discounted ? (
         <p className="text-[13px] font-medium leading-[1.2] text-text/60 line-through min-[900px]:text-[24px]">
-          {original}
+          <CatalogPrice product={product} />
         </p>
       ) : null}
       <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[24px] font-bold leading-[1.2] text-transparent min-[900px]:text-[30px]">
-        {sale}
+        {discounted ? (
+          <CatalogMoney minor={discountedPriceMinor(unit, percent)} />
+        ) : (
+          <CatalogPrice product={product} />
+        )}
       </p>
     </div>
   );
@@ -339,8 +337,6 @@ export function TotalsCard({
   children: ReactNode;
 }) {
   const copy = cartT(useLocale());
-  const money = (minor: number) =>
-    formatCatalogPrice(minor, totals.currency);
 
   return (
     <aside className="flex w-full flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10 text-white min-[1200px]:min-h-[463px] max-[600px]:gap-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
@@ -348,8 +344,14 @@ export function TotalsCard({
         {copy.totalsTitle}
       </h2>
       <div className="flex flex-col gap-2.5">
-        <TotalsRow label={copy.subtotal} value={money(totals.subtotalMinor)} />
-        <TotalsRow label={copy.discount} value={money(totals.discountMinor)} />
+        <TotalsRow
+          label={copy.subtotal}
+          value={<CatalogMoney minor={totals.subtotalMinor} />}
+        />
+        <TotalsRow
+          label={copy.discount}
+          value={<CatalogMoney minor={totals.discountMinor} />}
+        />
       </div>
       <div className="h-px w-full bg-white/50" />
       <div className="flex items-center justify-between gap-4">
@@ -357,7 +359,7 @@ export function TotalsCard({
           {copy.payable}
         </p>
         <p className="text-[50px] font-bold leading-[1.1] tracking-[-1.5px] max-[600px]:text-[24px] max-[600px]:font-semibold max-[600px]:tracking-[-0.72px]">
-          {money(totals.payableMinor)}
+          <CatalogMoney minor={totals.payableMinor} />
         </p>
       </div>
       {children}
@@ -365,7 +367,7 @@ export function TotalsCard({
   );
 }
 
-function TotalsRow({ label, value }: { label: string; value: string }) {
+function TotalsRow({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <p className="text-[16px] font-medium leading-[1.3] max-[600px]:text-[13px] max-[600px]:font-normal max-[600px]:leading-[1.5]">

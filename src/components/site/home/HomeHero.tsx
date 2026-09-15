@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
@@ -25,7 +26,7 @@ function LookHeadline({
   return (
     <p className="absolute left-[509px] top-[152px] z-[12] flex h-[145px] w-[475px] items-center whitespace-nowrap text-[109px] font-semibold uppercase leading-none tracking-[-4.36px]">
       <span className={lookGradient}>{text}</span>
-      <img
+      <HomeImg
         src={eyeSrc}
         alt=""
         width={45}
@@ -45,18 +46,21 @@ export function HomeHeroDesktop() {
 
   return (
     <>
-      <img
+      <HomeImg
+        eager
         src={homeAssets.heroBg}
         alt=""
         className="pointer-events-none absolute left-0 top-[-49px] z-0 h-[1120px] w-[1920px] object-cover"
       />
-      <img
+      <HomeImg
+        eager
         src={homeAssets.heroBlob}
         alt=""
         className="pointer-events-none absolute left-[-27px] top-[-12px] z-[1] h-[818px] w-[1610px] max-w-none"
       />
 
-      <img
+      <HomeImg
+        eager
         src={`${homeAssets.heroPhone}?v=fingers`}
         alt=""
         width={901}
@@ -86,14 +90,14 @@ export function HomeHeroDesktop() {
         >
           {copy.repeat}
         </p>
-        <img
+        <HomeImg
           src={homeAssets.decoQuote}
           alt=""
           width={39}
           height={39}
           className="absolute left-0 top-[120.32px] size-[38.97px] -rotate-3"
         />
-        <img
+        <HomeImg
           src={`${homeAssets.decoQuoteTr}?v=figma`}
           alt=""
           width={44}
@@ -159,7 +163,7 @@ export function HomeHeroDesktop() {
         </p>
       </div>
 
-      <img
+      <HomeImg
         src={`${homeAssets.decoArrow}?v=page`}
         alt=""
         width={196}
@@ -177,7 +181,7 @@ export function HomeHeroDesktop() {
           className="size-[60px] transition-transform duration-200 hover:scale-105 active:scale-95"
           aria-label={copy.chooseVideos}
         >
-          <img
+          <HomeImg
             src={`${homeAssets.btnPlay}?v=svg`}
             alt=""
             width={60}
@@ -198,12 +202,14 @@ export function HomeHeroMobile() {
 
   return (
     <>
-      <img
+      <HomeImg
+        eager
         src={homeAssets.heroBgMobile}
         alt=""
         className="pointer-events-none absolute left-[-5px] top-0 z-0 h-[844px] w-[370px] object-cover"
       />
-      <img
+      <HomeImg
+        eager
         src={homeAssets.heroBlob}
         alt=""
         className="pointer-events-none absolute left-[-170.98px] top-0 z-[1] h-[618px] w-[665px] max-w-none"
@@ -214,7 +220,7 @@ export function HomeHeroMobile() {
           {copy.look}
         </p>
       </div>
-      <img
+      <HomeImg
         src={homeAssets.iconLook}
         alt=""
         width={23}
@@ -263,7 +269,7 @@ export function HomeHeroMobile() {
         </div>
       </div>
       <div className="absolute left-[30px] top-[284.75px] z-[4] flex size-[19.662px] items-center justify-center">
-        <img
+        <HomeImg
           src={homeAssets.decoQuote}
           alt=""
           width={19}
@@ -275,7 +281,7 @@ export function HomeHeroMobile() {
         className="absolute top-[226.54px] z-[4] flex size-[19.662px] items-center justify-center"
         style={{ left: ru ? 302.01 : 201.41 }}
       >
-        <img
+        <HomeImg
           src={`${homeAssets.decoQuoteTr}?v=figma`}
           alt=""
           width={20}
@@ -324,7 +330,7 @@ export function HomeHeroMobile() {
         )}
       </div>
 
-      <img
+      <HomeImg
         src={`${homeAssets.decoArrowMobile}?v=m`}
         alt=""
         width={75}

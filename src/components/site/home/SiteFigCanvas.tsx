@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -112,6 +113,26 @@ export function SiteFigCanvas({
       window.visualViewport?.removeEventListener("resize", onResize);
     };
   }, [canvas.h, canvas.w, mode]);
+
+  /* Same as privateclub FigCanvas: hero marks data-eager-images */
+  useEffect(() => {
+    const root = canvasRef.current;
+    if (!root) return;
+    root.querySelectorAll("img").forEach((img) => {
+      if (img.closest("[data-eager-images]")) {
+        if (!img.hasAttribute("decoding")) {
+          img.setAttribute("decoding", "async");
+        }
+        return;
+      }
+      if (!img.hasAttribute("loading")) {
+        img.setAttribute("loading", "lazy");
+      }
+      if (!img.hasAttribute("decoding")) {
+        img.setAttribute("decoding", "async");
+      }
+    });
+  }, [mode]);
 
   return (
     <div

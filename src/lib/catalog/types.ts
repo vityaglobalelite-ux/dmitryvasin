@@ -25,6 +25,8 @@ export type Product = {
   id: string;
   type: ProductType;
   priceMinor: number;
+  priceUsdMinor: number;
+  priceEurMinor: number;
   currency: Currency;
   accessDays: number;
   coverUrl: string;

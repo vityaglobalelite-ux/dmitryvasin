@@ -33,7 +33,7 @@ export type SiteButtonProps = ButtonAsButton | ButtonAsLink;
 function buttonClassName(variant: SiteButtonVariant, className?: string) {
   const hasPx = Boolean(className && /(?:^|\s)px-/.test(className));
   const hasMobilePx = Boolean(className && /max-\[600px\]:px-/.test(className));
-  let variantCls = variants[variant];
+  let variantCls: string = variants[variant];
   if (hasPx) {
     variantCls = variantCls
       .replace(/\bpx-10\b/g, "")

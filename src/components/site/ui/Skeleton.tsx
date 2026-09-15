@@ -24,9 +24,10 @@ export function ProductCardSkeleton() {
     >
       <Skeleton className="aspect-[467/263] w-full rounded-none max-[600px]:aspect-[320/180]" />
       <div className="flex flex-col gap-4 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
-        <div className="flex min-h-[calc(40px*2+14px)] flex-wrap content-start items-start gap-2 max-[600px]:min-h-0">
+        <div className="flex items-center gap-3.5 max-[600px]:gap-1.5">
           <Skeleton className="h-10 w-[144px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[104px]" />
           <Skeleton className="h-10 w-[102px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[74px]" />
+          <Skeleton className="h-[18px] w-[118px] max-[600px]:h-3.5 max-[600px]:w-24" />
         </div>
         <Skeleton className="h-[58px] w-full max-[600px]:h-[42px]" />
         <Skeleton className="h-[120px] w-full max-[600px]:h-[105px]" />

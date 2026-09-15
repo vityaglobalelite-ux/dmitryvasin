@@ -52,6 +52,8 @@ export type ProductRow = {
   id: string;
   type: string;
   price_minor: number;
+  price_usd_minor: number;
+  price_eur_minor: number;
   currency: string;
   access_days: number;
   cover_url: string;
@@ -108,13 +110,21 @@ export function buildProductI18n(
 }
 
 export function mapProductRow(row: ProductRow): Product | null {
-  if (!isProductType(row.type) || !isCurrency(row.currency)) {
+  if (
+    !isProductType(row.type) ||
+    !isCurrency(row.currency) ||
+    typeof row.price_minor !== "number" ||
+    typeof row.price_usd_minor !== "number" ||
+    typeof row.price_eur_minor !== "number"
+  ) {
     return null;
   }
   return {
     id: row.id,
     type: row.type,
     priceMinor: row.price_minor,
+    priceUsdMinor: row.price_usd_minor,
+    priceEurMinor: row.price_eur_minor,
     currency: row.currency,
     accessDays: row.access_days,
     coverUrl: row.cover_url,
@@ -129,10 +139,10 @@ export function mapProductRow(row: ProductRow): Product | null {
 
 /** Public product columns — never kinescope / videos. */
 export const PRODUCT_SELECT =
-  "id, type, price_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program )";
+  "id, type, price_minor, price_usd_minor, price_eur_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program )";
 
 export const CART_ITEMS_SELECT =
-  "product_id, qty, added_at, catalog_products ( id, type, price_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program ) )";
+  "product_id, qty, added_at, catalog_products ( id, type, price_minor, price_usd_minor, price_eur_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program ) )";
 
 export const ACCESS_SELECT =
-  "user_id, product_id, order_id, purchased_at, expires_at, status, catalog_products ( id, type, price_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program ) )";
+  "user_id, product_id, order_id, purchased_at, expires_at, status, catalog_products ( id, type, price_minor, price_usd_minor, price_eur_minor, currency, access_days, cover_url, duration_sec, level, skills, lesson_count, published, catalog_product_i18n ( locale, title, short, description, program ) )";

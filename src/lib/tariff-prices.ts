@@ -2,9 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useCountdownTail } from "@/lib/countdown-tail";
+import {
+  currencyForCountry,
+  detectCountryCode,
+  formatMoney,
+  type GeoCurrency,
+} from "@/lib/geo-currency";
 import { ADDON_PRICES, STAGE3_PRICES } from "@/lib/tariff-stage3";
 
-export type DisplayCurrency = "rub" | "usd" | "eur";
+export type DisplayCurrency = GeoCurrency;
+export { currencyForCountry, formatMoney };
 
 export type TariffKey = "trial" | "full" | "vip";
 export type AddonKey = "month1" | "month2_3";
@@ -17,96 +24,6 @@ export type DisplayPrice = {
 const LANDING_TARIFFS: TariffKey[] = ["trial", "full", "vip"];
 const LANDING_ADDONS: AddonKey[] = ["month1", "month2_3"];
 const LANDING_PRICE_KEYS = [...LANDING_TARIFFS, ...LANDING_ADDONS] as const;
-
-/** CIS / post-Soviet → RUB */
-const CIS = new Set([
-  "RU",
-  "BY",
-  "KZ",
-  "AM",
-  "AZ",
-  "KG",
-  "MD",
-  "TJ",
-  "UZ",
-  "TM",
-  "GE",
-]);
-
-/** Europe → EUR */
-const EUROPE = new Set([
-  "AL",
-  "AD",
-  "AT",
-  "BA",
-  "BE",
-  "BG",
-  "HR",
-  "CY",
-  "CZ",
-  "DK",
-  "EE",
-  "FI",
-  "FR",
-  "DE",
-  "GR",
-  "HU",
-  "IS",
-  "IE",
-  "IT",
-  "XK",
-  "LV",
-  "LI",
-  "LT",
-  "LU",
-  "MT",
-  "MC",
-  "ME",
-  "NL",
-  "MK",
-  "NO",
-  "PL",
-  "PT",
-  "RO",
-  "SM",
-  "RS",
-  "SK",
-  "SI",
-  "ES",
-  "SE",
-  "CH",
-  "UA",
-  "GB",
-  "VA",
-]);
-
-/** Americas → USD */
-const AMERICAS = new Set([
-  "US",
-  "CA",
-  "MX",
-  "BR",
-  "AR",
-  "CL",
-  "CO",
-  "PE",
-  "UY",
-  "PY",
-  "BO",
-  "EC",
-  "VE",
-  "CR",
-  "PA",
-  "GT",
-  "HN",
-  "SV",
-  "NI",
-  "DO",
-  "CU",
-  "PR",
-  "JM",
-  "TT",
-]);
 
 type PriceRow = {
   tariff: string;
@@ -123,28 +40,6 @@ function toNum(v: number | string | null | undefined): number | null {
   if (v == null || v === "") return null;
   const n = typeof v === "number" ? v : Number(v);
   return Number.isFinite(n) ? n : null;
-}
-
-export function currencyForCountry(code: string | null | undefined): DisplayCurrency {
-  const c = (code || "").toUpperCase();
-  if (!c) return "rub";
-  if (CIS.has(c)) return "rub";
-  if (EUROPE.has(c)) return "eur";
-  if (AMERICAS.has(c)) return "usd";
-  return "rub";
-}
-
-export function formatMoney(amount: number, currency: DisplayCurrency): string {
-  if (currency === "rub") {
-    const rounded = Math.round(amount);
-    return `${rounded.toLocaleString("ru-RU").replace(/\u00a0/g, " ")} ₽`;
-  }
-  if (currency === "usd") {
-    const n = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
-    return `$${n}`;
-  }
-  const n = Number.isInteger(amount) ? String(amount) : amount.toFixed(2);
-  return `€${n}`;
 }
 
 function pickAmount(
@@ -168,19 +63,6 @@ function statusMap(label: string): Record<TariffKey, DisplayPrice> {
   ) as Record<TariffKey, DisplayPrice>;
 }
 
-async function detectCountryCode(): Promise<string | null> {
-  try {
-    const res = await fetch("https://api.country.is/", {
-      signal: AbortSignal.timeout(2500),
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as { country?: string };
-    return data.country?.toUpperCase() || null;
-  } catch {
-    return null;
-  }
-}
-
 async function fetchPriceRows(): Promise<PriceRow[] | null> {
   const base = (
     process.env.NEXT_PUBLIC_PUBLIC_DATA_URL ??
@@ -193,6 +75,7 @@ async function fetchPriceRows(): Promise<PriceRow[] | null> {
     `${base}/rest/v1/tariff_prices` +
     `?select=tariff,price_rub,price_usd,price_eur,price_rub_was,price_usd_was,price_eur_was,active` +
     `&active=eq.true` +
+    `&price_list=eq.current` +
     `&tariff=in.(${LANDING_PRICE_KEYS.join(",")})`;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {

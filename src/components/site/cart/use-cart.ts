@@ -12,6 +12,7 @@ import {
 } from "@/lib/catalog/use-add-to-cart";
 import type { AuthUser, CartItem, WholesaleTier } from "@/lib/catalog/types";
 import { computeCartTotals } from "@/components/site/cart/totals";
+import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 
 async function hydrateGuestItems(items: CartItem[]): Promise<CartItem[]> {
   if (items.length === 0) return [];
@@ -58,6 +59,7 @@ async function readCart(
 
 export function useCart() {
   const auth = useAuthUser();
+  const { currency } = useCatalogCurrency();
   const [items, setItems] = useState<CartItem[]>([]);
   const [tiers, setTiers] = useState<WholesaleTier[]>([]);
   const [loading, setLoading] = useState(true);
@@ -135,7 +137,7 @@ export function useCart() {
   return {
     items,
     tiers,
-    totals: computeCartTotals(items, tiers),
+    totals: computeCartTotals(items, tiers, currency),
     loading: loading || auth.loading,
     error,
     signedIn: Boolean(auth.data),

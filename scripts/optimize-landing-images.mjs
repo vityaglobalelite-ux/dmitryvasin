@@ -7,10 +7,16 @@ import path from "node:path";
 import sharp from "sharp";
 
 const ROOT = process.cwd();
-const DIR = path.join(ROOT, "public", "assets", "landing");
-const BACKUP = path.join(ROOT, "assets-originals", "landing");
+const DIR = path.resolve(ROOT, process.argv[2] || path.join("public", "assets", "landing"));
+const assetsRoot = path.join(ROOT, "public", "assets");
+const relFromAssets = path.relative(assetsRoot, DIR);
+const BACKUP = path.join(
+  ROOT,
+  "assets-originals",
+  relFromAssets.startsWith("..") ? path.basename(DIR) : relFromAssets,
+);
 const MAX_EDGE = 2560; // 2× for large desktop panels; no aggressive shrink
-const MIN_BYTES = 3 * 1024; // skip tiny rasters
+const MIN_BYTES = 0; // convert every raster so asset maps can switch to .webp
 
 function isRaster(name) {
   return /\.(png|jpe?g)$/i.test(name);

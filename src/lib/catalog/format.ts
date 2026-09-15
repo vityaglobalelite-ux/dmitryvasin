@@ -1,10 +1,5 @@
 import type { Currency, Locale } from "@/lib/catalog/types";
-
-const currencySuffix: Record<Currency, string> = {
-  rub: "₽",
-  eur: "€",
-  usd: "$",
-};
+import { formatMoney } from "@/lib/geo-currency";
 
 export function formatPriceMinor(
   minor: number,
@@ -12,13 +7,8 @@ export function formatPriceMinor(
   _locale: Locale = "ru",
 ): string {
   const major = minor / 100;
-  const amount = Number.isInteger(major)
-    ? String(major)
-    : major.toLocaleString("ru-RU", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-  return `${amount}\u00A0${currencySuffix[currency]}`;
+  const formatted = formatMoney(major, currency);
+  return formatted.replace(/ /g, "\u00A0");
 }
 
 export function formatDuration(durationSec: number, locale: Locale = "ru"): string {

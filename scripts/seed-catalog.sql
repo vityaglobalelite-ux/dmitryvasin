@@ -9,42 +9,44 @@ VALUES (
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO public.catalog_products (
-  id, type, price_minor, currency, access_days, cover_url,
+  id, type, price_minor, price_usd_minor, price_eur_minor, currency, access_days, cover_url,
   duration_sec, level, skills, lesson_count, published
 ) VALUES
-('c0a7a109-0001-4000-8000-000000000001', 'lifehack',  49000, 'rub',  30, '/assets/site/catalog/covers/yt-technique.png',     500,  '1', ARRAY['Осознавание','Ось'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000002', 'lifehack',  59000, 'rub',  30, '/assets/site/catalog/covers/studio-dmitry.png',    725,  '2', ARRAY['Техника','Стопы'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000009', 'lifehack',  45000, 'rub',  30, '/assets/site/catalog/covers/yt-interaction.png',  380,  '1', ARRAY['Осознавание','Объятие'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000010', 'lifehack',  55000, 'rub',  30, '/assets/site/catalog/covers/yt-variability.png',  640,  '2', ARRAY['Техника','Ось'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000011', 'lifehack',  52000, 'rub',  30, '/assets/site/catalog/covers/dancer-dress.png',    510,  '1', ARRAY['Музыкальность'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000001', 'lifehack',  49000,   600,   500, 'rub',  30, '/assets/site/catalog/covers/yt-technique.webp',     500,  '1', ARRAY['Осознавание','Ось'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000002', 'lifehack',  59000,   700,   600, 'rub',  30, '/assets/site/catalog/covers/studio-dmitry.webp',    725,  '2', ARRAY['Техника','Стопы'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000009', 'lifehack',  45000,   500,   500, 'rub',  30, '/assets/site/catalog/covers/yt-interaction.webp',  380,  '1', ARRAY['Осознавание','Объятие'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000010', 'lifehack',  55000,   600,   600, 'rub',  30, '/assets/site/catalog/covers/yt-variability.webp',  640,  '2', ARRAY['Техника','Ось'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000011', 'lifehack',  52000,   600,   500, 'rub',  30, '/assets/site/catalog/covers/dancer-dress.webp',    510,  '1', ARRAY['Музыкальность'], NULL, true),
 
-('c0a7a109-0001-4000-8000-000000000003', 'lesson',   149000, 'rub',  90, '/assets/site/catalog/covers/couple-gold.png',     2520,  '2', ARRAY['Техника','Очо'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000004', 'lesson',   169000, 'rub',  90, '/assets/site/catalog/covers/silhouette.png',      2292,  '3', ARRAY['Музыкальность','Осознавание'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000012', 'lesson',   139000, 'rub',  90, '/assets/site/catalog/covers/stage-feet.png',      2100,  '1', ARRAY['Техника','Шаг'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000013', 'lesson',   159000, 'rub',  90, '/assets/site/catalog/covers/photo-dance.webp',    2460,  '2', ARRAY['Техника','Поворот'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000014', 'lesson',   179000, 'rub',  90, '/assets/site/catalog/covers/studio-lesson.webp',  2640,  '3', ARRAY['Техника','Сакада'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000015', 'lesson',   155000, 'rub',  90, '/assets/site/catalog/covers/photo-liza.webp',     2340,  '2', ARRAY['Взаимодействие','Объятие'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000016', 'lesson',   165000, 'rub',  90, '/assets/site/catalog/covers/teacher-hero.webp',   2580,  '3', ARRAY['Техника','Ведение'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000003', 'lesson',   149000,  1700,  1500, 'rub',  90, '/assets/site/catalog/covers/couple-gold.webp',     2520,  '2', ARRAY['Техника','Очо'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000004', 'lesson',   169000,  2000,  1700, 'rub',  90, '/assets/site/catalog/covers/silhouette.webp',      2292,  '3', ARRAY['Музыкальность','Осознавание'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000012', 'lesson',   139000,  1600,  1400, 'rub',  90, '/assets/site/catalog/covers/stage-feet.webp',      2100,  '1', ARRAY['Техника','Шаг'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000013', 'lesson',   159000,  1800,  1600, 'rub',  90, '/assets/site/catalog/covers/photo-dance.webp',    2460,  '2', ARRAY['Техника','Поворот'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000014', 'lesson',   179000,  2100,  1800, 'rub',  90, '/assets/site/catalog/covers/studio-lesson.webp',  2640,  '3', ARRAY['Техника','Сакада'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000015', 'lesson',   155000,  1800,  1600, 'rub',  90, '/assets/site/catalog/covers/photo-liza.webp',     2340,  '2', ARRAY['Взаимодействие','Объятие'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000016', 'lesson',   165000,  1900,  1700, 'rub',  90, '/assets/site/catalog/covers/teacher-hero.webp',   2580,  '3', ARRAY['Техника','Ведение'], NULL, true),
 
-('c0a7a109-0001-4000-8000-000000000005', 'course',   990000, 'rub', 180, '/assets/site/catalog/covers/studio-lesson.webp', 21600,  '2', ARRAY['Техника','Взаимодействие','Осознавание'], 6, true),
-('c0a7a109-0001-4000-8000-000000000017', 'course',  1290000, 'rub', 180, '/assets/site/catalog/covers/og-dmitry.png',      28800, '3', ARRAY['Музыкальность','Осознавание'], 8, true),
-('c0a7a109-0001-4000-8000-000000000018', 'course',  1190000, 'rub', 180, '/assets/site/catalog/covers/couple-gold.png',    25200,  '2', ARRAY['Техника','Ось','Шаг'], 7, true),
-('c0a7a109-0001-4000-8000-000000000019', 'course',  1490000, 'rub', 365, '/assets/site/catalog/covers/dancer-dress.png',   32400,  '3', ARRAY['Взаимодействие','Техника'], 10, true),
+('c0a7a109-0001-4000-8000-000000000005', 'course',   990000, 11500,  9900, 'rub', 180, '/assets/site/catalog/covers/studio-lesson.webp', 21600,  '2', ARRAY['Техника','Взаимодействие','Осознавание'], 6, true),
+('c0a7a109-0001-4000-8000-000000000017', 'course',  1290000, 14900, 12900, 'rub', 180, '/assets/site/catalog/covers/og-dmitry.webp',      28800, '3', ARRAY['Музыкальность','Осознавание'], 8, true),
+('c0a7a109-0001-4000-8000-000000000018', 'course',  1190000, 13900, 11900, 'rub', 180, '/assets/site/catalog/covers/couple-gold.webp',    25200,  '2', ARRAY['Техника','Ось','Шаг'], 7, true),
+('c0a7a109-0001-4000-8000-000000000019', 'course',  1490000, 17500, 14900, 'rub', 365, '/assets/site/catalog/covers/dancer-dress.webp',   32400,  '3', ARRAY['Взаимодействие','Техника'], 10, true),
 
-('c0a7a109-0001-4000-8000-000000000006', 'extra',    79000, 'rub',  60, '/assets/site/catalog/covers/photo-dance.webp',    1320,  '1', ARRAY['Осознавание'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000020', 'extra',    69000, 'rub',  60, '/assets/site/catalog/covers/couple-stage.jpg',     900,  '1', ARRAY['Взаимодействие'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000021', 'extra',    89000, 'rub',  90, '/assets/site/catalog/covers/photo-dmitry.webp',   1500,  '2', ARRAY['Техника'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000006', 'extra',    79000,   900,   800, 'rub',  60, '/assets/site/catalog/covers/photo-dance.webp',    1320,  '1', ARRAY['Осознавание'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000020', 'extra',    69000,   800,   700, 'rub',  60, '/assets/site/catalog/covers/couple-stage.webp',     900,  '1', ARRAY['Взаимодействие'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000021', 'extra',    89000,  1000,   900, 'rub',  90, '/assets/site/catalog/covers/photo-dmitry.webp',   1500,  '2', ARRAY['Техника'], NULL, true),
 
-('c0a7a109-0001-4000-8000-000000000007', 'research', 249000, 'rub', 120, '/assets/site/catalog/covers/silhouette.png',      3480,  '4', ARRAY['Осознавание','Вариативность'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000022', 'research', 229000, 'rub', 120, '/assets/site/catalog/covers/dancer-dress.png',    3300,  '4', ARRAY['Осознавание','Объятие'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000023', 'research', 259000, 'rub', 120, '/assets/site/catalog/covers/studio-dmitry.png',   3600,  '3', ARRAY['Вариативность','Техника'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000007', 'research', 249000,  2900,  2500, 'rub', 120, '/assets/site/catalog/covers/silhouette.webp',      3480,  '4', ARRAY['Осознавание','Вариативность'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000022', 'research', 229000,  2600,  2300, 'rub', 120, '/assets/site/catalog/covers/dancer-dress.webp',    3300,  '4', ARRAY['Осознавание','Объятие'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000023', 'research', 259000,  3000,  2600, 'rub', 120, '/assets/site/catalog/covers/studio-dmitry.webp',   3600,  '3', ARRAY['Вариативность','Техника'], NULL, true),
 
-('c0a7a109-0001-4000-8000-000000000008', 'peek',    199000, 'rub',  90, '/assets/site/catalog/covers/studio-lesson.webp',  3270,  '3', ARRAY['Взаимодействие','Техника'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000024', 'peek',    189000, 'rub',  90, '/assets/site/catalog/covers/photo-liza.webp',     3120,  '2', ARRAY['Взаимодействие','Осознавание'], NULL, true),
-('c0a7a109-0001-4000-8000-000000000025', 'peek',    219000, 'rub',  90, '/assets/site/catalog/covers/teacher-hero.webp',   3540,  '3', ARRAY['Техника','Объятие'], NULL, true)
+('c0a7a109-0001-4000-8000-000000000008', 'peek',    199000,  2300,  2000, 'rub',  90, '/assets/site/catalog/covers/studio-lesson.webp',  3270,  '3', ARRAY['Взаимодействие','Техника'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000024', 'peek',    189000,  2200,  1900, 'rub',  90, '/assets/site/catalog/covers/photo-liza.webp',     3120,  '2', ARRAY['Взаимодействие','Осознавание'], NULL, true),
+('c0a7a109-0001-4000-8000-000000000025', 'peek',    219000,  2500,  2200, 'rub',  90, '/assets/site/catalog/covers/teacher-hero.webp',   3540,  '3', ARRAY['Техника','Объятие'], NULL, true)
 ON CONFLICT (id) DO UPDATE SET
   type = EXCLUDED.type,
   price_minor = EXCLUDED.price_minor,
+  price_usd_minor = EXCLUDED.price_usd_minor,
+  price_eur_minor = EXCLUDED.price_eur_minor,
   currency = EXCLUDED.currency,
   access_days = EXCLUDED.access_days,
   cover_url = EXCLUDED.cover_url,

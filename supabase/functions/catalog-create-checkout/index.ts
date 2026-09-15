@@ -2,19 +2,24 @@ import Stripe from "https://esm.sh/stripe@17.4.0?target=deno";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
+  currencyFromRequestHeaders,
+  isGeoCurrency,
+  type GeoCurrency,
+} from "../_shared/geo-currency.ts";
+import {
   computeCartTotalsFromPrices,
   discountedPriceMinor,
   parseWholesaleTiers,
 } from "../_shared/catalog-totals.ts";
 
-const CURRENCIES = ["rub", "eur", "usd"] as const;
-type CatalogCurrency = (typeof CURRENCIES)[number];
+type CatalogCurrency = GeoCurrency;
 
 type CheckoutBody = {
   success_url?: unknown;
   cancel_url?: unknown;
   successUrl?: unknown;
   cancelUrl?: unknown;
+  currency?: unknown;
 };
 
 type CartItemRow = {
@@ -29,7 +34,8 @@ type ProductI18nRow = {
 type ProductRow = {
   id: string;
   price_minor: number;
-  currency: string;
+  price_usd_minor: number;
+  price_eur_minor: number;
   published: boolean;
   catalog_product_i18n?: ProductI18nRow[] | ProductI18nRow | null;
 };
@@ -51,8 +57,29 @@ function bearerJwt(req: Request): string | null {
   return token;
 }
 
-function isCurrency(value: string): value is CatalogCurrency {
-  return (CURRENCIES as readonly string[]).includes(value);
+function readCheckoutCurrency(
+  body: CheckoutBody,
+  req: Request,
+): CatalogCurrency | null {
+  if (typeof body.currency === "string" && body.currency.trim() !== "") {
+    const raw = body.currency.trim().toLowerCase();
+    if (!isGeoCurrency(raw)) return null;
+    return raw;
+  }
+  return currencyFromRequestHeaders(req.headers);
+}
+
+function priceMinorFor(
+  product: ProductRow,
+  currency: CatalogCurrency,
+): number {
+  if (currency === "usd") return product.price_usd_minor;
+  if (currency === "eur") return product.price_eur_minor;
+  return product.price_minor;
+}
+
+function isFinitePrice(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value > 0;
 }
 
 function readJsonBody(raw: unknown): CheckoutBody {
@@ -180,7 +207,7 @@ Deno.serve(async (req) => {
     const { data: productRows, error: productErr } = await admin
       .from("catalog_products")
       .select(
-        "id, price_minor, currency, published, catalog_product_i18n ( locale, title )",
+        "id, price_minor, price_usd_minor, price_eur_minor, published, catalog_product_i18n ( locale, title )",
       )
       .in("id", uniqueProductIds);
     if (productErr) throw productErr;
@@ -191,37 +218,29 @@ Deno.serve(async (req) => {
     }
 
     const lines: CheckoutLine[] = [];
-    let currency: CatalogCurrency | null = null;
+    const currency = readCheckoutCurrency(body, req);
+    if (!currency) {
+      return jsonResponse({ error: "invalid_currency" }, 400);
+    }
 
     for (const productId of uniqueProductIds) {
       const product = productsById.get(productId);
       if (!product || !product.published) {
         return jsonResponse({ error: "unpublished_product" }, 400);
       }
-      if (!isCurrency(product.currency)) {
-        return jsonResponse({ error: "unpublished_product" }, 400);
-      }
-      if (currency === null) {
-        currency = product.currency;
-      } else if (product.currency !== currency) {
-        return jsonResponse({ error: "mixed_currencies" }, 400);
-      }
-      if (
-        typeof product.price_minor !== "number" ||
-        !Number.isFinite(product.price_minor) ||
-        product.price_minor < 0
-      ) {
+      const priceMinor = priceMinorFor(product, currency);
+      if (!isFinitePrice(priceMinor)) {
         return jsonResponse({ error: "unpublished_product" }, 400);
       }
       lines.push({
         productId,
         title: titleFromI18n(product.catalog_product_i18n),
-        priceMinor: product.price_minor,
+        priceMinor,
         unitAmount: 0,
       });
     }
 
-    if (!currency) {
+    if (lines.length === 0) {
       return jsonResponse({ error: "empty_cart" }, 400);
     }
 
@@ -297,11 +316,13 @@ Deno.serve(async (req) => {
       metadata: {
         catalog_order_id: order.id,
         catalog_user_id: user.id,
+        catalog_currency: currency,
       },
       payment_intent_data: {
         metadata: {
           catalog_order_id: order.id,
           catalog_user_id: user.id,
+          catalog_currency: currency,
         },
       },
     });

@@ -19,8 +19,11 @@ import { SiteFigCanvas } from "@/components/site/home/SiteFigCanvas";
 function HomeDesktopCanvas() {
   return (
     <div className="relative h-[8704px] w-[1920px] overflow-hidden bg-white">
-      <HomeHeroDesktop />
-      <HomeTeacherDesktop />
+      <div className="contents" data-eager-images>
+        <HomeHeroDesktop />
+        <HomeTeacherDesktop />
+        <HomeHeaderDesktop />
+      </div>
       <HomeDirectionsDesktop />
       <HomeCategoriesDesktop />
       <HomeCatalogRailDesktop />
@@ -28,7 +31,6 @@ function HomeDesktopCanvas() {
       <HomeSupportDesktop />
       <HomeReviewsDesktop />
       <HomeFooterDesktop />
-      <HomeHeaderDesktop />
     </div>
   );
 }
@@ -36,7 +38,10 @@ function HomeDesktopCanvas() {
 function HomeMobileCanvas() {
   return (
     <div className="relative h-[10116px] w-[360px] overflow-hidden bg-white">
-      <HomeHeroMobile />
+      <div className="contents" data-eager-images>
+        <HomeHeroMobile />
+        <HomeHeaderMobile />
+      </div>
       <HomeTeacherMobile />
       <HomeDirectionsMobile />
       <HomeCategoriesMobile />
@@ -45,7 +50,6 @@ function HomeMobileCanvas() {
       <HomeSupportMobile />
       <HomeReviewsMobile />
       <HomeFooterMobile />
-      <HomeHeaderMobile />
     </div>
   );
 }

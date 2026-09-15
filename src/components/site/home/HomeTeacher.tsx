@@ -1,6 +1,7 @@
 "use client";
 
 import { FigLines, Layer } from "@/components/site/home/HomeFrame";
+import { HomeImg } from "@/components/site/home/HomeImg";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale } from "@/lib/catalog/locale-context";
@@ -58,7 +59,7 @@ export function HomeTeacherDesktop() {
           </p>
         )}
       </Layer>
-      <img
+      <HomeImg
         src={`${homeAssets.idea}?v=alpha`}
         alt=""
         width={83}
@@ -66,7 +67,8 @@ export function HomeTeacherDesktop() {
         className="absolute left-[276px] top-[1190px] z-[13] h-[112px] w-[83px]"
       />
       <div className="pointer-events-none absolute left-[1017px] top-[738px] z-[14] h-[604px] w-[611px] overflow-hidden">
-        <img
+        <HomeImg
+          eager
           src={homeAssets.teacher}
           alt=""
           className="absolute top-[-27.91%] left-[-16.57%] h-[214.99%] w-[141.81%] max-w-none"
@@ -96,7 +98,7 @@ export function HomeTeacherMobile() {
         }}
       >
         <div className="absolute left-0 top-[422px] h-[316px] w-[320px] overflow-hidden">
-          <img
+          <HomeImg
             src={`${homeAssets.teacher}?v=knockout`}
             alt=""
             className="absolute top-[-27.91%] left-[-16.57%] h-[214.99%] w-[141.81%] max-w-none"
@@ -156,7 +158,7 @@ export function HomeTeacherMobile() {
               </p>
             )}
           </div>
-          <img
+          <HomeImg
             src={`${homeAssets.idea}?v=alpha`}
             alt=""
             width={67}

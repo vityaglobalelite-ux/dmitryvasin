@@ -17,14 +17,16 @@ import {
 } from "@/components/site/catalog/display";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { Button } from "@/components/site/ui/Button";
+import { CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { productAssets } from "@/components/site/product/assets";
+import { ProductProof } from "@/components/site/product/ProductProof";
 import {
   ProductHeroWash,
   ProductNotFound,
   ProductSkeleton,
 } from "@/components/site/product/ProductStates";
 import { SiteTrail } from "@/components/site/SiteTrail";
-import { formatDuration, formatPriceMinor } from "@/lib/catalog/format";
+import { formatDuration } from "@/lib/catalog/format";
 import { useAuthUser, useProduct, useProducts } from "@/lib/catalog/hooks";
 import { catalogT } from "@/lib/catalog/i18n";
 import { productCopy } from "@/lib/catalog/locale";
@@ -131,7 +133,7 @@ function ProductLoaded({
     <main className="relative flex flex-1 flex-col overflow-x-clip bg-white [overflow-anchor:none]">
       <WholesaleModal open={cart.modalOpen} onClose={cart.closeModal} />
       <ProductHeroWash />
-      <article className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
+      <article className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-0 pt-16 max-[600px]:px-5 max-[600px]:pt-6">
         <ProductHero
           product={product}
           title={copy.title}
@@ -174,6 +176,7 @@ function ProductLoaded({
           }}
         />
       </article>
+      <ProductProof />
     </main>
   );
 }
@@ -455,7 +458,7 @@ function BuyRow({
               {t.product.cost}
             </p>
             <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent max-[600px]:text-[24px]">
-              {formatPriceMinor(product.priceMinor, product.currency)}
+              <CatalogPrice product={product} />
             </p>
           </div>
         ) : null}
@@ -601,7 +604,7 @@ function ProductProgram({
           </div>
           <div className="flex w-full max-w-[405px] flex-col justify-between gap-6 rounded-[20px] bg-white p-5">
             <p className="bg-[image:var(--brand-gradient)] bg-clip-text text-[50px] font-bold leading-[1.2] text-transparent max-[600px]:text-[32px]">
-              {formatPriceMinor(product.priceMinor, product.currency)}
+              <CatalogPrice product={product} />
             </p>
             <BuyRow product={product} cart={cart} variant="bundle" />
           </div>

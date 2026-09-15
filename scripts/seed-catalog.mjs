@@ -35,6 +35,24 @@ const DEV_WHOLESALE_TIERS = [
   { minQty: 6, percent: 15 },
 ];
 
+/** Club trial list 16900₽ / $195 / €170. Courses get shoppable roundings. */
+const COURSE_FOREIGN_MINOR = {
+  990000: { usd: 11500, eur: 9900 },
+  1190000: { usd: 13900, eur: 11900 },
+  1290000: { usd: 14900, eur: 12900 },
+  1490000: { usd: 17500, eur: 14900 },
+};
+
+function foreignMinors(rubMinor) {
+  const pretty = COURSE_FOREIGN_MINOR[rubMinor];
+  if (pretty) return pretty;
+  const rub = rubMinor / 100;
+  return {
+    usd: Math.max(1, Math.round((rub * 195) / 16900)) * 100,
+    eur: Math.max(1, Math.round((rub * 170) / 16900)) * 100,
+  };
+}
+
 const PRODUCTS = [
   {
     id: "c0a7a109-0001-4000-8000-000000000001",
@@ -42,7 +60,7 @@ const PRODUCTS = [
     price_minor: 49000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/catalog/covers/yt-technique.png",
+    cover_url: "/assets/site/catalog/covers/yt-technique.webp",
     duration_sec: 8 * 60 + 20,
     level: "1",
     skills: ["Осознавание", "Ось"],
@@ -68,7 +86,7 @@ const PRODUCTS = [
     price_minor: 59000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/catalog/covers/studio-dmitry.png",
+    cover_url: "/assets/site/catalog/covers/studio-dmitry.webp",
     duration_sec: 12 * 60 + 5,
     level: "2",
     skills: ["Техника", "Стопы"],
@@ -94,7 +112,7 @@ const PRODUCTS = [
     price_minor: 149000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/catalog/covers/couple-gold.png",
+    cover_url: "/assets/site/catalog/covers/couple-gold.webp",
     duration_sec: 42 * 60,
     level: "2",
     skills: ["Техника", "Очо"],
@@ -120,7 +138,7 @@ const PRODUCTS = [
     price_minor: 169000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/catalog/covers/silhouette.png",
+    cover_url: "/assets/site/catalog/covers/silhouette.webp",
     duration_sec: 38 * 60 + 12,
     level: "3",
     skills: ["Музыкальность", "Осознавание"],
@@ -202,7 +220,7 @@ const PRODUCTS = [
     price_minor: 249000,
     currency: "rub",
     access_days: 120,
-    cover_url: "/assets/site/catalog/covers/silhouette.png",
+    cover_url: "/assets/site/catalog/covers/silhouette.webp",
     duration_sec: 58 * 60,
     level: "4",
     skills: ["Осознавание", "Вариативность"],
@@ -254,7 +272,7 @@ const PRODUCTS = [
     price_minor: 45000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/catalog/covers/yt-interaction.png",
+    cover_url: "/assets/site/catalog/covers/yt-interaction.webp",
     duration_sec: 380,
     level: "1",
     skills: ["Осознавание", "Объятие"],
@@ -280,7 +298,7 @@ const PRODUCTS = [
     price_minor: 55000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/catalog/covers/yt-variability.png",
+    cover_url: "/assets/site/catalog/covers/yt-variability.webp",
     duration_sec: 640,
     level: "2",
     skills: ["Техника", "Ось"],
@@ -306,7 +324,7 @@ const PRODUCTS = [
     price_minor: 52000,
     currency: "rub",
     access_days: 30,
-    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    cover_url: "/assets/site/catalog/covers/dancer-dress.webp",
     duration_sec: 510,
     level: "1",
     skills: ["Музыкальность"],
@@ -332,7 +350,7 @@ const PRODUCTS = [
     price_minor: 139000,
     currency: "rub",
     access_days: 90,
-    cover_url: "/assets/site/catalog/covers/stage-feet.png",
+    cover_url: "/assets/site/catalog/covers/stage-feet.webp",
     duration_sec: 2100,
     level: "1",
     skills: ["Техника", "Шаг"],
@@ -462,7 +480,7 @@ const PRODUCTS = [
     price_minor: 1290000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/og-dmitry.png",
+    cover_url: "/assets/site/catalog/covers/og-dmitry.webp",
     duration_sec: 28800,
     level: "3",
     skills: ["Музыкальность", "Осознавание"],
@@ -492,7 +510,7 @@ const PRODUCTS = [
     price_minor: 1190000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/couple-gold.png",
+    cover_url: "/assets/site/catalog/covers/couple-gold.webp",
     duration_sec: 25200,
     level: "2",
     skills: ["Техника", "Ось", "Шаг"],
@@ -517,7 +535,7 @@ const PRODUCTS = [
     },
   },
   {
-    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    cover_url: "/assets/site/catalog/covers/dancer-dress.webp",
     duration_sec: 32400,
     level: "3",
     skills: ["Взаимодействие", "Техника"],
@@ -547,7 +565,7 @@ const PRODUCTS = [
     price_minor: 69000,
     currency: "rub",
     access_days: 60,
-    cover_url: "/assets/site/catalog/covers/couple-stage.jpg",
+    cover_url: "/assets/site/catalog/covers/couple-stage.webp",
     duration_sec: 900,
     level: "1",
     skills: ["Взаимодействие"],
@@ -599,7 +617,7 @@ const PRODUCTS = [
     price_minor: 229000,
     currency: "rub",
     access_days: 120,
-    cover_url: "/assets/site/catalog/covers/dancer-dress.png",
+    cover_url: "/assets/site/catalog/covers/dancer-dress.webp",
     duration_sec: 3300,
     level: "4",
     skills: ["Осознавание", "Объятие"],
@@ -625,7 +643,7 @@ const PRODUCTS = [
     price_minor: 259000,
     currency: "rub",
     access_days: 120,
-    cover_url: "/assets/site/catalog/covers/studio-dmitry.png",
+    cover_url: "/assets/site/catalog/covers/studio-dmitry.webp",
     duration_sec: 3600,
     level: "3",
     skills: ["Вариативность", "Техника"],
@@ -744,19 +762,24 @@ try {
         level,
         skills,
         lesson_count,
-      }) => ({
-        id,
-        type,
-        price_minor,
-        currency,
-        access_days,
-        cover_url,
-        duration_sec,
-        level,
-        skills,
-        lesson_count,
-        published: true,
-      }),
+      }) => {
+        const foreign = foreignMinors(price_minor);
+        return {
+          id,
+          type,
+          price_minor,
+          price_usd_minor: foreign.usd,
+          price_eur_minor: foreign.eur,
+          currency,
+          access_days,
+          cover_url,
+          duration_sec,
+          level,
+          skills,
+          lesson_count,
+          published: true,
+        };
+      },
     ),
   });
 

@@ -4,11 +4,8 @@ import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
   isTariff,
   resolvePriceFromDb,
-  resolvePriceFromEnv,
-  toMinorUnits,
 } from "../_shared/tariffs.ts";
 import { isSalesClosedAt } from "../_shared/sales-window.ts";
-import { LEGACY_PRICES } from "../_shared/legacy-prices.ts";
 
 function assertCheckoutAuth(req: Request): void {
   const secret = Deno.env.get("CHECKOUT_SECRET");
@@ -71,13 +68,15 @@ Deno.serve(async (req) => {
 
     const { data: user, error: userErr } = await supabase
       .from("bot_users")
-      .select("telegram_id")
+      .select("telegram_id, pricing_cohort")
       .eq("telegram_id", telegramId)
       .maybeSingle();
     if (userErr) throw userErr;
     if (!user) {
       return jsonResponse({ error: "user not found" }, 404);
     }
+
+    const priceList = user.pricing_cohort === "legacy" ? "legacy" : "current";
 
     const { count: subCount, error: subErr } = await supabase
       .from("subscriptions")
@@ -106,31 +105,16 @@ Deno.serve(async (req) => {
     const { data: priceRow, error: priceErr } = await supabase
       .from("tariff_prices")
       .select(
-        "price_rub, price_usd, price_eur, checkout_currency, stripe_price_id, label, active",
+        "price_rub, price_usd, price_eur, checkout_currency, label, active",
       )
       .eq("tariff", tariff)
+      .eq("price_list", priceList)
       .maybeSingle();
     if (priceErr) throw priceErr;
 
-    let price =
-      resolvePriceFromDb(tariff, priceRow) || resolvePriceFromEnv(tariff);
-
-    if (isMember) {
-      const legacy = LEGACY_PRICES[tariff];
-      const major =
-        price.currency === "usd"
-          ? legacy.usd
-          : price.currency === "eur"
-            ? legacy.eur
-            : legacy.rub;
-      price = {
-        ...price,
-        priceId: undefined,
-        amountCents: toMinorUnits(major),
-        priceRub: legacy.rub,
-        priceUsd: legacy.usd,
-        priceEur: legacy.eur,
-      };
+    const price = resolvePriceFromDb(tariff, priceRow);
+    if (!price) {
+      return jsonResponse({ error: "price unavailable" }, 503);
     }
 
     const stripe = new Stripe(stripeKey, {
@@ -149,7 +133,8 @@ Deno.serve(async (req) => {
         currency: price.currency,
         metadata: {
           source: "create-checkout",
-          price_source: isMember ? "legacy" : priceRow ? "db" : "env",
+          price_source: `db:${priceList}`,
+          pricing_cohort: user.pricing_cohort || "current",
           price_rub: price.priceRub,
           price_usd: price.priceUsd,
           price_eur: price.priceEur,
@@ -159,25 +144,21 @@ Deno.serve(async (req) => {
       .single();
     if (payErr) throw payErr;
 
-    const lineItems = price.priceId
-      ? [{ price: price.priceId, quantity: 1 }]
-      : [
-          {
-            quantity: 1,
-            price_data: {
-              currency: price.currency,
-              unit_amount: price.amountCents,
-              product_data: {
-                name: price.label,
-                description: `BeTango research · telegram ${telegramId}`,
-              },
-            },
-          },
-        ];
-
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      line_items: lineItems,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: price.currency,
+            unit_amount: price.amountCents,
+            product_data: {
+              name: price.label,
+              description: `BeTango research · telegram ${telegramId}`,
+            },
+          },
+        },
+      ],
       success_url: successUrl.includes("{CHECKOUT_SESSION_ID}")
         ? successUrl
         : `${successUrl}${successUrl.includes("?") ? "&" : "?"}paid=1&session_id={CHECKOUT_SESSION_ID}`,

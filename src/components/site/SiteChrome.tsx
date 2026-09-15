@@ -6,6 +6,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteNav } from "@/components/site/SiteNav";
 import { SiteMain, SiteSkipLink } from "@/components/site/SiteSkipLink";
 import { SITE_MOBILE_MAX_WIDTH } from "@/lib/catalog/breakpoint";
+import { CatalogCurrencyProvider } from "@/lib/catalog/currency-context";
 import { LocaleProvider } from "@/lib/catalog/locale-context";
 import { useRouteScrollTop } from "@/lib/catalog/scroll-top";
 
@@ -20,19 +21,21 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <LocaleProvider>
-      <AuthModalProvider>
-        <div
-          className="flex min-h-full flex-1 flex-col bg-white"
-          data-site-chrome
-          data-site-mobile-max={SITE_MOBILE_MAX_WIDTH}
-          data-site-home={hideChrome ? "true" : undefined}
-        >
-          <SiteSkipLink />
-          {hideChrome ? null : <SiteNav />}
-          <SiteMain>{children}</SiteMain>
-          {hideChrome ? null : <SiteFooter />}
-        </div>
-      </AuthModalProvider>
+      <CatalogCurrencyProvider>
+        <AuthModalProvider>
+          <div
+            className="flex min-h-full flex-1 flex-col bg-white"
+            data-site-chrome
+            data-site-mobile-max={SITE_MOBILE_MAX_WIDTH}
+            data-site-home={hideChrome ? "true" : undefined}
+          >
+            <SiteSkipLink />
+            {hideChrome ? null : <SiteNav />}
+            <SiteMain>{children}</SiteMain>
+            {hideChrome ? null : <SiteFooter />}
+          </div>
+        </AuthModalProvider>
+      </CatalogCurrencyProvider>
     </LocaleProvider>
   );
 }

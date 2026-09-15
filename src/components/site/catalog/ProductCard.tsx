@@ -7,7 +7,6 @@ import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
   formatAccessLabel,
-  formatCatalogPrice,
   formatDurationClock,
   lessonNoun,
   parseDifficulty,
@@ -16,6 +15,7 @@ import {
 } from "@/components/site/catalog/display";
 import { productAssets } from "@/components/site/product/assets";
 import { Button } from "@/components/site/ui/Button";
+import { CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { productCopy } from "@/lib/catalog/locale";
 import {
   useCatalogT,
@@ -122,6 +122,7 @@ function CoverBody({
             fill
             className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
             sizes="(max-width: 600px) 320px, 467px"
+            loading="lazy"
             unoptimized
           />
         ) : null}
@@ -192,6 +193,8 @@ function CompactBody({
               alt={coverAlt}
               width={60}
               height={60}
+              loading="lazy"
+              decoding="async"
               className="size-[60px] object-cover"
             />
           ) : null}
@@ -263,26 +266,25 @@ function MetaRow({ product }: { product: Product }) {
   const difficulty = parseDifficulty(product.level);
 
   return (
-    <div className="flex min-h-[calc(40px*2+14px)] flex-wrap content-start items-start gap-3.5 max-[600px]:min-h-0 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-1.5">
-      <div className="flex flex-wrap items-center gap-3.5 max-[600px]:gap-1.5">
-        {skills.map((skill) => {
-          const icon = skillIconSrc(skill);
-          return (
-            <span
-              key={skill}
-              className="inline-flex items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
-            >
-              {icon ? (
-                <img src={icon} alt="" width={20} height={20} className="size-5 max-[600px]:size-4" />
-              ) : null}
-              <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
-                {skill}
-              </span>
+    <div className="flex w-full items-center gap-3.5 max-[600px]:gap-1.5">
+      {skills.map((skill) => {
+        const icon = skillIconSrc(skill);
+        return (
+          <span
+            key={skill}
+            title={skill}
+            className="inline-flex min-w-0 items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
+          >
+            {icon ? (
+              <img src={icon} alt="" width={20} height={20} className="size-5 shrink-0 max-[600px]:size-4" />
+            ) : null}
+            <span className="min-w-0 truncate text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
+              {skill}
             </span>
-          );
-        })}
-      </div>
-      <span className="inline-flex items-center gap-1.5 max-[600px]:order-first max-[600px]:gap-1">
+          </span>
+        );
+      })}
+      <span className="inline-flex shrink-0 items-center gap-1.5 max-[600px]:gap-1">
         <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
           {t.catalog.difficulty}
         </span>
@@ -319,7 +321,7 @@ function PriceRow({
           {t.catalog.cost}
         </p>
         <p className="w-max whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[466px]:text-[22px] max-[600px]:text-[22px]">
-          {formatCatalogPrice(product.priceMinor, product.currency)}
+          <CatalogPrice product={product} />
         </p>
       </div>
       <div className="flex shrink-0 items-center gap-2.5 @max-[466px]:gap-2 max-[600px]:gap-2">
