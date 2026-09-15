@@ -47,5 +47,8 @@ export function mapSignupError(error: unknown, copy: AuthCopy = authCopy): strin
 export function mapResetError(error: unknown, copy: AuthCopy = authCopy): string {
   const text = lower(error);
   if (text.includes("not configured")) return copy.notConfigured;
+  if (text.includes("weak") || text.includes("password should be")) {
+    return copy.weakPassword;
+  }
   return copy.genericError;
 }

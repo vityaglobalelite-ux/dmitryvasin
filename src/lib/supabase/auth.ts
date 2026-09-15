@@ -17,15 +17,18 @@ function clientOrThrow() {
   return supabase;
 }
 
-function passwordResetRedirectTo(): string {
+function catalogAuthRedirectTo(): string {
+  const accountPath = (pathname: string) =>
+    pathname === "/en" || pathname.startsWith("/en/") ? "/en/account/" : "/account/";
+
   if (typeof window !== "undefined" && window.location?.origin) {
-    return `${window.location.origin}/`;
+    return `${window.location.origin}${accountPath(window.location.pathname)}`;
   }
   const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
   if (appUrl) {
-    return appUrl.endsWith("/") ? appUrl : `${appUrl}/`;
+    return `${appUrl.replace(/\/+$/, "")}/account/`;
   }
-  return "/";
+  return "/account/";
 }
 
 export async function signInWithPassword(
@@ -44,7 +47,11 @@ export async function signInWithPassword(
 
 export async function signUp(email: string, password: string): Promise<AuthUser> {
   const supabase = clientOrThrow();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: catalogAuthRedirectTo() },
+  });
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error("Sign-up failed");
   return mapAuthUser(data.user);
@@ -59,7 +66,7 @@ export async function signOut(): Promise<void> {
 export async function resetPasswordForEmail(email: string): Promise<void> {
   const supabase = clientOrThrow();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: passwordResetRedirectTo(),
+    redirectTo: catalogAuthRedirectTo(),
   });
   if (error) throw new Error(error.message);
 }

@@ -114,7 +114,7 @@ export function AuthBanner({
     <div
       role={tone === "error" ? "alert" : "status"}
       className={cx(
-        "flex w-full items-center gap-2.5 rounded-[10px] p-2.5 max-[600px]:h-8 max-[600px]:gap-1.5",
+        "flex w-full items-center gap-2.5 rounded-[10px] p-2.5 max-[600px]:min-h-8 max-[600px]:gap-1.5",
         tone === "error" ? "bg-[rgba(219,12,37,0.1)]" : "bg-[rgba(23,234,0,0.1)]",
       )}
     >
@@ -150,6 +150,7 @@ export function PrivacyConsent({
 }) {
   const id = useId();
   const copy = authT(useLocale());
+  const errorId = `${id}-error`;
   return (
     <div className="flex w-full flex-col gap-1.5">
       <div className="flex items-center gap-2.5">
@@ -158,12 +159,17 @@ export function PrivacyConsent({
           type="checkbox"
           checked={checked}
           onChange={(event) => onChange(event.target.checked)}
+          aria-invalid={requiredMessage ? true : undefined}
+          aria-describedby={requiredMessage ? errorId : undefined}
           aria-label={copy.privacy}
           className="peer sr-only"
         />
         <label
           htmlFor={id}
-          className="relative size-[18px] shrink-0 cursor-pointer rounded-[5px] border border-plum bg-white peer-focus-visible:ring-2 peer-focus-visible:ring-plum/40 max-[600px]:size-4"
+          className={cx(
+            "relative size-[18px] shrink-0 cursor-pointer rounded-[5px] border bg-white peer-focus-visible:ring-2 peer-focus-visible:ring-plum/40 max-[600px]:size-4",
+            requiredMessage ? "border-accent-red" : "border-plum",
+          )}
         >
           <span
             aria-hidden
@@ -188,7 +194,11 @@ export function PrivacyConsent({
         </p>
       </div>
       {requiredMessage ? (
-        <p className="text-[12px] leading-[1.3] text-accent-red max-[600px]:text-[10px]">
+        <p
+          id={errorId}
+          role="alert"
+          className="text-[12px] leading-[1.3] text-accent-red max-[600px]:text-[10px]"
+        >
           {requiredMessage}
         </p>
       ) : null}

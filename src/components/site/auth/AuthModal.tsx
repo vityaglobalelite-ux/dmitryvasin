@@ -42,12 +42,14 @@ import { siteAssets } from "@/lib/catalog/assets";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import {
   getSession,
+  onAuthStateChange,
   resetPasswordForEmail,
   signInWithPassword,
   signUp,
+  updatePassword,
 } from "@/lib/supabase/auth";
 
-export type AuthMode = "login" | "signup" | "forgot";
+export type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 type OpenAuthOptions = {
   onDismiss?: () => void;
@@ -137,6 +139,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const closeReasonRef = useRef<"dismiss" | "success">("dismiss");
   const closingRef = useRef(false);
   const openRef = useRef(false);
+  const recoveryRef = useRef(false);
 
   const openAuth = useCallback((next: AuthMode = "login", options?: OpenAuthOptions) => {
     dismissRef.current = options?.onDismiss;
@@ -152,6 +155,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const closeAuth = useCallback((reason: "dismiss" | "success" = "dismiss") => {
     if (!openRef.current || closingRef.current) return;
     closeReasonRef.current = reason;
+    recoveryRef.current = false;
     if (reason === "success") dismissRef.current = undefined;
     closingRef.current = true;
     setClosing(true);
@@ -162,7 +166,16 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
 
   const { data: user } = useAuthUser();
   useEffect(() => {
-    if (user) closeAuth("success");
+    const { unsubscribe } = onAuthStateChange((event) => {
+      if (event !== "PASSWORD_RECOVERY") return;
+      recoveryRef.current = true;
+      openAuth("reset");
+    });
+    return () => unsubscribe();
+  }, [openAuth]);
+
+  useEffect(() => {
+    if (user && !recoveryRef.current) closeAuth("success");
   }, [closeAuth, user]);
 
   useEffect(() => {
@@ -401,17 +414,22 @@ function AuthDialogForm({
   const [pending, setPending] = useState(false);
   const [checkEmail, setCheckEmail] = useState<string | null>(null);
   const [sentTo, setSentTo] = useState<string | null>(null);
+  const requestGen = useRef(0);
 
   const mismatch = confirm.length > 0 && password !== confirm;
   const match = password.length > 0 && confirm.length > 0 && password === confirm;
+  const needsPrivacy = mode === "login" || mode === "signup";
+  const needsPair = mode === "signup" || mode === "reset";
 
   useEffect(() => {
+    requestGen.current += 1;
     setError(null);
     setPrivacyError(null);
     setPassword("");
     setConfirm("");
     setCheckEmail(null);
     setSentTo(null);
+    setPending(false);
   }, [mode]);
 
   async function finishSignedIn() {
@@ -440,14 +458,17 @@ function AuthDialogForm({
     event.preventDefault();
     setError(null);
     if (!requirePrivacy()) return;
+    const gen = ++requestGen.current;
     setPending(true);
     try {
       await signInWithPassword(email.trim(), password);
+      if (requestGen.current !== gen) return;
       if (!(await finishSignedIn())) setError(copy.loginError);
     } catch (caught) {
+      if (requestGen.current !== gen) return;
       setError(mapLoginError(caught, copy));
     } finally {
-      setPending(false);
+      if (requestGen.current === gen) setPending(false);
     }
   }
 
@@ -459,29 +480,55 @@ function AuthDialogForm({
       setError(copy.mismatch);
       return;
     }
+    const gen = ++requestGen.current;
     setPending(true);
     try {
       await signUp(email.trim(), password);
+      if (requestGen.current !== gen) return;
       if (!(await finishSignedIn())) setCheckEmail(email.trim());
     } catch (caught) {
+      if (requestGen.current !== gen) return;
       setError(mapSignupError(caught, copy));
     } finally {
-      setPending(false);
+      if (requestGen.current === gen) setPending(false);
     }
   }
 
   async function onForgot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
-    if (!requirePrivacy()) return;
+    const gen = ++requestGen.current;
     setPending(true);
     try {
       await resetPasswordForEmail(email.trim());
+      if (requestGen.current !== gen) return;
       setSentTo(email.trim());
     } catch (caught) {
+      if (requestGen.current !== gen) return;
       setError(mapResetError(caught, copy));
     } finally {
-      setPending(false);
+      if (requestGen.current === gen) setPending(false);
+    }
+  }
+
+  async function onReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    if (mismatch || password !== confirm) {
+      setError(copy.mismatch);
+      return;
+    }
+    const gen = ++requestGen.current;
+    setPending(true);
+    try {
+      await updatePassword(password);
+      if (requestGen.current !== gen) return;
+      if (!(await finishSignedIn())) setError(copy.genericError);
+    } catch (caught) {
+      if (requestGen.current !== gen) return;
+      setError(mapResetError(caught, copy));
+    } finally {
+      if (requestGen.current === gen) setPending(false);
     }
   }
 
@@ -492,7 +539,9 @@ function AuthDialogForm({
         ? sentTo
           ? copy.forgotSentTitle
           : copy.forgotTitle
-        : copy.loginTitle;
+        : mode === "reset"
+          ? copy.resetTitle
+          : copy.loginTitle;
 
   if (checkEmail) {
     return (
@@ -526,7 +575,7 @@ function AuthDialogForm({
           </p>
         </div>
         <AuthSwitch
-          prompt={copy.hasAccount}
+          prompt={copy.rememberedPassword}
           action={copy.goLogin}
           onAction={() => setMode("login")}
         />
@@ -534,7 +583,7 @@ function AuthDialogForm({
     );
   }
 
-  const signupBanner = error
+  const pairBanner = error
     ? { tone: "error" as const, text: error }
     : mismatch
       ? { tone: "error" as const, text: copy.mismatch }
@@ -542,13 +591,27 @@ function AuthDialogForm({
         ? { tone: "success" as const, text: copy.match }
         : null;
 
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    if (mode === "signup") return onSignup(event);
+    if (mode === "forgot") return onForgot(event);
+    if (mode === "reset") return onReset(event);
+    return onLogin(event);
+  }
+
+  const submitLabel =
+    mode === "signup"
+      ? copy.submitSignup
+      : mode === "forgot"
+        ? copy.submitForgot
+        : mode === "reset"
+          ? copy.submitReset
+          : copy.submitLogin;
+
   return (
     <form
       key={mode}
       className="auth-form-in flex w-full flex-col gap-10 max-[600px]:gap-5"
-      onSubmit={
-        mode === "signup" ? onSignup : mode === "forgot" ? onForgot : onLogin
-      }
+      onSubmit={onSubmit}
     >
       <div className="flex flex-col items-center gap-5 max-[600px]:gap-2.5">
         <AuthTitle id={titleId} as="h2">
@@ -559,34 +622,42 @@ function AuthDialogForm({
             {copy.forgotSubtitle}
           </p>
         ) : null}
+        {mode === "reset" ? (
+          <p className="max-w-[328px] text-center text-[16px] leading-[1.5] text-[#212121] max-[600px]:max-w-[254px] max-[600px]:text-[13px]">
+            {copy.resetSubtitle}
+          </p>
+        ) : null}
         <div className="flex w-full flex-col gap-4">
-          <AuthField
-            label={copy.email}
-            leading="mail"
-            type="email"
-            name="email"
-            autoComplete="email"
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            inputMode="email"
-            placeholder={copy.emailPlaceholder}
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              setError(null);
-            }}
-            required
-          />
+          {mode !== "reset" ? (
+            <AuthField
+              label={copy.email}
+              leading="mail"
+              type="email"
+              name="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              inputMode="email"
+              placeholder={copy.emailPlaceholder}
+              value={email}
+              onChange={(event) => {
+                setEmail(event.target.value);
+                setError(null);
+              }}
+              required
+            />
+          ) : null}
           {mode !== "forgot" ? (
             <AuthField
               label={copy.password}
               leading="lock"
               type="password"
               name="password"
-              autoComplete={mode === "signup" ? "new-password" : "current-password"}
+              autoComplete={needsPair ? "new-password" : "current-password"}
               placeholder={copy.passwordPlaceholder}
               value={password}
+              minLength={needsPair ? 6 : undefined}
               onChange={(event) => {
                 setPassword(event.target.value);
                 setError(null);
@@ -594,7 +665,7 @@ function AuthDialogForm({
               required
             />
           ) : null}
-          {mode === "signup" ? (
+          {needsPair ? (
             <AuthField
               label={copy.passwordRepeat}
               leading="lock"
@@ -604,6 +675,7 @@ function AuthDialogForm({
               placeholder={copy.passwordPlaceholder}
               value={confirm}
               invalid={mismatch}
+              minLength={6}
               onChange={(event) => {
                 setConfirm(event.target.value);
                 setError(null);
@@ -611,10 +683,10 @@ function AuthDialogForm({
               required
             />
           ) : null}
-          {mode === "signup" && signupBanner ? (
-            <AuthBanner tone={signupBanner.tone}>{signupBanner.text}</AuthBanner>
+          {needsPair && pairBanner ? (
+            <AuthBanner tone={pairBanner.tone}>{pairBanner.text}</AuthBanner>
           ) : null}
-          {mode !== "signup" && error ? (
+          {!needsPair && error ? (
             <AuthBanner tone="error">{error}</AuthBanner>
           ) : null}
           {mode === "login" ? (
@@ -642,28 +714,31 @@ function AuthDialogForm({
           <Button
             type="submit"
             disabled={pending}
+            aria-busy={pending || undefined}
             className="w-full max-[600px]:text-[13px]"
           >
-            {pending
-              ? copy.submitting
-              : mode === "signup"
-                ? copy.submitSignup
-                : mode === "forgot"
-                  ? copy.submitForgot
-                  : copy.submitLogin}
+            {pending ? copy.submitting : submitLabel}
           </Button>
-          <PrivacyConsent
-            checked={privacy}
-            onChange={(next) => {
-              setPrivacy(next);
-              if (next) setPrivacyError(null);
-            }}
-            requiredMessage={privacyError}
-          />
+          {needsPrivacy ? (
+            <PrivacyConsent
+              checked={privacy}
+              onChange={(next) => {
+                setPrivacy(next);
+                if (next) setPrivacyError(null);
+              }}
+              requiredMessage={privacyError}
+            />
+          ) : null}
         </div>
-        {mode === "signup" ? (
+        {mode === "reset" ? null : mode === "signup" ? (
           <AuthSwitch
             prompt={copy.hasAccount}
+            action={copy.goLogin}
+            onAction={() => setMode("login")}
+          />
+        ) : mode === "forgot" ? (
+          <AuthSwitch
+            prompt={copy.rememberedPassword}
             action={copy.goLogin}
             onAction={() => setMode("login")}
           />

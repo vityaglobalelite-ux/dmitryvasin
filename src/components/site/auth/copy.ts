@@ -8,8 +8,10 @@ const ru = {
   },
   loginTitle: "Войти в личный кабинет",
   signupTitle: "Зарегистрироваться",
-  forgotTitle: "Введите E-mail, указанный при регистрации",
-  forgotSubtitle: "Мы отправим вам инструкцию по восстановлению пароля",
+  forgotTitle: "Восстановление пароля",
+  forgotSubtitle: "Введите email, указанный при регистрации — пришлём инструкцию",
+  resetTitle: "Придумайте новый пароль",
+  resetSubtitle: "После сохранения вы войдёте в кабинет с новым паролем",
   email: "Email",
   emailPlaceholder: "mail@mail.ru",
   password: "Пароль",
@@ -19,12 +21,14 @@ const ru = {
   submitLogin: "Войти",
   submitSignup: "Зарегистрироваться",
   submitForgot: "Восстановить пароль",
+  submitReset: "Сохранить пароль",
   submitting: "Отправка…",
   privacy: "Соглашаюсь с Политикой конфиденциальности",
   privacyLead: "Соглашаюсь с",
   privacyPolicy: "Политикой конфиденциальности",
   noAccount: "Не зарегистрированы?",
   hasAccount: "Уже зарегистрированы?",
+  rememberedPassword: "Вспомнили пароль?",
   goSignup: "Зарегистрироваться",
   goLogin: "Войти",
   showPassword: "Показать пароль",
@@ -34,7 +38,7 @@ const ru = {
   userExists: "Профиль с таким логином уже существует",
   mismatch: "Введенные пароли не совпадают",
   match: "Пароли совпадают",
-  privacyRequired: "Чтобы продолжить, подтвердите согласие с политикой конфиденциальности",
+  privacyRequired: "Подтвердите согласие с политикой конфиденциальности",
   genericError: "Не получилось отправить форму. Попробуйте ещё раз.",
   notConfigured: "Вход временно недоступен. Проверьте подключение к сервису.",
   emailNotConfirmed:
@@ -42,10 +46,10 @@ const ru = {
   weakPassword: "Пароль слишком короткий. Придумайте более надёжный.",
   checkEmailTitle: "Проверьте почту",
   checkEmailBody:
-    "Мы отправили письмо на {email}. Откройте его и перейдите по ссылке, чтобы завершить регистрацию. В кабинет можно войти только после подтверждения — это не вход в аккаунт.",
+    "Отправили письмо на {email}. Откройте его и перейдите по ссылке, чтобы завершить регистрацию.",
   forgotSentTitle: "Письмо отправлено",
   forgotSentBody:
-    "Если аккаунт с адресом {email} существует, мы отправили инструкцию по восстановлению пароля. Письмо может прийти через несколько минут. Это не вход в кабинет.",
+    "Если аккаунт с адресом {email} есть, инструкция уже в пути. Проверьте почту — письмо может прийти через несколько минут.",
 } as const;
 
 const en = {
@@ -56,8 +60,10 @@ const en = {
   },
   loginTitle: "Sign in to your account",
   signupTitle: "Create an account",
-  forgotTitle: "Enter the email you used to register",
-  forgotSubtitle: "We will send you password reset instructions",
+  forgotTitle: "Forgot password",
+  forgotSubtitle: "Enter the email you used to register — we will send instructions",
+  resetTitle: "Choose a new password",
+  resetSubtitle: "After saving, you will enter your account with the new password",
   email: "Email",
   emailPlaceholder: "mail@mail.ru",
   password: "Password",
@@ -67,12 +73,14 @@ const en = {
   submitLogin: "Sign in",
   submitSignup: "Sign up",
   submitForgot: "Reset password",
+  submitReset: "Save password",
   submitting: "Sending…",
   privacy: "I agree to the Privacy Policy",
   privacyLead: "I agree to the",
   privacyPolicy: "Privacy Policy",
   noAccount: "Not registered?",
   hasAccount: "Already registered?",
+  rememberedPassword: "Remembered your password?",
   goSignup: "Sign up",
   goLogin: "Sign in",
   showPassword: "Show password",
@@ -82,7 +90,7 @@ const en = {
   userExists: "An account with this login already exists",
   mismatch: "The passwords do not match",
   match: "Passwords match",
-  privacyRequired: "To continue, confirm that you agree to the privacy policy",
+  privacyRequired: "Confirm that you agree to the privacy policy",
   genericError: "Couldn’t submit the form. Please try again.",
   notConfigured: "Sign-in is temporarily unavailable. Check the service connection.",
   emailNotConfirmed:
@@ -90,10 +98,10 @@ const en = {
   weakPassword: "The password is too short. Please choose a stronger one.",
   checkEmailTitle: "Check your email",
   checkEmailBody:
-    "We sent a message to {email}. Open it and follow the link to finish signing up. You can enter your account only after confirmation — this is not a sign-in.",
+    "We sent a message to {email}. Open it and follow the link to finish signing up.",
   forgotSentTitle: "Email sent",
   forgotSentBody:
-    "If an account with {email} exists, we sent password reset instructions. The message may take a few minutes. This is not a sign-in.",
+    "If an account with {email} exists, instructions are on the way. Check your inbox — it may take a few minutes.",
 } as const;
 
 type DeepString<T> = {
