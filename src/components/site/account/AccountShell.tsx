@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { accountAssets } from "@/components/site/account/assets";
+import { AccountAvatar } from "@/components/site/account/AccountAvatar";
 import { accountT } from "@/components/site/account/copy";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import {
+  getMyProfile,
+  onProfileChanged,
+  profileAvatarSrc,
+  profileDisplayName,
+} from "@/lib/catalog/repo/profile";
 import { signOut } from "@/lib/supabase/auth";
+import type { Profile } from "@/lib/catalog/types";
 
 export type AccountNavId = "materials" | "profile" | "orders" | "support";
 
@@ -15,11 +23,66 @@ function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
-function displayName(email: string | null | undefined, fallback: string): string {
-  const value = email?.trim();
-  if (!value) return fallback;
-  const local = value.split("@")[0]?.trim();
-  return local || value;
+function useAccountProfile(email?: string | null): Profile | null {
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const data = await getMyProfile();
+        if (!cancelled) setProfile(data);
+      } catch {
+        if (!cancelled) setProfile(null);
+      }
+    }
+
+    void load();
+    const unsubscribe = onProfileChanged(() => {
+      void load();
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [email]);
+
+  return profile;
+}
+
+function AccountSidebarAvatar({ src }: { src: string | null }) {
+  const [revealKey, setRevealKey] = useState(0);
+  const first = useRef(true);
+
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setRevealKey((key) => key + 1);
+  }, [src]);
+
+  return (
+    <AccountAvatar
+      src={src}
+      size={89}
+      className="size-[89px] shrink-0"
+      tone="onBrand"
+      revealKey={revealKey}
+    />
+  );
+}
+
+function personName(
+  profile: Profile | null,
+  email: string | null | undefined,
+  fallback: string,
+): string {
+  return profileDisplayName(
+    profile ?? { firstName: "", lastName: "", email: email ?? "" },
+    fallback,
+  );
 }
 
 export function AccountShell({
@@ -31,11 +94,12 @@ export function AccountShell({
   active: AccountNavId;
   children: ReactNode;
 }) {
+  const profile = useAccountProfile(email);
   return (
     <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-[75px] max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
       <div className="flex items-start gap-5 max-[1100px]:flex-col">
-        <AccountMobileNav email={email} active={active} />
-        <AccountSidebar email={email} active={active} />
+        <AccountMobileNav email={email} profile={profile} active={active} />
+        <AccountSidebar email={email} profile={profile} active={active} />
         <div className="min-w-0 flex-1">{children}</div>
       </div>
     </main>
@@ -126,9 +190,11 @@ function useAccountLogout() {
 
 function AccountMobileNav({
   email,
+  profile,
   active,
 }: {
   email?: string | null;
+  profile: Profile | null;
   active: AccountNavId;
 }) {
   const { busy, error, onLogout } = useAccountLogout();
@@ -140,7 +206,7 @@ function AccountMobileNav({
     <div className="flex w-full flex-col gap-4 min-[1101px]:hidden">
       <div className="flex items-center justify-between gap-3">
         <p className="min-w-0 truncate text-[16px] font-medium leading-[1.3] text-text max-[600px]:text-[13px]">
-          {displayName(email, profileFallback)}
+          {personName(profile, email, profileFallback)}
         </p>
         <button
           type="button"
@@ -199,9 +265,11 @@ function MobileNavLink({
 
 function AccountSidebar({
   email,
+  profile,
   active,
 }: {
   email?: string | null;
+  profile: Profile | null;
   active: AccountNavId;
 }) {
   const { busy, error, onLogout } = useAccountLogout();
@@ -213,13 +281,10 @@ function AccountSidebar({
     <aside className="hidden w-full max-w-[467px] shrink-0 min-[1101px]:block">
       <div className="flex flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10">
         <div className="flex items-center gap-5">
-          <span
-            aria-hidden
-            className="size-[89px] shrink-0 rounded-full bg-white/35"
-          />
+          <AccountSidebarAvatar src={profileAvatarSrc(profile)} />
           <div className="flex min-w-0 flex-col items-start gap-2.5">
             <p className="truncate text-[24px] font-medium leading-[1.2] text-white">
-              {displayName(email, profileFallback)}
+              {personName(profile, email, profileFallback)}
             </p>
             <button
               type="button"
@@ -232,21 +297,19 @@ function AccountSidebar({
           </div>
         </div>
 
-        <nav className="relative flex flex-col gap-5 rounded-[20px] bg-white p-5">
+        <nav className="relative overflow-visible flex flex-col gap-5 rounded-[20px] bg-white p-5">
           <SidebarLink
             href={routes.account}
             icon={accountAssets.materials}
             label={copy.navMaterials}
             active={active === "materials"}
-            bold
           />
           <span aria-hidden className="h-px w-full bg-[#ececec]" />
           <SidebarLink
             href={routes.accountOrders}
-            icon={accountAssets.materials}
+            icon={accountAssets.orders}
             label={copy.navOrders}
             active={active === "orders"}
-            iconHidden
           />
           <span aria-hidden className="h-px w-full bg-[#ececec]" />
           <SidebarLink
@@ -286,15 +349,11 @@ function SidebarLink({
   icon,
   label,
   active,
-  bold = false,
-  iconHidden = false,
 }: {
   href: string;
   icon: string;
   label: string;
   active: boolean;
-  bold?: boolean;
-  iconHidden?: boolean;
 }) {
   return (
     <Link
@@ -307,15 +366,11 @@ function SidebarLink({
           alt=""
           width={11}
           height={13}
-          className="pointer-events-none absolute top-1/2 left-[-28px] h-[13px] w-[11px] -translate-y-1/2 rotate-90"
+          className="pointer-events-none absolute top-1/2 left-[-18px] z-10 h-[13px] w-[11px] -translate-y-1/2 rotate-90"
         />
       ) : null}
-      {iconHidden ? (
-        <span aria-hidden className="size-6 shrink-0" />
-      ) : (
-        <img src={icon} alt="" width={24} height={24} className="size-6 shrink-0" />
-      )}
-      <span className={cx(active || bold ? "font-bold" : "font-medium", "leading-[1.3]")}>
+      <img src={icon} alt="" width={24} height={24} className="size-6 shrink-0" />
+      <span className={cx(active ? "font-bold" : "font-medium", "leading-[1.3]")}>
         {label}
       </span>
     </Link>

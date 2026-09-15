@@ -1,6 +1,10 @@
 import Stripe from "https://esm.sh/stripe@17.4.0?target=deno";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import {
+  catalogStripeSecret,
+  catalogStripeWebhookSecret,
+} from "../_shared/catalog-stripe.ts";
 
 type OrderRow = {
   id: string;
@@ -245,8 +249,8 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: "method_not_allowed" }, 405);
   }
 
-  const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-  const webhookSecret = Deno.env.get("STRIPE_CATALOG_WEBHOOK_SECRET");
+  const stripeKey = catalogStripeSecret();
+  const webhookSecret = catalogStripeWebhookSecret();
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -288,6 +292,9 @@ Deno.serve(async (req) => {
         const session = event.data.object as Stripe.Checkout.Session;
         if (isBotCheckoutMetadata(session.metadata)) {
           console.log("catalog-stripe-webhook ignoring bot session", session.id);
+          break;
+        }
+        if (session.metadata?.source && session.metadata.source !== "catalog") {
           break;
         }
         if (session.mode !== "payment") break;

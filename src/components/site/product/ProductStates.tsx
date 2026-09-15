@@ -9,16 +9,16 @@ export function ProductHeroWash() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-0 top-0 h-[520px] overflow-hidden max-[600px]:h-[240px]"
+      className="pointer-events-none absolute inset-x-0 -top-[50px] bottom-0 overflow-hidden max-[600px]:-top-12"
     >
       <img
         src={productAssets.heroWash}
         alt=""
         width={1920}
         height={1120}
-        className="absolute left-1/2 top-[-80px] h-[560px] w-[1920px] max-w-none -translate-x-1/2 object-cover max-[600px]:top-[-40px] max-[600px]:h-[280px]"
+        className="absolute inset-0 size-full object-cover object-[center_28%]"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-white from-[12%] via-white/80 to-white" />
+      <div className="absolute inset-x-0 bottom-0 h-[40%] bg-gradient-to-b from-transparent to-white" />
     </div>
   );
 }
@@ -27,8 +27,9 @@ export function ProductHeroWash() {
 export function ProductSkeleton() {
   return (
     <main className="relative flex flex-1 flex-col overflow-x-clip bg-white [overflow-anchor:none]">
-      <ProductHeroWash />
-      <div className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
+      <div className="relative">
+        <ProductHeroWash />
+        <div className="relative w-full px-[12.5%] pb-8 pt-16 max-[600px]:px-5 max-[600px]:pb-6 max-[600px]:pt-6">
         <div className="grid items-start gap-x-[8%] gap-y-10 min-[601px]:grid-cols-[minmax(0,588px)_minmax(0,710px)] min-[601px]:justify-between">
           <div className="flex flex-col gap-5">
             <Skeleton className="h-6 w-36 rounded-[8px] max-[600px]:h-5 max-[600px]:w-20" />
@@ -56,6 +57,7 @@ export function ProductSkeleton() {
             </div>
           </div>
         </div>
+        </div>
       </div>
     </main>
   );
@@ -67,7 +69,7 @@ export function ProductNotFound() {
   return (
     <main className="relative flex flex-1 flex-col overflow-x-clip bg-white">
       <ProductHeroWash />
-      <div className="relative mx-auto flex w-full max-w-[1440px] flex-1 flex-col items-start justify-center px-[12.5%] py-24 max-[600px]:px-5 max-[600px]:py-16">
+      <div className="relative mx-auto flex w-full flex-1 flex-col items-start justify-center px-[12.5%] py-24 max-[600px]:px-5 max-[600px]:py-16">
         <div className="max-w-[720px] rounded-[30px] bg-light-gray px-16 py-14 max-[600px]:px-5 max-[600px]:py-10">
           <p className="text-[14px] font-semibold uppercase tracking-[0.04em] text-plum/70">
             404

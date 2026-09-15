@@ -21,4 +21,8 @@ export {
   listNotifications,
   markNotificationRead,
 } from "@/lib/catalog/repo/notifications";
-export { getMyProfile } from "@/lib/catalog/repo/profile";
+export {
+  getMyProfile,
+  updateMyProfile,
+  uploadMyAvatar,
+} from "@/lib/catalog/repo/profile";

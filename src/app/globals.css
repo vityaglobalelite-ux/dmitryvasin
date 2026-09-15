@@ -892,3 +892,263 @@ body {
     animation: none;
   }
 }
+
+/* Account avatar — empty disc, hover, photo reveal */
+.account-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  border-radius: 999px;
+  isolation: isolate;
+}
+
+.account-avatar-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.account-avatar-light {
+  background: #fff;
+  box-shadow:
+    0 18px 40px rgba(76, 13, 50, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.account-avatar-brand {
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.95),
+    0 12px 28px rgba(76, 13, 50, 0.22);
+}
+
+.account-avatar-photo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.account-avatar-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.account-avatar-light .account-avatar-empty::before,
+.account-avatar-brand .account-avatar-empty::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--brand-gradient);
+}
+
+.account-avatar-light .account-avatar-empty::after,
+.account-avatar-brand .account-avatar-empty::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 32% 28%, #fff 0%, #fff8f4 58%, #fff 100%);
+}
+
+.account-avatar-empty-icon {
+  position: relative;
+  z-index: 1;
+  width: 38%;
+  height: 38%;
+}
+
+.account-avatar-interactive {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 0;
+  border: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.account-avatar-interactive:hover,
+.account-avatar-interactive:focus-visible {
+  transform: scale(1.035);
+}
+
+.account-avatar-interactive:active {
+  transform: scale(0.985);
+}
+
+.account-avatar-interactive:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--plum) 45%, white);
+  outline-offset: 4px;
+}
+
+.account-avatar-hint {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 18px 14px 16px;
+  background:
+    radial-gradient(circle at 50% 100%, rgba(76, 13, 50, 0.18), transparent 56%),
+    linear-gradient(180deg, rgba(76, 13, 50, 0.08) 0%, rgba(76, 13, 50, 0.62) 100%);
+  color: #fff;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  opacity: 0;
+  transform: translateY(6px);
+  transition:
+    opacity 320ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.account-avatar-interactive:hover .account-avatar-hint,
+.account-avatar-interactive:focus-visible .account-avatar-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.account-avatar-ring,
+.account-avatar-shine,
+.account-avatar-busy {
+  pointer-events: none;
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+}
+
+.account-avatar.is-revealing .account-avatar-photo {
+  animation: account-avatar-in 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.account-avatar-ring {
+  z-index: 4;
+  background: conic-gradient(
+    from 200deg,
+    transparent 0%,
+    #efb991 14%,
+    #e04c29 36%,
+    #db0c25 52%,
+    transparent 70%
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  animation: account-avatar-ring 1100ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.account-avatar-shine {
+  z-index: 2;
+  inset: -30%;
+  background: linear-gradient(
+    118deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.72) 50%,
+    transparent 58%
+  );
+  mix-blend-mode: overlay;
+  animation: account-avatar-shine 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.account-avatar-busy {
+  z-index: 4;
+  background: conic-gradient(#efb991, #e04c29, #db0c25, #4c0d32, #efb991);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 1.5px));
+  animation: account-avatar-busy 1.05s linear infinite;
+}
+
+@keyframes account-avatar-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.12);
+    filter: blur(10px) saturate(1.25);
+  }
+  58% {
+    opacity: 1;
+    transform: scale(1.02);
+    filter: blur(0) saturate(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0) saturate(1);
+  }
+}
+
+@keyframes account-avatar-ring {
+  0% {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.96);
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(210deg) scale(1.03);
+  }
+}
+
+@keyframes account-avatar-shine {
+  0% {
+    transform: translateX(-80%) rotate(12deg);
+    opacity: 0;
+  }
+  24% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(80%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
+@keyframes account-avatar-busy {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 600px) {
+  .account-avatar-hint {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .account-avatar-interactive,
+  .account-avatar-hint,
+  .account-avatar.is-revealing .account-avatar-photo,
+  .account-avatar-ring,
+  .account-avatar-shine,
+  .account-avatar-busy {
+    animation: none;
+    transition: none;
+  }
+
+  .account-avatar-interactive:hover,
+  .account-avatar-interactive:focus-visible,
+  .account-avatar-interactive:active {
+    transform: none;
+  }
+
+  .account-avatar-hint {
+    opacity: 0;
+    transform: none;
+  }
+
+  .account-avatar-interactive:hover .account-avatar-hint,
+  .account-avatar-interactive:focus-visible .account-avatar-hint {
+    opacity: 1;
+  }
+}

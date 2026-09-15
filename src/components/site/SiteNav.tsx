@@ -73,6 +73,7 @@ export function SiteNav() {
   const pathname = usePathname() ?? "/";
   const productReturn = useCatalogReturnHref(routes.catalog);
   const backHref = innerBackHref(pathname, routes, productReturn);
+  const onProduct = stripLocalePrefix(pathname).startsWith("/product/");
 
   const navItems = [
     { href: routes.home, label: copy.nav.home },
@@ -83,8 +84,13 @@ export function SiteNav() {
   ] as const;
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
-      <div className="flex h-[50px] items-center justify-between border-b border-[#ececec] px-[12.5%] max-[600px]:h-auto max-[600px]:border-b-0 max-[600px]:px-5 max-[600px]:pt-2.5">
+    <header className={onProduct ? "relative z-50 bg-transparent" : "sticky top-0 z-50 bg-white"}>
+      <div
+        className={[
+          "flex h-[50px] items-center justify-between px-[12.5%] max-[600px]:h-auto max-[600px]:border-b-0 max-[600px]:px-5 max-[600px]:pt-2.5",
+          onProduct ? "border-b border-transparent" : "border-b border-[#ececec]",
+        ].join(" ")}
+      >
         <nav
           className="hidden items-center gap-7 text-[16px] leading-normal text-text min-[601px]:flex"
           aria-label="Primary"

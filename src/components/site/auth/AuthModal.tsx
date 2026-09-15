@@ -53,6 +53,7 @@ export type AuthMode = "login" | "signup" | "forgot" | "reset";
 
 type OpenAuthOptions = {
   onDismiss?: () => void;
+  onSuccess?: () => void;
 };
 
 type AuthModalContextValue = {
@@ -136,6 +137,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<AuthMode>("login");
   const [session, setSession] = useState(0);
   const dismissRef = useRef<(() => void) | undefined>(undefined);
+  const successRef = useRef<(() => void) | undefined>(undefined);
   const closeReasonRef = useRef<"dismiss" | "success">("dismiss");
   const closingRef = useRef(false);
   const openRef = useRef(false);
@@ -143,6 +145,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
 
   const openAuth = useCallback((next: AuthMode = "login", options?: OpenAuthOptions) => {
     dismissRef.current = options?.onDismiss;
+    successRef.current = options?.onSuccess;
     closeReasonRef.current = "dismiss";
     setMode(next);
     closingRef.current = false;
@@ -182,12 +185,15 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     if (!closing) return;
     const timer = window.setTimeout(() => {
       const dismiss = dismissRef.current;
+      const success = successRef.current;
       const reason = closeReasonRef.current;
       dismissRef.current = undefined;
+      successRef.current = undefined;
       openRef.current = false;
       closingRef.current = false;
       setOpen(false);
       setClosing(false);
+      if (reason === "success") success?.();
       if (reason === "dismiss") dismiss?.();
     }, CLOSE_MS);
     return () => window.clearTimeout(timer);

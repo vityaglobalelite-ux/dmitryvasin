@@ -9,11 +9,13 @@ import {
   CatalogProductGrid,
   ProductCard,
 } from "@/components/site/catalog/ProductCard";
+import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
   formatAccessLabel,
   formatDurationClock,
   lessonNoun,
+  parseDifficulty,
 } from "@/components/site/catalog/display";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { Button } from "@/components/site/ui/Button";
@@ -132,29 +134,32 @@ function ProductLoaded({
   return (
     <main className="relative flex flex-1 flex-col overflow-x-clip bg-white [overflow-anchor:none]">
       <WholesaleModal open={cart.modalOpen} onClose={cart.closeModal} />
-      <ProductHeroWash />
-      <article className="relative mx-auto w-full max-w-[1440px] px-[12.5%] pb-0 pt-16 max-[600px]:px-5 max-[600px]:pt-6">
-        <ProductHero
-          product={product}
-          title={copy.title}
-          blurb={blurb}
-          layout={layout}
-          cart={cart}
-          onScrollProgram={
-            showProgram
-              ? () => document.getElementById(programId)?.scrollIntoView({ behavior: "smooth", block: "start" })
-              : undefined
-          }
-          onScrollDescription={
-            showDescription
-              ? () =>
-                  document
-                    .getElementById(descriptionId)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-              : undefined
-          }
-        />
-
+      <div className="relative">
+        <ProductHeroWash />
+        <div className="relative w-full px-[12.5%] pb-8 pt-16 max-[600px]:px-5 max-[600px]:pb-6 max-[600px]:pt-6">
+          <ProductHero
+            product={product}
+            title={copy.title}
+            blurb={blurb}
+            layout={layout}
+            cart={cart}
+            onScrollProgram={
+              showProgram
+                ? () => document.getElementById(programId)?.scrollIntoView({ behavior: "smooth", block: "start" })
+                : undefined
+            }
+            onScrollDescription={
+              showDescription
+                ? () =>
+                    document
+                      .getElementById(descriptionId)
+                      ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                : undefined
+            }
+          />
+        </div>
+      </div>
+      <article className="relative w-full px-[12.5%] pb-0 max-[600px]:px-5">
         {showProgram ? (
           <ProductProgram
             id={programId}
@@ -303,15 +308,12 @@ function ProductHero({
                 {t.product.difficulty}
               </span>
               <img
-                src={productAssets.stars}
+                src={catalogCardAssets.difficulty[parseDifficulty(product.level)]}
                 alt=""
                 width={72}
                 height={18}
                 className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
               />
-              <span className="text-[14px] font-medium text-[#1a1a1a]/70 max-[600px]:text-[10px]">
-                {product.level}
-              </span>
             </div>
           ) : null}
           {product.skills.length > 0 ? (

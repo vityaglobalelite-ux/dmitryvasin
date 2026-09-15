@@ -6,11 +6,13 @@ export type StartCatalogCheckoutOptions = {
   successUrl?: string;
   cancelUrl?: string;
   currency?: "rub" | "usd" | "eur";
+  locale?: "ru" | "en";
 };
 
 export type StartCatalogCheckoutResult = {
   url: string;
   orderId?: string;
+  alreadyPaid?: boolean;
 };
 
 export type CatalogCheckoutErrorCode =
@@ -86,8 +88,11 @@ function messageForServerError(
   if (errorCode === "invalid_url" || errorCode === "invalid_amount") {
     return "Не удалось начать оплату. Обновите страницу и попробуйте ещё раз.";
   }
+  if (status === 503 || errorCode === "catalog_stripe_misconfigured") {
+    return "Оплата на сайте ещё не подключена. Напишите в поддержку.";
+  }
   if (status === 501 || errorCode === "not_implemented") {
-    return "Оплата временно недоступна — мы уже подключаем Stripe. Попробуйте чуть позже.";
+    return "Оплата временно недоступна. Попробуйте чуть позже.";
   }
   return "Не удалось начать оплату. Попробуйте ещё раз или напишите в поддержку.";
 }
@@ -108,20 +113,42 @@ function codeForServerError(
   if (errorCode === "invalid_url" || errorCode === "invalid_amount") {
     return "validation";
   }
+  if (status === 503 || errorCode === "catalog_stripe_misconfigured") {
+    return "not_implemented";
+  }
   if (status === 501 || errorCode === "not_implemented") return "not_implemented";
   return "network";
 }
 
-function parseInvokeSuccess(data: unknown): StartCatalogCheckoutResult | null {
+function parseInvokeSuccess(
+  data: unknown,
+  fallbackPaidUrl?: string,
+): StartCatalogCheckoutResult | null {
   if (!isRecord(data)) return null;
-  if (typeof data.url !== "string" || !data.url.trim()) return null;
   const orderId =
     typeof data.orderId === "string" && data.orderId.trim()
       ? data.orderId
       : typeof data.order_id === "string" && data.order_id.trim()
         ? data.order_id
         : undefined;
+  const sessionId =
+    typeof data.session_id === "string" && data.session_id.trim()
+      ? data.session_id.trim()
+      : undefined;
+  if (data.already_paid === true) {
+    if (!fallbackPaidUrl) return null;
+    const url = sessionId
+      ? withQuery(fallbackPaidUrl, "session_id", sessionId)
+      : fallbackPaidUrl;
+    return { url, orderId, alreadyPaid: true };
+  }
+  if (typeof data.url !== "string" || !data.url.trim()) return null;
   return { url: data.url, orderId };
+}
+
+function withQuery(url: string, key: string, value: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}${key}=${encodeURIComponent(value)}`;
 }
 
 /** POST catalog-create-checkout with the user JWT. Server prices the cart. */
@@ -162,6 +189,7 @@ export async function startCatalogCheckout(
         success_url: successUrl,
         cancel_url: cancelUrl,
         ...(opts?.currency ? { currency: opts.currency } : {}),
+        ...(opts?.locale ? { locale: opts.locale } : {}),
       },
     },
   );
@@ -189,7 +217,7 @@ export async function startCatalogCheckout(
     );
   }
 
-  const parsed = parseInvokeSuccess(data);
+  const parsed = parseInvokeSuccess(data, successUrl);
   if (!parsed) {
     throw new CatalogCheckoutError(
       "invalid_response",

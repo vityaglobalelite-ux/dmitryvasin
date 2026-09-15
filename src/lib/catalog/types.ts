@@ -46,6 +46,11 @@ export type AuthUser = {
 export type Profile = {
   id: string;
   email: string;
+  firstName: string;
+  lastName: string;
+  avatarPath: string | null;
+  avatarBucket: string | null;
+  avatarUrl: string | null;
   createdAt: string;
 };
 
