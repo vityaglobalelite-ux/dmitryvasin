@@ -19,6 +19,10 @@ import { CatalogMoney } from "@/components/site/ui/CatalogPrice";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { listMyOrders } from "@/lib/catalog/repo/orders";
+import {
+  clearAccountListsCache,
+  writeOrdersCache,
+} from "@/lib/catalog/repo/account-lists-cache";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 import {
@@ -190,6 +194,9 @@ function useCheckoutProcessing(
 
         if (paid) {
           clearPendingCheckoutOrderId();
+          // Access rows appear via webhook — drop stale materials cache.
+          clearAccountListsCache();
+          writeOrdersCache(paid.userId, orders);
           setPhase("confirmed");
           return;
         }

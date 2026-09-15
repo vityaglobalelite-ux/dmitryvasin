@@ -4,14 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AccountMaterialsEmpty } from "@/components/site/account/AccountMaterialsEmpty";
-import { accountAssets } from "@/components/site/account/assets";
 import { accountT } from "@/components/site/account/copy";
+import { AccessMeter } from "@/components/site/account/AccessMeter";
+import { remainingAccess } from "@/components/site/account/remaining";
 import {
-  remainingAccess,
-  remainingToneClass,
-} from "@/components/site/account/remaining";
-import {
-  AccountMaterialCardSkeleton,
   AccountShell,
   AccountShellSkeleton,
 } from "@/components/site/account/AccountShell";
@@ -106,28 +102,11 @@ export function AccountMaterialsView() {
     }));
   }, [access.data]);
 
-  if (gate.pending) {
+  if (gate.pending || (access.loading && access.data.length === 0 && !access.error)) {
     return <AccountShellSkeleton variant="cards" />;
   }
 
-  if (access.loading) {
-    return (
-      <AccountShell email={gate.user?.email} active="materials">
-        <header className="flex flex-col gap-5">
-          <h1 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
-            {copy.materialsTitle}
-          </h1>
-          <div className="flex flex-col gap-5">
-            {Array.from({ length: 3 }, (_, i) => (
-              <AccountMaterialCardSkeleton key={i} />
-            ))}
-          </div>
-        </header>
-      </AccountShell>
-    );
-  }
-
-  if (access.error) {
+  if (access.error && access.data.length === 0) {
     return (
       <AccountShell email={gate.user?.email} active="materials">
         <h1 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
@@ -262,7 +241,7 @@ function MaterialCard({
             {copy.title}
           </h3>
         </Link>
-        <AccessMeter remaining={remaining} />
+        <AccessMeter remaining={remaining} showExpiredIcon />
         <Button
           href={href}
           className="h-[45px] w-fit px-5 text-[16px] font-semibold max-[600px]:h-[50px] max-[600px]:w-full"
@@ -376,36 +355,3 @@ function SkillRow({ product }: { product: Product }) {
   );
 }
 
-function AccessMeter({
-  remaining,
-}: {
-  remaining: ReturnType<typeof remainingAccess>;
-}) {
-  const copy = accountT(useLocale());
-  return (
-    <div className="flex h-10 w-full flex-col justify-end gap-2.5">
-      <div className="relative h-1.5 w-full overflow-hidden rounded-[10px] bg-[#d9d9d9]">
-        <span
-          className={`absolute inset-y-0 left-0 rounded-[10px] ${remainingToneClass(remaining.tone)}`}
-          style={{ width: `${Math.round(remaining.ratio * 100)}%` }}
-        />
-      </div>
-      <p className="flex min-h-4 items-center gap-1.5 text-[12px] font-medium leading-normal text-[#1a1a1a] max-[600px]:text-[10px] [font-variant-numeric:tabular-nums]">
-        {remaining.expired ? (
-          <>
-            <img
-              src={accountAssets.lock}
-              alt=""
-              width={16}
-              height={16}
-              className="size-4"
-            />
-            {copy.expired}
-          </>
-        ) : (
-          remaining.label
-        )}
-      </p>
-    </div>
-  );
-}

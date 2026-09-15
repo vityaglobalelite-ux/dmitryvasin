@@ -1,6 +1,7 @@
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import type { AuthUser } from "@/lib/catalog/types";
 import { clearProfileCache } from "@/lib/catalog/repo/profile";
+import { clearAccountListsCache } from "@/lib/catalog/repo/account-lists-cache";
 import { getSupabase } from "@/lib/supabase/client";
 
 export function mapAuthUser(user: User): AuthUser {
@@ -91,6 +92,7 @@ export async function signOut(): Promise<void> {
   suppressAuthPrompt();
   rememberAuthUser(null);
   clearProfileCache();
+  clearAccountListsCache();
   const supabase = clientOrThrow();
   try {
     const { error } = await supabase.auth.signOut();

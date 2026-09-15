@@ -195,7 +195,7 @@ function AccountContentSkeleton({
       {variant === "rows" ? (
         <div className="flex flex-col gap-3">
           {Array.from({ length: 4 }, (_, i) => (
-            <Skeleton key={i} className="h-[88px] w-full rounded-[20px]" />
+            <Skeleton key={i} className="h-[108px] w-full rounded-[20px]" />
           ))}
         </div>
       ) : null}

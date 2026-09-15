@@ -2,6 +2,19 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { listMyAccess } from "@/lib/catalog/repo/access";
+import {
+  beginAccessFetch,
+  beginOrdersFetch,
+  clearAccountListsCache,
+  hydrateAccessCache,
+  hydrateOrdersCache,
+  isAccessFetchCurrent,
+  isOrdersFetchCurrent,
+  peekCachedAccess,
+  peekCachedOrders,
+  writeAccessCache,
+  writeOrdersCache,
+} from "@/lib/catalog/repo/account-lists-cache";
 import { listMyOrders } from "@/lib/catalog/repo/orders";
 import { listMyWatchProgress } from "@/lib/catalog/repo/progress";
 import {
@@ -92,30 +105,58 @@ export function useMyProfile(): QueryState<Profile | null> {
 }
 
 export function useMyAccess(): QueryState<Access[]> {
-  const [state, setState] = useState<QueryState<Access[]>>({
-    data: [],
-    loading: true,
-    error: null,
+  const { data: user, loading: authLoading } = useAuthUser();
+  const [state, setState] = useState<QueryState<Access[]>>(() => {
+    const cached =
+      (user?.id ? peekCachedAccess(user.id) : null) ??
+      (user?.id ? hydrateAccessCache(user.id) : null);
+    return {
+      data: cached ?? [],
+      loading: !cached && (authLoading || Boolean(user)),
+      error: null,
+    };
   });
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      clearAccountListsCache();
+      setState({ data: [], loading: false, error: null });
+      return;
+    }
+
+    const cached =
+      peekCachedAccess(user.id) ?? hydrateAccessCache(user.id);
+    if (cached) {
+      setState({ data: cached, loading: false, error: null });
+    } else {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+    }
+
     let cancelled = false;
-    setState({ data: [], loading: true, error: null });
+    const gen = beginAccessFetch();
+    const userId = user.id;
 
     listMyAccess()
       .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: null });
+        if (cancelled || !isAccessFetchCurrent(gen)) return;
+        writeAccessCache(userId, data);
+        setState({ data, loading: false, error: null });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setState({ data: [], loading: false, error: toError(error) });
-        }
+        if (cancelled || !isAccessFetchCurrent(gen)) return;
+        setState((prev) => ({
+          data: prev.data,
+          loading: false,
+          error: toError(error),
+        }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authLoading, user?.id]);
 
   return state;
 }
@@ -166,35 +207,67 @@ export function useMyWatchProgress(): QueryState<WatchProgress[]> {
 }
 
 export function useMyOrders(): QueryState<Order[]> & { reload: () => void } {
-  const [state, setState] = useState<QueryState<Order[]>>({
-    data: [],
-    loading: true,
-    error: null,
-  });
+  const { data: user, loading: authLoading } = useAuthUser();
   const [tick, setTick] = useState(0);
+  const [state, setState] = useState<QueryState<Order[]>>(() => {
+    const cached =
+      (user?.id ? peekCachedOrders(user.id) : null) ??
+      (user?.id ? hydrateOrdersCache(user.id) : null);
+    return {
+      data: cached ?? [],
+      loading: !cached && (authLoading || Boolean(user)),
+      error: null,
+    };
+  });
 
   const reload = useCallback(() => {
     setTick((value) => value + 1);
   }, []);
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!user) {
+      clearAccountListsCache();
+      setState({ data: [], loading: false, error: null });
+      return;
+    }
+
+    const cached =
+      peekCachedOrders(user.id) ?? hydrateOrdersCache(user.id);
+    if (cached && tick === 0) {
+      setState({ data: cached, loading: false, error: null });
+    } else {
+      setState((prev) => ({
+        ...prev,
+        loading: !cached,
+        error: null,
+      }));
+    }
+
     let cancelled = false;
-    setState((prev) => ({ ...prev, loading: true, error: null }));
+    const gen = beginOrdersFetch();
+    const userId = user.id;
 
     listMyOrders()
       .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: null });
+        if (cancelled || !isOrdersFetchCurrent(gen)) return;
+        writeOrdersCache(userId, data);
+        setState({ data, loading: false, error: null });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setState({ data: [], loading: false, error: toError(error) });
-        }
+        if (cancelled || !isOrdersFetchCurrent(gen)) return;
+        setState((prev) => ({
+          data: prev.data,
+          loading: false,
+          error: toError(error),
+        }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [tick]);
+  }, [authLoading, tick, user?.id]);
 
   return { ...state, reload };
 }

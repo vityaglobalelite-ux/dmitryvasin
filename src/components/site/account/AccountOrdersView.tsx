@@ -14,6 +14,7 @@ import { catalogTypeLabel } from "@/components/site/catalog/display";
 import { isAccessActive } from "@/lib/catalog/access";
 import { formatPriceMinor } from "@/lib/catalog/format";
 import { useMyAccess, useMyOrders } from "@/lib/catalog/hooks-account";
+import { productCopy } from "@/lib/catalog/locale";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import type { Access, Currency, Order, OrderItem } from "@/lib/catalog/types";
 
@@ -24,11 +25,15 @@ export function AccountOrdersView() {
   const copy = accountT(useLocale());
   const routes = useLocalizedRoutes();
 
-  if (gate.pending) {
+  const paid = orders.data.filter((order) => order.status === "paid");
+  const hasOrdersPaint = paid.length > 0;
+  const bootPending =
+    gate.pending || (orders.loading && !hasOrdersPaint && !orders.error);
+
+  if (bootPending) {
     return <AccountShellSkeleton variant="rows" />;
   }
 
-  const paid = orders.data.filter((order) => order.status === "paid");
   const accessByProduct = new Map(
     access.data.map((row) => [row.productId, row] as const),
   );
@@ -40,13 +45,7 @@ export function AccountOrdersView() {
           {copy.ordersTitle}
         </h1>
 
-        {orders.loading ? (
-          <div className="flex flex-col gap-3">
-            {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-[108px] w-full rounded-[20px]" />
-            ))}
-          </div>
-        ) : orders.error ? (
+        {orders.error && !hasOrdersPaint ? (
           <div className="max-w-[640px] rounded-[20px] bg-light-gray p-10 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
             <p className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px]">
               {copy.ordersErrorTitle}
@@ -77,6 +76,7 @@ export function AccountOrdersView() {
                 key={order.id}
                 order={order}
                 accessByProduct={accessByProduct}
+                accessReady={!access.loading || access.data.length > 0}
               />
             ))}
           </ul>
@@ -89,17 +89,20 @@ export function AccountOrdersView() {
 function OrderBlock({
   order,
   accessByProduct,
+  accessReady,
 }: {
   order: Order;
   accessByProduct: Map<string, Access>;
+  accessReady: boolean;
 }) {
+  const locale = useLocale();
   return (
     <li className="rounded-[20px] bg-light-gray p-5 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <p className="text-[13px] leading-[1.5] text-text/60 [font-variant-numeric:tabular-nums]">
-          {formatOrderDate(order.createdAt)}
+          {formatOrderDate(order.createdAt, locale)}
         </p>
-        <p className="text-[16px] font-semibold leading-[1.2] text-text">
+        <p className="text-[16px] font-semibold leading-[1.2] text-text [font-variant-numeric:tabular-nums]">
           {formatPriceMinor(order.totalMinor, order.currency)}
         </p>
       </div>
@@ -110,6 +113,7 @@ function OrderBlock({
             item={item}
             currency={order.currency}
             access={accessByProduct.get(item.productId)}
+            accessReady={accessReady}
           />
         ))}
       </ul>
@@ -121,10 +125,12 @@ function OrderLine({
   item,
   currency,
   access,
+  accessReady,
 }: {
   item: OrderItem;
   currency: Currency;
   access?: Access;
+  accessReady: boolean;
 }) {
   const locale = useLocale();
   const copy = accountT(locale);
@@ -141,32 +147,49 @@ function OrderLine({
       : routes.accountExpired
     : routes.product(item.productId);
 
+  const title =
+    item.titleSnapshot.trim() ||
+    (product ? productCopy(product, locale).title : "") ||
+    "—";
+
   return (
     <li className="flex flex-col gap-1.5">
       <Link
         href={href}
         className="text-[16px] font-medium leading-[1.3] text-text transition-opacity duration-150 hover:opacity-80"
       >
-        {item.titleSnapshot}
+        {title}
       </Link>
-      <p className="flex min-h-5 flex-wrap gap-x-3 gap-y-1 text-[13px] leading-[1.5] text-text/70">
-        {typeLabel ? <span>{typeLabel}</span> : null}
-        <span>{formatPriceMinor(item.priceMinor, currency)}</span>
-        <span>{copy.orderPaid}</span>
-        {remaining ? (
-          <span className="[font-variant-numeric:tabular-nums]">
-            {remaining.expired ? copy.expired : remaining.label}
-          </span>
-        ) : null}
+      <p className="flex min-h-5 flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-[1.5] text-text/70">
+        {accessReady ? (
+          <>
+            {typeLabel ? <span>{typeLabel}</span> : null}
+            <span className="[font-variant-numeric:tabular-nums]">
+              {formatPriceMinor(item.priceMinor, currency)}
+            </span>
+            <span>{copy.orderPaid}</span>
+            {remaining ? (
+              <span className="[font-variant-numeric:tabular-nums]">
+                {remaining.expired ? copy.expired : remaining.label}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <Skeleton className="h-3.5 w-16 rounded-[6px]" />
+            <Skeleton className="h-3.5 w-14 rounded-[6px]" />
+            <Skeleton className="h-3.5 w-20 rounded-[6px]" />
+          </>
+        )}
       </p>
     </li>
   );
 }
 
-function formatOrderDate(iso: string): string {
+function formatOrderDate(iso: string, locale: "ru" | "en"): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString(locale === "en" ? "en-GB" : "ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",

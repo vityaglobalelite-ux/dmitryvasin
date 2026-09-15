@@ -7,6 +7,7 @@ import {
   AccountShell,
   AccountShellSkeleton,
 } from "@/components/site/account/AccountShell";
+import { AccessMeter } from "@/components/site/account/AccessMeter";
 import { accountT } from "@/components/site/account/copy";
 import { remainingAccess } from "@/components/site/account/remaining";
 import { useAccessEntry } from "@/components/site/account/use-access-entry";
@@ -71,17 +72,7 @@ export function AccountCourseView() {
         <h1 className="max-w-[799px] text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[30px] max-[600px]:tracking-[-0.9px]">
           {copy.title}
         </h1>
-        <div className="flex h-10 w-full flex-col justify-end gap-2.5">
-          <div className="relative h-1.5 w-full overflow-hidden rounded-[10px] bg-[#d9d9d9]">
-            <span
-              className={`absolute inset-y-0 left-0 rounded-[10px] bg-[image:var(--brand-gradient)]`}
-              style={{ width: `${Math.round(remaining.ratio * 100)}%` }}
-            />
-          </div>
-          <p className="min-h-4 text-[12px] font-medium leading-normal text-[#1a1a1a] [font-variant-numeric:tabular-nums]">
-            {remaining.label}
-          </p>
-        </div>
+        <AccessMeter remaining={remaining} />
         <section className="rounded-[20px] bg-light-gray p-10 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
           <h2 className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
             {copyUi.programTitle}
