@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -40,12 +40,16 @@ import { useAuthUser } from "@/lib/catalog/hooks";
 import { emitCartChanged } from "@/lib/catalog/use-add-to-cart";
 import { siteAssets } from "@/lib/catalog/assets";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import { stripLocalePrefix } from "@/lib/catalog/locale";
 import {
   getSession,
+  isAuthPromptSuppressed,
   onAuthStateChange,
   resetPasswordForEmail,
+  resumeAuthPrompt,
   signInWithPassword,
   signUp,
+  suppressAuthPrompt,
   updatePassword,
 } from "@/lib/supabase/auth";
 
@@ -54,6 +58,7 @@ export type AuthMode = "login" | "signup" | "forgot" | "reset";
 type OpenAuthOptions = {
   onDismiss?: () => void;
   onSuccess?: () => void;
+  requireSession?: boolean;
 };
 
 type AuthModalContextValue = {
@@ -132,6 +137,7 @@ export function useAuthModal(): AuthModalContextValue {
 }
 
 export function AuthModalProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [mode, setMode] = useState<AuthMode>("login");
@@ -144,6 +150,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const recoveryRef = useRef(false);
 
   const openAuth = useCallback((next: AuthMode = "login", options?: OpenAuthOptions) => {
+    if (options?.requireSession && isAuthPromptSuppressed()) return;
     dismissRef.current = options?.onDismiss;
     successRef.current = options?.onSuccess;
     closeReasonRef.current = "dismiss";
@@ -170,12 +177,28 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
   const { data: user } = useAuthUser();
   useEffect(() => {
     const { unsubscribe } = onAuthStateChange((event) => {
-      if (event !== "PASSWORD_RECOVERY") return;
-      recoveryRef.current = true;
-      openAuth("reset");
+      if (event === "PASSWORD_RECOVERY") {
+        recoveryRef.current = true;
+        openAuth("reset");
+        return;
+      }
+      if (event === "SIGNED_OUT") {
+        suppressAuthPrompt();
+        closeAuth("success");
+        return;
+      }
+      if (event === "SIGNED_IN") {
+        resumeAuthPrompt();
+      }
     });
     return () => unsubscribe();
-  }, [openAuth]);
+  }, [closeAuth, openAuth]);
+
+  useEffect(() => {
+    if (!stripLocalePrefix(pathname).startsWith("/account/")) {
+      resumeAuthPrompt();
+    }
+  }, [pathname]);
 
   useEffect(() => {
     if (user && !recoveryRef.current) closeAuth("success");

@@ -57,10 +57,31 @@ export async function signUp(email: string, password: string): Promise<AuthUser>
   return mapAuthUser(data.user);
 }
 
+let authPromptSuppressed = false;
+
+/** True between sign-out and landing on a public route. Protected pages must not prompt login. */
+export function isAuthPromptSuppressed(): boolean {
+  return authPromptSuppressed;
+}
+
+export function suppressAuthPrompt(): void {
+  authPromptSuppressed = true;
+}
+
+export function resumeAuthPrompt(): void {
+  authPromptSuppressed = false;
+}
+
 export async function signOut(): Promise<void> {
+  suppressAuthPrompt();
   const supabase = clientOrThrow();
-  const { error } = await supabase.auth.signOut();
-  if (error) throw new Error(error.message);
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw new Error(error.message);
+  } catch (error) {
+    resumeAuthPrompt();
+    throw error;
+  }
 }
 
 export async function resetPasswordForEmail(email: string): Promise<void> {
