@@ -33,7 +33,10 @@ import {
   mapResetError,
   mapSignupError,
 } from "@/components/site/auth/mapError";
-import { safeReturnUrl } from "@/components/site/auth/returnUrl";
+import {
+  safeReturnUrl,
+  shouldStayAfterLogin,
+} from "@/components/site/auth/returnUrl";
 import { Button } from "@/components/site/ui/Button";
 import { mergeGuestCartOnLogin } from "@/lib/catalog/cart";
 import { useAuthUser } from "@/lib/catalog/hooks";
@@ -138,13 +141,16 @@ export function useAuthModal(): AuthModalContextValue {
 
 export function AuthModalProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/";
+  const router = useRouter();
+  const routes = useLocalizedRoutes();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [mode, setMode] = useState<AuthMode>("login");
   const [session, setSession] = useState(0);
   const dismissRef = useRef<(() => void) | undefined>(undefined);
   const successRef = useRef<(() => void) | undefined>(undefined);
-  const closeReasonRef = useRef<"dismiss" | "success">("dismiss");
+  const postLoginPathRef = useRef<string | null>(null);
+  const closeReasonRef = useRef<"dismiss" | "success" | "silent">("dismiss");
   const closingRef = useRef(false);
   const openRef = useRef(false);
   const recoveryRef = useRef(false);
@@ -162,14 +168,26 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
     setOpen(true);
   }, []);
 
-  const closeAuth = useCallback((reason: "dismiss" | "success" = "dismiss") => {
-    if (!openRef.current || closingRef.current) return;
-    closeReasonRef.current = reason;
-    recoveryRef.current = false;
-    if (reason === "success") dismissRef.current = undefined;
-    closingRef.current = true;
-    setClosing(true);
-  }, []);
+  const closeAuth = useCallback(
+    (reason: "dismiss" | "success" | "silent" = "dismiss") => {
+      if (!openRef.current || closingRef.current) return;
+      closeReasonRef.current = reason;
+      recoveryRef.current = false;
+      if (reason === "success") {
+        dismissRef.current = undefined;
+        postLoginPathRef.current = shouldStayAfterLogin(pathname)
+          ? null
+          : routes.account;
+      } else if (reason === "silent") {
+        dismissRef.current = undefined;
+        successRef.current = undefined;
+        postLoginPathRef.current = null;
+      }
+      closingRef.current = true;
+      setClosing(true);
+    },
+    [pathname, routes.account],
+  );
 
   const dismissAuth = useCallback(() => closeAuth("dismiss"), [closeAuth]);
   const succeedAuth = useCallback(() => closeAuth("success"), [closeAuth]);
@@ -184,7 +202,7 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       }
       if (event === "SIGNED_OUT") {
         suppressAuthPrompt();
-        closeAuth("success");
+        closeAuth("silent");
         return;
       }
       if (event === "SIGNED_IN") {
@@ -216,11 +234,16 @@ export function AuthModalProvider({ children }: { children: ReactNode }) {
       closingRef.current = false;
       setOpen(false);
       setClosing(false);
-      if (reason === "success") success?.();
+      if (reason === "success") {
+        if (success) success();
+        else if (postLoginPathRef.current) {
+          router.replace(postLoginPathRef.current);
+        }
+      }
       if (reason === "dismiss") dismiss?.();
     }, CLOSE_MS);
     return () => window.clearTimeout(timer);
-  }, [closing]);
+  }, [closing, router]);
 
   const value: AuthModalContextValue = {
     open,
@@ -842,13 +865,17 @@ export function AuthDeepLink({ mode }: { mode: AuthMode }) {
   useEffect(() => {
     if (loading || started.current) return;
     started.current = true;
+    const dest = safeReturnUrl(searchParams.get("returnUrl"), locale);
     if (user) {
-      router.replace(safeReturnUrl(searchParams.get("returnUrl"), locale));
+      router.replace(dest);
       return;
     }
-    openAuth(mode);
-    const raw = searchParams.get("returnUrl");
-    router.replace(raw ? safeReturnUrl(raw, locale, routes.home) : routes.home);
+    openAuth(mode, {
+      onSuccess: () => {
+        router.replace(dest);
+      },
+    });
+    router.replace(routes.home);
   }, [loading, locale, mode, openAuth, router, routes.home, searchParams, user]);
 
   return null;

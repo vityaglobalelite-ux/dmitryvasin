@@ -67,6 +67,19 @@ export function safeReturnUrl(
   return withTrailingSlashKeepQuery(decoded);
 }
 
+/**
+ * After a successful sign-in, keep the user in an in-progress flow
+ * (cabinet, cart, checkout). Everywhere else the cabinet is the destination.
+ */
+export function shouldStayAfterLogin(pathname: string): boolean {
+  const path = withTrailingSlash(stripLocalePrefix(pathname));
+  return (
+    path.startsWith("/account/") ||
+    path.startsWith("/cart/") ||
+    path.startsWith("/checkout/")
+  );
+}
+
 export function hrefWithReturnUrl(href: string, returnUrl: string): string {
   const locale = localeFromPathname(href);
   const account = localizedSiteRoutes(locale).account;
