@@ -10,6 +10,21 @@ import {
 export const SUPPORT_BUCKET = "catalog-support";
 export const SUPPORT_MAX_BYTES = 12 * 1024 * 1024;
 const SIGNED_URL_TTL_SEC = 60 * 60;
+const UUID_FILE_PREFIX_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-/i;
+const SUPPORT_IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|bmp|avif|heic|heif)$/i;
+
+export type SupportImageTransform = {
+  width: number;
+  height: number;
+  quality: number;
+};
+
+export const SUPPORT_PREVIEW_TRANSFORM: SupportImageTransform = {
+  width: 960,
+  height: 960,
+  quality: 68,
+};
 
 export class SupportRelayError extends Error {
   readonly name = "SupportRelayError";
@@ -108,13 +123,24 @@ function sanitizeFilename(name: string): string {
 
 export function supportFilename(storagePath: string): string {
   const last = storagePath.split("/").pop() ?? "file";
-  const dash = last.indexOf("-");
-  if (dash <= 0 || dash === last.length - 1) return last;
-  return last.slice(dash + 1);
+  if (UUID_FILE_PREFIX_RE.test(last)) {
+    return last.replace(UUID_FILE_PREFIX_RE, "") || last;
+  }
+  return last;
 }
 
 export function isSupportImagePath(storagePath: string): boolean {
-  return /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(storagePath);
+  return SUPPORT_IMAGE_EXT_RE.test(storagePath);
+}
+
+export function isSupportImageFile(file: File): boolean {
+  if (file.type === "image/svg+xml") return false;
+  if (file.type.startsWith("image/")) return true;
+  return SUPPORT_IMAGE_EXT_RE.test(file.name);
+}
+
+function canTransformImage(storagePath: string): boolean {
+  return isSupportImagePath(storagePath) && !/\.gif$/i.test(storagePath);
 }
 
 export async function uploadSupportAttachment(file: File): Promise<string> {
@@ -129,6 +155,7 @@ export async function uploadSupportAttachment(file: File): Promise<string> {
   const { error } = await supabase.storage.from(SUPPORT_BUCKET).upload(path, file, {
     upsert: false,
     contentType: file.type || undefined,
+    cacheControl: "3600",
   });
   if (error) throw new Error(error.message);
   return path;
@@ -136,6 +163,7 @@ export async function uploadSupportAttachment(file: File): Promise<string> {
 
 export async function createSupportAttachmentSignedUrl(
   storagePath: string,
+  transform?: SupportImageTransform | null,
 ): Promise<string | null> {
   const supabase = getSupabase();
   if (!supabase) return null;
@@ -146,11 +174,33 @@ export async function createSupportAttachmentSignedUrl(
     return null;
   }
 
+  const preview = transform && canTransformImage(storagePath) ? transform : null;
+  const options = preview
+    ? {
+        transform: {
+          width: preview.width,
+          height: preview.height,
+          resize: "contain" as const,
+          quality: preview.quality,
+        },
+      }
+    : undefined;
+
   const { data, error } = await supabase.storage
     .from(SUPPORT_BUCKET)
-    .createSignedUrl(storagePath, SIGNED_URL_TTL_SEC);
-  if (error || !data?.signedUrl) return null;
-  return data.signedUrl;
+    .createSignedUrl(storagePath, SIGNED_URL_TTL_SEC, options);
+  if (!error && data?.signedUrl) return data.signedUrl;
+
+  if (preview) {
+    const fallback = await supabase.storage
+      .from(SUPPORT_BUCKET)
+      .createSignedUrl(storagePath, SIGNED_URL_TTL_SEC);
+    if (!fallback.error && fallback.data?.signedUrl) {
+      return fallback.data.signedUrl;
+    }
+  }
+
+  return null;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
