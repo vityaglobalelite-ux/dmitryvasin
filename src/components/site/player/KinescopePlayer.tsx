@@ -1,5 +1,6 @@
 "use client";
 
+import { load } from "@kinescope/player-iframe-api-loader";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
@@ -9,10 +10,19 @@ import {
   fetchKinescopeEmbed,
   isOfficialKinescopeEmbed,
   KinescopeTokenError,
+  withKinescopeStartTime,
 } from "@/lib/catalog/kinescope";
 import { useAuthUser } from "@/lib/catalog/hooks";
 import { useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import {
+  getMyWatchProgress,
+  upsertWatchProgress,
+} from "@/lib/catalog/repo/progress";
 import type { Locale } from "@/lib/catalog/types";
+import {
+  isWatchComplete,
+  resumeSeekSeconds,
+} from "@/lib/catalog/watch-progress";
 
 export type KinescopePlayerProps = {
   productId: string;
@@ -21,22 +31,32 @@ export type KinescopePlayerProps = {
 
 type PlayerState =
   | { kind: "loading" }
-  | { kind: "ready"; embedUrl: string }
+  | { kind: "ready"; embedUrl: string; resumeSec: number }
   | { kind: "forbidden"; needsLogin: boolean }
   | { kind: "error"; message: string };
 
 const IFRAME_ALLOW = "encrypted-media; fullscreen; picture-in-picture";
+const SAVE_INTERVAL_MS = 4000;
+
+type KinescopeApi = Awaited<ReturnType<typeof load>>;
+type KinescopeHandle = Awaited<ReturnType<KinescopeApi["create"]>>;
 
 function PlayerFrame({
   children,
   busy = false,
+  tone = "video",
 }: {
   children: ReactNode;
   busy?: boolean;
+  tone?: "video" | "message";
 }) {
   return (
     <div
-      className="relative aspect-video w-full overflow-hidden rounded-[30px] bg-light-gray max-[600px]:rounded-[10px]"
+      className={
+        tone === "message"
+          ? "relative aspect-video w-full min-w-0 overflow-hidden rounded-[inherit] bg-light-gray"
+          : "relative aspect-video w-full min-w-0 overflow-hidden rounded-[inherit] bg-black"
+      }
       aria-busy={busy || undefined}
     >
       {children}
@@ -73,6 +93,229 @@ function PlayerMessage({
   );
 }
 
+function KinescopeFrame({
+  embedUrl,
+  productId,
+  locale,
+  resumeSec,
+  title,
+  onReady,
+  onError,
+}: {
+  embedUrl: string;
+  productId: string;
+  locale: Locale;
+  resumeSec: number;
+  title: string;
+  onReady: () => void;
+  onError: () => void;
+}) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const onReadyRef = useRef(onReady);
+  const onErrorRef = useRef(onError);
+  onReadyRef.current = onReady;
+  onErrorRef.current = onError;
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    let cancelled = false;
+    let player: KinescopeHandle | null = null;
+    let played = false;
+    let latest = {
+      position: Math.max(0, resumeSec),
+      duration: 0,
+      completed: false,
+    };
+    let saveTimer: number | null = null;
+    let flushing: Promise<void> | null = null;
+
+    const clearSaveTimer = () => {
+      if (saveTimer != null) {
+        window.clearTimeout(saveTimer);
+        saveTimer = null;
+      }
+    };
+
+    const flush = () => {
+      if (flushing) return flushing;
+      clearSaveTimer();
+      if (!played && !latest.completed) return Promise.resolve();
+      if (!(latest.duration > 0) && !latest.completed) return Promise.resolve();
+
+      const snapshot = { ...latest };
+      flushing = upsertWatchProgress({
+        productId,
+        positionSec: snapshot.position,
+        durationSec: snapshot.duration,
+        completed: snapshot.completed,
+      })
+        .then(() => undefined)
+        .catch(() => undefined)
+        .finally(() => {
+          flushing = null;
+        });
+      return flushing;
+    };
+
+    const note = (
+      position: number,
+      duration: number,
+      completed?: boolean,
+    ) => {
+      const nextDuration = duration > 0 ? duration : latest.duration;
+      const nextCompleted =
+        completed ?? isWatchComplete(position, nextDuration);
+      latest = {
+        position: Math.max(0, position),
+        duration: nextDuration,
+        completed: nextCompleted,
+      };
+      if (nextCompleted) {
+        void flush();
+        return;
+      }
+      if (saveTimer != null) return;
+      saveTimer = window.setTimeout(() => {
+        saveTimer = null;
+        void flush();
+      }, SAVE_INTERVAL_MS);
+    };
+
+    const attach = (instance: KinescopeHandle) => {
+      player = instance;
+      if (cancelled) {
+        void instance.destroy();
+        return;
+      }
+      onReadyRef.current();
+
+      instance.on(instance.Events.DurationChange, (event) => {
+        const duration = event.data.duration;
+        if (duration > 0) latest.duration = duration;
+      });
+
+      instance.on(instance.Events.Loaded, async (event) => {
+        const duration = event.data.duration;
+        if (duration > 0) latest.duration = duration;
+        const seek = resumeSeekSeconds(
+          {
+            productId,
+            positionSec: resumeSec,
+            durationSec: duration,
+            completed: false,
+            updatedAt: "",
+          },
+          duration,
+        );
+        if (seek != null) {
+          try {
+            await instance.seekTo(seek);
+            latest.position = seek;
+          } catch {
+            /* keep going */
+          }
+        }
+      });
+
+      instance.on(instance.Events.Playing, () => {
+        played = true;
+      });
+
+      instance.on(instance.Events.TimeUpdate, (event) => {
+        if (!played) return;
+        note(event.data.currentTime, latest.duration);
+      });
+
+      instance.on(instance.Events.Pause, () => {
+        if (played) void flush();
+      });
+
+      instance.on(instance.Events.Ended, async () => {
+        played = true;
+        try {
+          const duration =
+            latest.duration > 0
+              ? latest.duration
+              : await instance.getDuration();
+          note(duration, duration, true);
+        } catch {
+          note(latest.position, latest.duration, true);
+        }
+      });
+
+      instance.on(instance.Events.Error, () => {
+        if (!cancelled) onErrorRef.current();
+      });
+    };
+
+    void (async () => {
+      try {
+        const factory = await load();
+        if (cancelled) return;
+        const created = await factory.create(iframe, {
+          url: embedUrl,
+          size: { width: "100%", height: "100%" },
+          keepElement: true,
+          behavior: {
+            preload: "metadata",
+            autoPlay: false,
+            playsInline: true,
+            localStorage: {
+              time: false,
+              quality: true,
+              textTrack: true,
+            },
+          },
+          ui: { language: locale },
+          settings: { externalId: productId },
+        });
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.style.position = "absolute";
+        iframe.style.inset = "0";
+        attach(created);
+      } catch {
+        if (!cancelled) onErrorRef.current();
+      }
+    })();
+
+    const onHide = () => {
+      if (document.visibilityState === "hidden") void flush();
+    };
+    document.addEventListener("visibilitychange", onHide);
+    window.addEventListener("pagehide", onHide);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onHide);
+      window.removeEventListener("pagehide", onHide);
+      void (async () => {
+        await flush();
+        try {
+          await player?.destroy();
+        } catch {
+          /* already gone */
+        }
+      })();
+    };
+  }, [embedUrl, locale, productId, resumeSec]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      title={title}
+      width="100%"
+      height="100%"
+      allow={IFRAME_ALLOW}
+      allowFullScreen
+      referrerPolicy="strict-origin-when-cross-origin"
+      className="absolute inset-0 block h-full w-full border-0"
+    />
+  );
+}
+
 export function KinescopePlayer({
   productId,
   locale = "ru",
@@ -102,13 +345,21 @@ export function KinescopePlayer({
 
     void (async () => {
       try {
-        const { embedUrl } = await fetchKinescopeEmbed(productId, locale);
+        const [embed, saved] = await Promise.all([
+          fetchKinescopeEmbed(productId, locale),
+          getMyWatchProgress(productId).catch(() => null),
+        ]);
         if (controller.signal.aborted) return;
-        if (!isOfficialKinescopeEmbed(embedUrl)) {
+        if (!isOfficialKinescopeEmbed(embed.embedUrl)) {
           setState({ kind: "error", message: t.player.errorTitle });
           return;
         }
-        setState({ kind: "ready", embedUrl });
+        const resumeSec = resumeSeekSeconds(saved) ?? 0;
+        setState({
+          kind: "ready",
+          embedUrl: withKinescopeStartTime(embed.embedUrl, resumeSec),
+          resumeSec,
+        });
       } catch (err) {
         if (controller.signal.aborted) return;
         if (err instanceof KinescopeTokenError) {
@@ -149,7 +400,7 @@ export function KinescopePlayer({
 
   if (state.kind === "forbidden") {
     return (
-      <PlayerFrame>
+      <PlayerFrame tone="message">
         <PlayerMessage
           kicker={t.player.noAccessKicker}
           title={t.player.noAccessTitle}
@@ -188,7 +439,7 @@ export function KinescopePlayer({
 
   if (state.kind === "error") {
     return (
-      <PlayerFrame>
+      <PlayerFrame tone="message">
         <PlayerMessage
           kicker={t.player.errorKicker}
           title={t.player.errorTitle}
@@ -212,14 +463,16 @@ export function KinescopePlayer({
   return (
     <PlayerFrame busy={showSkeleton}>
       {state.kind === "ready" ? (
-        <iframe
-          src={state.embedUrl}
+        <KinescopeFrame
+          embedUrl={state.embedUrl}
+          productId={productId}
+          locale={locale}
+          resumeSec={state.resumeSec}
           title={t.player.iframeTitle}
-          allow={IFRAME_ALLOW}
-          allowFullScreen
-          referrerPolicy="strict-origin-when-cross-origin"
-          className="absolute inset-0 h-full w-full border-0"
-          onLoad={() => setIframeReady(true)}
+          onReady={() => setIframeReady(true)}
+          onError={() =>
+            setState({ kind: "error", message: t.player.errorTitle })
+          }
         />
       ) : null}
       {showSkeleton ? (

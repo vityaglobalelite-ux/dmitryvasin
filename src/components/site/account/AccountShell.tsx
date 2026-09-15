@@ -1,77 +1,48 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { accountAssets } from "@/components/site/account/assets";
 import { AccountAvatar } from "@/components/site/account/AccountAvatar";
 import { accountT } from "@/components/site/account/copy";
+import { useAccountGate } from "@/components/site/account/use-account-gate";
 import { Skeleton } from "@/components/site/ui/Skeleton";
+import { useMyProfile } from "@/lib/catalog/hooks-account";
+import { stripLocalePrefix } from "@/lib/catalog/locale";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
-import {
-  getMyProfile,
-  onProfileChanged,
-  profileAvatarSrc,
-  profileDisplayName,
-} from "@/lib/catalog/repo/profile";
+import { profileAvatarSrc, profileDisplayName } from "@/lib/catalog/repo/profile";
 import { signOut } from "@/lib/supabase/auth";
 import type { Profile } from "@/lib/catalog/types";
 
 export type AccountNavId = "materials" | "profile" | "orders" | "support";
 
+const AccountFrameContext = createContext(false);
+
+/** Page gutter lives on the shell; bleed uses the same token, not a mirrored px value. */
+const accountShellMainClass =
+  "mx-auto w-full flex-1 [--account-gutter:12.5%] px-[var(--account-gutter)] pb-24 pt-[75px] max-[600px]:[--account-gutter:1.25rem] max-[600px]:pb-16 max-[600px]:pt-6";
+
+export const accountMediaBleedClass =
+  "max-[600px]:-mx-[var(--account-gutter)] max-[600px]:w-[calc(100%+2*var(--account-gutter))] max-[600px]:rounded-none";
+
 function cx(...parts: Array<string | false | null | undefined>): string {
   return parts.filter(Boolean).join(" ");
 }
 
-function useAccountProfile(email?: string | null): Profile | null {
-  const [profile, setProfile] = useState<Profile | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        const data = await getMyProfile();
-        if (!cancelled) setProfile(data);
-      } catch {
-        if (!cancelled) setProfile(null);
-      }
-    }
-
-    void load();
-    const unsubscribe = onProfileChanged(() => {
-      void load();
-    });
-    return () => {
-      cancelled = true;
-      unsubscribe();
-    };
-  }, [email]);
-
-  return profile;
-}
-
-function AccountSidebarAvatar({ src }: { src: string | null }) {
-  const [revealKey, setRevealKey] = useState(0);
-  const first = useRef(true);
-
-  useEffect(() => {
-    if (first.current) {
-      first.current = false;
-      return;
-    }
-    setRevealKey((key) => key + 1);
-  }, [src]);
-
-  return (
-    <AccountAvatar
-      src={src}
-      size={89}
-      className="size-[89px] shrink-0"
-      tone="onBrand"
-      revealKey={revealKey}
-    />
-  );
+function accountNavFromPathname(pathname: string): AccountNavId {
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
+  if (path === "/account/profile") return "profile";
+  if (path === "/account/orders") return "orders";
+  if (path === "/account/support") return "support";
+  return "materials";
 }
 
 function personName(
@@ -85,6 +56,25 @@ function personName(
   );
 }
 
+export function AccountLayoutChrome({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+  const gate = useAccountGate();
+  const profile = useMyProfile();
+
+  return (
+    <AccountFrameContext.Provider value={true}>
+      <AccountShellView
+        email={gate.user?.email}
+        profile={profile.data}
+        identityPending={!profile.data && (gate.pending || profile.loading)}
+        active={accountNavFromPathname(pathname)}
+      >
+        {children}
+      </AccountShellView>
+    </AccountFrameContext.Provider>
+  );
+}
+
 export function AccountShell({
   email,
   active,
@@ -94,13 +84,66 @@ export function AccountShell({
   active: AccountNavId;
   children: ReactNode;
 }) {
-  const profile = useAccountProfile(email);
+  const framed = useContext(AccountFrameContext);
+  if (framed) return children;
   return (
-    <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-[75px] max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
-      <div className="flex items-start gap-5 max-[1100px]:flex-col">
-        <AccountMobileNav email={email} profile={profile} active={active} />
-        <AccountSidebar email={email} profile={profile} active={active} />
-        <div className="min-w-0 flex-1">{children}</div>
+    <AccountShellStandalone email={email} active={active}>
+      {children}
+    </AccountShellStandalone>
+  );
+}
+
+function AccountShellStandalone({
+  email,
+  active,
+  children,
+}: {
+  email?: string | null;
+  active: AccountNavId;
+  children: ReactNode;
+}) {
+  const profile = useMyProfile();
+  return (
+    <AccountShellView
+      email={email}
+      profile={profile.data}
+      identityPending={profile.loading && !profile.data}
+      active={active}
+    >
+      {children}
+    </AccountShellView>
+  );
+}
+
+function AccountShellView({
+  email,
+  profile,
+  identityPending,
+  active,
+  children,
+}: {
+  email?: string | null;
+  profile: Profile | null;
+  identityPending: boolean;
+  active: AccountNavId;
+  children: ReactNode;
+}) {
+  return (
+    <main className={accountShellMainClass}>
+      <div className="flex items-start gap-5 max-[1100px]:flex-col max-[1100px]:items-stretch">
+        <AccountMobileNav
+          email={email}
+          profile={profile}
+          identityPending={identityPending}
+          active={active}
+        />
+        <AccountSidebar
+          email={email}
+          profile={profile}
+          identityPending={identityPending}
+          active={active}
+        />
+        <div className="min-w-0 w-full flex-1">{children}</div>
       </div>
     </main>
   );
@@ -111,35 +154,58 @@ export function AccountShellSkeleton({
 }: {
   variant?: "cards" | "player" | "form" | "rows";
 }) {
+  const framed = useContext(AccountFrameContext);
+  if (framed) return <AccountContentSkeleton variant={variant} />;
+
   return (
-    <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-[75px] max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
-      <div className="flex items-start gap-5 max-[1100px]:flex-col">
+    <main className={accountShellMainClass}>
+      <div className="flex items-start gap-5 max-[1100px]:flex-col max-[1100px]:items-stretch">
         <Skeleton className="h-[72px] w-full rounded-[16px] min-[1101px]:hidden" />
         <Skeleton className="hidden h-[463px] w-full max-w-[467px] rounded-[30px] min-[1101px]:block" />
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          <Skeleton className="h-[55px] w-[min(80%,520px)] rounded-[12px] max-[600px]:h-8" />
-          {variant === "player" ? (
-            <Skeleton className="aspect-video w-full rounded-[30px] max-[600px]:rounded-[10px]" />
-          ) : null}
-          {variant === "form" ? (
-            <Skeleton className="h-[640px] w-full rounded-[30px] max-[600px]:h-[720px] max-[600px]:rounded-[10px]" />
-          ) : null}
-          {variant === "rows" ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 4 }, (_, i) => (
-                <Skeleton key={i} className="h-[88px] w-full rounded-[20px]" />
-              ))}
-            </div>
-          ) : null}
-          {variant === "cards" ? (
-            <div className="flex flex-col gap-5">
-              <AccountMaterialCardSkeleton />
-              <AccountMaterialCardSkeleton />
-            </div>
-          ) : null}
+        <div className="min-w-0 w-full flex-1">
+          <AccountContentSkeleton variant={variant} />
         </div>
       </div>
     </main>
+  );
+}
+
+function AccountContentSkeleton({
+  variant,
+}: {
+  variant: "cards" | "player" | "form" | "rows";
+}) {
+  return (
+    <div className="flex min-w-0 w-full flex-1 flex-col gap-5">
+      {variant === "player" ? (
+        <>
+          <Skeleton
+            className={`aspect-video w-full rounded-[30px] ${accountMediaBleedClass}`}
+          />
+          <Skeleton className="h-4 w-[160px] rounded-[8px] max-[600px]:h-3.5" />
+          <Skeleton className="h-[22px] w-[min(90%,520px)] rounded-[8px] max-[600px]:h-[18px]" />
+          <Skeleton className="h-4 w-[min(70%,360px)] rounded-[8px] max-[600px]:h-3.5" />
+        </>
+      ) : (
+        <Skeleton className="h-[55px] w-[min(80%,520px)] rounded-[12px] max-[600px]:h-8" />
+      )}
+      {variant === "form" ? (
+        <Skeleton className="h-[640px] w-full rounded-[30px] max-[600px]:h-[720px] max-[600px]:rounded-[10px]" />
+      ) : null}
+      {variant === "rows" ? (
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: 4 }, (_, i) => (
+            <Skeleton key={i} className="h-[88px] w-full rounded-[20px]" />
+          ))}
+        </div>
+      ) : null}
+      {variant === "cards" ? (
+        <div className="flex flex-col gap-5">
+          <AccountMaterialCardSkeleton />
+          <AccountMaterialCardSkeleton />
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -191,31 +257,45 @@ function useAccountLogout() {
 function AccountMobileNav({
   email,
   profile,
+  identityPending,
   active,
 }: {
   email?: string | null;
   profile: Profile | null;
+  identityPending: boolean;
   active: AccountNavId;
 }) {
   const { busy, error, onLogout } = useAccountLogout();
   const copy = accountT(useLocale());
   const routes = useLocalizedRoutes();
   const profileFallback = useCatalogT().pages.accountProfile;
+  const name = personName(profile, email, profileFallback);
+  const showName = !identityPending && Boolean(name);
+  const canLogout = Boolean(email || profile);
 
   return (
     <div className="flex w-full flex-col gap-4 min-[1101px]:hidden">
       <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 truncate text-[16px] font-medium leading-[1.3] text-text max-[600px]:text-[13px]">
-          {personName(profile, email, profileFallback)}
-        </p>
-        <button
-          type="button"
-          onClick={() => void onLogout()}
-          disabled={busy}
-          className="shrink-0 rounded-[10px] bg-[image:var(--brand-gradient)] px-2.5 py-1.5 text-[13px] font-medium leading-[1.3] text-white transition-[filter,transform] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
-        >
-          {copy.logout}
-        </button>
+        {showName ? (
+          <p
+            title={name}
+            className="min-w-0 flex-1 truncate text-[16px] font-medium leading-[1.3] text-text max-[600px]:text-[13px]"
+          >
+            {name}
+          </p>
+        ) : (
+          <span aria-hidden className="site-shimmer h-5 w-[min(60%,220px)] rounded-[8px]" />
+        )}
+        {canLogout ? (
+          <button
+            type="button"
+            onClick={() => void onLogout()}
+            disabled={busy}
+            className="shrink-0 rounded-[10px] bg-[image:var(--brand-gradient)] px-2.5 py-1.5 text-[13px] font-medium leading-[1.3] text-white transition-[filter,transform] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
+          >
+            {copy.logout}
+          </button>
+        ) : null}
       </div>
       <nav className="flex flex-wrap gap-x-5 gap-y-2">
         <MobileNavLink
@@ -266,38 +346,68 @@ function MobileNavLink({
 function AccountSidebar({
   email,
   profile,
+  identityPending,
   active,
 }: {
   email?: string | null;
   profile: Profile | null;
+  identityPending: boolean;
   active: AccountNavId;
 }) {
   const { busy, error, onLogout } = useAccountLogout();
   const copy = accountT(useLocale());
   const routes = useLocalizedRoutes();
   const profileFallback = useCatalogT().pages.accountProfile;
+  const name = personName(profile, email, profileFallback);
+  const showName = !identityPending && Boolean(name);
+  const avatarSrc = identityPending ? null : profileAvatarSrc(profile);
+  const canLogout = Boolean(email || profile);
 
   return (
     <aside className="hidden w-full max-w-[467px] shrink-0 min-[1101px]:block">
-      <div className="flex flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10">
-        <div className="flex items-center gap-5">
-          <AccountSidebarAvatar src={profileAvatarSrc(profile)} />
-          <div className="flex min-w-0 flex-col items-start gap-2.5">
-            <p className="truncate text-[24px] font-medium leading-[1.2] text-white">
-              {personName(profile, email, profileFallback)}
-            </p>
-            <button
-              type="button"
-              onClick={() => void onLogout()}
-              disabled={busy}
-              className="rounded-[10px] bg-white px-2.5 py-1.5 text-[16px] font-medium leading-[1.3] text-accent-orange transition-[filter,transform] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
-            >
-              {copy.logout}
-            </button>
+      <div className="flex min-w-0 flex-col gap-[31px] rounded-[30px] bg-[image:var(--brand-gradient)] p-10">
+        <div className="flex min-w-0 items-center gap-5">
+          {identityPending ? (
+            <span
+              aria-hidden
+              className="site-shimmer-on-brand size-[89px] shrink-0 rounded-full"
+            />
+          ) : (
+            <AccountSidebarAvatar src={avatarSrc} />
+          )}
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-2.5 overflow-hidden">
+            {showName ? (
+              <p
+                title={name}
+                className="w-full max-w-full text-[24px] font-medium leading-[1.2] text-white [overflow-wrap:anywhere] [word-break:break-word] line-clamp-2"
+              >
+                {name}
+              </p>
+            ) : (
+              <span
+                aria-hidden
+                className="site-shimmer-on-brand h-7 w-[min(100%,220px)] rounded-[8px]"
+              />
+            )}
+            {canLogout ? (
+              <button
+                type="button"
+                onClick={() => void onLogout()}
+                disabled={busy}
+                className="rounded-[10px] bg-white px-2.5 py-1.5 text-[16px] font-medium leading-[1.3] text-accent-orange transition-[filter,transform] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50"
+              >
+                {copy.logout}
+              </button>
+            ) : (
+              <span
+                aria-hidden
+                className="site-shimmer-on-brand h-[37px] w-[76px] rounded-[10px]"
+              />
+            )}
           </div>
         </div>
 
-        <nav className="relative overflow-visible flex flex-col gap-5 rounded-[20px] bg-white p-5">
+        <nav className="relative flex flex-col gap-5 overflow-visible rounded-[20px] bg-white p-5">
           <SidebarLink
             href={routes.account}
             icon={accountAssets.materials}
@@ -341,6 +451,29 @@ function AccountSidebar({
         ) : null}
       </div>
     </aside>
+  );
+}
+
+function AccountSidebarAvatar({ src }: { src: string | null }) {
+  const [revealKey, setRevealKey] = useState(0);
+  const first = useRef(true);
+
+  useEffect(() => {
+    if (first.current) {
+      first.current = false;
+      return;
+    }
+    setRevealKey((key) => key + 1);
+  }, [src]);
+
+  return (
+    <AccountAvatar
+      src={src}
+      size={89}
+      className="size-[89px] shrink-0"
+      tone="onBrand"
+      revealKey={revealKey}
+    />
   );
 }
 

@@ -1,30 +1,53 @@
 /**
- * Public site identity for dmitryvasin.com (`/`).
- * Club copy lives in club-config.ts.
+ * Public catalog identity (`/`). Club copy lives in club-config.ts.
+ *
+ * `output: "export"` bakes absolute OG/canonical URLs at build time.
+ * Set NEXT_PUBLIC_APP_URL to the host of THIS deploy (betango.dance or
+ * dmitryvasin.com), otherwise crawlers get the fallback origin.
  */
 
-export const siteOrigin = "https://dmitryvasin.com";
+const FALLBACK_ORIGIN = "https://dmitryvasin.com";
+
+function resolvePublicOrigin(): string {
+  const raw = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!raw) return FALLBACK_ORIGIN;
+  try {
+    const url = new URL(raw.includes("://") ? raw : `https://${raw}`);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return FALLBACK_ORIGIN;
+    }
+    return url.origin;
+  } catch {
+    return FALLBACK_ORIGIN;
+  }
+}
+
+export const siteOrigin = resolvePublicOrigin();
 
 export const absoluteUrl = (path = "") => {
   const normalized = path.startsWith("/") ? path : path ? `/${path}` : "";
   return `${siteOrigin}${normalized}`;
 };
 
+const catalogShareTitle = "Дмитрий Васин. СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!";
+const catalogShareDescription =
+  "Аргентинское танго в лёгких и понятных видеоуроках, в своём темпе и в любое время, всегда в твоём смартфоне. СЛОЖНЫЕ ПРОЦЕССЫ В ТАНГО ПРОСТЫМ И ДОСТУПНЫМ ЯЗЫКОМ";
+
 export const siteConfig = {
   name: "Дмитрий Васин",
-  title: "Дмитрий Васин",
-  ogTitle: "Дмитрий Васин",
-  description: "Официальный сайт Дмитрия Васина.",
+  title: catalogShareTitle,
+  ogTitle: catalogShareTitle,
+  description: catalogShareDescription,
   url: siteOrigin,
   canonical: `${siteOrigin}/`,
   locale: "ru_RU",
   localeLang: "ru",
   publisher: "BeTango Global LLC",
   ogImage: {
-    url: absoluteUrl("/assets/images/og-share.png"),
+    url: absoluteUrl("/assets/images/og-photo.png"),
     width: 1200,
     height: 630,
-    alt: "Дмитрий Васин",
+    alt: catalogShareTitle,
     type: "image/png",
   },
 } as const;
@@ -47,6 +70,15 @@ type ShareCopy = {
   url: string;
 };
 
+function shareImage(brand: BrandIdentity) {
+  return {
+    ...brand.ogImage,
+    secureUrl: brand.ogImage.url.startsWith("https:")
+      ? brand.ogImage.url
+      : undefined,
+  };
+}
+
 export const shareOpenGraph = (
   page: ShareCopy,
   brand: BrandIdentity = siteConfig,
@@ -57,7 +89,7 @@ export const shareOpenGraph = (
   siteName: brand.name,
   locale: brand.locale,
   type: "website" as const,
-  images: [brand.ogImage],
+  images: [shareImage(brand)],
 });
 
 export const shareTwitter = (
@@ -67,5 +99,5 @@ export const shareTwitter = (
   card: "summary_large_image" as const,
   title: page.title,
   description: page.description,
-  images: [brand.ogImage],
+  images: [shareImage(brand)],
 });

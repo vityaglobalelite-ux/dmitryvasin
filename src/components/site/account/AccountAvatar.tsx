@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { siteAssets } from "@/lib/catalog/assets";
 
+const loadedPhotos = new Set<string>();
+
 export function AccountAvatar({
   src,
   size,
@@ -26,10 +28,36 @@ export function AccountAvatar({
 }) {
   const [broken, setBroken] = useState(false);
   const [revealing, setRevealing] = useState(false);
+  const [photoReady, setPhotoReady] = useState(() => Boolean(src && loadedPhotos.has(src)));
   const photo = src && !broken ? src : null;
 
   useEffect(() => {
     setBroken(false);
+    if (!src) {
+      setPhotoReady(false);
+      return;
+    }
+    if (loadedPhotos.has(src)) {
+      setPhotoReady(true);
+      return;
+    }
+    setPhotoReady(false);
+    let cancelled = false;
+    const img = new Image();
+    const done = () => {
+      if (cancelled) return;
+      loadedPhotos.add(src);
+      setPhotoReady(true);
+    };
+    img.onload = done;
+    img.onerror = () => {
+      if (!cancelled) setBroken(true);
+    };
+    img.src = src;
+    if (img.complete && img.naturalWidth > 0) done();
+    return () => {
+      cancelled = true;
+    };
   }, [src]);
 
   useEffect(() => {
@@ -54,15 +82,32 @@ export function AccountAvatar({
     <>
       <span className="account-avatar-clip">
         {photo ? (
-          <img
-            key={src}
-            src={photo}
-            alt=""
-            width={size}
-            height={size}
-            className="account-avatar-photo"
-            onError={() => setBroken(true)}
-          />
+          <>
+            {!photoReady ? (
+              <span
+                aria-hidden
+                className={
+                  tone === "onBrand"
+                    ? "site-shimmer-on-brand absolute inset-0 rounded-full"
+                    : "site-shimmer absolute inset-0 rounded-full"
+                }
+              />
+            ) : null}
+            <img
+              key={src}
+              src={photo}
+              alt=""
+              width={size}
+              height={size}
+              className="account-avatar-photo"
+              style={{ opacity: photoReady ? 1 : 0 }}
+              onLoad={() => {
+                if (src) loadedPhotos.add(src);
+                setPhotoReady(true);
+              }}
+              onError={() => setBroken(true)}
+            />
+          </>
         ) : (
           <span className="account-avatar-empty">
             <img

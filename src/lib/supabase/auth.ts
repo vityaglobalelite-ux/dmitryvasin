@@ -1,5 +1,6 @@
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import type { AuthUser } from "@/lib/catalog/types";
+import { clearProfileCache } from "@/lib/catalog/repo/profile";
 import { getSupabase } from "@/lib/supabase/client";
 
 export function mapAuthUser(user: User): AuthUser {
@@ -7,6 +8,16 @@ export function mapAuthUser(user: User): AuthUser {
     id: user.id,
     email: user.email ?? null,
   };
+}
+
+let cachedAuthUser: AuthUser | null | undefined;
+
+export function peekCachedAuthUser(): AuthUser | null | undefined {
+  return cachedAuthUser;
+}
+
+export function rememberAuthUser(user: AuthUser | null): void {
+  cachedAuthUser = user;
 }
 
 function clientOrThrow() {
@@ -42,7 +53,9 @@ export async function signInWithPassword(
   });
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error("Sign-in failed");
-  return mapAuthUser(data.user);
+  const mapped = mapAuthUser(data.user);
+  rememberAuthUser(mapped);
+  return mapped;
 }
 
 export async function signUp(email: string, password: string): Promise<AuthUser> {
@@ -54,7 +67,9 @@ export async function signUp(email: string, password: string): Promise<AuthUser>
   });
   if (error) throw new Error(error.message);
   if (!data.user) throw new Error("Sign-up failed");
-  return mapAuthUser(data.user);
+  const mapped = mapAuthUser(data.user);
+  rememberAuthUser(mapped);
+  return mapped;
 }
 
 let authPromptSuppressed = false;
@@ -74,6 +89,8 @@ export function resumeAuthPrompt(): void {
 
 export async function signOut(): Promise<void> {
   suppressAuthPrompt();
+  rememberAuthUser(null);
+  clearProfileCache();
   const supabase = clientOrThrow();
   try {
     const { error } = await supabase.auth.signOut();

@@ -8,6 +8,7 @@ import {
   AccountBackLink,
   AccountShell,
   AccountShellSkeleton,
+  accountMediaBleedClass,
 } from "@/components/site/account/AccountShell";
 import { useAccessEntry } from "@/components/site/account/use-access-entry";
 import { useAccountGate } from "@/components/site/account/use-account-gate";
@@ -68,8 +69,10 @@ export function AccountWatchView() {
 
   return (
     <AccountShell email={gate.user?.email} active="materials">
-      <div className="flex flex-col gap-[39px] max-[600px]:gap-5">
-        <div className="relative overflow-hidden rounded-[30px] bg-light-gray max-[600px]:rounded-[10px]">
+      <div className="flex w-full min-w-0 flex-col gap-[39px] max-[600px]:gap-5">
+        <div
+          className={`relative w-full min-w-0 overflow-hidden rounded-[30px] bg-black ${accountMediaBleedClass}`}
+        >
           {product.coverUrl ? (
             <Image
               src={product.coverUrl}
@@ -80,7 +83,7 @@ export function AccountWatchView() {
               unoptimized
             />
           ) : null}
-          <div className="relative">
+          <div className="relative w-full min-w-0">
             <AccountPlayer productId={product.id} locale={locale} />
           </div>
         </div>

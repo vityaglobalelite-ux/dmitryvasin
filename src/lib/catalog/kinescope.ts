@@ -46,6 +46,22 @@ export function isOfficialKinescopeEmbed(url: string): boolean {
   }
 }
 
+/** Resume offset. Does not rewrite host/path — signed token stays valid. */
+export function withKinescopeStartTime(
+  embedUrl: string,
+  seconds: number,
+): string {
+  if (!isOfficialKinescopeEmbed(embedUrl)) return embedUrl;
+  if (!Number.isFinite(seconds) || seconds < 5) return embedUrl;
+  try {
+    const url = new URL(embedUrl);
+    url.searchParams.set("t", String(Math.floor(seconds)));
+    return url.toString();
+  } catch {
+    return embedUrl;
+  }
+}
+
 function parseEmbed(data: unknown): KinescopeEmbed | null {
   if (!isRecord(data)) return null;
   const embedUrl =

@@ -26,7 +26,7 @@ import {
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import { Button } from "@/components/site/ui/Button";
 import { isAccessActive } from "@/lib/catalog/access";
-import { useMyAccess } from "@/lib/catalog/hooks-account";
+import { useMyAccess, useMyWatchProgress } from "@/lib/catalog/hooks-account";
 import { catalogT } from "@/lib/catalog/i18n";
 import { productCopy } from "@/lib/catalog/locale";
 import {
@@ -34,8 +34,18 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
-import type { Access, Product, ProductType } from "@/lib/catalog/types";
+import type {
+  Access,
+  Product,
+  ProductType,
+  WatchProgress,
+} from "@/lib/catalog/types";
 import type { LocalizedSiteRoutes } from "@/lib/catalog/locale";
+import {
+  formatWatchClock,
+  remainingWatchSec,
+  watchPercent,
+} from "@/lib/catalog/watch-progress";
 
 const SECTION_ORDER: ProductType[] = [
   "course",
@@ -70,9 +80,15 @@ function materialHref(
 export function AccountMaterialsView() {
   const gate = useAccountGate();
   const access = useMyAccess();
+  const progress = useMyWatchProgress();
   const now = useNow();
   const copy = accountT(useLocale());
   const locale = useLocale();
+  const progressByProduct = useMemo(() => {
+    const map = new Map<string, WatchProgress>();
+    for (const row of progress.data) map.set(row.productId, row);
+    return map;
+  }, [progress.data]);
 
   const grouped = useMemo(() => {
     const rows = access.data.filter((row) => row.product);
@@ -157,7 +173,12 @@ export function AccountMaterialsView() {
             </h2>
             <div className="flex flex-col gap-5">
               {section.items.map((row) => (
-                <MaterialCard key={row.productId} access={row} now={now} />
+                <MaterialCard
+                  key={row.productId}
+                  access={row}
+                  now={now}
+                  progress={progressByProduct.get(row.productId) ?? null}
+                />
               ))}
             </div>
           </section>
@@ -167,7 +188,15 @@ export function AccountMaterialsView() {
   );
 }
 
-function MaterialCard({ access, now }: { access: Access; now: Date }) {
+function MaterialCard({
+  access,
+  now,
+  progress,
+}: {
+  access: Access;
+  now: Date;
+  progress: WatchProgress | null;
+}) {
   const product = access.product;
   if (!product) return null;
   const locale = useLocale();
@@ -183,6 +212,15 @@ function MaterialCard({ access, now }: { access: Access; now: Date }) {
       ? `${product.lessonCount} ${lessonNoun(product.lessonCount, locale)}`
       : formatDurationClock(product.durationSec, locale);
   const accessLabel = formatAccessLabel(product.accessDays, "overlay", locale);
+  const cta = !active
+    ? ui.renew
+    : product.type === "course"
+      ? ui.open
+      : progress?.completed
+        ? ui.watchAgain
+        : watchPercent(progress, product.durationSec) > 0
+          ? ui.continueWatching
+          : ui.open;
 
   return (
     <article className="flex overflow-hidden rounded-[20px] bg-light-gray max-[600px]:flex-col">
@@ -208,6 +246,12 @@ function MaterialCard({ access, now }: { access: Access; now: Date }) {
           {duration ? <CoverChip>{duration}</CoverChip> : null}
           {accessLabel ? <CoverChip>{accessLabel}</CoverChip> : null}
         </div>
+        <CoverWatchMeter
+          progress={progress}
+          fallbackDurationSec={product.durationSec}
+          watchedLabel={ui.watched}
+          leftLabel={ui.watchLeft}
+        />
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
@@ -223,10 +267,60 @@ function MaterialCard({ access, now }: { access: Access; now: Date }) {
           href={href}
           className="h-[45px] w-fit px-5 text-[16px] font-semibold max-[600px]:h-[50px] max-[600px]:w-full"
         >
-          {active ? ui.open : ui.renew}
+          {cta}
         </Button>
       </div>
     </article>
+  );
+}
+
+function CoverWatchMeter({
+  progress,
+  fallbackDurationSec,
+  watchedLabel,
+  leftLabel,
+}: {
+  progress: WatchProgress | null;
+  fallbackDurationSec: number;
+  watchedLabel: string;
+  leftLabel: string;
+}) {
+  const percent = watchPercent(progress, fallbackDurationSec);
+  if (!progress || percent <= 0) return null;
+  const left = remainingWatchSec(progress, fallbackDurationSec);
+  const caption = progress.completed
+    ? watchedLabel
+    : left > 0
+      ? leftLabel.replace("{time}", formatWatchClock(left))
+      : `${percent}%`;
+
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10">
+      <div className="absolute inset-x-0 bottom-0 h-[72px] bg-gradient-to-t from-black/70 via-black/25 to-transparent max-[600px]:h-14" />
+      <div className="relative flex items-end justify-between gap-3 px-3 pb-2 max-[600px]:px-2 max-[600px]:pb-1.5">
+        <p className="text-[12px] font-medium leading-none tracking-[0.01em] text-white max-[600px]:text-[10px]">
+          {caption}
+        </p>
+        {progress.completed ? null : (
+          <p className="text-[12px] font-semibold leading-none text-white/90 [font-variant-numeric:tabular-nums] max-[600px]:text-[10px]">
+            {percent}%
+          </p>
+        )}
+      </div>
+      <div
+        className="relative h-[3px] w-full bg-white/20 max-[600px]:h-[2px]"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+        aria-label={caption}
+      >
+        <span
+          className="absolute inset-y-0 left-0 bg-[image:var(--brand-gradient)] shadow-[0_0_12px_rgba(219,12,37,0.45)] transition-[width] duration-500 ease-out"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    </div>
   );
 }
 

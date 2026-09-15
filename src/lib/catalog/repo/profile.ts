@@ -18,6 +18,16 @@ const META_FIRST = "catalog_first_name";
 const META_LAST = "catalog_last_name";
 const META_AVATAR = "catalog_avatar_path";
 const META_BUCKET = "catalog_avatar_bucket";
+const PROFILE_CACHE_KEY = "betango.catalog.profile.v1";
+
+type ProfileCacheEntry = {
+  userId: string;
+  profile: Profile;
+};
+
+let memoryProfile: ProfileCacheEntry | null = null;
+let inflightProfile: Promise<Profile | null> | null = null;
+let profileFetchGen = 0;
 
 type ProfileRow = {
   id: string;
@@ -34,6 +44,65 @@ type AvatarRef = {
 };
 
 const profileListeners = new Set<() => void>();
+
+function warmAvatar(url: string | null): void {
+  if (!url || typeof window === "undefined") return;
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
+}
+
+function readStoredProfile(userId?: string | null): ProfileCacheEntry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = sessionStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ProfileCacheEntry;
+    if (!parsed?.userId || !parsed.profile?.id) return null;
+    if (userId && parsed.userId !== userId) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeProfileCache(userId: string, profile: Profile): void {
+  memoryProfile = { userId, profile };
+  warmAvatar(profile.avatarUrl);
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(memoryProfile));
+  } catch {
+    /* private mode / quota */
+  }
+}
+
+export function peekCachedProfile(userId?: string | null): Profile | null {
+  if (!memoryProfile) return null;
+  if (userId && memoryProfile.userId !== userId) return null;
+  if (!userId) return null;
+  return memoryProfile.profile;
+}
+
+export function hydrateProfileCache(userId?: string | null): Profile | null {
+  const stored = readStoredProfile(userId);
+  if (!stored) return null;
+  memoryProfile = stored;
+  warmAvatar(stored.profile.avatarUrl);
+  return stored.profile;
+}
+
+export function clearProfileCache(): void {
+  memoryProfile = null;
+  inflightProfile = null;
+  profileFetchGen += 1;
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
 
 export function notifyProfileChanged(): void {
   for (const listener of profileListeners) listener();
@@ -158,7 +227,8 @@ export function profileAvatarSrc(profile: Profile | null | undefined): string | 
   return url || null;
 }
 
-export async function getMyProfile(): Promise<Profile | null> {
+async function loadMyProfile(): Promise<Profile | null> {
+  const gen = ++profileFetchGen;
   const supabase = getSupabase();
   if (!supabase) return null;
 
@@ -175,7 +245,10 @@ export async function getMyProfile(): Promise<Profile | null> {
   }
 
   if (full.data && !full.error) {
-    return mapProfile(full.data as ProfileRow, user);
+    const mapped = await mapProfile(full.data as ProfileRow, user);
+    if (gen !== profileFetchGen) return peekCachedProfile(user.id);
+    writeProfileCache(user.id, mapped);
+    return mapped;
   }
 
   const legacy = await supabase
@@ -185,8 +258,23 @@ export async function getMyProfile(): Promise<Profile | null> {
     .maybeSingle();
 
   throwIfPostgrestError(legacy.error);
-  if (!legacy.data) return null;
-  return mapProfile(legacy.data as ProfileRow, user);
+  if (!legacy.data) return peekCachedProfile(user.id);
+  const mapped = await mapProfile(legacy.data as ProfileRow, user);
+  if (gen !== profileFetchGen) return peekCachedProfile(user.id);
+  writeProfileCache(user.id, mapped);
+  return mapped;
+}
+
+export async function getMyProfile(options?: {
+  fresh?: boolean;
+}): Promise<Profile | null> {
+  if (!options?.fresh && inflightProfile) return inflightProfile;
+
+  const run = loadMyProfile();
+  inflightProfile = run.finally(() => {
+    if (inflightProfile === run) inflightProfile = null;
+  });
+  return inflightProfile;
 }
 
 async function writeAuthMeta(
@@ -262,6 +350,7 @@ export async function updateMyProfile(input: {
       [META_BUCKET]: avatar.bucket,
     },
   });
+  writeProfileCache(user.id, profile);
   notifyProfileChanged();
   return profile;
 }

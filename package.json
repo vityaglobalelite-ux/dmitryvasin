@@ -9,9 +9,11 @@
     "lint": "eslint",
     "optimize:images": "node scripts/optimize-landing-images.mjs",
     "optimize:site-home": "node scripts/optimize-landing-images.mjs public/assets/site/home",
-    "og:image": "python scripts/generate-og-image.py"
+    "og:image": "python scripts/generate-og-image.py",
+    "og:catalog": "python scripts/generate-og-catalog.py"
   },
   "dependencies": {
+    "@kinescope/player-iframe-api-loader": "^0.9.0",
     "@supabase/supabase-js": "^2.109.0",
     "next": "16.2.6",
     "react": "19.2.4",

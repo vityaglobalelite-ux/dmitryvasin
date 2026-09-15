@@ -65,8 +65,9 @@ const ru = {
     main: "Основное содержимое",
   },
   seo: {
-    siteTitle: "Дмитрий Васин",
-    siteDescription: "Официальный сайт Дмитрия Васина.",
+    siteTitle: "Дмитрий Васин. СМОТРИ. ПОВТОРЯЙ. ТАНЦУЙ!",
+    siteDescription:
+      "Аргентинское танго в лёгких и понятных видеоуроках, в своём темпе и в любое время, всегда в твоём смартфоне. СЛОЖНЫЕ ПРОЦЕССЫ В ТАНГО ПРОСТЫМ И ДОСТУПНЫМ ЯЗЫКОМ",
   },
   catalog: {
     all: "Все",
@@ -212,8 +213,9 @@ const en = {
     main: "Main content",
   },
   seo: {
-    siteTitle: "Dmitry Vasin",
-    siteDescription: "Official website of Dmitry Vasin.",
+    siteTitle: "Dmitry Vasin. WATCH. REPEAT. DANCE!",
+    siteDescription:
+      "Argentine tango in clear, easy video lessons — at your pace, anytime, always on your phone. COMPLEX TANGO MADE SIMPLE AND ACCESSIBLE.",
   },
   catalog: {
     all: "All",

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AccountLayoutChrome } from "@/components/site/account/AccountShell";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -9,5 +10,5 @@ export default function EnAccountLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <AccountLayoutChrome>{children}</AccountLayoutChrome>;
 }

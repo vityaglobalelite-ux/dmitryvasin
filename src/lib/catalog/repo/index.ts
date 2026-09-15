@@ -11,6 +11,11 @@ export {
   upsertCartItem,
 } from "@/lib/catalog/repo/cart";
 export { getMyAccess, listMyAccess } from "@/lib/catalog/repo/access";
+export {
+  getMyWatchProgress,
+  listMyWatchProgress,
+  upsertWatchProgress,
+} from "@/lib/catalog/repo/progress";
 export { getMyOrder, listMyOrders } from "@/lib/catalog/repo/orders";
 export { getWholesaleTiers } from "@/lib/catalog/repo/settings";
 export {

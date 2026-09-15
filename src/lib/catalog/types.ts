@@ -97,6 +97,14 @@ export type Access = {
   product?: Product;
 };
 
+export type WatchProgress = {
+  productId: string;
+  positionSec: number;
+  durationSec: number;
+  completed: boolean;
+  updatedAt: string;
+};
+
 export type SupportMessage = {
   id: string;
   userId: string;

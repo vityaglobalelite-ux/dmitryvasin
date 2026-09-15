@@ -11,7 +11,13 @@ import type {
   ProductType,
   QueryState,
 } from "@/lib/catalog/types";
-import { getSession, mapAuthUser, onAuthStateChange } from "@/lib/supabase/auth";
+import {
+  getSession,
+  mapAuthUser,
+  onAuthStateChange,
+  peekCachedAuthUser,
+  rememberAuthUser,
+} from "@/lib/supabase/auth";
 
 export function useProducts(opts: { type?: ProductType } = {}): QueryState<
   Product[]
@@ -82,40 +88,38 @@ export function useProduct(id: string | null): QueryState<Product | null> {
 }
 
 export function useAuthUser(): QueryState<AuthUser | null> {
-  const [state, setState] = useState<QueryState<AuthUser | null>>({
-    data: null,
-    loading: true,
+  const cached = peekCachedAuthUser();
+  const [state, setState] = useState<QueryState<AuthUser | null>>(() => ({
+    data: cached === undefined ? null : cached,
+    loading: cached === undefined,
     error: null,
-  });
+  }));
 
   useEffect(() => {
     let cancelled = false;
 
+    function apply(user: AuthUser | null) {
+      rememberAuthUser(user);
+      if (!cancelled) {
+        setState({ data: user, loading: false, error: null });
+      }
+    }
+
     getSession()
       .then((session) => {
-        if (cancelled) return;
-        setState({
-          data: session?.user ? mapAuthUser(session.user) : null,
-          loading: false,
-          error: null,
-        });
+        apply(session?.user ? mapAuthUser(session.user) : null);
       })
       .catch((error: unknown) => {
         if (cancelled) return;
         setState({
-          data: null,
+          data: peekCachedAuthUser() ?? null,
           loading: false,
           error: error instanceof Error ? error : new Error("auth"),
         });
       });
 
     const { unsubscribe } = onAuthStateChange((_event, session) => {
-      if (cancelled) return;
-      setState({
-        data: session?.user ? mapAuthUser(session.user) : null,
-        loading: false,
-        error: null,
-      });
+      apply(session?.user ? mapAuthUser(session.user) : null);
     });
 
     return () => {

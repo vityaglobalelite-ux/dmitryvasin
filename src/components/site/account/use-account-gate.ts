@@ -8,6 +8,8 @@ import { localeFromPathname, localizedSiteRoutes } from "@/lib/catalog/locale";
 import type { AuthUser } from "@/lib/catalog/types";
 import { isAuthPromptSuppressed } from "@/lib/supabase/auth";
 
+let accountAuthPromptLocked = false;
+
 export function useAccountGate(): {
   user: AuthUser | null;
   pending: boolean;
@@ -22,6 +24,7 @@ export function useAccountGate(): {
     if (loading) return;
     if (user) {
       requested.current = false;
+      accountAuthPromptLocked = false;
       return;
     }
     const locale = localeFromPathname(pathname);
@@ -31,11 +34,13 @@ export function useAccountGate(): {
       router.replace(routes.home);
       return;
     }
-    if (requested.current) return;
+    if (requested.current || accountAuthPromptLocked) return;
     requested.current = true;
+    accountAuthPromptLocked = true;
     openAuth("login", {
       requireSession: true,
       onDismiss: () => {
+        accountAuthPromptLocked = false;
         router.replace(routes.home);
       },
     });

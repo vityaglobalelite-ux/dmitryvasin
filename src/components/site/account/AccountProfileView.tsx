@@ -14,11 +14,11 @@ import { useCatalogT, useLocale } from "@/lib/catalog/locale-context";
 import {
   AVATAR_MAX_BYTES,
   deleteMyAvatar,
-  getMyProfile,
   profileAvatarSrc,
   updateMyProfile,
   uploadMyAvatar,
 } from "@/lib/catalog/repo/profile";
+import { useMyProfile } from "@/lib/catalog/hooks-account";
 import { updatePassword } from "@/lib/supabase/auth";
 import type { Profile } from "@/lib/catalog/types";
 
@@ -29,11 +29,10 @@ export function AccountProfileView() {
   const gate = useAccountGate();
   const copy = accountT(useLocale());
   const passwordCopy = useCatalogT();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [profileReady, setProfileReady] = useState(false);
-
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const profileQuery = useMyProfile();
+  const [profile, setProfile] = useState<Profile | null>(() => profileQuery.data);
+  const [firstName, setFirstName] = useState(() => profileQuery.data?.firstName ?? "");
+  const [lastName, setLastName] = useState(() => profileQuery.data?.lastName ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
@@ -47,27 +46,17 @@ export function AccountProfileView() {
   const [securityBusy, setSecurityBusy] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [securitySaved, setSecuritySaved] = useState(false);
+  const hydrated = useRef(Boolean(profileQuery.data));
 
   useEffect(() => {
-    if (gate.pending) return;
-    let cancelled = false;
-    getMyProfile()
-      .then((data) => {
-        if (cancelled) return;
-        setProfile(data);
-        setFirstName(data?.firstName ?? "");
-        setLastName(data?.lastName ?? "");
-      })
-      .catch(() => {
-        if (!cancelled) setProfile(null);
-      })
-      .finally(() => {
-        if (!cancelled) setProfileReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [gate.pending]);
+    const next = profileQuery.data;
+    if (!next) return;
+    setProfile(next);
+    if (hydrated.current) return;
+    hydrated.current = true;
+    setFirstName(next.firstName);
+    setLastName(next.lastName);
+  }, [profileQuery.data]);
 
   useEffect(() => {
     return () => {
@@ -75,7 +64,7 @@ export function AccountProfileView() {
     };
   }, [previewUrl]);
 
-  if (gate.pending || !profileReady) {
+  if (gate.pending || (!profile && profileQuery.loading)) {
     return <AccountShellSkeleton variant="form" />;
   }
 
