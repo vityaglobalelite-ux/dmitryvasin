@@ -420,8 +420,8 @@ export const homeReviews = [
 const enCopy = {
   chooseVideos: "Choose training videos",
   choose: "Choose",
-  look: "Watch.",
-  repeat: "Repeat.",
+  look: "Watch",
+  repeat: "Practice",
   dance: "Dance!",
   bubbleLook:
     "Play training videos from anywhere in the world, on any device, and break down the movement with me.",

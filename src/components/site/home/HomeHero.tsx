@@ -61,7 +61,7 @@ export function HomeHeroDesktop() {
 
       <HomeImg
         eager
-        src={`${homeAssets.heroPhone}?v=fingers`}
+        src={`${ru ? homeAssets.heroPhone : homeAssets.heroPhoneEn}?v=fingers`}
         alt=""
         width={901}
         height={1104}
@@ -71,12 +71,16 @@ export function HomeHeroDesktop() {
       <LookHeadline
         text={copy.look}
         eyeSrc={homeAssets.iconLook}
-        eyeLeft={ru ? 202.52 : 239.66}
+        eyeLeft={ru ? 202.52 : 242.52}
       />
 
       <div
-        className="absolute left-[881.58px] top-[281.65px] z-[12] h-[174.84px]"
-        style={{ width: ru ? 592.85 : 394.57 }}
+        className="absolute z-[12] h-[174.84px]"
+        style={{
+          left: ru ? 881.58 : 890,
+          top: ru ? 281.65 : 284.67,
+          width: ru ? 592.85 : 526.08,
+        }}
       >
         <p className="absolute left-[12.05px] top-[30.04px] origin-center rotate-[-0.18deg] whitespace-nowrap text-[109px] font-semibold uppercase leading-none tracking-[-4.36px] text-[rgba(76,13,50,0.6)] opacity-50">
           {copy.repeat}
@@ -103,19 +107,27 @@ export function HomeHeroDesktop() {
           width={44}
           height={42}
           className="absolute top-[-1.31px] z-[1] h-[42px] w-[44px] max-w-none"
-          style={{ left: ru ? 538.9 : 340.62 }}
+          style={{ left: ru ? 538.9 : 486.08 }}
         />
       </div>
 
       <p
-        className="absolute left-[1254px] top-[444.71px] z-[12] bg-clip-text text-[109px] font-bold uppercase leading-none tracking-[-4.36px] text-transparent"
-        style={{ backgroundImage: "var(--brand-gradient)" }}
+        className="absolute top-[444.71px] z-[12] bg-clip-text text-[109px] font-bold uppercase leading-none tracking-[-4.36px] text-transparent"
+        style={{
+          left: ru ? 1254 : 1255,
+          backgroundImage: "var(--brand-gradient)",
+        }}
       >
         {copy.dance}
       </p>
 
       <div
-        className={`absolute left-[1002px] top-[174px] z-[15] flex h-[82px] w-[511px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        className={`absolute z-[15] flex h-[82px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        style={{
+          left: ru ? 1002 : 902,
+          top: 174,
+          width: ru ? 511 : 457,
+        }}
       >
         <p className="text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleLookLead}</span>
@@ -131,7 +143,12 @@ export function HomeHeroDesktop() {
         </p>
       </div>
       <div
-        className={`absolute left-[535px] top-[332px] z-[5] flex h-[82px] w-[327px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        className={`absolute z-[5] flex h-[82px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        style={{
+          left: ru ? 535 : 566,
+          top: 332,
+          width: ru ? 327 : 298,
+        }}
       >
         <p className="text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleDoLead}</span>
@@ -226,7 +243,7 @@ export function HomeHeroMobile() {
         width={23}
         height={23}
         className="pointer-events-none absolute top-[96px] z-[4] size-[22.866px]"
-        style={{ left: ru ? 122.18 : 141.48 }}
+        style={{ left: ru ? 122.18 : 140.2 }}
       />
 
       <div
@@ -244,7 +261,7 @@ export function HomeHeroMobile() {
 
       <div
         className="absolute left-[38.36px] top-[268.15px] z-[3] flex h-[73.914px] -translate-y-1/2 items-center justify-center"
-        style={{ width: ru ? 290.229 : 189.3 }}
+        style={{ width: ru ? 290.229 : 252.4 }}
       >
         <div className="rotate-[-0.18deg]">
           <p className="whitespace-nowrap text-[54.996px] font-semibold uppercase leading-none tracking-[-2.1998px] text-[rgba(76,13,50,0.6)] opacity-50">
@@ -254,7 +271,7 @@ export function HomeHeroMobile() {
       </div>
       <div
         className="absolute left-[36.08px] top-[269.04px] z-[3] flex h-[88.077px] -translate-y-1/2 items-center justify-center"
-        style={{ width: ru ? 293.423 : 191.4 }}
+        style={{ width: ru ? 293.423 : 255.2 }}
       >
         <div className="-rotate-3">
           <p
@@ -279,7 +296,7 @@ export function HomeHeroMobile() {
       </div>
       <div
         className="absolute top-[226.54px] z-[4] flex size-[19.662px] items-center justify-center"
-        style={{ left: ru ? 302.01 : 201.41 }}
+        style={{ left: ru ? 302.01 : 268.2 }}
       >
         <HomeImg
           src={`${homeAssets.decoQuoteTr}?v=figma`}

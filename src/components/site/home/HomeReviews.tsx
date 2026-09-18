@@ -6,12 +6,45 @@ import { Button } from "@/components/site/ui/Button";
 import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
+import type { Locale } from "@/lib/catalog/types";
 
 const avatars = {
   avatarKirill: homeAssets.avatarKirill,
   avatarYulia: homeAssets.avatarYulia,
   avatarEkaterina: homeAssets.avatarEkaterina,
 } as const;
+
+const reviewShotsRu = {
+  shot35: homeAssets.shot35,
+  shot36: homeAssets.shot36,
+  shot37: homeAssets.shot37,
+  shot38: homeAssets.shot38,
+  shot39: homeAssets.shot39,
+  shot40: homeAssets.shot40,
+  shot41: homeAssets.shot41,
+  shot42: homeAssets.shot42,
+  shot43: homeAssets.shot43,
+  shot44: homeAssets.shot44,
+  shot45: homeAssets.shot45,
+} as const;
+
+const reviewShotsEn = {
+  shot35: homeAssets.shot35En,
+  shot36: homeAssets.shot36En,
+  shot37: homeAssets.shot37En,
+  shot38: homeAssets.shot38En,
+  shot39: homeAssets.shot39En,
+  shot40: homeAssets.shot40En,
+  shot41: homeAssets.shot41En,
+  shot42: homeAssets.shot42En,
+  shot43: homeAssets.shot43En,
+  shot44: homeAssets.shot44En,
+  shot45: homeAssets.shot45En,
+} as const;
+
+function reviewShots(locale: Locale) {
+  return locale === "en" ? reviewShotsEn : reviewShotsRu;
+}
 
 type ReviewItem = ReturnType<typeof homeT>["reviews"][number];
 
@@ -61,6 +94,7 @@ export function HomeReviewsDesktop() {
   const { copy, reviews } = homeT(locale);
   const routes = useLocalizedRoutes();
   const ru = locale === "ru";
+  const shots = reviewShots(locale);
 
   return (
     <>
@@ -75,57 +109,57 @@ export function HomeReviewsDesktop() {
       </Layer>
 
       <HomeImg
-        src={homeAssets.shot37}
+        src={shots.shot37}
         alt=""
         className="absolute left-[339px] top-[6522px] z-[1] h-[632px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot35}
+        src={shots.shot35}
         alt=""
         className="absolute left-[704px] top-[6522px] z-[1] h-[73px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot36}
+        src={shots.shot36}
         alt=""
         className="absolute left-[704px] top-[6615px] z-[1] h-[156px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot39}
+        src={shots.shot39}
         alt=""
         className="absolute left-[704px] top-[6791px] z-[1] h-[180px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot41}
+        src={shots.shot41}
         alt=""
         className="absolute left-[704px] top-[6991px] z-[1] h-[106px] w-[344px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot38}
+        src={shots.shot38}
         alt=""
         className="absolute left-[1069px] top-[6522px] z-[1] h-[265px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot43}
+        src={shots.shot43}
         alt=""
         className="absolute left-[1069px] top-[6807px] z-[1] h-[98px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot44}
+        src={shots.shot44}
         alt=""
         className="absolute left-[1069px] top-[6925px] z-[1] h-[222px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot40}
+        src={shots.shot40}
         alt=""
         className="absolute left-[1434px] top-[6522px] z-[1] h-[173px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot42}
+        src={shots.shot42}
         alt=""
         className="absolute left-[1434px] top-[6715px] z-[1] h-[309px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
-        src={homeAssets.shot45}
+        src={shots.shot45}
         alt=""
         className="absolute left-[1434px] top-[7044px] z-[1] h-[82px] w-[343px] rounded-[10px] object-cover"
       />
@@ -165,6 +199,7 @@ export function HomeReviewsMobile() {
   const { copy, reviews } = homeT(locale);
   const routes = useLocalizedRoutes();
   const ru = locale === "ru";
+  const shots = reviewShots(locale);
 
   return (
     <>
@@ -193,15 +228,15 @@ export function HomeReviewsMobile() {
 
       <div className="absolute left-5 top-[8048px] z-[1] flex w-[320px] gap-5 overflow-x-auto">
         <HomeImg
-          src={homeAssets.shot37}
+          src={shots.shot37}
           alt=""
           className="h-[531px] w-[290px] shrink-0 rounded-[5px] object-cover"
         />
         <div className="flex w-[290px] shrink-0 flex-col gap-[10px]">
-          <HomeImg src={homeAssets.shot35} alt="" className="h-[61px] rounded-[5px] object-cover" />
-          <HomeImg src={homeAssets.shot36} alt="" className="h-[131px] rounded-[5px] object-cover" />
-          <HomeImg src={homeAssets.shot39} alt="" className="h-[151px] rounded-[5px] object-cover" />
-          <HomeImg src={homeAssets.shot41} alt="" className="h-[89px] rounded-[5px] object-cover" />
+          <HomeImg src={shots.shot35} alt="" className="h-[61px] rounded-[5px] object-cover" />
+          <HomeImg src={shots.shot36} alt="" className="h-[131px] rounded-[5px] object-cover" />
+          <HomeImg src={shots.shot39} alt="" className="h-[151px] rounded-[5px] object-cover" />
+          <HomeImg src={shots.shot41} alt="" className="h-[89px] rounded-[5px] object-cover" />
         </div>
       </div>
 
