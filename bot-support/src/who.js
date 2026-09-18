@@ -91,6 +91,21 @@ function whoHtml(person) {
   return personHeaderHtml(person);
 }
 
+function personCompactHtml(person) {
+  const described = describeCatalogPerson(person);
+  if (described.guest) {
+    const code = guestCode(person.id);
+    if (described.headline === "Гость") {
+      return `Гость · <code>${escapeHtml(code)}</code>`;
+    }
+    return `<b>${escapeHtml(described.headline)}</b> · <code>${escapeHtml(code)}</code>`;
+  }
+  if (described.details[0]) {
+    return `<b>${escapeHtml(described.headline)}</b> · ${escapeHtml(described.details[0])}`;
+  }
+  return `<b>${escapeHtml(described.headline)}</b>`;
+}
+
 function personButtonLabel(person) {
   if (person?.guest) return guestCode(person.id);
   const name = displayName(person?.firstName, person?.lastName);
@@ -127,6 +142,7 @@ module.exports = {
   formatSupportTime,
   personHeaderHtml,
   whoHtml,
+  personCompactHtml,
   personButtonLabel,
   personFromProfile,
   isGuestProfile,

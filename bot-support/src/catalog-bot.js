@@ -7,14 +7,18 @@ const who = require("./who");
 const bot = new Telegraf(config.token);
 const SITE_SUPPORT_URL = "https://betango.dance/support/";
 
-/** adminTelegramId -> catalog_profiles.id */
-const replyTarget = new Map();
+/** In-flight send, so a double-tap cannot post twice. Draft itself lives in DB. */
+const sending = new Set();
 
 const MENU = {
-  waiting: "📥 Ожидают ответа",
-  recent: "🕓 Последние диалоги",
+  waiting: "📥 Входящие",
+  recent: "🕓 Последние",
   help: "❓ Помощь",
 };
+
+const WAITING_LABELS = new Set([MENU.waiting, "📥 Ожидают ответа"]);
+const RECENT_LABELS = new Set([MENU.recent, "🕓 Последние диалоги"]);
+const HELP_LABELS = new Set([MENU.help]);
 
 const adminKeyboard = Markup.keyboard([
   [MENU.waiting],
@@ -45,6 +49,10 @@ function personOf(profile) {
 
 function personHtml(profile) {
   return who.personHeaderHtml(personOf(profile));
+}
+
+function personCompact(profile) {
+  return who.personCompactHtml(personOf(profile));
 }
 
 function fmtTime(value) {
@@ -110,17 +118,6 @@ async function sendHtml(chatId, text, extra = {}) {
   }
 }
 
-function ticketKeyboard(userId, hasHistory) {
-  const rows = [[Markup.button.callback("✍️ Ответить", `catreply:${userId}`)]];
-  const second = [];
-  if (hasHistory) {
-    second.push(Markup.button.callback("📜 История", `cathist:${userId}`));
-  }
-  second.push(Markup.button.callback("✓ Прочитано", `catread:${userId}`));
-  rows.push(second);
-  return Markup.inlineKeyboard(rows);
-}
-
 function replyAndHistoryKeyboard(userId) {
   return Markup.inlineKeyboard([
     [
@@ -146,9 +143,7 @@ function adminDisplayName(from) {
 }
 
 async function requireProfile(userId) {
-  const profile = await db.getCatalogProfile(userId);
-  if (!profile) return null;
-  return profile;
+  return db.getCatalogProfile(userId);
 }
 
 async function showHelp(ctx) {
@@ -156,27 +151,22 @@ async function showHelp(ctx) {
     ctx,
     [
       "🛟 <b>Поддержка сайта BeTango</b>",
-      "Сообщения приходят с betango.dance/support.",
+      "Сюда приходит всё с betango.dance/support.",
       "",
-      "<b>Под карточкой:</b>",
-      "• <b>✍️ Ответить</b> — следующее сообщение (текст, фото или файл) уйдёт человеку на сайт.",
-      "• <b>📜 История</b> — вся переписка с этим человеком.",
-      "• <b>✓ Прочитано</b> — снять непрочитанное, если отвечать пока не нужно.",
+      "<b>Карточка:</b>",
+      "• <b>✍️ Ответить</b> — следующее сообщение уйдёт человеку на сайт.",
+      "• <b>📜 История</b> — переписка. Вложения открываются по ссылке час.",
+      "• <b>✓ Прочитано</b> — снять с входящих без ответа. Если писать не нужно.",
       "",
-      "<b>Меню внизу:</b>",
-      `• <b>${MENU.waiting}</b> — все, кому ещё не ответили.`,
+      "<b>Меню:</b>",
+      `• <b>${MENU.waiting}</b> — ещё не разобрали: не ответили и не прочитали.`,
       `• <b>${MENU.recent}</b> — последние диалоги.`,
       "",
       "<b>Кто есть кто:</b>",
       "• <b>Гость · G-XXXX-XXXX</b> — без аккаунта. Тот же код = тот же браузер.",
-      "• <b>Имя и почта</b> — человек из личного кабинета.",
+      "• Имя и почта — человек из кабинета.",
       "",
-      "Когда кто-то отвечает, остальные админы видят <b>кто</b> и <b>что</b>.",
-      "",
-      "<b>Команды:</b>",
-      "• <code>/history G-XXXX-XXXX</code> или почта",
-      "• <code>/reply G-XXXX-XXXX текст</code>",
-      "• <code>/cancel</code> — отменить начатый ответ",
+      "Ответ или «прочитано» видят все админы. Отмена набора — /cancel.",
     ].join("\n"),
     adminKeyboard,
   );
@@ -188,13 +178,13 @@ async function showWaiting(ctx) {
     rows = await db.getCatalogWaiting();
   } catch (err) {
     log("waiting", err.message);
-    await replyHtml(ctx, "Не удалось загрузить очередь. Попробуйте ещё раз.", adminKeyboard);
+    await replyHtml(ctx, "Не удалось загрузить входящие. Попробуйте ещё раз.", adminKeyboard);
     return;
   }
   if (!rows.length) {
     await replyHtml(
       ctx,
-      "✅ <b>Очереди нет.</b>\nНа все сообщения с сайта уже ответили.",
+      "✅ <b>Входящих нет.</b>\nВсё разобрано: ответили или отметили прочитанным.",
       adminKeyboard,
     );
     return;
@@ -202,7 +192,7 @@ async function showWaiting(ctx) {
   const shown = rows.slice(0, 25);
   await replyHtml(
     ctx,
-    `📥 <b>Ожидают ответа:</b> ${rows.length} ${plural(
+    `📥 <b>Входящие:</b> ${rows.length} ${plural(
       rows.length,
       "человек",
       "человека",
@@ -225,11 +215,11 @@ async function showWaiting(ctx) {
         : "";
     const block = [
       personHtml(row),
-      `🕓 ждёт с ${fmtTime(row.first_waiting_at)} · ${row.waiting_count} ${plural(
+      `🕓 с ${fmtTime(row.first_waiting_at)} · ${row.waiting_count} ${plural(
         row.waiting_count,
-        "сообщение",
-        "сообщения",
-        "сообщений",
+        "непрочитанное",
+        "непрочитанных",
+        "непрочитанных",
       )}`,
       "",
       numbered + more,
@@ -239,7 +229,7 @@ async function showWaiting(ctx) {
   if (rows.length > shown.length) {
     await replyHtml(
       ctx,
-      `<i>Показаны первые ${shown.length} из ${rows.length}. Ответьте на них, чтобы увидеть остальные.</i>`,
+      `<i>Показаны первые ${shown.length} из ${rows.length}. Разберите их, чтобы увидеть остальные.</i>`,
     );
   }
 }
@@ -263,8 +253,8 @@ async function showRecent(ctx) {
     const person = personOf(row);
     const n = index + 1;
     const flag =
-      row.waiting_count > 0 ? `⏳ ${row.waiting_count} ждут` : "✓ отвечено";
-    lines.push(`<b>${n}.</b> ${personHtml(row)} — ${flag}`);
+      row.waiting_count > 0 ? `⏳ ${row.waiting_count}` : "✓";
+    lines.push(`<b>${n}.</b> ${personCompact(row)} — ${flag}`);
     if (row.last_message_preview) {
       lines.push(
         `    <i>${who.escapeHtml(truncate(row.last_message_preview, 80))}</i> · ${fmtTime(
@@ -294,12 +284,25 @@ async function showHistory(ctx, userId) {
     await replyHtml(ctx, `${header}\n\n<i>Сообщений пока нет.</i>`, replyOnlyKeyboard(userId));
     return;
   }
-  const lines = msgs.map((message) => {
+  const files = await Promise.all(
+    msgs.map((message) =>
+      message.storage_path
+        ? db.signCatalogSupportPath(message.storage_path)
+        : Promise.resolve(null),
+    ),
+  );
+  const lines = msgs.map((message, index) => {
     const author =
       message.from_role === "user"
         ? "👤 С сайта"
         : `🛟 ${who.escapeHtml(message.admin_name || "Поддержка")}`;
-    const file = message.storage_path ? "\n📎 вложение" : "";
+    const url = files[index];
+    let file = "";
+    if (url) {
+      file = `\n📎 <a href="${who.escapeHtml(url)}">открыть файл</a>`;
+    } else if (message.storage_path) {
+      file = "\n📎 вложение";
+    }
     return `<b>${fmtTime(message.created_at)}</b> · ${author}\n${who.escapeHtml(
       message.body,
     )}${file}`;
@@ -313,13 +316,13 @@ async function beginReply(ctx, userId) {
     await replyHtml(ctx, "Человек на сайте не найден. Тикет мог устареть.");
     return;
   }
-  replyTarget.set(ctx.from.id, profile.id);
-  await db.markCatalogRead(profile.id).catch((err) => log("markRead", err.message));
+  await db.setAdminDraft(ctx.from.id, profile.id);
   await replyHtml(
     ctx,
     [
       `✍️ Отвечаете:\n${personHtml(profile)}`,
       "Следующее сообщение (текст, фото или файл) уйдёт в чат на сайте.",
+      "Пока не отправите — диалог останется во входящих.",
       "<i>Отмена — /cancel</i>",
     ].join("\n"),
   );
@@ -336,16 +339,12 @@ async function sendReplyToSite({
   if (!profile) return { ok: false, reason: "missing" };
   const text = (body || "").trim() || (storagePath ? "Вложение" : "");
   if (!text && !storagePath) return { ok: false, reason: "empty" };
-  await db.addCatalogAgentMessage({
+  await db.postCatalogAgentReply({
     userId: profile.id,
     body: text,
     storagePath,
     adminTelegramId,
     adminName,
-  });
-  await db.addCatalogSupportReplyNotification({
-    userId: profile.id,
-    body: text,
   });
   return { ok: true, profile };
 }
@@ -364,6 +363,22 @@ async function broadcastReply(from, profile, body) {
       await sendHtml(adminId, text, replyAndHistoryKeyboard(profile.id));
     } catch (err) {
       log("broadcast failed", adminId, err.message);
+    }
+  }
+}
+
+async function broadcastRead(from, profile) {
+  const adminName = adminDisplayName(from);
+  const text = [
+    `✓ <b>${who.escapeHtml(adminName)}</b> снял(а) с входящих:`,
+    personHtml(profile),
+  ].join("\n");
+  for (const adminId of config.adminIds) {
+    if (adminId === from.id) continue;
+    try {
+      await sendHtml(adminId, text, replyAndHistoryKeyboard(profile.id));
+    } catch (err) {
+      log("broadcast read failed", adminId, err.message);
     }
   }
 }
@@ -388,8 +403,7 @@ async function uploadFromTelegram(ctx, userId, fileId, filename, contentType) {
 }
 
 async function resolvePersonQuery(query) {
-  const matches = await db.findCatalogPerson(query);
-  return matches;
+  return db.findCatalogPerson(query);
 }
 
 bot.start(async (ctx) => {
@@ -402,13 +416,13 @@ bot.start(async (ctx) => {
     }
     const hint =
       waitingCount > 0
-        ? `📥 Сейчас ждут ответа: <b>${waitingCount}</b> ${plural(
+        ? `📥 Во входящих: <b>${waitingCount}</b> ${plural(
             waitingCount,
             "человек",
             "человека",
             "человек",
           )}.`
-        : "✅ Неотвеченных сообщений нет.";
+        : "✅ Входящих нет.";
     await replyHtml(
       ctx,
       [
@@ -449,12 +463,13 @@ bot.command("recent", async (ctx) => {
 
 bot.command("cancel", async (ctx) => {
   if (!isAdmin(ctx)) return;
-  if (!replyTarget.has(ctx.from.id)) {
+  const draft = await db.getAdminDraft(ctx.from.id);
+  if (!draft) {
     await ctx.reply("Сейчас нечего отменять.", adminKeyboard);
     return;
   }
-  replyTarget.delete(ctx.from.id);
-  await ctx.reply("Ответ отменён.", adminKeyboard);
+  await db.clearAdminDraft(ctx.from.id);
+  await ctx.reply("Ответ отменён. Диалог остался во входящих.", adminKeyboard);
 });
 
 bot.command("history", async (ctx) => {
@@ -493,7 +508,7 @@ bot.command("reply", async (ctx) => {
     await ctx.reply("Нашлось несколько человек — уточните код или почту.");
     return;
   }
-  replyTarget.delete(ctx.from.id);
+  await db.clearAdminDraft(ctx.from.id);
   const result = await sendReplyToSite({
     userId: matches[0].id,
     body: match[2].trim(),
@@ -525,9 +540,31 @@ bot.action(/^cathist:([0-9a-f-]{36})$/i, async (ctx) => {
 });
 
 bot.action(/^catread:([0-9a-f-]{36})$/i, async (ctx) => {
-  await ctx.answerCbQuery("Отмечено прочитанным");
-  if (!isAdmin(ctx)) return;
-  await db.markCatalogRead(ctx.match[1]).catch((err) => log("read", err.message));
+  if (!isAdmin(ctx)) {
+    await ctx.answerCbQuery();
+    return;
+  }
+  const userId = ctx.match[1];
+  try {
+    const status = await db.getCatalogThreadStatus(userId);
+    await db.markCatalogRead(userId);
+    if (!status.waiting_count) {
+      await ctx.answerCbQuery("Уже разобрано");
+      return;
+    }
+    await ctx.answerCbQuery("Снято с входящих");
+    const profile = await requireProfile(userId);
+    if (!profile) return;
+    await replyHtml(
+      ctx,
+      `✓ Снято с входящих:\n${personHtml(profile)}`,
+      adminKeyboard,
+    );
+    await broadcastRead(ctx.from, profile);
+  } catch (err) {
+    log("read", err.message);
+    await ctx.answerCbQuery("Не получилось");
+  }
 });
 
 bot.on("message", async (ctx) => {
@@ -538,30 +575,36 @@ bot.on("message", async (ctx) => {
   }
 
   const text = ctx.message.text?.trim() || "";
-  if (text === MENU.waiting) {
-    replyTarget.delete(ctx.from.id);
+  if (WAITING_LABELS.has(text)) {
+    await db.clearAdminDraft(ctx.from.id);
     return showWaiting(ctx);
   }
-  if (text === MENU.recent) {
-    replyTarget.delete(ctx.from.id);
+  if (RECENT_LABELS.has(text)) {
+    await db.clearAdminDraft(ctx.from.id);
     return showRecent(ctx);
   }
-  if (text === MENU.help) {
-    replyTarget.delete(ctx.from.id);
+  if (HELP_LABELS.has(text)) {
+    await db.clearAdminDraft(ctx.from.id);
     return showHelp(ctx);
   }
   if (text.startsWith("/")) return;
 
-  if (!replyTarget.has(ctx.from.id)) {
+  const userId = await db.getAdminDraft(ctx.from.id);
+  if (!userId) {
     await replyHtml(
       ctx,
-      "Выберите обращение кнопкой <b>✍️ Ответить</b> или откройте <b>📥 Ожидают ответа</b>.",
+      "Выберите обращение кнопкой <b>✍️ Ответить</b> или откройте <b>📥 Входящие</b>.",
       adminKeyboard,
     );
     return;
   }
 
-  const userId = replyTarget.get(ctx.from.id);
+  if (sending.has(ctx.from.id)) {
+    await ctx.reply("Этот ответ уже отправляется.");
+    return;
+  }
+  sending.add(ctx.from.id);
+
   const caption = ctx.message.caption?.trim() || "";
   let storagePath = null;
   let body = text;
@@ -600,6 +643,9 @@ bot.on("message", async (ctx) => {
       adminName: adminDisplayName(ctx.from),
     });
     if (!result.ok) {
+      if (storagePath) {
+        await db.removeCatalogSupportFile(storagePath).catch(() => {});
+      }
       await ctx.reply(
         result.reason === "missing"
           ? "Человек на сайте не найден."
@@ -607,7 +653,7 @@ bot.on("message", async (ctx) => {
       );
       return;
     }
-    replyTarget.delete(ctx.from.id);
+    await db.clearAdminDraft(ctx.from.id);
     await replyHtml(
       ctx,
       `✅ Ответ ушёл на сайт:\n${personHtml(result.profile)}`,
@@ -616,12 +662,17 @@ bot.on("message", async (ctx) => {
     await broadcastReply(ctx.from, result.profile, body);
   } catch (err) {
     log("reply failed", err?.message || err);
+    if (storagePath) {
+      await db.removeCatalogSupportFile(storagePath).catch(() => {});
+    }
     const tooBig = err?.message === "file_too_large";
     await ctx.reply(
       tooBig
         ? "Файл больше 12 МБ — сайт такой не примет. Отправьте поменьше или ссылкой."
-        : "Не получилось отправить на сайт. Попробуйте ещё раз или /cancel.",
+        : "Не получилось отправить на сайт. Черновик сохранён — попробуйте ещё раз или /cancel.",
     );
+  } finally {
+    sending.delete(ctx.from.id);
   }
 });
 
@@ -634,7 +685,7 @@ async function setupCommands() {
   await bot.telegram.setMyCommands([]);
   const adminCommands = [
     { command: "start", description: "Меню поддержки" },
-    { command: "waiting", description: "Ожидают ответа" },
+    { command: "waiting", description: "Входящие" },
     { command: "recent", description: "Последние диалоги" },
     { command: "history", description: "История: /history код" },
     { command: "reply", description: "Ответ: /reply код текст" },

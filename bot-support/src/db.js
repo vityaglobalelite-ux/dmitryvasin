@@ -246,7 +246,8 @@ async function getCatalogThreadStatus(userId) {
     { p_user_id: userId },
   );
   if (error) throw error;
-  return (data && data[0]) || { total_messages: 0, waiting_count: 0 };
+  const row = Array.isArray(data) ? data[0] : data;
+  return row || { total_messages: 0, waiting_count: 0 };
 }
 
 async function markCatalogRead(userId) {
@@ -291,6 +292,83 @@ async function uploadCatalogSupportFile({
   return path;
 }
 
+async function postCatalogAgentReply({
+  userId,
+  body,
+  storagePath = null,
+  adminTelegramId = null,
+  adminName = null,
+}) {
+  if (!UUID_RE.test(String(userId || ""))) {
+    throw new Error("invalid_user");
+  }
+  const { data, error } = await supabase.rpc(
+    "catalog_support_post_agent_reply",
+    {
+      p_user_id: userId,
+      p_body: body ?? "",
+      p_storage_path: storagePath,
+      p_admin_telegram_id: adminTelegramId,
+      p_admin_name: adminName,
+    },
+  );
+  if (error) throw error;
+  return Array.isArray(data) ? data[0] : data;
+}
+
+async function getAdminDraft(adminTelegramId) {
+  const id = Number(adminTelegramId);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const { data, error } = await supabase
+    .from("catalog_support_admin_drafts")
+    .select("user_id")
+    .eq("admin_telegram_id", id)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.user_id || null;
+}
+
+async function setAdminDraft(adminTelegramId, userId) {
+  const id = Number(adminTelegramId);
+  if (!Number.isFinite(id) || id <= 0) throw new Error("invalid_admin");
+  if (!UUID_RE.test(String(userId || ""))) throw new Error("invalid_user");
+  const { error } = await supabase.from("catalog_support_admin_drafts").upsert(
+    {
+      admin_telegram_id: id,
+      user_id: userId,
+      updated_at: nowIso(),
+    },
+    { onConflict: "admin_telegram_id" },
+  );
+  if (error) throw error;
+}
+
+async function clearAdminDraft(adminTelegramId) {
+  const id = Number(adminTelegramId);
+  if (!Number.isFinite(id) || id <= 0) return;
+  const { error } = await supabase
+    .from("catalog_support_admin_drafts")
+    .delete()
+    .eq("admin_telegram_id", id);
+  if (error) throw error;
+}
+
+async function signCatalogSupportPath(storagePath, ttlSec = 60 * 60) {
+  const path = String(storagePath || "").trim();
+  if (!path || path.includes("..")) return null;
+  const { data, error } = await supabase.storage
+    .from(SUPPORT_BUCKET)
+    .createSignedUrl(path, ttlSec);
+  if (error || !data?.signedUrl) return null;
+  return data.signedUrl;
+}
+
+async function removeCatalogSupportFile(storagePath) {
+  const path = String(storagePath || "").trim();
+  if (!path || path.includes("..")) return;
+  await supabase.storage.from(SUPPORT_BUCKET).remove([path]);
+}
+
 async function addCatalogSupportReplyNotification({ userId, body }) {
   const preview =
     body.length > 240 ? `${body.slice(0, 240)}…` : body;
@@ -316,12 +394,18 @@ module.exports = {
   markReadForAdmin,
   getCatalogProfile,
   addCatalogAgentMessage,
+  postCatalogAgentReply,
   listCatalogMessages,
   getCatalogWaiting,
   getCatalogRecent,
   getCatalogThreadStatus,
   markCatalogRead,
   findCatalogPerson,
+  getAdminDraft,
+  setAdminDraft,
+  clearAdminDraft,
+  signCatalogSupportPath,
+  removeCatalogSupportFile,
   uploadCatalogSupportFile,
   addCatalogSupportReplyNotification,
 };

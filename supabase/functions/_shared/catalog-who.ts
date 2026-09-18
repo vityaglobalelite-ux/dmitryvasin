@@ -139,7 +139,7 @@ export function ticketHtml(params: TicketView): string {
   }
   const meta: string[] = [];
   if (timeLabel) meta.push(`🕓 ${escapeHtml(timeLabel)}`);
-  if (waiting > 1) meta.push(`⏳ без ответа: ${waiting}`);
+  if (waiting > 1) meta.push(`⏳ в очереди: ${waiting}`);
   if (meta.length) lines.push(meta.join(" · "));
   if (params.filename) {
     lines.push(`📎 <code>${escapeHtml(params.filename)}</code>`);
@@ -161,7 +161,7 @@ export function ticketPlain(params: TicketView): string {
   }
   const meta: string[] = [];
   if (timeLabel) meta.push(timeLabel);
-  if (waiting > 1) meta.push(`без ответа: ${waiting}`);
+  if (waiting > 1) meta.push(`в очереди: ${waiting}`);
   if (meta.length) lines.push(meta.join(" · "));
   if (params.filename) lines.push(`Файл: ${params.filename}`);
   const body = previewText(params.body, 800);
