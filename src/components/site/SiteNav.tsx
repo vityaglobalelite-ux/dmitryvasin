@@ -10,6 +10,7 @@ import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useCatalogReturnHref } from "@/lib/catalog/return-to";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { NotificationBell } from "@/components/site/notifications/NotificationBell";
+import { SupportNavLink } from "@/components/site/notifications/SupportNavLink";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
 
 function CartMark({ className }: { className?: string }) {
@@ -96,15 +97,24 @@ export function SiteNav() {
           className="hidden items-center gap-7 text-[16px] leading-normal text-text min-[601px]:flex"
           aria-label="Primary"
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="transition-opacity duration-150 hover:opacity-70"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.href === routes.accountSupport ? (
+              <SupportNavLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                className="transition-opacity duration-150 hover:opacity-70"
+              />
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="transition-opacity duration-150 hover:opacity-70"
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
         </nav>
 
         <div className="flex items-center gap-5 max-[600px]:w-full max-[600px]:gap-3">
@@ -179,16 +189,26 @@ export function SiteNav() {
           className="hidden flex-col gap-4 bg-white px-5 pb-5 pt-4 max-[600px]:flex"
           aria-label="Primary"
         >
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[16px] text-text transition-opacity hover:opacity-70"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) =>
+            item.href === routes.accountSupport ? (
+              <SupportNavLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                onClick={() => setOpen(false)}
+              />
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
         </nav>
       ) : null}
     </header>

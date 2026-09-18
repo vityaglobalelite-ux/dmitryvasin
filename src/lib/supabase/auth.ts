@@ -12,7 +12,9 @@ const GUEST_EMAIL_RE = /@guest\.betango\.internal$/i;
 
 export function isGuestUser(user: User): boolean {
   if (user.is_anonymous === true) return true;
-  if (user.user_metadata?.[GUEST_META] === true) return true;
+  const flag = user.user_metadata?.[GUEST_META];
+  if (flag === true) return true;
+  if (flag === false) return false;
   return GUEST_EMAIL_RE.test(user.email ?? "");
 }
 
@@ -183,16 +185,6 @@ export async function ensureSupportSession(): Promise<AuthUser> {
     return mapped;
   }
 
-  const { data, error } = await supabase.auth.signInAnonymously();
-  if (!error && data.user) {
-    const mapped = mapAuthUser(data.user);
-    rememberAuthUser(mapped);
-    await waitForCatalogProfile(mapped.id);
-    return mapped;
-  }
-  if (error && !/anonymous sign-ins are disabled/i.test(error.message)) {
-    throw new Error(error.message);
-  }
   return openMintedGuestSession(supabase);
 }
 

@@ -1,4 +1,5 @@
 const { createClient } = require("@supabase/supabase-js");
+const { randomUUID } = require("crypto");
 const ws = require("ws");
 const { config } = require("./config");
 
@@ -130,6 +131,24 @@ async function markReadForAdmin(chatId) {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const GUEST_EMAIL_RE = /@guest\.betango\.internal$/i;
+const SUPPORT_BUCKET = "catalog-support";
+const SUPPORT_MAX_BYTES = 12 * 1024 * 1024;
+
+function catalogWho(profile) {
+  const email = (profile?.email || "").trim();
+  if (!email || GUEST_EMAIL_RE.test(email)) return "Гость · без email";
+  return email;
+}
+
+function sanitizeFilename(name) {
+  const trimmed = String(name || "file").trim().slice(0, 80);
+  const cleaned = trimmed
+    .replace(/[/\\]+/g, "")
+    .replace(/[^a-zA-Z0-9._-]+/g, "_")
+    .replace(/^\.+/, "");
+  return cleaned || "file";
+}
 
 async function getCatalogProfile(userId) {
   if (!UUID_RE.test(String(userId || ""))) return null;
@@ -142,19 +161,42 @@ async function getCatalogProfile(userId) {
   return data;
 }
 
-async function addCatalogAgentMessage({ userId, body }) {
+async function addCatalogAgentMessage({ userId, body, storagePath = null }) {
   const { data, error } = await supabase
     .from("catalog_support_messages")
     .insert({
       user_id: userId,
       from_role: "agent",
       body,
-      storage_path: null,
+      storage_path: storagePath,
     })
     .select("*")
     .single();
   if (error) throw error;
   return data;
+}
+
+async function uploadCatalogSupportFile({
+  userId,
+  buffer,
+  filename,
+  contentType,
+}) {
+  if (!UUID_RE.test(String(userId || ""))) {
+    throw new Error("invalid_user");
+  }
+  if (!buffer?.length) throw new Error("empty_file");
+  if (buffer.length > SUPPORT_MAX_BYTES) throw new Error("file_too_large");
+  const safe = sanitizeFilename(filename);
+  const path = `${userId}/${randomUUID()}-${safe}`;
+  const { error } = await supabase.storage
+    .from(SUPPORT_BUCKET)
+    .upload(path, buffer, {
+      contentType: contentType || "application/octet-stream",
+      upsert: false,
+    });
+  if (error) throw error;
+  return path;
 }
 
 async function addCatalogSupportReplyNotification({ userId, body }) {
@@ -181,6 +223,8 @@ module.exports = {
   markReadForUser,
   markReadForAdmin,
   getCatalogProfile,
+  catalogWho,
   addCatalogAgentMessage,
+  uploadCatalogSupportFile,
   addCatalogSupportReplyNotification,
 };

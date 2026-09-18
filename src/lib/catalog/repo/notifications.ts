@@ -1,6 +1,13 @@
 import type { Notification } from "@/lib/catalog/types";
 import { getSupabase } from "@/lib/supabase/client";
-import { requireUserId, throwIfPostgrestError } from "@/lib/catalog/repo/internal";
+import {
+  AuthRequiredError,
+  requireUserId,
+  throwIfPostgrestError,
+} from "@/lib/catalog/repo/internal";
+
+export const UNREAD_CHANGED_EVENT = "catalog-unread-changed";
+export const SUPPORT_REPLY_TYPE = "support_reply";
 
 type NotificationRow = {
   id: string;
@@ -24,6 +31,20 @@ function mapNotificationRow(row: NotificationRow): Notification {
     read: row.read,
     createdAt: row.created_at,
   };
+}
+
+export function emitUnreadChanged(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(UNREAD_CHANGED_EVENT));
+}
+
+async function requireUserIdOrNull(): Promise<string | null> {
+  try {
+    return await requireUserId();
+  } catch (error) {
+    if (error instanceof AuthRequiredError) return null;
+    throw error;
+  }
 }
 
 export async function listNotifications(): Promise<Notification[]> {
@@ -54,19 +75,64 @@ export async function markNotificationRead(id: string): Promise<void> {
     .eq("user_id", userId);
 
   throwIfPostgrestError(error);
+  emitUnreadChanged();
 }
 
-export async function countUnreadNotifications(): Promise<number> {
+export async function markSupportNotificationsRead(): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const userId = await requireUserIdOrNull();
+  if (!userId) return;
+
+  const { error } = await supabase
+    .from("catalog_notifications")
+    .update({ read: true })
+    .eq("user_id", userId)
+    .eq("type", SUPPORT_REPLY_TYPE)
+    .eq("read", false);
+
+  throwIfPostgrestError(error);
+  emitUnreadChanged();
+}
+
+export async function countUnreadNotifications(
+  type?: string,
+): Promise<number> {
   const supabase = getSupabase();
   if (!supabase) return 0;
 
-  await requireUserId();
+  const userId = await requireUserIdOrNull();
+  if (!userId) return 0;
 
-  const { count, error } = await supabase
+  let query = supabase
     .from("catalog_notifications")
     .select("id", { count: "exact", head: true })
     .eq("read", false);
 
+  if (type) query = query.eq("type", type);
+
+  const { count, error } = await query;
   throwIfPostgrestError(error);
   return count ?? 0;
+}
+
+export async function peekUnreadSupportReply(): Promise<Notification | null> {
+  const supabase = getSupabase();
+  if (!supabase) return null;
+
+  const userId = await requireUserIdOrNull();
+  if (!userId) return null;
+
+  const { data, error } = await supabase
+    .from("catalog_notifications")
+    .select("id, user_id, type, title, body, href, read, created_at")
+    .eq("type", SUPPORT_REPLY_TYPE)
+    .eq("read", false)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  throwIfPostgrestError(error);
+  return data ? mapNotificationRow(data as NotificationRow) : null;
 }

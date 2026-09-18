@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { isCatalogGuest } from "../_shared/catalog-guest.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -95,30 +96,52 @@ function filenameFromPath(storagePath: string): string {
   return last;
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+function whoLine(email: string, guest?: boolean): string {
+  if (guest && (email === "гость сайта" || email === "—")) {
+    return "Гость · без email";
+  }
+  if (guest) return `Гость · ${email}`;
+  return `Аккаунт · ${email}`;
+}
+
 function replyKeyboard(userId: string): string {
   return JSON.stringify({
     inline_keyboard: [
-      [{ text: "Ответить на сайте", callback_data: `catreply:${userId}` }],
+      [{ text: "Ответить", callback_data: `catreply:${userId}` }],
     ],
   });
 }
 
-function ticketText(params: {
+function ticketHtml(params: {
   email: string;
-  userId: string;
   body: string;
   filename?: string;
   guest?: boolean;
 }): string {
   const lines = [
-    params.guest ? "Тикет с сайта каталога (гость)" : "Тикет с сайта каталога",
-    `Email: ${params.email}`,
-    `user_id: ${params.userId}`,
+    "<b>Новый вопрос с сайта</b>",
+    "betango.dance/support",
+    "",
+    escapeHtml(whoLine(params.email, params.guest)),
   ];
   if (params.filename) {
-    lines.push(`Вложение: ${params.filename}`);
+    lines.push(`Файл: <code>${escapeHtml(params.filename)}</code>`);
   }
-  lines.push("", previewText(params.body, PREVIEW_LIMIT) || "—");
+  const body = previewText(params.body, PREVIEW_LIMIT);
+  if (body && body !== "—") {
+    lines.push("", escapeHtml(body));
+  }
+  lines.push(
+    "",
+    "<i>Нажмите «Ответить» — сообщение придёт человеку в чат на сайте.</i>",
+  );
   return lines.join("\n");
 }
 
@@ -151,6 +174,7 @@ async function telegramFile(
   const form = new FormData();
   form.set("chat_id", String(chatId));
   form.set("caption", previewText(caption, CAPTION_LIMIT));
+  form.set("parse_mode", "HTML");
   form.set("reply_markup", replyMarkup);
   form.set(method === "sendPhoto" ? "photo" : "document", file, filename);
   const res = await fetch(`${TELEGRAM_API}/bot${token}/${method}`, {
@@ -254,10 +278,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (profileErr) throw profileErr;
 
-    const guest =
-      user.is_anonymous === true ||
-      user.user_metadata?.catalog_guest === true ||
-      /@guest\.betango\.internal$/i.test(user.email ?? "");
+    const guest = isCatalogGuest(user);
     const rawEmail =
       (profileRow as ProfileRow | null)?.email?.trim() ||
       user.email?.trim() ||
@@ -276,9 +297,8 @@ Deno.serve(async (req) => {
     }
 
     const filename = storagePath ? filenameFromPath(storagePath) : undefined;
-    const text = ticketText({
+    const text = ticketHtml({
       email,
-      userId: user.id,
       body: message.body,
       filename,
       guest,
@@ -332,6 +352,8 @@ Deno.serve(async (req) => {
           ok = await telegramJson(botToken, "sendMessage", {
             chat_id: adminId,
             text,
+            parse_mode: "HTML",
+            disable_web_page_preview: true,
             reply_markup: JSON.parse(keyboard),
           });
         }

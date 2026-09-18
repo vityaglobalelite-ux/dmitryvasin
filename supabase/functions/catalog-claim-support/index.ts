@@ -1,18 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { isCatalogGuest } from "../_shared/catalog-guest.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const SUPPORT_BUCKET = "catalog-support";
-function isCatalogGuest(user: {
-  is_anonymous?: boolean;
-  email?: string | null;
-  user_metadata?: Record<string, unknown> | null;
-}): boolean {
-  if (user.is_anonymous === true) return true;
-  if (user.user_metadata?.catalog_guest === true) return true;
-  return /@guest\.betango\.internal$/i.test(user.email ?? "");
-}
 
 type ClaimBody = {
   guestAccessToken?: unknown;

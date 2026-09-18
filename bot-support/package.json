@@ -4,7 +4,8 @@
   "private": true,
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "start:catalog": "node src/catalog-bot.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",

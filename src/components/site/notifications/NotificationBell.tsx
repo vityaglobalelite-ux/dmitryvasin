@@ -3,26 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { notificationCopy } from "@/components/site/notifications/copy";
+import { notificationT } from "@/components/site/notifications/copy";
+import { useUnreadNotifications } from "@/components/site/notifications/UnreadProvider";
 import { supportAssets } from "@/components/site/support/assets";
 import { siteAssets } from "@/lib/catalog/assets";
 import { useSessionUser } from "@/lib/catalog/hooks";
 import { useLocale } from "@/lib/catalog/locale-context";
 import { withLocalePrefix } from "@/lib/catalog/locale";
 import {
-  countUnreadNotifications,
   listNotifications,
   markNotificationRead,
 } from "@/lib/catalog/repo/notifications";
-import { getSupabase } from "@/lib/supabase/client";
 import type { Notification } from "@/lib/catalog/types";
 
-const POLL_MS = 15000;
-
-function formatTime(iso: string): string {
+function formatTime(iso: string, locale: "ru" | "en"): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ru-RU", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -33,30 +30,21 @@ function formatTime(iso: string): string {
 export function NotificationBell() {
   const { data: user, loading } = useSessionUser();
   const locale = useLocale();
+  const copy = notificationT(locale);
+  const { unread, refresh } = useUnreadNotifications();
   const router = useRouter();
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
-  const [unread, setUnread] = useState(0);
   const [items, setItems] = useState<Notification[]>([]);
   const [listError, setListError] = useState(false);
   const [listLoading, setListLoading] = useState(false);
-
-  const refreshCount = useCallback(async () => {
-    if (!user) return;
-    try {
-      setUnread(await countUnreadNotifications());
-    } catch {
-      /* keep last count */
-    }
-  }, [user]);
 
   const refreshList = useCallback(async () => {
     if (!user) return;
     try {
       const rows = await listNotifications();
       setItems(rows);
-      setUnread(rows.filter((row) => !row.read).length);
       setListError(false);
     } catch {
       setListError(true);
@@ -66,26 +54,6 @@ export function NotificationBell() {
   }, [user]);
 
   useEffect(() => {
-    if (loading || !user) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const count = await countUnreadNotifications();
-        if (!cancelled) setUnread(count);
-      } catch {
-        /* keep last count */
-      }
-    })();
-    const id = window.setInterval(() => {
-      void refreshCount();
-    }, POLL_MS);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [loading, refreshCount, user]);
-
-  useEffect(() => {
     if (!open || !user) return;
     let cancelled = false;
     (async () => {
@@ -93,7 +61,6 @@ export function NotificationBell() {
         const rows = await listNotifications();
         if (cancelled) return;
         setItems(rows);
-        setUnread(rows.filter((row) => !row.read).length);
         setListError(false);
       } catch {
         if (!cancelled) setListError(true);
@@ -107,29 +74,9 @@ export function NotificationBell() {
   }, [open, user]);
 
   useEffect(() => {
-    if (!user) return;
-    const supabase = getSupabase();
-    if (!supabase) return;
-    const channel = supabase
-      .channel(`catalog_notifications:${user.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "catalog_notifications",
-          filter: `user_id=eq.${user.id}`,
-        },
-        () => {
-          void refreshCount();
-          if (open) void refreshList();
-        },
-      )
-      .subscribe();
-    return () => {
-      void supabase.removeChannel(channel);
-    };
-  }, [open, refreshCount, refreshList, user]);
+    if (!open) return;
+    void refreshList();
+  }, [open, refreshList, unread]);
 
   useEffect(() => {
     if (!open) return;
@@ -158,7 +105,7 @@ export function NotificationBell() {
     setItems((prev) =>
       prev.map((row) => (row.id === item.id ? { ...row, read: true } : row)),
     );
-    setUnread((value) => Math.max(0, item.read ? value : value - 1));
+    void refresh();
     setOpen(false);
     if (item.href) router.push(withLocalePrefix(item.href, locale));
   }
@@ -172,7 +119,7 @@ export function NotificationBell() {
       <button
         type="button"
         className="relative block size-[35px] transition-transform duration-150 hover:scale-[1.04] active:scale-95 max-[600px]:size-8"
-        aria-label={notificationCopy.label}
+        aria-label={copy.label}
         aria-expanded={open}
         aria-controls={panelId}
         onClick={() => {
@@ -214,12 +161,12 @@ export function NotificationBell() {
         <div
           id={panelId}
           role="dialog"
-          aria-label={notificationCopy.label}
+          aria-label={copy.label}
           className="absolute right-0 z-[60] mt-3 w-[min(calc(100vw-40px),360px)] overflow-hidden rounded-[20px] border border-[#ececec] bg-white"
         >
           <div className="border-b border-[#ececec] px-5 py-3">
             <p className="text-[16px] font-semibold leading-[1.3] text-text">
-              {notificationCopy.label}
+              {copy.label}
             </p>
           </div>
           <div className="max-h-[min(70vh,420px)] overflow-y-auto">
@@ -231,11 +178,11 @@ export function NotificationBell() {
               </div>
             ) : listError ? (
               <p className="p-5 text-[13px] leading-[1.5] text-text/70">
-                {notificationCopy.error}
+                {copy.error}
               </p>
             ) : items.length === 0 ? (
               <p className="p-5 text-[13px] leading-[1.5] text-text/70">
-                {notificationCopy.empty}
+                {copy.empty}
               </p>
             ) : (
               <ul>
@@ -250,7 +197,7 @@ export function NotificationBell() {
                           void onItemClick(item);
                         }}
                       >
-                        <NotificationRow item={item} />
+                        <NotificationRow item={item} locale={locale} />
                       </Link>
                     ) : (
                       <button
@@ -258,7 +205,7 @@ export function NotificationBell() {
                         className="block w-full px-5 py-3 text-left transition-colors hover:bg-light-gray"
                         onClick={() => void onItemClick(item)}
                       >
-                        <NotificationRow item={item} />
+                        <NotificationRow item={item} locale={locale} />
                       </button>
                     )}
                   </li>
@@ -272,7 +219,13 @@ export function NotificationBell() {
   );
 }
 
-function NotificationRow({ item }: { item: Notification }) {
+function NotificationRow({
+  item,
+  locale,
+}: {
+  item: Notification;
+  locale: "ru" | "en";
+}) {
   return (
     <>
       <span className="flex items-baseline justify-between gap-3">
@@ -285,7 +238,7 @@ function NotificationRow({ item }: { item: Notification }) {
           {item.title}
         </span>
         <span className="shrink-0 text-[13px] tabular-nums text-text/50">
-          {formatTime(item.createdAt)}
+          {formatTime(item.createdAt, locale)}
         </span>
       </span>
       <span className="mt-1 block text-[13px] leading-[1.4] text-text/70">

@@ -29,18 +29,6 @@ const ru = {
   deliveryFailed: "Не доставлено",
   deliveryRetry: "Повторить",
   backToAccount: "В кабинет",
-  keepTitle: "Чтобы не потерять ответ",
-  keepBody:
-    "Мы запомнили этот чат в этом браузере. С другого устройства его не увидеть — оставьте email или создайте аккаунт.",
-  keepEmailLabel: "Email",
-  keepEmailPlaceholder: "you@email.com",
-  keepSave: "Сохранить",
-  keepSaving: "Сохраняем…",
-  keepSaved: "Записали. Если понадобится — поддержка сможет написать вам на почту.",
-  keepInvalid: "Проверьте адрес почты.",
-  keepError: "Не получилось сохранить email. Попробуйте ещё раз.",
-  keepSignup: "Создать аккаунт",
-  identifiedHint: "Переписка привязана к вашему аккаунту — откроется с любого устройства.",
   sendErrorGuest:
     "Не получилось открыть диалог. Обновите страницу и попробуйте ещё раз.",
 } as const;
@@ -74,18 +62,6 @@ const en = {
   deliveryFailed: "Not delivered",
   deliveryRetry: "Retry",
   backToAccount: "Account",
-  keepTitle: "Don’t lose the reply",
-  keepBody:
-    "We saved this chat in this browser. It won’t follow you to another device — leave an email or create an account.",
-  keepEmailLabel: "Email",
-  keepEmailPlaceholder: "you@email.com",
-  keepSave: "Save",
-  keepSaving: "Saving…",
-  keepSaved: "Saved. Support can reach you by email if needed.",
-  keepInvalid: "Check the email address.",
-  keepError: "Couldn’t save the email. Try again.",
-  keepSignup: "Create an account",
-  identifiedHint: "This conversation is on your account — it opens on any device.",
   sendErrorGuest:
     "Couldn’t open the conversation. Refresh the page and try again.",
 };

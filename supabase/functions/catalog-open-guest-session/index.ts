@@ -47,9 +47,9 @@ function requestOrigin(req: Request): string | null {
 }
 
 function originAllowed(origin: string | null, allowlist: string[]): boolean {
-  if (!origin) return allowlist.length === 0;
+  if (!origin) return false;
   if (isLocalOrigin(origin)) return true;
-  if (allowlist.length === 0) return true;
+  if (allowlist.length === 0) return false;
   return allowlist.includes(stripSlash(origin));
 }
 

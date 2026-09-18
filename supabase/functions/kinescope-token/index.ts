@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
+import { isCatalogGuest } from "../_shared/catalog-guest.ts";
 
 const LOCALES = ["ru", "en"] as const;
 type CatalogLocale = (typeof LOCALES)[number];
@@ -263,7 +264,7 @@ Deno.serve(async (req) => {
       data: { user },
       error: userErr,
     } = await userClient.auth.getUser();
-    if (userErr || !user || user.is_anonymous === true || user.user_metadata?.catalog_guest === true) {
+    if (userErr || !user || isCatalogGuest(user)) {
       return jsonResponse({ error: "unauthorized" }, 401);
     }
 

@@ -12,7 +12,6 @@ import {
   type KeyboardEvent,
 } from "react";
 import { AuthBanner } from "@/components/site/auth/AuthPrimitives";
-import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { accountAssets } from "@/components/site/account/assets";
 import { supportAssets } from "@/components/site/support/assets";
 import { supportT, type SupportCopy } from "@/components/site/support/copy";
@@ -28,18 +27,17 @@ import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { AuthRequiredError } from "@/lib/catalog/repo/internal";
 import {
   createSupportAttachmentSignedUrl,
-  getSupportContactEmail,
   isSupportImageFile,
   isSupportImagePath,
   listSupportMessages,
   relaySupportMessageReliable,
-  saveSupportContactEmail,
   sendSupportMessage,
   SUPPORT_MAX_BYTES,
   SUPPORT_PREVIEW_TRANSFORM,
   supportFilename,
   uploadSupportAttachment,
 } from "@/lib/catalog/repo/support";
+import { markSupportNotificationsRead } from "@/lib/catalog/repo/notifications";
 import { isIdentifiedUser, type Locale, type SupportMessage } from "@/lib/catalog/types";
 import { ensureSupportSession } from "@/lib/supabase/auth";
 import { getSupabase } from "@/lib/supabase/client";
@@ -165,6 +163,9 @@ export function SupportChatView() {
     setMessages(rows);
     setError(null);
     await hydrateSigned(rows);
+    await markSupportNotificationsRead().catch(() => {
+      /* unread badge can retry on next poll */
+    });
   }, [hydrateSigned]);
 
   const load = useCallback(async () => {
@@ -174,6 +175,9 @@ export function SupportChatView() {
       setError(null);
       setLoading(false);
       await hydrateSigned(rows);
+      await markSupportNotificationsRead().catch(() => {
+        /* unread badge can retry on next poll */
+      });
     } catch (err) {
       setError(toError(err));
       setMessages([]);
@@ -255,6 +259,9 @@ export function SupportChatView() {
         setError(null);
         setLoading(false);
         await hydrateSigned(rows);
+        await markSupportNotificationsRead().catch(() => {
+          /* unread badge can retry on next poll */
+        });
       } catch (err) {
         if (cancelled) return;
         setError(toError(err));
@@ -347,14 +354,6 @@ export function SupportChatView() {
           </p>
         </header>
 
-        {identified ? (
-          <p className="max-w-[640px] text-[13px] leading-[1.5] text-text/55">
-            {copy.identifiedHint}
-          </p>
-        ) : messages.length > 0 ? (
-          <SupportKeepCard />
-        ) : null}
-
         {loading ? (
           <SupportThreadSkeleton />
         ) : error ? (
@@ -399,99 +398,6 @@ export function SupportChatView() {
         onClose={() => setViewer(null)}
       />
     </main>
-  );
-}
-
-function SupportKeepCard() {
-  const copy = supportT(useLocale());
-  const { openAuth } = useAuthModal();
-  const [email, setEmail] = useState("");
-  const [saved, setSaved] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    void getSupportContactEmail()
-      .then((value) => {
-        if (cancelled || !value) return;
-        setSaved(value);
-        setEmail(value);
-      })
-      .catch(() => {
-        /* keep empty */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  async function onSave(event: FormEvent) {
-    event.preventDefault();
-    const next = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
-      setError(copy.keepInvalid);
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await saveSupportContactEmail(next);
-      setSaved(next);
-    } catch {
-      setError(copy.keepError);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="overflow-hidden rounded-[24px] bg-light-gray p-6 max-[600px]:rounded-[14px] max-[600px]:p-[15px]">
-      <p className="text-[16px] font-semibold leading-[1.3] text-text max-[600px]:text-[15px]">
-        {copy.keepTitle}
-      </p>
-      <p className="mt-2 max-w-[640px] text-[14px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
-        {copy.keepBody}
-      </p>
-      {saved ? (
-        <p className="mt-4 text-[14px] leading-[1.5] text-plum">{copy.keepSaved}</p>
-      ) : (
-        <form
-          onSubmit={(event) => void onSave(event)}
-          className="mt-5 flex flex-wrap items-stretch gap-3"
-        >
-          <label className="sr-only" htmlFor="support-keep-email">
-            {copy.keepEmailLabel}
-          </label>
-          <input
-            id="support-keep-email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(event) => {
-              setEmail(event.target.value);
-              if (error) setError(null);
-            }}
-            placeholder={copy.keepEmailPlaceholder}
-            className="h-[50px] min-w-[min(100%,240px)] flex-1 rounded-[16px] border border-[#d9d9d9] bg-white px-4 text-[15px] text-text outline-none transition-colors placeholder:text-[#d9d9d9] focus:border-[rgba(76,13,50,0.4)]"
-          />
-          <Button type="submit" disabled={busy} className="h-[50px] px-6">
-            {busy ? copy.keepSaving : copy.keepSave}
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-[50px] px-6"
-            onClick={() => openAuth("signup")}
-          >
-            {copy.keepSignup}
-          </Button>
-        </form>
-      )}
-      {error ? (
-        <p className="mt-3 text-[13px] leading-[1.4] text-accent-red">{error}</p>
-      ) : null}
-    </section>
   );
 }
 

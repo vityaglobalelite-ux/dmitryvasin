@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { AuthEntryChip } from "@/components/site/auth/AuthModal";
 import { CartCount } from "@/components/site/cart/CartCount";
+import { SupportNavLink } from "@/components/site/notifications/SupportNavLink";
 import { LangDesktop, LangMobile } from "@/components/site/SiteLangSwitcher";
 import { siteAssets } from "@/lib/catalog/assets";
 import { clubPath } from "@/lib/club-config";
@@ -71,15 +72,24 @@ export function HomeHeaderDesktop() {
         className="absolute left-[240px] top-[10px] flex items-center gap-7 text-[16px] leading-normal text-text"
         aria-label="Primary"
       >
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="transition-opacity duration-150 hover:opacity-70"
-          >
-            {item.label}
-          </Link>
-        ))}
+        {items.map((item) =>
+          item.href === routes.accountSupport ? (
+            <SupportNavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              className="transition-opacity duration-150 hover:opacity-70"
+            />
+          ) : (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="transition-opacity duration-150 hover:opacity-70"
+            >
+              {item.label}
+            </Link>
+          ),
+        )}
       </nav>
       <div className="absolute right-[242px] top-0 flex h-[35px] items-center gap-5">
         <LangDesktop />
@@ -152,16 +162,26 @@ export function HomeHeaderMobile() {
           className="absolute left-5 top-[50px] z-50 flex w-[320px] flex-col gap-4 rounded-[16px] bg-white p-4 shadow-[0_8px_30px_rgba(76,13,50,0.12)]"
           aria-label="Primary"
         >
-          {items.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-[16px] text-text transition-opacity hover:opacity-70"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {items.map((item) =>
+            item.href === routes.accountSupport ? (
+              <SupportNavLink
+                key={item.href}
+                href={item.href}
+                label={item.label}
+                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                onClick={() => setOpen(false)}
+              />
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                onClick={() => setOpen(false)}
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
         </nav>
       ) : null}
     </>

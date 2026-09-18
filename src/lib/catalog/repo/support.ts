@@ -10,7 +10,6 @@ import {
 export const SUPPORT_BUCKET = "catalog-support";
 export const SUPPORT_MAX_BYTES = 12 * 1024 * 1024;
 const SIGNED_URL_TTL_SEC = 60 * 60;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UUID_FILE_PREFIX_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}-/i;
 const SUPPORT_IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|bmp|avif|heic|heif)$/i;
@@ -83,38 +82,6 @@ export async function listSupportMessages(): Promise<SupportMessage[]> {
     if (message) result.push(message);
   }
   return result;
-}
-
-export async function saveSupportContactEmail(email: string): Promise<void> {
-  const supabase = getSupabase();
-  if (!supabase) throw new Error("Supabase is not configured");
-
-  const userId = await requireUserId();
-  const trimmed = email.trim().toLowerCase();
-  if (!EMAIL_RE.test(trimmed)) throw new Error("invalid_email");
-
-  const { error } = await supabase
-    .from("catalog_profiles")
-    .update({ email: trimmed })
-    .eq("id", userId);
-
-  throwIfPostgrestError(error);
-}
-
-export async function getSupportContactEmail(): Promise<string | null> {
-  const supabase = getSupabase();
-  if (!supabase) return null;
-
-  const userId = await requireUserId();
-  const { data, error } = await supabase
-    .from("catalog_profiles")
-    .select("email")
-    .eq("id", userId)
-    .maybeSingle();
-
-  throwIfPostgrestError(error);
-  const value = (data as { email?: string | null } | null)?.email?.trim();
-  return value || null;
 }
 
 export async function sendSupportMessage(
