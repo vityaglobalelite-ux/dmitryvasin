@@ -2,6 +2,7 @@ const fs = require("fs");
 const { Telegraf, Markup } = require("telegraf");
 const { config } = require("./config");
 const db = require("./db");
+const who = require("./who");
 
 const bot = new Telegraf(config.token);
 const SITE_SUPPORT_URL = "https://betango.dance/support/";
@@ -25,24 +26,26 @@ function isAdmin(ctx) {
   return config.adminIds.has(ctx.from?.id);
 }
 
-function escapeHtml(value) {
-  return String(value || "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+function personCard(profile) {
+  return who.whoHtml(
+    who.personFromProfile(profile, who.isGuestProfile(profile)),
+  );
 }
 
 function adminStartText() {
   return [
     "<b>Поддержка сайта BeTango</b>",
     "",
-    "Сюда приходят вопросы с betango.dance/support — гости и аккаунты.",
+    "Сюда приходят вопросы с betango.dance/support.",
+    "",
+    "<b>Аккаунт</b> — имя и фамилия из кабинета, почта под ними.",
+    "<b>Гость</b> — без регистрации. Код вида <code>G-A3F2-C91B</code> постоянный: тот же код = тот же человек в том же браузере.",
     "",
     "1. Приходит карточка вопроса",
     "2. Нажимаете <b>Ответить</b>",
-    "3. Пишете текст, фото или файл — это уйдёт человеку в чат на сайте",
+    "3. Текст, фото или файл уходят в чат на сайте",
     "",
-    "Он увидит ответ в чате, точку у «Поддержка» и уведомление.",
+    "Человек увидит ответ в чате, точку у «Поддержка» и уведомление.",
     "/cancel — если передумали.",
   ].join("\n");
 }
@@ -61,7 +64,7 @@ async function sendReplyToSite({ userId, body, storagePath = null }) {
     userId: profile.id,
     body: text,
   });
-  return { ok: true, who: db.catalogWho(profile) };
+  return { ok: true, who: personCard(profile) };
 }
 
 async function downloadTelegramFile(ctx, fileId) {
@@ -120,11 +123,10 @@ bot.action(/^catreply:([0-9a-f-]{36})$/i, async (ctx) => {
     return;
   }
   replyTarget.set(ctx.from.id, profile.id);
-  const who = escapeHtml(db.catalogWho(profile));
   await ctx.reply(
     [
       `<b>Пишете ответ</b>`,
-      who,
+      personCard(profile),
       "",
       "Следующее сообщение (текст, фото или файл) уйдёт в чат на сайте.",
       "/cancel — отмена",
@@ -197,7 +199,7 @@ bot.on("message", async (ctx) => {
     await ctx.reply(
       [
         "<b>Ответ ушёл на сайт</b>",
-        escapeHtml(result.who),
+        result.who,
         "",
         "Человек увидит его в чате поддержки, в уведомлениях и по точке у «Поддержка».",
       ].join("\n"),

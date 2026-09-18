@@ -131,15 +131,8 @@ async function markReadForAdmin(chatId) {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const GUEST_EMAIL_RE = /@guest\.betango\.internal$/i;
 const SUPPORT_BUCKET = "catalog-support";
 const SUPPORT_MAX_BYTES = 12 * 1024 * 1024;
-
-function catalogWho(profile) {
-  const email = (profile?.email || "").trim();
-  if (!email || GUEST_EMAIL_RE.test(email)) return "Гость · без email";
-  return email;
-}
 
 function sanitizeFilename(name) {
   const trimmed = String(name || "file").trim().slice(0, 80);
@@ -154,7 +147,7 @@ async function getCatalogProfile(userId) {
   if (!UUID_RE.test(String(userId || ""))) return null;
   const { data, error } = await supabase
     .from("catalog_profiles")
-    .select("id, email")
+    .select("id, email, first_name, last_name")
     .eq("id", userId)
     .maybeSingle();
   if (error) throw error;
@@ -223,7 +216,6 @@ module.exports = {
   markReadForUser,
   markReadForAdmin,
   getCatalogProfile,
-  catalogWho,
   addCatalogAgentMessage,
   uploadCatalogSupportFile,
   addCatalogSupportReplyNotification,

@@ -1,6 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { isCatalogGuest } from "../_shared/catalog-guest.ts";
+import {
+  escapeHtml,
+  whoHtml,
+  type CatalogPerson,
+} from "../_shared/catalog-who.ts";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -27,6 +32,8 @@ type SupportRow = {
 
 type ProfileRow = {
   email: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
 };
 
 function bearerJwt(req: Request): string | null {
@@ -96,19 +103,33 @@ function filenameFromPath(storagePath: string): string {
   return last;
 }
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
+function metaString(meta: Record<string, unknown> | null | undefined, key: string): string | null {
+  const value = meta?.[key];
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
 }
 
-function whoLine(email: string, guest?: boolean): string {
-  if (guest && (email === "гость сайта" || email === "—")) {
-    return "Гость · без email";
-  }
-  if (guest) return `Гость · ${email}`;
-  return `Аккаунт · ${email}`;
+function personFromUser(
+  userId: string,
+  guest: boolean,
+  profile: ProfileRow | null,
+  user: {
+    email?: string | null;
+    user_metadata?: Record<string, unknown> | null;
+  },
+): CatalogPerson {
+  return {
+    id: userId,
+    guest,
+    email: profile?.email ?? user.email ?? null,
+    firstName:
+      profile?.first_name?.trim() ||
+      metaString(user.user_metadata, "catalog_first_name"),
+    lastName:
+      profile?.last_name?.trim() ||
+      metaString(user.user_metadata, "catalog_last_name"),
+  };
 }
 
 function replyKeyboard(userId: string): string {
@@ -120,16 +141,15 @@ function replyKeyboard(userId: string): string {
 }
 
 function ticketHtml(params: {
-  email: string;
+  person: CatalogPerson;
   body: string;
   filename?: string;
-  guest?: boolean;
 }): string {
   const lines = [
     "<b>Новый вопрос с сайта</b>",
-    "betango.dance/support",
+    params.person.guest ? "гость" : "аккаунт",
     "",
-    escapeHtml(whoLine(params.email, params.guest)),
+    whoHtml(params.person),
   ];
   if (params.filename) {
     lines.push(`Файл: <code>${escapeHtml(params.filename)}</code>`);
@@ -140,7 +160,7 @@ function ticketHtml(params: {
   }
   lines.push(
     "",
-    "<i>Нажмите «Ответить» — сообщение придёт человеку в чат на сайте.</i>",
+    "<i>Нажмите «Ответить» — сообщение придёт в чат на сайте.</i>",
   );
   return lines.join("\n");
 }
@@ -273,20 +293,18 @@ Deno.serve(async (req) => {
 
     const { data: profileRow, error: profileErr } = await admin
       .from("catalog_profiles")
-      .select("email")
+      .select("email, first_name, last_name")
       .eq("id", user.id)
       .maybeSingle();
     if (profileErr) throw profileErr;
 
     const guest = isCatalogGuest(user);
-    const rawEmail =
-      (profileRow as ProfileRow | null)?.email?.trim() ||
-      user.email?.trim() ||
-      "";
-    const email =
-      guest && /@guest\.betango\.internal$/i.test(rawEmail)
-        ? "гость сайта"
-        : rawEmail || (guest ? "гость сайта" : "—");
+    const person = personFromUser(
+      user.id,
+      guest,
+      (profileRow as ProfileRow | null) ?? null,
+      user,
+    );
 
     const storagePath = message.storage_path?.trim() || null;
     if (storagePath) {
@@ -298,10 +316,9 @@ Deno.serve(async (req) => {
 
     const filename = storagePath ? filenameFromPath(storagePath) : undefined;
     const text = ticketHtml({
-      email,
+      person,
       body: message.body,
       filename,
-      guest,
     });
     const keyboard = replyKeyboard(user.id);
 
