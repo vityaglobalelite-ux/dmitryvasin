@@ -85,7 +85,7 @@ export function HomeCategoriesDesktop() {
         />
       </div>
       <HomeImg
-        src={homeAssets.requestChat}
+        src={`${homeAssets.requestChat}?v=clear`}
         alt=""
         width={218}
         height={218}
