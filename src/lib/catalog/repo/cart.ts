@@ -1,7 +1,15 @@
+import {
+  dropPostureBlocksIfFullCovered,
+  isPostureBundleBlock,
+  isPostureBundleFull,
+} from "@/lib/catalog/bundles";
+import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import type { CartItem } from "@/lib/catalog/types";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   CART_ITEMS_SELECT,
+  CART_ITEMS_SELECT_LEGACY,
+  catalogSelectWithFallback,
   mapProductRow,
   requireUserId,
   throwIfPostgrestError,
@@ -36,13 +44,82 @@ export async function listCartItems(): Promise<CartItem[]> {
 
   await requireUserId();
 
-  const { data, error } = await supabase
-    .from("catalog_cart_items")
-    .select(CART_ITEMS_SELECT)
-    .order("added_at", { ascending: true });
+  const result = await catalogSelectWithFallback(
+    CART_ITEMS_SELECT,
+    CART_ITEMS_SELECT_LEGACY,
+    (select) =>
+      supabase
+        .from("catalog_cart_items")
+        .select(select)
+        .order("added_at", { ascending: true }),
+  );
 
+  throwIfPostgrestError(result.error);
+  return ((result.data ?? []) as unknown as CartItemRow[]).map(mapCartItemRow);
+}
+
+export class CartBundleConflictError extends Error {
+  readonly name = "CartBundleConflictError";
+}
+
+function isActiveAccessRow(
+  row: { status?: string; expires_at?: string } | null,
+): boolean {
+  if (!row || row.status !== "active" || !row.expires_at) return false;
+  const expires = Date.parse(row.expires_at);
+  return Number.isFinite(expires) && expires > Date.now();
+}
+
+async function hasActiveFullAccess(userId: string): Promise<boolean> {
+  const supabase = getSupabase();
+  if (!supabase) return false;
+
+  const { data, error } = await supabase
+    .from("catalog_access")
+    .select("status, expires_at")
+    .eq("user_id", userId)
+    .eq("product_id", POSTURE_BUNDLE.fullId)
+    .maybeSingle();
   throwIfPostgrestError(error);
-  return ((data ?? []) as CartItemRow[]).map(mapCartItemRow);
+  return isActiveAccessRow(data);
+}
+
+async function dropCartBlocks(userId: string): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  const { error } = await supabase
+    .from("catalog_cart_items")
+    .delete()
+    .eq("user_id", userId)
+    .in("product_id", [POSTURE_BUNDLE.block1Id, POSTURE_BUNDLE.block2Id]);
+  throwIfPostgrestError(error);
+}
+
+async function enforceBundleCartRules(
+  userId: string,
+  productId: string,
+): Promise<void> {
+  const supabase = getSupabase();
+  if (!supabase) return;
+
+  if (isPostureBundleBlock(productId)) {
+    if (await hasActiveFullAccess(userId)) {
+      throw new CartBundleConflictError();
+    }
+    const { data, error } = await supabase
+      .from("catalog_cart_items")
+      .select("product_id")
+      .eq("user_id", userId)
+      .eq("product_id", POSTURE_BUNDLE.fullId)
+      .maybeSingle();
+    throwIfPostgrestError(error);
+    if (data) throw new CartBundleConflictError();
+  }
+
+  if (isPostureBundleFull(productId)) {
+    await dropCartBlocks(userId);
+  }
 }
 
 export async function upsertCartItem(productId: string, qty = 1): Promise<void> {
@@ -51,6 +128,8 @@ export async function upsertCartItem(productId: string, qty = 1): Promise<void> 
 
   const userId = await requireUserId();
   const safeQty = Math.min(Math.max(qty, 1), 1);
+
+  await enforceBundleCartRules(userId, productId);
 
   const { error } = await supabase.from("catalog_cart_items").upsert(
     {
@@ -91,12 +170,35 @@ export async function mergeGuestCart(items: CartItem[]): Promise<void> {
   }
   if (unique.size === 0) return;
 
-  const rows = [...unique.values()].map((item) => ({
-    user_id: userId,
-    product_id: item.productId,
-    qty: 1,
-    added_at: item.addedAt || new Date().toISOString(),
-  }));
+  const { data: existing, error: existingErr } = await supabase
+    .from("catalog_cart_items")
+    .select("product_id")
+    .eq("user_id", userId);
+  throwIfPostgrestError(existingErr);
+
+  const hasFullAccess = await hasActiveFullAccess(userId);
+  const combined = dropPostureBlocksIfFullCovered(
+    [
+      ...(existing ?? []).map((row) => row.product_id),
+      ...unique.keys(),
+    ],
+    hasFullAccess,
+  );
+  const keep = new Set(combined);
+  if (hasFullAccess || keep.has(POSTURE_BUNDLE.fullId)) {
+    await dropCartBlocks(userId);
+  }
+
+  const now = new Date().toISOString();
+  const rows = [...unique.values()]
+    .filter((item) => keep.has(item.productId))
+    .map((item) => ({
+      user_id: userId,
+      product_id: item.productId,
+      qty: 1,
+      added_at: item.addedAt || now,
+    }));
+  if (rows.length === 0) return;
 
   const { error } = await supabase
     .from("catalog_cart_items")

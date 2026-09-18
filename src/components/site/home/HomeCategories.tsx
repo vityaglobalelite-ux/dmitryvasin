@@ -71,7 +71,7 @@ export function HomeCategoriesDesktop() {
               : copy.requestTwoLead}
             <span className="font-bold">{copy.courseWord}</span>
             {copy.requestBodyOr}
-            <span className="font-bold">{copy.researchWord}</span>.
+            <span className="font-bold">{copy.peekWord}</span>.
           </p>
         </div>
       </div>
@@ -135,7 +135,7 @@ export function HomeCategoriesDesktop() {
               }}
             />
             <Layer x={box.textX} y={box.textY} w={i === 3 ? 316 : 307} h={box.textH} z={2}>
-              <h3 className="text-[24px] font-medium leading-[1.2] text-text">
+              <h3 className="w-full text-[24px] font-medium leading-[1.2] text-text">
                 {cat.title}
               </h3>
               {ru ? (
@@ -272,7 +272,7 @@ export function HomeCategoriesMobile() {
               <br />
               <span className="whitespace-nowrap">
                 <span className="font-semibold">курсы</span> или{" "}
-                <span className="font-semibold">исследования</span>.
+                <span className="font-semibold">уроки-«подсмотры»</span>.
               </span>
             </p>
           </div>
@@ -292,7 +292,7 @@ export function HomeCategoriesMobile() {
               {copy.requestBodyMid2}
               <span className="font-semibold">{copy.courseWord}</span>
               {copy.requestBodyOr}
-              <span className="font-semibold">{copy.researchWord}</span>
+              <span className="font-semibold">{copy.peekWord}</span>.
             </p>
           </div>
         )}

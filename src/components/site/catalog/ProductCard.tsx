@@ -2,20 +2,25 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
+  coverFrames,
   formatAccessLabel,
   formatDurationClock,
+  formatPeekUnlockDate,
+  isCatalogPriceUnset,
   lessonNoun,
   parseDifficulty,
+  skillIconSize,
   skillIconSrc,
   typeBadgeIcon,
 } from "@/components/site/catalog/display";
 import { productAssets } from "@/components/site/product/assets";
-import { Button } from "@/components/site/ui/Button";
+import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { CatalogPrice } from "@/components/site/ui/CatalogPrice";
+import { isPeekWatchable } from "@/lib/catalog/access";
 import { productCopy } from "@/lib/catalog/locale";
 import {
   useCatalogT,
@@ -23,6 +28,7 @@ import {
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
 import { rememberReturnTo } from "@/lib/catalog/return-to";
+import { SKILL_LABELS, type SkillKey } from "@/lib/catalog/skills";
 import type { Product } from "@/lib/catalog/types";
 
 type ProductCardProps = {
@@ -50,8 +56,8 @@ export function CatalogProductGrid({
 }
 
 /**
- * Public product card. Wave 2B restyles 1:1 to Figma `677:819` / `676:510`.
- * Keep this export signature stable.
+ * Public product card. Figma `677:819` (lifehack/lesson/course + burgundy stars),
+ * `708:978` / `867:3071` (peek open / lock).
  */
 export function ProductCard({
   product,
@@ -61,15 +67,14 @@ export function ProductCard({
 }: ProductCardProps) {
   const routes = useLocalizedRoutes();
   const href = routes.product(product.id);
-  const compact = product.type === "research";
 
   return (
     <article
-      className="@container group flex h-full w-full min-w-0 max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] max-[600px]:rounded-[10px]"
+      className="@container group flex h-full w-full min-w-0 max-w-[467px] flex-col overflow-hidden rounded-[20px] bg-light-gray transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(76,13,50,0.08)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:hover:shadow-none max-[600px]:rounded-[10px]"
       onClick={rememberReturnTo}
     >
-      {compact ? (
-        <CompactBody
+      {product.type === "peek" ? (
+        <PeekBody
           product={product}
           href={href}
           onAdd={onAdd}
@@ -114,27 +119,19 @@ function CoverBody({
 
   return (
     <>
-      <Link href={href} className="relative block h-[263px] shrink-0 overflow-hidden rounded-[20px] bg-light-gray max-[600px]:h-[180px] max-[600px]:rounded-[10px]">
-        {product.coverUrl ? (
-          <Image
-            src={product.coverUrl}
-            alt={coverAlt}
-            fill
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
-            sizes="(max-width: 600px) 320px, 467px"
-            loading="lazy"
-            unoptimized
-          />
-        ) : null}
-        <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap gap-[9px] p-[10px] max-[600px]:gap-1.5 max-[600px]:p-2">
-          <TypeBadge type={product.type} />
-          {duration ? <OverlayChip>{duration}</OverlayChip> : null}
-          {access ? <OverlayChip dim>{access}</OverlayChip> : null}
-        </div>
-      </Link>
+      <CoverStage
+        href={href}
+        alt={coverAlt}
+        frames={coverFrames(product)}
+        locked={false}
+      >
+        <TypeBadge type={product.type} />
+        {duration ? <OverlayChip>{duration}</OverlayChip> : null}
+        {access ? <OverlayChip dim>{access}</OverlayChip> : null}
+      </CoverStage>
       <div className="flex min-h-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
-        <MetaRow product={product} />
-        <Link href={href} className="flex min-h-0 flex-1 flex-col gap-2.5">
+        <MetaRow product={product} stacked={false} />
+        <Link href={href} className={`flex min-h-0 flex-1 flex-col gap-2.5 rounded-[8px] ${siteFocusRing}`}>
           <h2 className="line-clamp-2 min-h-[calc(1.2em*2)] overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-black transition-opacity duration-150 group-hover:opacity-90 max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
             {copy.title}
           </h2>
@@ -154,7 +151,7 @@ function CoverBody({
   );
 }
 
-function CompactBody({
+function PeekBody({
   product,
   href,
   onAdd,
@@ -171,49 +168,170 @@ function CompactBody({
   const t = useCatalogT();
   const copy = productCopy(product, locale);
   const coverAlt = copy.title || t.pages.product;
-  const access = formatAccessLabel(product.accessDays, "chip", locale);
+  const frames = coverFrames(product);
+  const locked = !isPeekWatchable(product);
+  const unlockDate =
+    locked && product.availableAt
+      ? formatPeekUnlockDate(product.availableAt, locale)
+      : null;
+  const access = formatAccessLabel(product.accessDays, "overlay", locale);
+  const thumb = frames[0];
 
   return (
-    <div className="flex flex-1 flex-col gap-5 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
-      <div className="flex flex-wrap items-center gap-[9px]">
-        <TypeBadge type={product.type} />
-        {access ? (
-          <span className="inline-flex h-[34px] items-center justify-center rounded-[20px] bg-white px-2.5 text-[12px] font-medium leading-[1.2] text-black">
-            {access}
-          </span>
-        ) : null}
-      </div>
-      <Link href={href} className="flex items-start gap-5">
-        <span
-          className="flex size-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[30px] border border-accent-red bg-[image:var(--brand-gradient)]"
-        >
-          {product.coverUrl ? (
-            <img
-              src={product.coverUrl}
-              alt={coverAlt}
-              width={60}
-              height={60}
-              loading="lazy"
-              decoding="async"
-              className="size-[60px] object-cover"
-            />
-          ) : null}
-        </span>
-        <h2 className="min-h-[calc(1.2em*2)] min-w-0 flex-1 line-clamp-2 overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-text-dark max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-          {copy.title}
-        </h2>
-      </Link>
-      <p className="line-clamp-5 min-h-[calc(1.5em*5)] overflow-hidden break-words text-[16px] leading-[1.5] text-text-dark max-[600px]:min-h-[calc(20px*5)] max-[600px]:text-[13px] max-[600px]:leading-5">
-        {copy.short}
-      </p>
-      <MetaRow product={product} />
-      <PriceRow
-        product={product}
+    <>
+      <CoverStage
         href={href}
-        onAdd={onAdd}
-        adding={adding}
-        inCart={inCart}
+        alt={coverAlt}
+        frames={frames}
+        locked={locked}
+        unlockDate={unlockDate}
+        opensLabel={t.catalog.peekOpens}
+      >
+        <TypeBadge type={product.type} />
+        {access ? <OverlayChip dim>{access}</OverlayChip> : null}
+      </CoverStage>
+      <div className="flex min-h-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
+        <Link href={href} className={`flex items-start gap-5 rounded-[8px] ${siteFocusRing}`}>
+          <span className="flex size-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[30px] border border-accent-red bg-[image:var(--brand-gradient)]">
+            {thumb ? (
+              <img
+                src={thumb}
+                alt=""
+                width={60}
+                height={60}
+                loading="lazy"
+                decoding="async"
+                className="size-[60px] object-cover"
+              />
+            ) : null}
+          </span>
+          <h2 className="min-h-[calc(1.2em*2)] min-w-0 flex-1 line-clamp-2 overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-text-dark max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
+            {copy.title}
+          </h2>
+        </Link>
+        <p className="line-clamp-3 min-h-[calc(1.5em*3)] overflow-hidden break-words text-[16px] leading-[1.5] text-text-dark max-[600px]:min-h-[calc(20px*3)] max-[600px]:text-[13px] max-[600px]:leading-5">
+          {copy.short}
+        </p>
+        <MetaRow product={product} stacked />
+        <PriceRow
+          product={product}
+          href={href}
+          onAdd={onAdd}
+          adding={adding}
+          inCart={inCart}
+        />
+      </div>
+    </>
+  );
+}
+
+function CoverStage({
+  href,
+  alt,
+  frames,
+  locked,
+  unlockDate,
+  opensLabel,
+  children,
+}: {
+  href: string;
+  alt: string;
+  frames: string[];
+  locked: boolean;
+  unlockDate?: string | null;
+  opensLabel?: string;
+  children: ReactNode;
+}) {
+  const [index, setIndex] = useState(0);
+  const safeIndex = frames.length === 0 ? 0 : Math.min(index, frames.length - 1);
+  const showDots = frames.length > 1;
+
+  return (
+    <div className="relative h-[263px] shrink-0 overflow-hidden rounded-[20px] bg-white max-[600px]:h-[180px] max-[600px]:rounded-[10px]">
+      {frames.map((src, frameIndex) => (
+        <Image
+          key={`${src}-${frameIndex}`}
+          src={src}
+          alt={frameIndex === safeIndex ? alt : ""}
+          fill
+          className={[
+            "object-cover transition-[opacity,transform] duration-500 ease-out",
+            frameIndex === safeIndex ? "opacity-100" : "opacity-0",
+            !locked && frameIndex === safeIndex ? "group-hover:scale-[1.04]" : "",
+          ].join(" ")}
+          sizes="(max-width: 600px) 320px, 467px"
+          loading="lazy"
+          unoptimized
+        />
+      ))}
+      {locked ? (
+        <div className="pointer-events-none absolute inset-0 z-[8] bg-black/60 transition-colors duration-200 ease-out group-hover:bg-black/45 motion-reduce:transition-none" />
+      ) : null}
+      {locked ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[9] flex flex-col items-center justify-center gap-5 px-6 text-center"
+          aria-hidden={!unlockDate}
+        >
+          <img
+            src={catalogCardAssets.peekLock}
+            alt=""
+            width={49}
+            height={61}
+            className="origin-center transition-transform duration-200 ease-out group-hover:scale-110 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
+          {unlockDate && opensLabel ? (
+            <p className="max-w-[8rem] text-[16px] leading-[1.5] text-white transition-opacity duration-200 group-hover:opacity-95">
+              {opensLabel}
+              <br />
+              <span className="font-bold">{unlockDate}</span>
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+      <Link
+        href={href}
+        className={`absolute inset-0 z-[11] rounded-[inherit] ${siteFocusRing}`}
+        aria-label={
+          locked && unlockDate && opensLabel
+            ? `${alt}. ${opensLabel} ${unlockDate}`
+            : alt
+        }
       />
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap gap-[9px] p-[10px] max-[600px]:gap-1.5 max-[600px]:p-2">
+        {children}
+      </div>
+      {showDots ? (
+        <div
+          className="absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2.5 max-[600px]:bottom-2.5"
+          role="tablist"
+          aria-label={alt}
+        >
+          {frames.map((src, frameIndex) => {
+            const active = frameIndex === safeIndex;
+            return (
+              <button
+                key={src}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                aria-label={`${frameIndex + 1} / ${frames.length}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  setIndex(frameIndex);
+                }}
+                className={[
+                  "size-2.5 rounded-full transition-[transform,opacity] duration-200",
+                  siteFocusRing,
+                  active
+                    ? "bg-[image:var(--brand-gradient)]"
+                    : "bg-[#D9D9D9]",
+                ].join(" ")}
+              />
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -222,7 +340,7 @@ function TypeBadge({ type }: { type: Product["type"] }) {
   const locale = useLocale();
   const icon = typeBadgeIcon(type);
   return (
-    <span className="inline-flex h-[34px] items-center gap-1.5 rounded-[30px] bg-white p-2.5">
+    <span className="pointer-events-none inline-flex h-[34px] items-center gap-1.5 rounded-[30px] bg-white p-2.5">
       {icon ? (
         <img
           src={icon}
@@ -232,7 +350,7 @@ function TypeBadge({ type }: { type: Product["type"] }) {
           className="size-[25px] object-cover"
         />
       ) : null}
-      <span className="text-[12px] font-medium leading-normal text-text-dark">
+      <span className="whitespace-nowrap text-[12px] font-medium leading-normal text-text-dark">
         {catalogTypeLabel(type, locale)}
       </span>
     </span>
@@ -249,7 +367,7 @@ function OverlayChip({
   return (
     <span
       className={[
-        "inline-flex h-[34px] items-center justify-center rounded-[20px] px-2.5 text-[12px] font-medium leading-[1.2] text-white backdrop-blur-[12px]",
+        "pointer-events-none inline-flex h-[34px] items-center justify-center rounded-[20px] px-2.5 text-[12px] font-medium leading-[1.2] text-white backdrop-blur-[12px]",
         dim
           ? "border border-white/50 bg-black/20"
           : "border border-white/60 bg-black/20",
@@ -260,42 +378,76 @@ function OverlayChip({
   );
 }
 
-function MetaRow({ product }: { product: Product }) {
+function SkillChip({ skill }: { skill: SkillKey }) {
+  const locale = useLocale();
+  const icon = skillIconSrc(skill);
+  const size = skillIconSize(skill);
+  const label = SKILL_LABELS[locale][skill];
+  return (
+    <span
+      title={label}
+      className="inline-flex min-w-0 items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
+    >
+      {icon ? (
+        <img
+          src={icon}
+          alt=""
+          width={size.width}
+          height={size.height}
+          className="shrink-0"
+        />
+      ) : null}
+      <span className="min-w-0 truncate text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
+        {label}
+      </span>
+    </span>
+  );
+}
+
+function MetaRow({
+  product,
+  stacked,
+}: {
+  product: Product;
+  stacked: boolean;
+}) {
   const t = useCatalogT();
-  const skills = product.skills.filter(Boolean).slice(0, 2);
+  const skills = product.skills.slice(0, 2);
   const difficulty = parseDifficulty(product.level);
+  const stars = (
+    <span className="inline-flex shrink-0 items-center gap-1.5 max-[600px]:gap-1">
+      <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
+        {t.catalog.difficulty}
+      </span>
+      <img
+        src={catalogCardAssets.difficulty[difficulty]}
+        alt=""
+        width={72}
+        height={18}
+        className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
+      />
+    </span>
+  );
+
+  if (stacked) {
+    return (
+      <div className="flex w-full flex-col items-start justify-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {skills.map((skill) => (
+            <SkillChip key={skill} skill={skill} />
+          ))}
+        </div>
+        {stars}
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full items-center gap-3.5 max-[600px]:gap-1.5">
-      {skills.map((skill) => {
-        const icon = skillIconSrc(skill);
-        return (
-          <span
-            key={skill}
-            title={skill}
-            className="inline-flex min-w-0 items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
-          >
-            {icon ? (
-              <img src={icon} alt="" width={20} height={20} className="size-5 shrink-0 max-[600px]:size-4" />
-            ) : null}
-            <span className="min-w-0 truncate text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
-              {skill}
-            </span>
-          </span>
-        );
-      })}
-      <span className="inline-flex shrink-0 items-center gap-1.5 max-[600px]:gap-1">
-        <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
-          {t.catalog.difficulty}
-        </span>
-        <img
-          src={catalogCardAssets.difficulty[difficulty]}
-          alt=""
-          width={72}
-          height={18}
-          className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
-        />
-      </span>
+      {skills.map((skill) => (
+        <SkillChip key={skill} skill={skill} />
+      ))}
+      {stars}
     </div>
   );
 }
@@ -314,16 +466,21 @@ function PriceRow({
   inCart: boolean;
 }) {
   const t = useCatalogT();
+  const showPrice = !isCatalogPriceUnset(product);
   return (
     <div className="mt-auto flex flex-nowrap items-end justify-between gap-2.5">
-      <div className="flex w-max max-w-full shrink-0 flex-col gap-[3px]">
-        <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60">
-          {t.catalog.cost}
-        </p>
-        <p className="w-max whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[466px]:text-[22px] max-[600px]:text-[22px]">
-          <CatalogPrice product={product} />
-        </p>
-      </div>
+      {showPrice ? (
+        <div className="flex w-max max-w-full shrink-0 flex-col gap-[3px]">
+          <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60">
+            {t.catalog.cost}
+          </p>
+          <p className="w-max whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[466px]:text-[22px] max-[600px]:text-[22px]">
+            <CatalogPrice product={product} />
+          </p>
+        </div>
+      ) : (
+        <span />
+      )}
       <div className="flex shrink-0 items-center gap-2.5 @max-[466px]:gap-2 max-[600px]:gap-2">
         <Button
           href={href}
@@ -351,8 +508,10 @@ function CartButton({
 }) {
   const t = useCatalogT();
   const routes = useLocalizedRoutes();
-  const frame =
-    "size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 @max-[466px]:size-[50px] max-[600px]:size-[50px]";
+  const frame = [
+    "size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 @max-[466px]:size-[50px] max-[600px]:size-[50px]",
+    siteFocusRing,
+  ].join(" ");
 
   if (inCart) {
     return (

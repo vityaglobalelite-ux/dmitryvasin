@@ -1,3 +1,8 @@
+import {
+  isPostureBundleBlock,
+  isPostureBundleFull,
+} from "@/lib/catalog/bundles";
+import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import type { CartItem } from "@/lib/catalog/types";
 
 const STORAGE_KEY = "catalog.guest-cart.v1";
@@ -28,8 +33,23 @@ export function setGuestCart(items: CartItem[]): void {
 }
 
 export function addGuestItem(productId: string): CartItem[] {
-  const items = getGuestCart();
+  let items = getGuestCart();
   if (items.some((item) => item.productId === productId)) return items;
+
+  if (isPostureBundleBlock(productId)) {
+    if (items.some((item) => item.productId === POSTURE_BUNDLE.fullId)) {
+      return items;
+    }
+  }
+
+  if (isPostureBundleFull(productId)) {
+    items = items.filter(
+      (item) =>
+        item.productId !== POSTURE_BUNDLE.block1Id &&
+        item.productId !== POSTURE_BUNDLE.block2Id,
+    );
+  }
+
   const next = [
     ...items,
     { productId, qty: 1, addedAt: new Date().toISOString() },

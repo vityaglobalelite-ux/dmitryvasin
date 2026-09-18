@@ -2,6 +2,16 @@ import Stripe from "https://esm.sh/stripe@17.4.0?target=deno";
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import {
+  accessStartsAt,
+  expiresAtFromStart,
+  maxDate,
+} from "../_shared/catalog-access.ts";
+import {
+  POSTURE_COURSE_BLOCK1_ID,
+  POSTURE_COURSE_BLOCK2_ID,
+  POSTURE_COURSE_FULL_ID,
+} from "../_shared/catalog-ids.ts";
+import {
   catalogStripeSecret,
   catalogStripeWebhookSecret,
 } from "../_shared/catalog-stripe.ts";
@@ -20,6 +30,12 @@ type OrderItemRow = {
 type ProductAccessRow = {
   id: string;
   access_days: number;
+  available_at: string | null;
+};
+
+type BundleRow = {
+  parent_id: string;
+  child_id: string;
 };
 
 type AccessRow = {
@@ -74,8 +90,23 @@ async function findOrderByIdOrSession(
   return null;
 }
 
-function addAccessDays(from: Date, accessDays: number): Date {
-  return new Date(from.getTime() + accessDays * 24 * 60 * 60 * 1000);
+function expandBundleGrants(
+  purchasedIds: string[],
+  bundleRows: BundleRow[],
+): string[] {
+  const out = new Set(purchasedIds);
+  for (const id of purchasedIds) {
+    for (const row of bundleRows) {
+      if (row.parent_id === id) out.add(row.child_id);
+    }
+  }
+  if (
+    out.has(POSTURE_COURSE_BLOCK1_ID) &&
+    out.has(POSTURE_COURSE_BLOCK2_ID)
+  ) {
+    out.add(POSTURE_COURSE_FULL_ID);
+  }
+  return [...out];
 }
 
 async function grantCatalogAccess(
@@ -98,25 +129,41 @@ async function grantCatalogAccess(
   ];
   if (productIds.length === 0) return;
 
+  const { data: bundleRows, error: bundleErr } = await admin
+    .from("catalog_product_bundles")
+    .select("parent_id, child_id")
+    .in("parent_id", productIds);
+  if (bundleErr) throw bundleErr;
+
+  const grantIds = expandBundleGrants(
+    productIds,
+    (bundleRows ?? []) as BundleRow[],
+  );
+
   const { data: products, error: productsErr } = await admin
     .from("catalog_products")
-    .select("id, access_days")
-    .in("id", productIds);
+    .select("id, access_days, available_at")
+    .in("id", grantIds);
   if (productsErr) throw productsErr;
 
-  const daysByProduct = new Map<string, number>();
+  const productById = new Map<string, ProductAccessRow>();
   for (const product of (products ?? []) as ProductAccessRow[]) {
-    daysByProduct.set(product.id, product.access_days);
+    productById.set(product.id, product);
   }
 
   const now = new Date();
   const nowIso = now.toISOString();
 
-  for (const productId of productIds) {
-    const accessDays = daysByProduct.get(productId);
+  for (const productId of grantIds) {
+    const product = productById.get(productId);
+    const accessDays = product?.access_days;
     if (!accessDays || accessDays <= 0) {
       throw new Error(`missing access_days for product ${productId}`);
     }
+
+    const start = accessStartsAt(now, product?.available_at ?? null);
+    const purchasedAtIso = start.toISOString();
+    const proposedExpiry = expiresAtFromStart(start, accessDays);
 
     const { data: existing, error: existingErr } = await admin
       .from("catalog_access")
@@ -132,33 +179,95 @@ async function grantCatalogAccess(
         user_id: order.user_id,
         product_id: productId,
         order_id: order.id,
-        purchased_at: nowIso,
-        expires_at: addAccessDays(now, accessDays).toISOString(),
+        purchased_at: purchasedAtIso,
+        expires_at: proposedExpiry.toISOString(),
         status: "active",
       });
       if (insertErr) throw insertErr;
       continue;
     }
 
-    if (current.order_id === order.id || !options.extend) {
+    if (current.order_id === order.id && !options.extend) {
+      continue;
+    }
+
+    if (current.order_id === order.id && options.extend) {
       continue;
     }
 
     const currentExpiry = new Date(current.expires_at);
-    const proposed = addAccessDays(now, accessDays);
-    const expiresAt = proposed > currentExpiry ? proposed : currentExpiry;
+    const expiresAt = maxDate(proposedExpiry, currentExpiry);
 
     const { error: updateErr } = await admin
       .from("catalog_access")
       .update({
         order_id: order.id,
-        purchased_at: nowIso,
+        purchased_at: purchasedAtIso,
         expires_at: expiresAt.toISOString(),
         status: "active",
       })
       .eq("user_id", order.user_id)
       .eq("product_id", productId);
     if (updateErr) throw updateErr;
+  }
+
+  if (
+    grantIds.includes(POSTURE_COURSE_BLOCK1_ID) ||
+    grantIds.includes(POSTURE_COURSE_BLOCK2_ID)
+  ) {
+    const { data: blockAccess, error: blockErr } = await admin
+      .from("catalog_access")
+      .select("product_id, expires_at, status")
+      .eq("user_id", order.user_id)
+      .in("product_id", [
+        POSTURE_COURSE_BLOCK1_ID,
+        POSTURE_COURSE_BLOCK2_ID,
+      ]);
+    if (blockErr) throw blockErr;
+
+    const activeBlocks = (blockAccess ?? []).filter(
+      (row: { status: string; expires_at: string }) =>
+        row.status === "active" &&
+        Date.parse(row.expires_at) > Date.now(),
+    );
+    const hasB1 = activeBlocks.some(
+      (row: { product_id: string }) =>
+        row.product_id === POSTURE_COURSE_BLOCK1_ID,
+    );
+    const hasB2 = activeBlocks.some(
+      (row: { product_id: string }) =>
+        row.product_id === POSTURE_COURSE_BLOCK2_ID,
+    );
+    if (hasB1 && hasB2) {
+      const fullProduct = productById.get(POSTURE_COURSE_FULL_ID) ??
+        (await admin
+          .from("catalog_products")
+          .select("id, access_days, available_at")
+          .eq("id", POSTURE_COURSE_FULL_ID)
+          .maybeSingle()).data as ProductAccessRow | null;
+      if (fullProduct?.access_days) {
+        const blockExpiry = activeBlocks.reduce(
+          (latest: Date, row: { expires_at: string }) =>
+            maxDate(latest, new Date(row.expires_at)),
+          new Date(0),
+        );
+        const start = accessStartsAt(now, fullProduct.available_at);
+        const fromStart = expiresAtFromStart(start, fullProduct.access_days);
+        const fullExpiry = maxDate(fromStart, blockExpiry);
+        const { error: fullErr } = await admin.from("catalog_access").upsert(
+          {
+            user_id: order.user_id,
+            product_id: POSTURE_COURSE_FULL_ID,
+            order_id: order.id,
+            purchased_at: start.toISOString(),
+            expires_at: fullExpiry.toISOString(),
+            status: "active",
+          },
+          { onConflict: "user_id,product_id" },
+        );
+        if (fullErr) throw fullErr;
+      }
+    }
   }
 }
 

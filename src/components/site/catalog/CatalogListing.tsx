@@ -2,24 +2,20 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import {
-  Suspense,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { Suspense, useState } from "react";
+import { CatalogEmpty } from "@/components/site/catalog/CatalogEmpty";
 import {
   CatalogProductGrid,
   ProductCard,
 } from "@/components/site/catalog/ProductCard";
 import {
+  CATALOG_FILTERS,
   catalogFilterHref,
   catalogFilterLabel,
   parseProductType,
 } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
-import { Button } from "@/components/site/ui/Button";
+import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { SiteTrail } from "@/components/site/SiteTrail";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { useProducts } from "@/lib/catalog/hooks";
@@ -28,7 +24,6 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
-import { listPublishedProducts } from "@/lib/catalog/repo/products";
 import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
 import type { Product, ProductType } from "@/lib/catalog/types";
 
@@ -52,41 +47,15 @@ function CatalogListingGate() {
 function CatalogQuery({ onRetry }: { onRetry: () => void }) {
   const searchParams = useSearchParams();
   const type = parseProductType(searchParams.get("type"));
-  const products = useProducts(type ? { type } : {});
+  const locale = useLocale();
+  const products = useProducts({ type, locale });
   const addToCart = useAddToCart();
   const inCartIds = useCartProductIds();
-  const [presentTypes, setPresentTypes] = useState<Set<ProductType>>(
-    () => new Set(),
-  );
-
-  useEffect(() => {
-    let cancelled = false;
-    listPublishedProducts()
-      .then((all) => {
-        if (!cancelled) {
-          setPresentTypes(new Set(all.map((product) => product.type)));
-        }
-      })
-      .catch(() => {
-        /* chips stay on the four base types until inventory arrives */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const extraTypes = useMemo(() => {
-    const next = new Set(presentTypes);
-    for (const product of products.data) next.add(product.type);
-    if (type === "research" || type === "peek") next.add(type);
-    return next;
-  }, [presentTypes, products.data, type]);
 
   return (
     <>
       <CatalogFrame
         type={type}
-        extraTypes={extraTypes}
         loading={products.loading}
         error={products.error}
         products={products.data}
@@ -104,7 +73,6 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
 
 function CatalogFrame({
   type,
-  extraTypes,
   loading = false,
   error = null,
   products = [],
@@ -114,7 +82,6 @@ function CatalogFrame({
   onRetry,
 }: {
   type?: ProductType;
-  extraTypes?: Set<ProductType>;
   loading?: boolean;
   error?: Error | null;
   products?: Product[];
@@ -138,7 +105,7 @@ function CatalogFrame({
           {copy.pages.catalog}
         </h1>
       </header>
-      <CatalogFilters type={type} extraTypes={extraTypes} />
+      <CatalogFilters type={type} />
       {loading ? (
         <CatalogProductGrid className="mt-10">
           {Array.from({ length: SKELETON_COUNT }, (_, index) => (
@@ -146,7 +113,7 @@ function CatalogFrame({
           ))}
         </CatalogProductGrid>
       ) : error ? (
-        <CatalogMessage
+        <CatalogEmpty
           title={copy.catalog.errorTitle}
           body={copy.catalog.errorBody}
           action={
@@ -156,21 +123,7 @@ function CatalogFrame({
           }
         />
       ) : products.length === 0 ? (
-        <CatalogMessage
-          title={type ? copy.catalog.emptyFilterTitle : copy.catalog.emptyTitle}
-          body={type ? copy.catalog.emptyFilterBody : copy.catalog.emptyBody}
-          action={
-            type ? (
-              <Button href={routes.catalog} variant="secondary">
-                {copy.catalog.allProducts}
-              </Button>
-            ) : (
-              <Button href={routes.home} variant="secondary">
-                {copy.catalog.toHome}
-              </Button>
-            )
-          }
-        />
+        <CatalogEmptyState type={type} />
       ) : (
         <CatalogProductGrid className="mt-10">
           {products.map((product) => (
@@ -188,19 +141,64 @@ function CatalogFrame({
   );
 }
 
-function CatalogFilters({
-  type,
-  extraTypes,
-}: {
-  type?: ProductType;
-  extraTypes?: Set<ProductType>;
-}) {
+function CatalogEmptyState({ type }: { type?: ProductType }) {
+  const copy = useCatalogT();
+  const routes = useLocalizedRoutes();
+  const locale = useLocale();
+
+  if (type === "lifehack") {
+    return (
+      <CatalogEmpty
+        kicker={catalogFilterLabel("lifehack", locale)}
+        title={copy.catalog.emptyLifehackTitle}
+        body={copy.catalog.emptyLifehackBody}
+        action={
+          <Button href={routes.catalog} variant="secondary">
+            {copy.catalog.allProducts}
+          </Button>
+        }
+      />
+    );
+  }
+
+  if (type === "lesson") {
+    return (
+      <CatalogEmpty
+        kicker={catalogFilterLabel("lesson", locale)}
+        title={copy.catalog.emptyLessonTitle}
+        body={copy.catalog.emptyLessonBody}
+        action={
+          <Button href={routes.catalog} variant="secondary">
+            {copy.catalog.allProducts}
+          </Button>
+        }
+      />
+    );
+  }
+
+  return (
+    <CatalogEmpty
+      kicker={type ? catalogFilterLabel(type, locale) : undefined}
+      title={type ? copy.catalog.emptyFilterTitle : copy.catalog.emptyTitle}
+      body={type ? copy.catalog.emptyFilterBody : copy.catalog.emptyBody}
+      action={
+        type ? (
+          <Button href={routes.catalog} variant="secondary">
+            {copy.catalog.allProducts}
+          </Button>
+        ) : (
+          <Button href={routes.home} variant="secondary">
+            {copy.catalog.toHome}
+          </Button>
+        )
+      }
+    />
+  );
+}
+
+function CatalogFilters({ type }: { type?: ProductType }) {
   const copy = useCatalogT();
   const locale = useLocale();
-  const extras: ProductType[] = (["research", "peek"] as const).filter(
-    (chip) => extraTypes?.has(chip) || type === chip,
-  );
-  const base: ProductType[] = ["lifehack", "lesson", "course", "extra"];
 
   return (
     <nav
@@ -208,15 +206,7 @@ function CatalogFilters({
       className="mt-8 flex flex-wrap items-center gap-5 max-[600px]:mt-5 max-[600px]:gap-2.5"
     >
       <FilterChip href={catalogFilterHref(undefined, locale)} active={!type} label={copy.catalog.all} />
-      {base.map((chip) => (
-        <FilterChip
-          key={chip}
-          href={catalogFilterHref(chip, locale)}
-          active={type === chip}
-          label={catalogFilterLabel(chip, locale)}
-        />
-      ))}
-      {extras.map((chip) => (
+      {CATALOG_FILTERS.map((chip) => (
         <FilterChip
           key={chip}
           href={catalogFilterHref(chip, locale)}
@@ -244,7 +234,8 @@ function FilterChip({
       aria-current={active ? "page" : undefined}
       className={[
         "inline-flex items-center justify-center rounded-[40px] px-10 py-5 text-[24px] font-medium leading-[1.2] transition-[filter,transform] duration-200 ease-out max-[600px]:rounded-[30px] max-[600px]:px-5 max-[600px]:py-3 max-[600px]:text-[16px]",
-        "hover:brightness-105 active:scale-[0.98]",
+        "hover:brightness-105 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+        siteFocusRing,
         active
           ? "bg-[image:var(--brand-gradient)] text-white"
           : "border border-accent-orange text-accent-orange",
@@ -252,27 +243,5 @@ function FilterChip({
     >
       {label}
     </Link>
-  );
-}
-
-function CatalogMessage({
-  title,
-  body,
-  action,
-}: {
-  title: string;
-  body: string;
-  action: ReactNode;
-}) {
-  return (
-    <section className="mt-10 max-w-[640px] rounded-[20px] bg-light-gray px-8 py-10 max-[600px]:px-5 max-[600px]:py-8">
-      <h2 className="text-[24px] font-medium leading-[1.2] text-text-dark max-[600px]:text-[20px]">
-        {title}
-      </h2>
-      <p className="mt-3 text-[16px] leading-[1.5] text-text max-[600px]:text-[14px]">
-        {body}
-      </p>
-      <div className="mt-8">{action}</div>
-    </section>
   );
 }

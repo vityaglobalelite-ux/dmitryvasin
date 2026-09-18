@@ -14,4 +14,5 @@ export const productAssets = {
   back: "/assets/site/product/icon-back.svg",
   check: "/assets/site/product/icon-check.svg",
   checkWhite: "/assets/site/product/icon-check-white.svg",
+  lock: "/assets/site/product/icon-lock.svg",
 } as const;

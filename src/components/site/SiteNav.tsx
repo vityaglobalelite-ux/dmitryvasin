@@ -8,6 +8,7 @@ import { siteAssets } from "@/lib/catalog/assets";
 import { stripLocalePrefix } from "@/lib/catalog/locale";
 import { useCatalogT, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useCatalogReturnHref } from "@/lib/catalog/return-to";
+import { siteFocusRing } from "@/components/site/ui/Button";
 import { CartCount } from "@/components/site/cart/CartCount";
 import { NotificationBell } from "@/components/site/notifications/NotificationBell";
 import { SupportNavLink } from "@/components/site/notifications/SupportNavLink";
@@ -103,13 +104,13 @@ export function SiteNav() {
                 key={item.href}
                 href={item.href}
                 label={item.label}
-                className="transition-opacity duration-150 hover:opacity-70"
+                className={`transition-opacity duration-150 hover:opacity-70 ${siteFocusRing}`}
               />
             ) : (
               <Link
                 key={item.href}
                 href={item.href}
-                className="transition-opacity duration-150 hover:opacity-70"
+                className={`transition-opacity duration-150 hover:opacity-70 ${siteFocusRing}`}
               >
                 {item.label}
               </Link>
@@ -121,7 +122,7 @@ export function SiteNav() {
           {backHref ? (
             <Link
               href={backHref}
-              className="relative hidden size-8 shrink-0 items-center justify-center rounded-full transition-opacity duration-150 hover:opacity-70 max-[600px]:flex"
+              className={`relative hidden size-8 shrink-0 items-center justify-center rounded-full transition-opacity duration-150 hover:opacity-70 max-[600px]:flex ${siteFocusRing}`}
               aria-label={copy.nav.back}
             >
               <span className="flex h-[11px] w-[7px] items-center justify-center" aria-hidden>
@@ -148,7 +149,7 @@ export function SiteNav() {
             <NotificationBell />
             <Link
               href={routes.cart}
-              className="relative transition-transform duration-150 hover:scale-[1.04] active:scale-95"
+              className={`relative rounded-full transition-transform duration-150 hover:scale-[1.04] active:scale-95 ${siteFocusRing}`}
               aria-label={copy.nav.cart}
             >
               <CartMark />
@@ -157,7 +158,7 @@ export function SiteNav() {
           </div>
           <button
             type="button"
-            className="relative hidden size-8 max-[600px]:block"
+            className={`relative hidden size-8 rounded-full max-[600px]:block ${siteFocusRing}`}
             aria-expanded={open}
             aria-label={open ? copy.nav.closeMenu : copy.nav.menu}
             onClick={() => setOpen((v) => !v)}
@@ -195,14 +196,14 @@ export function SiteNav() {
                 key={item.href}
                 href={item.href}
                 label={item.label}
-                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                className={`text-[16px] text-text transition-opacity hover:opacity-70 ${siteFocusRing}`}
                 onClick={() => setOpen(false)}
               />
             ) : (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-[16px] text-text transition-opacity hover:opacity-70"
+                className={`text-[16px] text-text transition-opacity hover:opacity-70 ${siteFocusRing}`}
                 onClick={() => setOpen(false)}
               >
                 {item.label}

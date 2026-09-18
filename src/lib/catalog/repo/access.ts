@@ -2,6 +2,8 @@ import type { Access, AccessStatus } from "@/lib/catalog/types";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   ACCESS_SELECT,
+  ACCESS_SELECT_LEGACY,
+  catalogSelectWithFallback,
   mapProductRow,
   requireUserId,
   throwIfPostgrestError,
@@ -47,19 +49,24 @@ export async function listMyAccess(): Promise<Access[]> {
 
   await requireUserId();
 
-  const { data, error } = await supabase
-    .from("catalog_access")
-    .select(ACCESS_SELECT)
-    .order("purchased_at", { ascending: false });
+  const result = await catalogSelectWithFallback(
+    ACCESS_SELECT,
+    ACCESS_SELECT_LEGACY,
+    (select) =>
+      supabase
+        .from("catalog_access")
+        .select(select)
+        .order("purchased_at", { ascending: false }),
+  );
 
-  throwIfPostgrestError(error);
+  throwIfPostgrestError(result.error);
 
-  const result: Access[] = [];
-  for (const row of (data ?? []) as AccessRow[]) {
+  const mapped: Access[] = [];
+  for (const row of (result.data ?? []) as unknown as AccessRow[]) {
     const access = mapAccessRow(row);
-    if (access) result.push(access);
+    if (access) mapped.push(access);
   }
-  return result;
+  return mapped;
 }
 
 export async function getMyAccess(productId: string): Promise<Access | null> {
@@ -68,14 +75,19 @@ export async function getMyAccess(productId: string): Promise<Access | null> {
 
   await requireUserId();
 
-  const { data, error } = await supabase
-    .from("catalog_access")
-    .select(ACCESS_SELECT)
-    .eq("product_id", productId)
-    .maybeSingle();
+  const result = await catalogSelectWithFallback(
+    ACCESS_SELECT,
+    ACCESS_SELECT_LEGACY,
+    (select) =>
+      supabase
+        .from("catalog_access")
+        .select(select)
+        .eq("product_id", productId)
+        .maybeSingle(),
+  );
 
-  throwIfPostgrestError(error);
-  if (!data) return null;
+  throwIfPostgrestError(result.error);
+  if (!result.data) return null;
 
-  return mapAccessRow(data as AccessRow);
+  return mapAccessRow(result.data as unknown as AccessRow);
 }

@@ -1,6 +1,9 @@
 import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
+export const siteFocusRing =
+  "outline-none focus-visible:ring-2 focus-visible:ring-plum/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
+
 const variants = {
   primary:
     "h-[60px] rounded-[60px] bg-[image:var(--cta-gradient)] px-10 text-[16px] font-semibold tracking-[0.2px] text-white max-[600px]:h-[50px] max-[600px]:px-8",
@@ -45,8 +48,9 @@ function buttonClassName(variant: SiteButtonVariant, className?: string) {
 
   return [
     "inline-flex items-center justify-center whitespace-nowrap font-[inherit] leading-normal transition-[filter,transform,opacity] duration-200 ease-out",
-    "hover:brightness-105 active:scale-[0.98]",
+    "hover:brightness-105 active:scale-[0.98] motion-reduce:transition-none motion-reduce:hover:brightness-100 motion-reduce:active:scale-100",
     "disabled:pointer-events-none disabled:opacity-50",
+    siteFocusRing,
     variantCls,
     className,
   ]

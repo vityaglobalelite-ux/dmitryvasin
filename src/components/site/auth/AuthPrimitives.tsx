@@ -9,6 +9,7 @@ import {
 } from "react";
 import { authAssets } from "@/components/site/auth/assets";
 import { authT } from "@/components/site/auth/copy";
+import { siteFocusRing } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { clubPath } from "@/lib/club-config";
 import { useLocale } from "@/lib/catalog/locale-context";
@@ -53,10 +54,10 @@ export function AuthField({
       </span>
       <span
         className={cx(
-          "flex h-[60px] items-center gap-5 rounded-[20px] border bg-light-gray px-5 py-4 transition-colors duration-150 max-[600px]:h-[50px] max-[600px]:gap-2.5 max-[600px]:px-[15px]",
+          "flex h-[60px] items-center gap-5 rounded-[20px] border bg-light-gray px-5 py-4 transition-[border-color,box-shadow] duration-150 max-[600px]:h-[50px] max-[600px]:gap-2.5 max-[600px]:px-[15px]",
           invalid
             ? "border-accent-red"
-            : "border-[#d9d9d9] focus-within:border-[rgba(76,13,50,0.4)]",
+            : "border-[#d9d9d9] focus-within:border-[rgba(76,13,50,0.4)] focus-within:shadow-[0_0_0_2px_rgba(76,13,50,0.18)]",
         )}
       >
         <img
@@ -80,7 +81,7 @@ export function AuthField({
         {isPassword ? (
           <button
             type="button"
-            className="flex size-6 shrink-0 items-center justify-center overflow-hidden max-[600px]:size-4"
+            className={`flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-full max-[600px]:size-4 ${siteFocusRing}`}
             onClick={() => setVisible((v) => !v)}
             aria-label={visible ? copy.hidePassword : copy.showPassword}
           >
@@ -187,7 +188,7 @@ export function PrivacyConsent({
             href={clubPath("privacy-policy")}
             target="_blank"
             rel="noreferrer"
-            className="text-plum underline-offset-2 hover:underline"
+            className={`text-plum underline-offset-2 hover:underline ${siteFocusRing}`}
           >
             {copy.privacyPolicy}
           </Link>
@@ -245,7 +246,7 @@ export function AuthTitle({
 }
 
 const switchActionClass =
-  "font-semibold text-plum underline underline-offset-2";
+  `rounded-[4px] font-semibold text-plum underline underline-offset-2 ${siteFocusRing}`;
 
 export function AuthSwitch({
   prompt,

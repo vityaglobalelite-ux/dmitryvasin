@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { addGuestItem, getGuestCart } from "@/lib/catalog/cart";
+import { isPostureBundleBlock } from "@/lib/catalog/bundles";
+import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import { useAuthUser } from "@/lib/catalog/hooks";
-import { listCartItems, upsertCartItem } from "@/lib/catalog/repo/cart";
+import { CartBundleConflictError, listCartItems, upsertCartItem } from "@/lib/catalog/repo/cart";
 
 export const CART_CHANGED_EVENT = "catalog:cart-changed";
 
@@ -110,6 +112,12 @@ export function useAddToCart() {
           emitCartChanged({ added: productId });
           return "exists";
         }
+        if (
+          isPostureBundleBlock(productId) &&
+          existing.some((item) => item.productId === POSTURE_BUNDLE.fullId)
+        ) {
+          return "error";
+        }
         if (user) {
           await upsertCartItem(productId, 1);
         } else {
@@ -121,7 +129,11 @@ export function useAddToCart() {
           setModalOpen(true);
         }
         return "added";
-      } catch {
+      } catch (caught) {
+        if (user) return "error";
+        if (caught instanceof CartBundleConflictError) {
+          return "error";
+        }
         const guest = getGuestCart();
         if (!guest.some((item) => item.productId === productId)) {
           addGuestItem(productId);

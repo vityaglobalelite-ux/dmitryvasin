@@ -9,6 +9,12 @@ import {
 } from "../_shared/geo-currency.ts";
 import { catalogStripeSecret } from "../_shared/catalog-stripe.ts";
 import {
+  POSTURE_COURSE_BLOCK1_ID,
+  POSTURE_COURSE_BLOCK2_ID,
+  POSTURE_COURSE_FULL_ID,
+} from "../_shared/catalog-ids.ts";
+import {
+  applyPostureBundlePricingLines,
   computeCartTotalsFromPrices,
   discountedPriceMinor,
   parseWholesaleTiers,
@@ -363,6 +369,78 @@ Deno.serve(async (req) => {
 
     if (lines.length === 0) {
       return jsonResponse({ error: "empty_cart" }, 400);
+    }
+
+    const { data: bundleRows, error: bundleErr } = await admin
+      .from("catalog_product_bundles")
+      .select("parent_id, child_id")
+      .in("child_id", uniqueProductIds);
+    if (bundleErr) throw bundleErr;
+
+    const cartSet = new Set(uniqueProductIds);
+    for (const row of bundleRows ?? []) {
+      const link = row as { parent_id: string; child_id: string };
+      if (cartSet.has(link.parent_id) && cartSet.has(link.child_id)) {
+        return jsonResponse({ error: "bundle_conflict" }, 400);
+      }
+    }
+
+    const { data: fullAccess, error: fullAccessErr } = await admin
+      .from("catalog_access")
+      .select("status, expires_at")
+      .eq("user_id", user.id)
+      .eq("product_id", POSTURE_COURSE_FULL_ID)
+      .maybeSingle();
+    if (fullAccessErr) throw fullAccessErr;
+    const fullExpires = fullAccess
+      ? Date.parse((fullAccess as { expires_at: string }).expires_at)
+      : NaN;
+    const ownsFullCourse =
+      (fullAccess as { status?: string } | null)?.status === "active" &&
+      Number.isFinite(fullExpires) &&
+      fullExpires > Date.now();
+    if (
+      ownsFullCourse &&
+      (cartSet.has(POSTURE_COURSE_BLOCK1_ID) ||
+        cartSet.has(POSTURE_COURSE_BLOCK2_ID))
+    ) {
+      return jsonResponse({ error: "bundle_conflict" }, 400);
+    }
+
+    const cartHasBothBlocks =
+      cartSet.has(POSTURE_COURSE_BLOCK1_ID) &&
+      cartSet.has(POSTURE_COURSE_BLOCK2_ID);
+    let fullProduct = productsById.get(POSTURE_COURSE_FULL_ID);
+    if (!fullProduct && cartHasBothBlocks) {
+      const { data: fullRow, error: fullErr } = await admin
+        .from("catalog_products")
+        .select(
+          "id, price_minor, price_usd_minor, price_eur_minor, published, catalog_product_i18n ( locale, title )",
+        )
+        .eq("id", POSTURE_COURSE_FULL_ID)
+        .maybeSingle();
+      if (fullErr) throw fullErr;
+      if (fullRow) {
+        fullProduct = fullRow as ProductRow;
+        productsById.set(POSTURE_COURSE_FULL_ID, fullProduct);
+      }
+    }
+    const pricedLines = applyPostureBundlePricingLines(
+      lines.map((line) => ({
+        productId: line.productId,
+        priceMinor: line.priceMinor,
+      })),
+      POSTURE_COURSE_FULL_ID,
+      POSTURE_COURSE_BLOCK1_ID,
+      POSTURE_COURSE_BLOCK2_ID,
+      fullProduct ? priceMinorFor(fullProduct, currency) : 0,
+    );
+    const priceById = new Map(
+      pricedLines.map((line) => [line.productId, line.priceMinor]),
+    );
+    for (const line of lines) {
+      const adjusted = priceById.get(line.productId);
+      if (typeof adjusted === "number") line.priceMinor = adjusted;
     }
 
     const { data: settingsRow, error: settingsErr } = await admin

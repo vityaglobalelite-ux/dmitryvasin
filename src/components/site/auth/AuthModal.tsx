@@ -37,7 +37,7 @@ import {
   safeReturnUrl,
   shouldStayAfterLogin,
 } from "@/components/site/auth/returnUrl";
-import { Button } from "@/components/site/ui/Button";
+import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { mergeGuestCartOnLogin } from "@/lib/catalog/cart";
 import { useAuthUser } from "@/lib/catalog/hooks";
 import { emitCartChanged } from "@/lib/catalog/use-add-to-cart";
@@ -708,7 +708,9 @@ function AuthDialogForm({
               type="password"
               name="password"
               autoComplete={needsPair ? "new-password" : "current-password"}
-              placeholder={copy.passwordPlaceholder}
+              placeholder={
+                needsPair ? copy.signupPasswordPlaceholder : copy.passwordPlaceholder
+              }
               value={password}
               minLength={needsPair ? 6 : undefined}
               onChange={(event) => {
@@ -725,7 +727,7 @@ function AuthDialogForm({
               type="password"
               name="passwordConfirm"
               autoComplete="new-password"
-              placeholder={copy.passwordPlaceholder}
+              placeholder={copy.passwordRepeat}
               value={confirm}
               invalid={mismatch}
               minLength={6}
@@ -746,7 +748,7 @@ function AuthDialogForm({
             <button
               type="button"
               onClick={() => setMode("forgot")}
-              className="w-full text-right text-[16px] font-semibold leading-[1.5] text-plum underline underline-offset-2 max-[600px]:text-[13px]"
+              className={`w-full text-right text-[16px] font-semibold leading-[1.5] text-plum underline underline-offset-2 max-[600px]:text-[13px] ${siteFocusRing}`}
             >
               {copy.forgotLink}
             </button>
@@ -755,7 +757,7 @@ function AuthDialogForm({
             <button
               type="button"
               onClick={() => setMode("forgot")}
-              className="w-full text-right text-[16px] font-semibold leading-[1.5] text-plum underline underline-offset-2 max-[600px]:text-[13px]"
+              className={`w-full text-right text-[16px] font-semibold leading-[1.5] text-plum underline underline-offset-2 max-[600px]:text-[13px] ${siteFocusRing}`}
             >
               {copy.forgotLink}
             </button>

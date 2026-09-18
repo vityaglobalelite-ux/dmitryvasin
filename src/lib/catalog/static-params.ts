@@ -1,3 +1,10 @@
+import {
+  COURSE_2_ID,
+  POSTURE_COURSE_BLOCK1_ID,
+  POSTURE_COURSE_BLOCK2_ID,
+  POSTURE_COURSE_FULL_ID,
+  peekProductId,
+} from "@/lib/catalog/ids";
 import { listPublishedProducts } from "@/lib/catalog/repo/products";
 
 /**
@@ -10,6 +17,13 @@ export const CATALOG_STATIC_PARAM_STUB = "_" as const;
 
 export async function catalogIdStaticParams(): Promise<{ id: string }[]> {
   const ids = new Set<string>([CATALOG_STATIC_PARAM_STUB]);
+  ids.add(POSTURE_COURSE_FULL_ID);
+  ids.add(POSTURE_COURSE_BLOCK1_ID);
+  ids.add(POSTURE_COURSE_BLOCK2_ID);
+  ids.add(COURSE_2_ID);
+  for (let n = 1; n <= 24; n += 1) {
+    ids.add(peekProductId(n));
+  }
   try {
     const products = await listPublishedProducts();
     for (const product of products) {

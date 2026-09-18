@@ -100,6 +100,60 @@ function originAllowed(origin: string | null, allowlist: string[]): boolean {
   return allowlist.includes(stripSlash(origin));
 }
 
+function isActiveAccess(row: AccessRow | null): boolean {
+  if (!row || row.status !== "active") return false;
+  const expiresAtMs = Date.parse(row.expires_at);
+  return Number.isFinite(expiresAtMs) && expiresAtMs > Date.now();
+}
+
+function isMissingRelationError(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const code = error.code ?? "";
+  const message = error.message ?? "";
+  return (
+    code === "PGRST205" ||
+    code === "42P01" ||
+    /does not exist/i.test(message) ||
+    /could not find/i.test(message)
+  );
+}
+
+async function userCanWatchProduct(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+  productId: string,
+): Promise<boolean> {
+  const { data, error } = await admin
+    .from("catalog_access")
+    .select("status, expires_at")
+    .eq("user_id", userId)
+    .eq("product_id", productId)
+    .maybeSingle();
+  if (error) throw error;
+  if (isActiveAccess(data as AccessRow | null)) return true;
+
+  const { data: parents, error: parentErr } = await admin
+    .from("catalog_product_bundles")
+    .select("parent_id")
+    .eq("child_id", productId);
+  if (parentErr) {
+    if (isMissingRelationError(parentErr)) return false;
+    throw parentErr;
+  }
+
+  for (const row of (parents ?? []) as { parent_id: string }[]) {
+    const { data: parentAccess, error: parentAccessErr } = await admin
+      .from("catalog_access")
+      .select("status, expires_at")
+      .eq("user_id", userId)
+      .eq("product_id", row.parent_id)
+      .maybeSingle();
+    if (parentAccessErr) throw parentAccessErr;
+    if (isActiveAccess(parentAccess as AccessRow | null)) return true;
+  }
+  return false;
+}
+
 function otherLocale(locale: CatalogLocale): CatalogLocale {
   return locale === "ru" ? "en" : "ru";
 }
@@ -294,22 +348,27 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "forbidden_origin" }, 403);
     }
 
-    const { data: accessRow, error: accessErr } = await admin
-      .from("catalog_access")
-      .select("status, expires_at")
-      .eq("user_id", user.id)
-      .eq("product_id", productId)
-      .maybeSingle();
-    if (accessErr) throw accessErr;
-
-    const access = accessRow as AccessRow | null;
-    const expiresAtMs = access ? Date.parse(access.expires_at) : NaN;
-    const hasActiveAccess =
-      access?.status === "active" &&
-      Number.isFinite(expiresAtMs) &&
-      expiresAtMs > Date.now();
+    const hasActiveAccess = await userCanWatchProduct(
+      admin,
+      user.id,
+      productId,
+    );
     if (!hasActiveAccess) {
       return jsonResponse({ error: "forbidden" }, 403);
+    }
+
+    const { data: productRow, error: productErr } = await admin
+      .from("catalog_products")
+      .select("type, available_at")
+      .eq("id", productId)
+      .maybeSingle();
+    if (productErr) throw productErr;
+
+    if (productRow?.type === "peek" && productRow.available_at) {
+      const unlockMs = Date.parse(productRow.available_at);
+      if (Number.isFinite(unlockMs) && unlockMs > Date.now()) {
+        return jsonResponse({ error: "peek_locked" }, 403);
+      }
     }
 
     const { data: videoRows, error: videoErr } = await admin

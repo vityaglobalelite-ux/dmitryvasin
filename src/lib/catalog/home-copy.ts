@@ -45,7 +45,7 @@ export const homeCopy = {
     "А другие хотят погрузиться в тему целиком и исследовать её шаг за шагом через ",
   courseWord: "курсы",
   requestBodyOr: " или ",
-  researchWord: "исследования",
+  peekWord: "уроки-«подсмотры»",
   developed:
     "Поэтому я разработал разные обучающие видео, которые помогут каждому танцору найти именно то, что ему нужно.",
   variantsLead: "Давайте рассмотрим, какие ",
@@ -57,6 +57,7 @@ export const homeCopy = {
   emptyBody:
     "Как только уроки, курсы и лайфхаки появятся в базе, карточки встанут на это место — без скачка сетки.",
   emptyCta: "Открыть каталог",
+  emptyFilterCta: "Смотреть каталог",
   errorTitle: "Не удалось загрузить каталог",
   errorBody: "Проверьте соединение и откройте каталог ещё раз.",
   extraLead:
@@ -280,7 +281,7 @@ export const homeMobileBreaks = {
     "или\u00a0тематического урока, чтобы\u00a0иначе увидеть",
     "и\u00a0попрактиковать движение. А\u00a0иногда\u00a0—",
     "погрузиться в\u00a0тему целиком и\u00a0исследовать",
-    "её\u00a0шаг за\u00a0шагом через\u00a0курс или\u00a0исследование.",
+    "её\u00a0шаг за\u00a0шагом через\u00a0курс или\u00a0уроки-«подсмотры».",
   ],
   extraLead: [
     "Выбирайте то, что нужно вам сейчас.",
@@ -389,8 +390,8 @@ export const homeCategories = [
     photo: "catCourse",
   },
   {
-    type: "research" as const,
-    title: "Исследования",
+    type: "peek" as const,
+    title: "Уроки-«подсмотры»",
     text: "Уникальные часовые «подсмотры» за моими индивидуальными уроками и глубокое погружение в тему (в паре с Елизаветой Сурменелян).",
     textLines: [
       "Уникальные часовые «подсмотры»",
@@ -408,6 +409,25 @@ export const homeCatalogFilters = [
   { type: "course" as const, label: "Курсы" },
   { type: "peek" as const, label: "Уроки-«подсмотры»" },
 ] as const;
+
+export const homeEmptyFilter = {
+  lifehack: {
+    title: "Лайфхаки появятся здесь",
+    body: "Короткие наблюдения ещё собираются. Когда они выйдут, карточки встанут на это место — в том же ритме.",
+  },
+  lesson: {
+    title: "Уроки появятся здесь",
+    body: "Тематические разборы ещё готовятся. Пока можно выбрать курс или урок-«подсмотр».",
+  },
+  course: {
+    title: "Курсы появятся здесь",
+    body: "Последовательные программы ещё собираются. Загляните в другие форматы — или чуть позже.",
+  },
+  peek: {
+    title: "Уроки-«подсмотры» появятся здесь",
+    body: "Часовые «подсмотры» ещё готовятся. Когда они выйдут, карточки встанут сюда.",
+  },
+} as const;
 
 export const homeReviews = [
   {
@@ -478,7 +498,7 @@ const enCopy = {
     "Others want to go all the way into a topic and explore it step by step through ",
   courseWord: "courses",
   requestBodyOr: " or ",
-  researchWord: "research",
+  peekWord: "“peek” lessons",
   developed:
     "That is why I made different training videos, so every dancer can find exactly what they need.",
   variantsLead: "Let’s look at the ",
@@ -490,6 +510,7 @@ const enCopy = {
   emptyBody:
     "As soon as lessons, courses, and lifehacks appear in the database, cards will sit here — without a layout jump.",
   emptyCta: "Open catalog",
+  emptyFilterCta: "Browse the catalog",
   errorTitle: "Couldn’t load the catalog",
   errorBody: "Check your connection and open the catalog again.",
   extraLead:
@@ -569,8 +590,8 @@ const enCategories = [
     photo: "catCourse",
   },
   {
-    type: "research" as const,
-    title: "Research",
+    type: "peek" as const,
+    title: "“Peek” lessons",
     text: "Unique hour-long “peeks” at my private lessons and a deep dive into the topic (in partnership with Elizaveta Surmenelyan).",
     photo: "catResearch",
   },
@@ -582,6 +603,25 @@ const enCatalogFilters = [
   { type: "course" as const, label: "Courses" },
   { type: "peek" as const, label: "“Peek” lessons" },
 ] as const;
+
+const enEmptyFilter = {
+  lifehack: {
+    title: "Lifehacks will live here",
+    body: "Short observations are still being gathered. When they are ready, the cards will sit here — in the same rhythm.",
+  },
+  lesson: {
+    title: "Lessons will live here",
+    body: "Focused lessons are still being prepared. For now you can choose a course or a “peek” lesson.",
+  },
+  course: {
+    title: "Courses will live here",
+    body: "Full programmes are still being gathered. Look at the other formats — or come back a little later.",
+  },
+  peek: {
+    title: "“Peek” lessons will live here",
+    body: "Hour-long peeks are still being prepared. When they are ready, the cards will sit here.",
+  },
+} as const;
 
 const enReviews = [
   {
@@ -618,6 +658,7 @@ export function homeT(locale: Locale = "ru") {
       directions: enDirections,
       categories: enCategories,
       filters: enCatalogFilters,
+      emptyFilter: enEmptyFilter,
       reviews: enReviews,
     };
   }
@@ -626,6 +667,7 @@ export function homeT(locale: Locale = "ru") {
     directions: homeDirections,
     categories: homeCategories,
     filters: homeCatalogFilters,
+    emptyFilter: homeEmptyFilter,
     reviews: homeReviews,
   };
 }

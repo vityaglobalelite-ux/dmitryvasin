@@ -84,6 +84,13 @@ const ru = {
     emptyFilterTitle: "В этой категории пока пусто",
     emptyFilterBody:
       "Опубликованных продуктов этого типа сейчас нет. Откройте весь каталог — или загляните позже.",
+    emptyLifehackTitle: "Лайфхаков пока нет",
+    emptyLifehackBody:
+      "Короткие находки для зала появятся здесь — без чужих обложек и фальшивых карточек. Пока можно открыть курсы, подсмотры или весь каталог.",
+    emptyLessonTitle: "Уроков пока нет",
+    emptyLessonBody:
+      "Полные видеоуроки ещё не опубликованы. Загляните в курсы и уроки-«подсмотры» — или вернитесь ко всему каталогу.",
+    peekOpens: "Откроется",
     cost: "Стоимость",
     details: "Подробнее",
     addToCart: "Добавить в корзину",
@@ -94,7 +101,7 @@ const ru = {
       course: "Курс",
       extra: "Доп. материал",
       research: "Исследование",
-      peek: "Подсмотр",
+      peek: "Уроки-«подсмотры»",
     },
     filters: {
       lifehack: "Лайфхаки",
@@ -233,6 +240,13 @@ const en = {
     emptyFilterTitle: "This category is empty for now",
     emptyFilterBody:
       "There are no published products of this type right now. Open the full catalog — or check back later.",
+    emptyLifehackTitle: "No lifehacks yet",
+    emptyLifehackBody:
+      "Short studio finds will land here — no stock covers, no fake cards. Meanwhile, browse courses, peek lessons, or the full catalog.",
+    emptyLessonTitle: "No lessons yet",
+    emptyLessonBody:
+      "Full video lessons are not published yet. Browse courses and “peek” lessons — or return to the full catalog.",
+    peekOpens: "Opens",
     cost: "Price",
     details: "Details",
     addToCart: "Add to cart",
@@ -243,7 +257,7 @@ const en = {
       course: "Course",
       extra: "Extra material",
       research: "Research",
-      peek: "Peek",
+      peek: "“Peek” lessons",
     },
     filters: {
       lifehack: "Lifehacks",

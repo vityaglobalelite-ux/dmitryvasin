@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { accountAssets } from "@/components/site/account/assets";
 import { AccountMaterialsEmpty } from "@/components/site/account/AccountMaterialsEmpty";
 import { accountT } from "@/components/site/account/copy";
 import { AccessMeter } from "@/components/site/account/AccessMeter";
@@ -21,7 +22,8 @@ import {
 } from "@/components/site/catalog/display";
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import { Button } from "@/components/site/ui/Button";
-import { isAccessActive } from "@/lib/catalog/access";
+import { isAccessActive, isPeekWatchable } from "@/lib/catalog/access";
+import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import { useMyAccess, useMyWatchProgress } from "@/lib/catalog/hooks-account";
 import { catalogT } from "@/lib/catalog/i18n";
 import { productCopy } from "@/lib/catalog/locale";
@@ -30,8 +32,10 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
+import { getPublishedProduct } from "@/lib/catalog/repo/products";
 import type {
   Access,
+  Locale,
   Product,
   ProductType,
   WatchProgress,
@@ -43,14 +47,14 @@ import {
   watchPercent,
 } from "@/lib/catalog/watch-progress";
 
-const SECTION_ORDER: ProductType[] = [
+const LIBRARY_SECTION_ORDER: ProductType[] = [
   "course",
   "lesson",
   "lifehack",
-  "extra",
-  "research",
   "peek",
 ];
+
+const LIBRARY_TYPES = new Set<ProductType>(LIBRARY_SECTION_ORDER);
 
 function useNow(intervalMs = 60_000): Date {
   const [now, setNow] = useState(() => new Date());
@@ -59,6 +63,70 @@ function useNow(intervalMs = 60_000): Date {
     return () => window.clearInterval(id);
   }, [intervalMs]);
   return now;
+}
+
+function formatUnlockDate(iso: string, locale: Locale): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ru-RU", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function mergePostureAccess(block1: Access, block2: Access, product: Product): Access {
+  const expiresAt =
+    new Date(block1.expiresAt).getTime() < new Date(block2.expiresAt).getTime()
+      ? block1.expiresAt
+      : block2.expiresAt;
+  return {
+    ...block1,
+    productId: POSTURE_BUNDLE.fullId,
+    expiresAt,
+    status:
+      block1.status === "active" && block2.status === "active"
+        ? "active"
+        : block1.status,
+    product,
+  };
+}
+
+/** One posture course card when full or both blocks; hide redundant block rows. */
+function prepareLibraryAccess(
+  rows: Access[],
+  fullCourseProduct: Product | null,
+): Access[] {
+  const withProduct = rows.filter((row) => row.product);
+  const byId = new Map(withProduct.map((row) => [row.productId, row]));
+
+  const full = byId.get(POSTURE_BUNDLE.fullId);
+  const block1 = byId.get(POSTURE_BUNDLE.block1Id);
+  const block2 = byId.get(POSTURE_BUNDLE.block2Id);
+  const unified = Boolean(full) || (Boolean(block1) && Boolean(block2));
+  const canSynthesize =
+    unified && !full && Boolean(block1) && Boolean(block2) && Boolean(fullCourseProduct);
+
+  const hidden = new Set<string>();
+  if (unified && (full || canSynthesize)) {
+    hidden.add(POSTURE_BUNDLE.block1Id);
+    hidden.add(POSTURE_BUNDLE.block2Id);
+  }
+
+  const result: Access[] = [];
+  for (const row of withProduct) {
+    if (!row.product?.type || !LIBRARY_TYPES.has(row.product.type)) continue;
+    if (hidden.has(row.productId)) continue;
+    result.push(row);
+  }
+
+  if (canSynthesize && block1 && block2 && fullCourseProduct) {
+    result.push(mergePostureAccess(block1, block2, fullCourseProduct));
+  }
+
+  return result;
 }
 
 function materialHref(
@@ -80,27 +148,60 @@ export function AccountMaterialsView() {
   const now = useNow();
   const copy = accountT(useLocale());
   const locale = useLocale();
+  const [fullCourseProduct, setFullCourseProduct] = useState<Product | null>(
+    null,
+  );
+
+  const needsPostureFullProduct = useMemo(() => {
+    const ids = new Set(access.data.map((row) => row.productId));
+    return (
+      !ids.has(POSTURE_BUNDLE.fullId) &&
+      ids.has(POSTURE_BUNDLE.block1Id) &&
+      ids.has(POSTURE_BUNDLE.block2Id)
+    );
+  }, [access.data]);
+
+  useEffect(() => {
+    if (!needsPostureFullProduct) {
+      setFullCourseProduct(null);
+      return undefined;
+    }
+    let cancelled = false;
+    void getPublishedProduct(POSTURE_BUNDLE.fullId, locale).then((product) => {
+      if (!cancelled) setFullCourseProduct(product);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [needsPostureFullProduct, locale]);
+
   const progressByProduct = useMemo(() => {
     const map = new Map<string, WatchProgress>();
     for (const row of progress.data) map.set(row.productId, row);
     return map;
   }, [progress.data]);
 
+  const libraryRows = useMemo(
+    () => prepareLibraryAccess(access.data, fullCourseProduct),
+    [access.data, fullCourseProduct],
+  );
+
   const grouped = useMemo(() => {
-    const rows = access.data.filter((row) => row.product);
     const byType = new Map<ProductType, Access[]>();
-    for (const row of rows) {
+    for (const row of libraryRows) {
       const type = row.product?.type;
-      if (!type) continue;
+      if (!type || !LIBRARY_TYPES.has(type)) continue;
       const list = byType.get(type) ?? [];
       list.push(row);
       byType.set(type, list);
     }
-    return SECTION_ORDER.filter((type) => byType.has(type)).map((type) => ({
-      type,
-      items: byType.get(type) ?? [],
-    }));
-  }, [access.data]);
+    return LIBRARY_SECTION_ORDER.filter((type) => byType.has(type)).map(
+      (type) => ({
+        type,
+        items: byType.get(type) ?? [],
+      }),
+    );
+  }, [libraryRows]);
 
   if (gate.pending || (access.loading && access.data.length === 0 && !access.error)) {
     return <AccountShellSkeleton variant="cards" />;
@@ -183,6 +284,12 @@ function MaterialCard({
   const ui = accountT(locale);
 
   const active = isAccessActive(access, now);
+  const peekLocked =
+    active && product.type === "peek" && !isPeekWatchable(product, now);
+  const unlockLabel =
+    peekLocked && product.availableAt
+      ? formatUnlockDate(product.availableAt, locale)
+      : "";
   const remaining = remainingAccess(access, now, locale);
   const href = materialHref(access, active, routes);
   const copy = productCopy(product, locale);
@@ -193,13 +300,15 @@ function MaterialCard({
   const accessLabel = formatAccessLabel(product.accessDays, "overlay", locale);
   const cta = !active
     ? ui.renew
-    : product.type === "course"
-      ? ui.open
-      : progress?.completed
-        ? ui.watchAgain
-        : watchPercent(progress, product.durationSec) > 0
-          ? ui.continueWatching
-          : ui.open;
+    : peekLocked && unlockLabel
+      ? ui.peekLockedCta.replace("{date}", unlockLabel)
+      : product.type === "course"
+        ? ui.open
+        : progress?.completed
+          ? ui.watchAgain
+          : watchPercent(progress, product.durationSec) > 0
+            ? ui.continueWatching
+            : ui.open;
 
   return (
     <article className="flex overflow-hidden rounded-[20px] bg-light-gray max-[600px]:flex-col">
@@ -213,7 +322,7 @@ function MaterialCard({
             alt={copy.title}
             fill
             className={
-              active
+              active && !peekLocked
                 ? "object-cover"
                 : "object-cover opacity-60"
             }
@@ -221,16 +330,37 @@ function MaterialCard({
             unoptimized
           />
         ) : null}
+        {peekLocked ? (
+          <div className="pointer-events-none absolute inset-0 z-[11] flex items-center justify-center bg-black/25">
+            <span className="inline-flex size-14 items-center justify-center rounded-full bg-black/50 backdrop-blur-md max-[600px]:size-12">
+              <img
+                src={accountAssets.lock}
+                alt=""
+                width={28}
+                height={28}
+                className="size-7 max-[600px]:size-6"
+              />
+            </span>
+          </div>
+        ) : null}
         <div className="absolute inset-x-0 top-0 z-10 flex flex-wrap gap-2.5 p-2.5 max-[600px]:gap-1 max-[600px]:p-1.5">
           {duration ? <CoverChip>{duration}</CoverChip> : null}
-          {accessLabel ? <CoverChip>{accessLabel}</CoverChip> : null}
+          {peekLocked && unlockLabel ? (
+            <CoverChip>
+              {ui.peekAvailableFrom.replace("{date}", unlockLabel)}
+            </CoverChip>
+          ) : accessLabel ? (
+            <CoverChip>{accessLabel}</CoverChip>
+          ) : null}
         </div>
-        <CoverWatchMeter
-          progress={progress}
-          fallbackDurationSec={product.durationSec}
-          watchedLabel={ui.watched}
-          leftLabel={ui.watchLeft}
-        />
+        {!peekLocked ? (
+          <CoverWatchMeter
+            progress={progress}
+            fallbackDurationSec={product.durationSec}
+            watchedLabel={ui.watched}
+            leftLabel={ui.watchLeft}
+          />
+        ) : null}
       </Link>
 
       <div className="flex min-w-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
@@ -354,4 +484,3 @@ function SkillRow({ product }: { product: Product }) {
     </div>
   );
 }
-

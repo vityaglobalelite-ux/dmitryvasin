@@ -1,16 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import { getGuestCart, mergeGuestCartOnLogin, removeGuestItem } from "@/lib/catalog/cart";
 import { useAuthUser } from "@/lib/catalog/hooks";
 import { listCartItems, removeCartItem } from "@/lib/catalog/repo/cart";
-import { listPublishedProducts } from "@/lib/catalog/repo/products";
+import {
+  getPublishedProduct,
+  listPublishedProducts,
+} from "@/lib/catalog/repo/products";
 import { getWholesaleTiers } from "@/lib/catalog/repo/settings";
 import {
   CART_CHANGED_EVENT,
   emitCartChanged,
 } from "@/lib/catalog/use-add-to-cart";
-import type { AuthUser, CartItem, WholesaleTier } from "@/lib/catalog/types";
+import type { AuthUser, CartItem, Product, WholesaleTier } from "@/lib/catalog/types";
 import { computeCartTotals } from "@/components/site/cart/totals";
 import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 
@@ -31,10 +35,19 @@ async function hydrateGuestItems(items: CartItem[]): Promise<CartItem[]> {
   return hydrated;
 }
 
+async function bundleCapProducts(items: CartItem[]): Promise<Product[]> {
+  const ids = new Set(items.map((item) => item.productId));
+  const hasBothBlocks =
+    ids.has(POSTURE_BUNDLE.block1Id) && ids.has(POSTURE_BUNDLE.block2Id);
+  if (!hasBothBlocks || ids.has(POSTURE_BUNDLE.fullId)) return [];
+  const fetched = await getPublishedProduct(POSTURE_BUNDLE.fullId);
+  return fetched ? [fetched] : [];
+}
+
 async function readCart(
   user: AuthUser | null,
   mergedRef: { current: boolean },
-): Promise<{ items: CartItem[]; tiers: WholesaleTier[] }> {
+): Promise<{ items: CartItem[]; tiers: WholesaleTier[]; extras: Product[] }> {
   const tiers = await getWholesaleTiers().catch(() => [] as WholesaleTier[]);
   if (user) {
     if (!mergedRef.current) {
@@ -48,13 +61,16 @@ async function readCart(
       }
     }
     const serverItems = await listCartItems();
+    const items = serverItems.map((item) => ({ ...item, qty: 1 }));
     return {
       tiers,
-      items: serverItems.map((item) => ({ ...item, qty: 1 })),
+      items,
+      extras: await bundleCapProducts(items),
     };
   }
   mergedRef.current = false;
-  return { tiers, items: await hydrateGuestItems(getGuestCart()) };
+  const items = await hydrateGuestItems(getGuestCart());
+  return { tiers, items, extras: await bundleCapProducts(items) };
 }
 
 export function useCart() {
@@ -62,16 +78,21 @@ export function useCart() {
   const { currency } = useCatalogCurrency();
   const [items, setItems] = useState<CartItem[]>([]);
   const [tiers, setTiers] = useState<WholesaleTier[]>([]);
+  const [extras, setExtras] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const mergedRef = useRef(false);
 
-  const apply = useCallback((next: { items: CartItem[]; tiers: WholesaleTier[] }) => {
-    setTiers(next.tiers);
-    setItems(next.items);
-    setError(null);
-    setLoading(false);
-  }, []);
+  const apply = useCallback(
+    (next: { items: CartItem[]; tiers: WholesaleTier[]; extras: Product[] }) => {
+      setTiers(next.tiers);
+      setItems(next.items);
+      setExtras(next.extras);
+      setError(null);
+      setLoading(false);
+    },
+    [],
+  );
 
   useEffect(() => {
     if (auth.loading) return;
@@ -137,7 +158,7 @@ export function useCart() {
   return {
     items,
     tiers,
-    totals: computeCartTotals(items, tiers, currency),
+    totals: computeCartTotals(items, tiers, currency, extras),
     loading: loading || auth.loading,
     error,
     signedIn: Boolean(auth.data),

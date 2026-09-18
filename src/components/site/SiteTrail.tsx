@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Fragment } from "react";
+import { siteFocusRing } from "@/components/site/ui/Button";
 import { siteAssets } from "@/lib/catalog/assets";
 import { useCatalogT } from "@/lib/catalog/locale-context";
 
@@ -25,7 +26,7 @@ export function SiteTrail({
       {backHref ? (
         <Link
           href={backHref}
-          className="inline-flex min-h-11 w-fit items-center gap-2.5 text-[16px] font-semibold leading-normal text-plum underline decoration-plum/35 underline-offset-[5px] transition-[opacity,text-decoration-color] duration-150 hover:opacity-80 hover:decoration-plum max-[600px]:min-h-10 max-[600px]:gap-1.5 max-[600px]:text-[13px] max-[600px]:leading-[1.5] min-[601px]:min-h-0"
+          className={`inline-flex min-h-11 w-fit items-center gap-2.5 rounded-[8px] text-[16px] font-semibold leading-normal text-plum underline decoration-plum/35 underline-offset-[5px] transition-[opacity,text-decoration-color] duration-150 hover:opacity-80 hover:decoration-plum max-[600px]:min-h-10 max-[600px]:gap-1.5 max-[600px]:text-[13px] max-[600px]:leading-[1.5] min-[601px]:min-h-0 ${siteFocusRing}`}
         >
           <span className="flex h-2.5 w-[5px] shrink-0 items-center justify-center" aria-hidden>
             <img
@@ -58,7 +59,7 @@ export function SiteTrail({
             {crumb.href ? (
               <Link
                 href={crumb.href}
-                className="shrink-0 text-[rgba(37,37,37,0.5)] underline-offset-4 transition-[color,opacity] duration-150 hover:text-text hover:underline"
+                className={`shrink-0 rounded-[4px] text-[rgba(37,37,37,0.5)] underline-offset-4 transition-[color,opacity] duration-150 hover:text-text hover:underline ${siteFocusRing}`}
               >
                 {crumb.label}
               </Link>

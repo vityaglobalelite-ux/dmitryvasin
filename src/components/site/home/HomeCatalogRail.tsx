@@ -5,7 +5,7 @@ import { ProductCard } from "@/components/site/catalog/ProductCard";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import { Layer } from "@/components/site/home/HomeFrame";
-import { Button } from "@/components/site/ui/Button";
+import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { homeT } from "@/lib/catalog/home-copy";
 import { useProducts } from "@/lib/catalog/hooks";
@@ -27,10 +27,10 @@ function isHomeFilter(type: ProductType): type is HomeFilter {
 
 function useHomeCatalogRail(count: number) {
   const locale = useLocale();
-  const { copy, filters } = homeT(locale);
+  const { copy, filters, emptyFilter: emptyFilterCopy } = homeT(locale);
   const catalogCopy = useCatalogT();
   const routes = useLocalizedRoutes();
-  const { data, loading, error } = useProducts();
+  const { data, loading, error } = useProducts({ locale });
   const addToCart = useAddToCart();
   const inCartIds = useCartProductIds();
   const [selectedType, setSelectedType] = useState<HomeFilter>(DEFAULT_FILTER);
@@ -72,6 +72,7 @@ function useHomeCatalogRail(count: number) {
     copy,
     catalogCopy,
     filters,
+    emptyFilterCopy,
     locale,
     routes,
     loading,
@@ -109,9 +110,10 @@ function HomeFilterChip({
       aria-pressed={selected}
       className={[
         "inline-flex items-center justify-center whitespace-nowrap font-medium transition-[filter,transform] duration-200 ease-out",
-        "hover:brightness-105 active:scale-[0.98]",
+        "hover:brightness-105 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100",
+        siteFocusRing,
         compact
-          ? "h-[35px] rounded-[40px] px-[11px] text-[10px] leading-normal"
+          ? "h-[35px] shrink-0 rounded-[40px] px-[11px] text-[10px] leading-normal"
           : "h-[69px] rounded-[40px] px-10 text-[24px] leading-[1.2]",
         selected
           ? "bg-[image:var(--brand-gradient)] text-white"
@@ -170,10 +172,24 @@ export function HomeCatalogRailDesktop() {
             }
           />
         ) : rail.emptyFilter ? (
-          <RailMessage
-            title={rail.catalogCopy.catalog.emptyFilterTitle}
-            body={rail.catalogCopy.catalog.emptyFilterBody}
-          />
+          <div
+            className={[
+              "flex h-full gap-5 transition-[opacity,transform] duration-200 ease-out",
+              rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+            ].join(" ")}
+          >
+            {Array.from({ length: DESKTOP_COUNT }, (_, i) => (
+              <div key={`empty-${rail.displayedType}-${i}`} className="h-full w-[467px] shrink-0">
+                <EmptyRailCard
+                  featured={i === 0}
+                  title={rail.emptyFilterCopy[rail.displayedType].title}
+                  body={rail.emptyFilterCopy[rail.displayedType].body}
+                  cta={rail.copy.emptyFilterCta}
+                  href={rail.routes.catalog}
+                />
+              </div>
+            ))}
+          </div>
         ) : (
           <div
             className={[
@@ -211,7 +227,7 @@ export function HomeCatalogRailMobile() {
         </h2>
       </Layer>
       <div
-        className="absolute left-5 top-[4828px] z-[2] flex h-[35px] items-center gap-[7px]"
+        className="absolute left-5 top-[4828px] z-[2] flex h-[35px] w-[320px] items-center gap-[7px] overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="tablist"
         aria-label={rail.catalogCopy.catalog.filterAria}
       >
@@ -256,23 +272,29 @@ export function HomeCatalogRailMobile() {
             </Layer>
             )
           : rail.emptyFilter
-            ? (
-              <Layer
-                x={20}
-                y={4883}
-                w={320}
-                h={500}
-                z={2}
-                className="flex flex-col items-start justify-center rounded-[10px] bg-light-gray p-5"
-              >
-                <p className="text-[16px] font-medium leading-[1.3] text-text">
-                  {rail.catalogCopy.catalog.emptyFilterTitle}
-                </p>
-                <p className="mt-3 text-[13px] leading-[1.5] text-text/70">
-                  {rail.catalogCopy.catalog.emptyFilterBody}
-                </p>
-              </Layer>
-              )
+            ? cardY.map((y, i) => (
+                <Layer
+                  key={`empty-${rail.displayedType}-${y}`}
+                  x={20}
+                  y={y}
+                  w={320}
+                  h={500}
+                  z={2}
+                  className={[
+                    "transition-[opacity,transform] duration-200 ease-out",
+                    rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+                  ].join(" ")}
+                >
+                  <EmptyRailCard
+                    featured={i === 0}
+                    compact
+                    title={rail.emptyFilterCopy[rail.displayedType].title}
+                    body={rail.emptyFilterCopy[rail.displayedType].body}
+                    cta={rail.copy.emptyFilterCta}
+                    href={rail.routes.catalog}
+                  />
+                </Layer>
+              ))
             : rail.items.map((product, i) => (
                 <Layer
                   key={`${rail.displayedType}-${product.id}`}
@@ -307,6 +329,81 @@ export function HomeCatalogRailMobile() {
       ) : null}
       <WholesaleModal open={rail.modalOpen} onClose={rail.closeModal} />
     </>
+  );
+}
+
+function EmptyRailCard({
+  featured,
+  title,
+  body,
+  cta,
+  href,
+  compact = false,
+}: {
+  featured: boolean;
+  title: string;
+  body: string;
+  cta: string;
+  href: string;
+  compact?: boolean;
+}) {
+  return (
+    <article
+      className={[
+        "flex h-full w-full flex-col overflow-hidden bg-light-gray",
+        compact ? "rounded-[10px]" : "rounded-[20px]",
+      ].join(" ")}
+      aria-hidden={!featured}
+      {...(featured ? { role: "status" as const } : {})}
+    >
+      <div
+        aria-hidden
+        className={
+          compact
+            ? "h-[180px] w-full shrink-0 border-b border-black/[0.04]"
+            : "h-[263px] w-full shrink-0 border-b border-black/[0.04]"
+        }
+      />
+      {featured ? (
+        <div
+          className={[
+            "flex flex-1 flex-col justify-end",
+            compact ? "p-[15px]" : "p-10",
+          ].join(" ")}
+        >
+          <p
+            className={
+              compact
+                ? "text-[16px] font-medium leading-[1.3] text-text"
+                : "text-[24px] font-medium leading-[1.2] text-text"
+            }
+          >
+            {title}
+          </p>
+          <p
+            className={
+              compact
+                ? "mt-2.5 text-[13px] leading-[1.5] text-text/70"
+                : "mt-4 max-w-[360px] text-[16px] leading-[1.5] text-text/70"
+            }
+          >
+            {body}
+          </p>
+          <Button
+            href={href}
+            className={
+              compact
+                ? "mt-5 h-[50px] w-full px-0 text-[13px]"
+                : "mt-8 h-[60px] w-[309px] px-0"
+            }
+          >
+            {cta}
+          </Button>
+        </div>
+      ) : (
+        <div className="flex-1" />
+      )}
+    </article>
   );
 }
 

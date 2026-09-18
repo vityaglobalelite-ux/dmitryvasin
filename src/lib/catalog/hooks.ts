@@ -5,11 +5,14 @@ import type { Session } from "@supabase/supabase-js";
 import {
   getPublishedProduct,
   listPublishedProducts,
+  PUBLIC_PRODUCT_TYPES,
 } from "@/lib/catalog/repo/products";
 import type {
   AuthUser,
+  Locale,
   Product,
   ProductType,
+  PublicProductType,
   QueryState,
 } from "@/lib/catalog/types";
 import {
@@ -21,19 +24,32 @@ import {
   rememberAuthUser,
 } from "@/lib/supabase/auth";
 
-export function useProducts(opts: { type?: ProductType } = {}): QueryState<
-  Product[]
-> {
+function publicProductTypeFilter(
+  type?: ProductType,
+): PublicProductType | undefined {
+  if (!type) return undefined;
+  return (PUBLIC_PRODUCT_TYPES as readonly string[]).includes(type)
+    ? (type as PublicProductType)
+    : undefined;
+}
+
+export function useProducts(
+  opts: { type?: ProductType; locale?: Locale } = {},
+): QueryState<Product[]> {
   const [state, setState] = useState<QueryState<Product[]>>({
     data: [],
     loading: true,
     error: null,
   });
+  const locale = opts.locale ?? "ru";
 
   useEffect(() => {
     let cancelled = false;
     setState({ data: [], loading: true, error: null });
-    listPublishedProducts({ type: opts.type })
+    listPublishedProducts({
+      type: publicProductTypeFilter(opts.type),
+      locale,
+    })
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
@@ -49,12 +65,15 @@ export function useProducts(opts: { type?: ProductType } = {}): QueryState<
     return () => {
       cancelled = true;
     };
-  }, [opts.type]);
+  }, [opts.type, locale]);
 
   return state;
 }
 
-export function useProduct(id: string | null): QueryState<Product | null> {
+export function useProduct(
+  id: string | null,
+  locale: Locale = "ru",
+): QueryState<Product | null> {
   const [state, setState] = useState<QueryState<Product | null>>({
     data: null,
     loading: Boolean(id),
@@ -68,7 +87,7 @@ export function useProduct(id: string | null): QueryState<Product | null> {
     }
     let cancelled = false;
     setState({ data: null, loading: true, error: null });
-    getPublishedProduct(id)
+    getPublishedProduct(id, locale)
       .then((data) => {
         if (!cancelled) setState({ data, loading: false, error: null });
       })
@@ -84,7 +103,7 @@ export function useProduct(id: string | null): QueryState<Product | null> {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, locale]);
 
   return state;
 }

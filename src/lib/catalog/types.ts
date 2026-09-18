@@ -1,3 +1,5 @@
+import type { SkillKey } from "@/lib/catalog/skills";
+
 export type Locale = "ru" | "en";
 
 export type ProductType =
@@ -7,6 +9,28 @@ export type ProductType =
   | "extra"
   | "research"
   | "peek";
+
+/** Types returned by listPublishedProducts / getPublishedProduct. */
+export type PublicProductType = "lifehack" | "lesson" | "course" | "peek";
+
+export type { SkillKey } from "@/lib/catalog/skills";
+export { SKILL_KEYS, isSkillKey } from "@/lib/catalog/skills";
+
+export type ProgramLesson = {
+  sort: number;
+  title: string;
+  gifUrls: string[];
+};
+
+export type ProgramBlock = {
+  blockKey: string;
+  outcomes: string[];
+  lessons: ProgramLesson[];
+};
+
+export type CourseProgram = {
+  blocks: ProgramBlock[];
+};
 
 export type AccessStatus = "active" | "expired";
 export type OrderStatus = "pending" | "paid" | "failed" | "canceled";
@@ -29,11 +53,20 @@ export type Product = {
   priceEurMinor: number;
   currency: Currency;
   accessDays: number;
+  /** First cover frame, or empty when none (e.g. locked peeks 10–24). */
   coverUrl: string;
+  /** Cover carousel frames (kind=cover), sorted. */
+  coverUrls: string[];
   durationSec: number;
   level: string;
-  skills: string[];
+  skills: SkillKey[];
   lessonCount?: number;
+  /** Peek unlock instant; null = no schedule lock. */
+  availableAt: string | null;
+  sortIndex?: number;
+  bundleParentId: string | null;
+  bundleChildIds: string[];
+  programBlocks: CourseProgram;
   i18n: Record<Locale, ProductI18n>;
   published: boolean;
 };
