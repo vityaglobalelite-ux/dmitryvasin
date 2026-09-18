@@ -1,6 +1,7 @@
 import { FunctionsHttpError } from "@supabase/supabase-js";
 import { siteRoutes } from "@/lib/catalog/routes";
 import { getSupabase } from "@/lib/supabase/client";
+import { isGuestUser } from "@/lib/supabase/auth";
 
 export type StartCatalogCheckoutOptions = {
   successUrl?: string;
@@ -167,7 +168,7 @@ export async function startCatalogCheckout(
     data: { session },
   } = await supabase.auth.getSession();
   const accessToken = session?.access_token?.trim();
-  if (!accessToken) {
+  if (!accessToken || (session?.user && isGuestUser(session.user))) {
     throw new CatalogCheckoutError(
       "auth",
       "Войдите в аккаунт, чтобы перейти к оплате.",

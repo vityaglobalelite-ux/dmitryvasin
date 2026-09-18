@@ -17,7 +17,8 @@ export const siteRoutes = {
   accountWatch: (id: string) => `/account/watch/${id}/` as const,
   accountProfile: "/account/profile/",
   accountOrders: "/account/orders/",
-  accountSupport: "/account/support/",
+  support: "/support/",
+  accountSupport: "/support/",
   accountExpired: "/account/expired/",
 } as const;
 

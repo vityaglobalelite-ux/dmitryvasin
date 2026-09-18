@@ -81,6 +81,7 @@ export function catalogSitemapEntries(productIds: string[]): MetadataRoute.Sitem
   const pages: { path: string; priority: number }[] = [
     { path: siteRoutes.home, priority: 1 },
     { path: siteRoutes.catalog, priority: 0.9 },
+    { path: siteRoutes.support, priority: 0.6 },
     { path: siteRoutes.login, priority: 0.4 },
     { path: siteRoutes.signup, priority: 0.4 },
     { path: siteRoutes.forgotPassword, priority: 0.3 },

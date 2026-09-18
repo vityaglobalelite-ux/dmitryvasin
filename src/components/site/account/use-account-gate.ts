@@ -4,11 +4,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
 import { useAuthModal } from "@/components/site/auth/AuthModal";
 import { useAuthUser } from "@/lib/catalog/hooks";
-import { localeFromPathname, localizedSiteRoutes } from "@/lib/catalog/locale";
+import { localeFromPathname, localizedSiteRoutes, stripLocalePrefix } from "@/lib/catalog/locale";
 import type { AuthUser } from "@/lib/catalog/types";
 import { isAuthPromptSuppressed } from "@/lib/supabase/auth";
 
 let accountAuthPromptLocked = false;
+
+export function isAccountSupportPath(pathname: string): boolean {
+  const path = stripLocalePrefix(pathname).replace(/\/+$/, "") || "/";
+  return path === "/account/support";
+}
 
 export function useAccountGate(): {
   user: AuthUser | null;
@@ -22,6 +27,10 @@ export function useAccountGate(): {
 
   useEffect(() => {
     if (loading) return;
+    if (isAccountSupportPath(pathname)) {
+      requested.current = false;
+      return;
+    }
     if (user) {
       requested.current = false;
       accountAuthPromptLocked = false;

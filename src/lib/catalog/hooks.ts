@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import {
   getPublishedProduct,
   listPublishedProducts,
@@ -16,6 +17,7 @@ import {
   mapAuthUser,
   onAuthStateChange,
   peekCachedAuthUser,
+  peekCachedSessionUser,
   rememberAuthUser,
 } from "@/lib/supabase/auth";
 
@@ -98,6 +100,55 @@ export function useAuthUser(): QueryState<AuthUser | null> {
   useEffect(() => {
     let cancelled = false;
 
+    function applySession(session: Session | null) {
+      rememberAuthUser(session?.user ? mapAuthUser(session.user) : null);
+      if (!cancelled) {
+        setState({
+          data: peekCachedAuthUser() ?? null,
+          loading: false,
+          error: null,
+        });
+      }
+    }
+
+    getSession()
+      .then((session) => {
+        applySession(session);
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return;
+        setState({
+          data: peekCachedAuthUser() ?? null,
+          loading: false,
+          error: error instanceof Error ? error : new Error("auth"),
+        });
+      });
+
+    const { unsubscribe } = onAuthStateChange((_event, session) => {
+      applySession(session);
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, []);
+
+  return state;
+}
+
+/** Any durable session, including anonymous support visitors. */
+export function useSessionUser(): QueryState<AuthUser | null> {
+  const cached = peekCachedSessionUser();
+  const [state, setState] = useState<QueryState<AuthUser | null>>(() => ({
+    data: cached === undefined ? null : cached,
+    loading: cached === undefined,
+    error: null,
+  }));
+
+  useEffect(() => {
+    let cancelled = false;
+
     function apply(user: AuthUser | null) {
       rememberAuthUser(user);
       if (!cancelled) {
@@ -112,7 +163,7 @@ export function useAuthUser(): QueryState<AuthUser | null> {
       .catch((error: unknown) => {
         if (cancelled) return;
         setState({
-          data: peekCachedAuthUser() ?? null,
+          data: peekCachedSessionUser() ?? null,
           loading: false,
           error: error instanceof Error ? error : new Error("auth"),
         });

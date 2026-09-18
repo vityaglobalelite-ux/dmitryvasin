@@ -13,7 +13,7 @@ import {
 import { accountAssets } from "@/components/site/account/assets";
 import { AccountAvatar } from "@/components/site/account/AccountAvatar";
 import { accountT } from "@/components/site/account/copy";
-import { useAccountGate } from "@/components/site/account/use-account-gate";
+import { useAccountGate, isAccountSupportPath } from "@/components/site/account/use-account-gate";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useMyProfile } from "@/lib/catalog/hooks-account";
 import { stripLocalePrefix } from "@/lib/catalog/locale";
@@ -58,8 +58,11 @@ function personName(
 
 export function AccountLayoutChrome({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const ungated = isAccountSupportPath(pathname);
   const gate = useAccountGate();
   const profile = useMyProfile();
+
+  if (ungated) return children;
 
   return (
     <AccountFrameContext.Provider value={true}>

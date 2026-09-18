@@ -278,7 +278,7 @@ Deno.serve(async (req) => {
       data: { user },
       error: userErr,
     } = await userClient.auth.getUser();
-    if (userErr || !user) {
+    if (userErr || !user || user.is_anonymous === true || user.user_metadata?.catalog_guest === true) {
       return jsonResponse({ error: "unauthorized" }, 401);
     }
 

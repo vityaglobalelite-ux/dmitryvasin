@@ -30,7 +30,7 @@ export function HomeHowToDesktop() {
         className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
       />
       <HomeImg
-        src={`${ru ? homeAssets.macbook : homeAssets.macbookEn}?v=alpha`}
+        src={`${ru ? homeAssets.macbook : homeAssets.macbookEn}?v=sharp`}
         alt=""
         width={841}
         height={830}
@@ -190,7 +190,7 @@ export function HomeHowToMobile() {
         </div>
       </Layer>
       <HomeImg
-        src={`${ru ? homeAssets.macbook : homeAssets.macbookEn}?v=alpha`}
+        src={`${ru ? homeAssets.macbook : homeAssets.macbookEn}?v=sharp`}
         alt=""
         width={320}
         height={315}

@@ -24,3 +24,4 @@ export type {
   SupportMessage,
   WholesaleTier,
 } from "@/lib/catalog/types";
+export { asIdentifiedUser, isIdentifiedUser } from "@/lib/catalog/types";

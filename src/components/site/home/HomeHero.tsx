@@ -61,7 +61,7 @@ export function HomeHeroDesktop() {
 
       <HomeImg
         eager
-        src={`${ru ? homeAssets.heroPhone : homeAssets.heroPhoneEn}?v=fingers`}
+        src={`${ru ? homeAssets.heroPhone : homeAssets.heroPhoneEn}?v=sharp`}
         alt=""
         width={901}
         height={1104}

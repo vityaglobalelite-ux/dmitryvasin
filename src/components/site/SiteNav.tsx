@@ -60,6 +60,7 @@ function innerBackHref(
   if (stripped === "/") return null;
   if (stripped.startsWith("/product/")) return productReturn;
   if (stripped.startsWith("/catalog/")) return routes.home;
+  if (stripped.startsWith("/support")) return routes.home;
   if (stripped.startsWith("/cart/") || stripped.startsWith("/checkout/")) {
     return routes.catalog;
   }

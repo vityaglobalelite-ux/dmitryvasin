@@ -17,3 +17,13 @@ verify_jwt = true
 
 [functions.catalog-relay-support]
 verify_jwt = true
+
+[functions.catalog-claim-support]
+verify_jwt = true
+
+[functions.catalog-open-guest-session]
+verify_jwt = false
+
+# Guest support chat uses GoTrue anonymous sessions.
+# On self-hosted Auth set GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED=true
+# (or [auth] enable_anonymous_sign_ins = true in the full Auth config).

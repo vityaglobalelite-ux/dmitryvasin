@@ -165,7 +165,7 @@ async function addCatalogSupportReplyNotification({ userId, body }) {
     type: "support_reply",
     title: "Ответ поддержки",
     body: preview,
-    href: "/account/support/",
+    href: "/support/",
     read: false,
   });
   if (error) throw error;

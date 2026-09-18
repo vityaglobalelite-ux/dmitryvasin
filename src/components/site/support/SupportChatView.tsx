@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -11,13 +12,10 @@ import {
   type KeyboardEvent,
 } from "react";
 import { AuthBanner } from "@/components/site/auth/AuthPrimitives";
-import {
-  AccountShell,
-  AccountShellSkeleton,
-} from "@/components/site/account/AccountShell";
-import { useAccountGate } from "@/components/site/account/use-account-gate";
+import { useAuthModal } from "@/components/site/auth/AuthModal";
+import { accountAssets } from "@/components/site/account/assets";
 import { supportAssets } from "@/components/site/support/assets";
-import { supportCopy } from "@/components/site/support/copy";
+import { supportT, type SupportCopy } from "@/components/site/support/copy";
 import { SupportImageViewer } from "@/components/site/support/SupportImageViewer";
 import { Button } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
@@ -25,20 +23,25 @@ import {
   isSupportCompressibleImage,
   prepareSupportAttachment,
 } from "@/lib/catalog/prepare-support-attachment";
+import { useSessionUser } from "@/lib/catalog/hooks";
+import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { AuthRequiredError } from "@/lib/catalog/repo/internal";
 import {
   createSupportAttachmentSignedUrl,
+  getSupportContactEmail,
   isSupportImageFile,
   isSupportImagePath,
   listSupportMessages,
   relaySupportMessageReliable,
+  saveSupportContactEmail,
   sendSupportMessage,
   SUPPORT_MAX_BYTES,
   SUPPORT_PREVIEW_TRANSFORM,
   supportFilename,
   uploadSupportAttachment,
 } from "@/lib/catalog/repo/support";
-import type { SupportMessage } from "@/lib/catalog/types";
+import { isIdentifiedUser, type Locale, type SupportMessage } from "@/lib/catalog/types";
+import { ensureSupportSession } from "@/lib/supabase/auth";
 import { getSupabase } from "@/lib/supabase/client";
 
 const POLL_MS = 5000;
@@ -63,10 +66,10 @@ type ViewerState = {
   filename: string;
 };
 
-function formatTime(iso: string): string {
+function formatTime(iso: string, locale: Locale): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.DateTimeFormat("ru-RU", {
+  return new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "ru-RU", {
     day: "numeric",
     month: "short",
     hour: "2-digit",
@@ -90,9 +93,13 @@ function isRedundantCaption(body: string, filename: string | null): boolean {
 }
 
 export function SupportChatView() {
-  const gate = useAccountGate();
+  const copy = supportT(useLocale());
+  const routes = useLocalizedRoutes();
+  const session = useSessionUser();
+  const identified = isIdentifiedUser(session.data);
+  const visitorId = session.data?.id ?? null;
   const [messages, setMessages] = useState<SupportMessage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [fullSigned, setFullSigned] = useState<Record<string, string>>({});
@@ -231,7 +238,14 @@ export function SupportChatView() {
   }, []);
 
   useEffect(() => {
-    if (gate.pending) return;
+    if (session.loading) return;
+    if (!visitorId) {
+      setMessages([]);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     let cancelled = false;
     (async () => {
       try {
@@ -251,31 +265,31 @@ export function SupportChatView() {
     return () => {
       cancelled = true;
     };
-  }, [gate.pending, hydrateSigned]);
+  }, [hydrateSigned, session.loading, visitorId]);
 
   useEffect(() => {
-    if (gate.pending || error) return;
+    if (session.loading || !visitorId || error) return;
     const id = window.setInterval(() => {
       void refresh().catch(() => {
         /* keep last good thread */
       });
     }, POLL_MS);
     return () => window.clearInterval(id);
-  }, [error, gate.pending, refresh]);
+  }, [error, refresh, session.loading, visitorId]);
 
   useEffect(() => {
-    if (gate.pending || !gate.user) return;
+    if (session.loading || !visitorId) return;
     const supabase = getSupabase();
     if (!supabase) return;
     const channel = supabase
-      .channel(`catalog_support_messages:${gate.user.id}`)
+      .channel(`catalog_support_messages:${visitorId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "catalog_support_messages",
-          filter: `user_id=eq.${gate.user.id}`,
+          filter: `user_id=eq.${visitorId}`,
         },
         () => {
           void refresh().catch(() => {
@@ -287,28 +301,69 @@ export function SupportChatView() {
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [gate.pending, gate.user, refresh]);
+  }, [refresh, session.loading, visitorId]);
 
-  if (gate.pending) {
-    return <AccountShellSkeleton variant="form" />;
+  const pending = session.loading;
+
+  if (pending) {
+    return (
+      <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-[75px] max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
+        <div className="flex min-h-[min(72vh,760px)] flex-col gap-5">
+          <Skeleton className="h-[55px] w-[min(80%,280px)] rounded-[12px] max-[600px]:h-8" />
+          <Skeleton className="h-4 w-[min(90%,520px)] rounded-[8px]" />
+          <SupportThreadSkeleton />
+        </div>
+      </main>
+    );
   }
 
   return (
-    <AccountShell email={gate.user?.email} active="support">
+    <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-[75px] max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
       <div className="flex min-h-[min(72vh,760px)] flex-col gap-5">
-        <h1 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
-          {supportCopy.title}
-        </h1>
+        {identified ? (
+          <Link
+            href={routes.account}
+            className="inline-flex items-center gap-2.5 text-[16px] font-semibold leading-normal text-plum transition-opacity duration-150 hover:opacity-80 max-[600px]:gap-1.5 max-[600px]:text-[13px]"
+          >
+            <span className="flex h-2.5 w-[5px] items-center justify-center">
+              <img
+                src={accountAssets.back}
+                alt=""
+                width={10}
+                height={5}
+                className="h-[5px] w-2.5 -rotate-90"
+              />
+            </span>
+            {copy.backToAccount}
+          </Link>
+        ) : null}
+
+        <header className="flex max-w-[720px] flex-col gap-3">
+          <h1 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
+            {copy.title}
+          </h1>
+          <p className="text-[16px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
+            {copy.lede}
+          </p>
+        </header>
+
+        {identified ? (
+          <p className="max-w-[640px] text-[13px] leading-[1.5] text-text/55">
+            {copy.identifiedHint}
+          </p>
+        ) : messages.length > 0 ? (
+          <SupportKeepCard />
+        ) : null}
 
         {loading ? (
           <SupportThreadSkeleton />
         ) : error ? (
           <div className="max-w-[640px] rounded-[20px] bg-light-gray p-10 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
             <p className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px]">
-              {supportCopy.errorTitle}
+              {copy.errorTitle}
             </p>
             <p className="mt-4 text-[16px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
-              {supportCopy.errorBody}
+              {copy.errorBody}
             </p>
             <Button
               type="button"
@@ -319,7 +374,7 @@ export function SupportChatView() {
                 void load();
               }}
             >
-              {supportCopy.retry}
+              {copy.retry}
             </Button>
           </div>
         ) : (
@@ -343,7 +398,100 @@ export function SupportChatView() {
         alt={viewer?.filename ?? ""}
         onClose={() => setViewer(null)}
       />
-    </AccountShell>
+    </main>
+  );
+}
+
+function SupportKeepCard() {
+  const copy = supportT(useLocale());
+  const { openAuth } = useAuthModal();
+  const [email, setEmail] = useState("");
+  const [saved, setSaved] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void getSupportContactEmail()
+      .then((value) => {
+        if (cancelled || !value) return;
+        setSaved(value);
+        setEmail(value);
+      })
+      .catch(() => {
+        /* keep empty */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function onSave(event: FormEvent) {
+    event.preventDefault();
+    const next = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(next)) {
+      setError(copy.keepInvalid);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await saveSupportContactEmail(next);
+      setSaved(next);
+    } catch {
+      setError(copy.keepError);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="overflow-hidden rounded-[24px] bg-light-gray p-6 max-[600px]:rounded-[14px] max-[600px]:p-[15px]">
+      <p className="text-[16px] font-semibold leading-[1.3] text-text max-[600px]:text-[15px]">
+        {copy.keepTitle}
+      </p>
+      <p className="mt-2 max-w-[640px] text-[14px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
+        {copy.keepBody}
+      </p>
+      {saved ? (
+        <p className="mt-4 text-[14px] leading-[1.5] text-plum">{copy.keepSaved}</p>
+      ) : (
+        <form
+          onSubmit={(event) => void onSave(event)}
+          className="mt-5 flex flex-wrap items-stretch gap-3"
+        >
+          <label className="sr-only" htmlFor="support-keep-email">
+            {copy.keepEmailLabel}
+          </label>
+          <input
+            id="support-keep-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              if (error) setError(null);
+            }}
+            placeholder={copy.keepEmailPlaceholder}
+            className="h-[50px] min-w-[min(100%,240px)] flex-1 rounded-[16px] border border-[#d9d9d9] bg-white px-4 text-[15px] text-text outline-none transition-colors placeholder:text-[#d9d9d9] focus:border-[rgba(76,13,50,0.4)]"
+          />
+          <Button type="submit" disabled={busy} className="h-[50px] px-6">
+            {busy ? copy.keepSaving : copy.keepSave}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className="h-[50px] px-6"
+            onClick={() => openAuth("signup")}
+          >
+            {copy.keepSignup}
+          </Button>
+        </form>
+      )}
+      {error ? (
+        <p className="mt-3 text-[13px] leading-[1.4] text-accent-red">{error}</p>
+      ) : null}
+    </section>
   );
 }
 
@@ -438,6 +586,7 @@ function SupportThread({
 }
 
 function SupportEmpty() {
+  const copy = supportT(useLocale());
   return (
     <div className="flex flex-1 flex-col items-start justify-center gap-5 py-6">
       <span className="grid size-[60px] place-items-center rounded-full bg-[image:var(--brand-gradient)]">
@@ -451,10 +600,10 @@ function SupportEmpty() {
       </span>
       <div className="max-w-[520px]">
         <p className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
-          {supportCopy.emptyTitle}
+          {copy.emptyTitle}
         </p>
         <p className="mt-3 text-[16px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
-          {supportCopy.emptyBody}
+          {copy.emptyBody}
         </p>
       </div>
     </div>
@@ -476,6 +625,8 @@ function SupportBubble({
   onPreviewError: (path: string) => void;
   onRetryDelivery: () => void;
 }) {
+  const copy = supportT(useLocale());
+  const locale = useLocale();
   const mine = message.fromRole === "user";
   const filename = message.storagePath
     ? supportFilename(message.storagePath)
@@ -500,8 +651,8 @@ function SupportBubble({
           mine ? "text-right" : "text-left",
         ].join(" ")}
       >
-        {mine ? supportCopy.you : supportCopy.agent}
-        <span className="tabular-nums"> · {formatTime(message.createdAt)}</span>
+        {mine ? copy.you : copy.agent}
+        <span className="tabular-nums"> · {formatTime(message.createdAt, locale)}</span>
       </p>
       <div
         className={[
@@ -542,7 +693,7 @@ function SupportBubble({
               mine ? "text-white/90" : "text-plum",
             ].join(" ")}
           >
-            {supportCopy.download} {filename}
+            {copy.download} {filename}
           </a>
         ) : null}
         {!imagePath && message.storagePath && !signedUrl ? (
@@ -554,20 +705,20 @@ function SupportBubble({
           role="status"
           className="mt-1.5 text-right text-[12px] leading-[1.3] text-text/45"
         >
-          {supportCopy.deliveryPending}
+          {copy.deliveryPending}
         </p>
       ) : null}
       {mine && delivery === "failed" ? (
         <div className="mt-1.5 flex items-center justify-end gap-2">
           <p role="alert" className="text-[12px] leading-[1.3] text-accent-red">
-            {supportCopy.deliveryFailed}
+            {copy.deliveryFailed}
           </p>
           <button
             type="button"
             onClick={onRetryDelivery}
             className="text-[12px] font-semibold leading-[1.3] text-plum underline-offset-2 transition-opacity hover:underline hover:opacity-80"
           >
-            {supportCopy.deliveryRetry}
+            {copy.deliveryRetry}
           </button>
         </div>
       ) : null}
@@ -588,6 +739,7 @@ function SupportPhoto({
   onOpen: () => void;
   onBroken: () => void;
 }) {
+  const copy = supportT(useLocale());
   const [loaded, setLoaded] = useState(false);
   const [src, setSrc] = useState(signedUrl);
   const triedFallback = useRef(false);
@@ -612,7 +764,7 @@ function SupportPhoto({
     <button
       type="button"
       onClick={onOpen}
-      aria-label={supportCopy.openPhoto}
+      aria-label={copy.openPhoto}
         className={[
         "group relative block max-w-full overflow-hidden rounded-[14px] text-left outline-none transition-[filter] duration-200 hover:brightness-[1.03] focus-visible:ring-2 focus-visible:ring-[rgba(76,13,50,0.4)]",
         padded ? "mt-3" : "",
@@ -646,13 +798,16 @@ function SupportPhoto({
   );
 }
 
-function mapSendError(err: unknown): string {
-  if (err instanceof AuthRequiredError) return supportCopy.sendErrorAuth;
+function mapSendError(err: unknown, copy: SupportCopy): string {
+  if (err instanceof AuthRequiredError) return copy.sendErrorAuth;
   const code = err instanceof Error ? err.message : "";
-  if (code === "file_too_large") return supportCopy.fileTooLarge;
-  if (code === "empty_file") return supportCopy.sendErrorEmpty;
-  if (/invalid key/i.test(code)) return supportCopy.sendError;
-  return supportCopy.sendError;
+  if (code === "file_too_large") return copy.fileTooLarge;
+  if (code === "empty_file") return copy.sendErrorEmpty;
+  if (/anonymous|guest session|non-2xx|not found/i.test(code)) {
+    return copy.sendErrorGuest;
+  }
+  if (/invalid key/i.test(code)) return copy.sendError;
+  return copy.sendError;
 }
 
 function SupportComposer({
@@ -662,6 +817,7 @@ function SupportComposer({
   onSaved: (message: SupportMessage | null) => void;
   onLocalFile: (path: string, file: File) => void;
 }) {
+  const copy = supportT(useLocale());
   const fileId = useId();
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -694,7 +850,7 @@ function SupportComposer({
     }
     if (next.size > SUPPORT_MAX_BYTES) {
       setFile(null);
-      setError(supportCopy.fileTooLarge);
+      setError(copy.fileTooLarge);
       return;
     }
 
@@ -710,7 +866,7 @@ function SupportComposer({
       if (id !== pickId.current) return;
       if (prepared.size > SUPPORT_MAX_BYTES) {
         setFile(null);
-        setError(supportCopy.fileTooLarge);
+        setError(copy.fileTooLarge);
         return;
       }
       setFile(prepared);
@@ -731,12 +887,13 @@ function SupportComposer({
   async function submit() {
     const body = text.trim() || (file ? file.name : "");
     if (!body || busy || preparing) {
-      if (!body) setError(supportCopy.composerNeedContent);
+      if (!body) setError(copy.composerNeedContent);
       return;
     }
     setBusy(true);
     setError(null);
     try {
+      await ensureSupportSession();
       let storagePath: string | null = null;
       if (file) {
         storagePath = await uploadSupportAttachment(file);
@@ -748,7 +905,8 @@ function SupportComposer({
       onSaved(saved);
       queueMicrotask(() => textRef.current?.focus());
     } catch (err) {
-      setError(mapSendError(err));
+      console.error("support send failed", err);
+      setError(mapSendError(err, copy));
     } finally {
       setBusy(false);
     }
@@ -790,13 +948,13 @@ function SupportComposer({
           <span className="min-w-0">
             <span className="block max-w-[220px] truncate">{file.name}</span>
             <span className="text-text/50">
-              {preparing ? supportCopy.preparing : formatSize(file.size)}
+              {preparing ? copy.preparing : formatSize(file.size)}
             </span>
           </span>
           <button
             type="button"
             className="grid size-7 shrink-0 place-items-center rounded-full transition-opacity hover:opacity-70"
-            aria-label={supportCopy.removeFile}
+            aria-label={copy.removeFile}
             onClick={clearFile}
             disabled={busy}
           >
@@ -820,7 +978,7 @@ function SupportComposer({
             locked ? "pointer-events-none opacity-50" : "",
           ].join(" ")}
         >
-          {supportCopy.attach}
+          {copy.attach}
           <input
             id={fileId}
             type="file"
@@ -837,7 +995,7 @@ function SupportComposer({
             if (error) setError(null);
           }}
           onKeyDown={onKeyDown}
-          placeholder={supportCopy.placeholder}
+          placeholder={copy.placeholder}
           rows={1}
           disabled={locked}
           aria-invalid={error ? true : undefined}
@@ -851,7 +1009,7 @@ function SupportComposer({
         <button
           type="submit"
           disabled={locked}
-          aria-label={busy ? supportCopy.sending : supportCopy.send}
+          aria-label={busy ? copy.sending : copy.send}
           className="grid size-[60px] shrink-0 place-items-center rounded-full bg-[image:var(--cta-gradient)] text-white transition-[filter,transform,opacity] duration-200 hover:brightness-105 active:scale-[0.98] disabled:opacity-50 max-[600px]:size-[50px]"
         >
           {busy ? (

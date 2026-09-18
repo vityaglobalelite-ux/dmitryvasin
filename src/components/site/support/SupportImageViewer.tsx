@@ -3,8 +3,9 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { supportAssets } from "@/components/site/support/assets";
-import { supportCopy } from "@/components/site/support/copy";
+import { supportT } from "@/components/site/support/copy";
 import { Skeleton } from "@/components/site/ui/Skeleton";
+import { useLocale } from "@/lib/catalog/locale-context";
 
 const CLOSE_MS = 240;
 
@@ -23,6 +24,7 @@ export function SupportImageViewer({
   alt,
   onClose,
 }: SupportImageViewerProps) {
+  const copy = supportT(useLocale());
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
   const [host, setHost] = useState<HTMLElement | null>(null);
@@ -107,13 +109,13 @@ export function SupportImageViewer({
       onClick={onClose}
     >
       <h2 id={titleId} className="sr-only">
-        {shownAlt || supportCopy.openPhoto}
+        {shownAlt || copy.openPhoto}
       </h2>
       <button
         ref={closeRef}
         type="button"
         onClick={onClose}
-        aria-label={supportCopy.closePhoto}
+        aria-label={copy.closePhoto}
         className="absolute right-5 top-5 z-10 grid size-11 place-items-center rounded-full bg-white shadow-[0_10px_30px_rgba(0,0,0,0.22)] transition-[transform,opacity] duration-200 hover:opacity-90 active:scale-[0.97] max-[600px]:right-3 max-[600px]:top-3"
       >
         <img

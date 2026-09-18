@@ -6,7 +6,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { notificationCopy } from "@/components/site/notifications/copy";
 import { supportAssets } from "@/components/site/support/assets";
 import { siteAssets } from "@/lib/catalog/assets";
-import { useAuthUser } from "@/lib/catalog/hooks";
+import { useSessionUser } from "@/lib/catalog/hooks";
+import { useLocale } from "@/lib/catalog/locale-context";
+import { withLocalePrefix } from "@/lib/catalog/locale";
 import {
   countUnreadNotifications,
   listNotifications,
@@ -29,7 +31,8 @@ function formatTime(iso: string): string {
 }
 
 export function NotificationBell() {
-  const { data: user, loading } = useAuthUser();
+  const { data: user, loading } = useSessionUser();
+  const locale = useLocale();
   const router = useRouter();
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -157,7 +160,7 @@ export function NotificationBell() {
     );
     setUnread((value) => Math.max(0, item.read ? value : value - 1));
     setOpen(false);
-    if (item.href) router.push(item.href);
+    if (item.href) router.push(withLocalePrefix(item.href, locale));
   }
 
   if (loading || !user) return null;
@@ -240,7 +243,7 @@ export function NotificationBell() {
                   <li key={item.id} className="border-t border-[#ececec] first:border-t-0">
                     {item.href ? (
                       <Link
-                        href={item.href}
+                        href={withLocalePrefix(item.href, locale)}
                         className="block px-5 py-3 text-left transition-colors hover:bg-light-gray"
                         onClick={(event) => {
                           event.preventDefault();

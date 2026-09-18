@@ -41,7 +41,20 @@ export type Product = {
 export type AuthUser = {
   id: string;
   email: string | null;
+  isAnonymous: boolean;
 };
+
+export function isIdentifiedUser(
+  user: AuthUser | null | undefined,
+): user is AuthUser {
+  return Boolean(user && !user.isAnonymous);
+}
+
+export function asIdentifiedUser(
+  user: AuthUser | null | undefined,
+): AuthUser | null {
+  return isIdentifiedUser(user) ? user : null;
+}
 
 export type Profile = {
   id: string;

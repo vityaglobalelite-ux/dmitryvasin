@@ -47,6 +47,7 @@ import { stripLocalePrefix } from "@/lib/catalog/locale";
 import {
   getSession,
   isAuthPromptSuppressed,
+  isGuestUser,
   onAuthStateChange,
   resetPasswordForEmail,
   resumeAuthPrompt,
@@ -486,7 +487,7 @@ function AuthDialogForm({
 
   async function finishSignedIn() {
     const session = await getSession();
-    if (!session?.user) return false;
+    if (!session?.user || isGuestUser(session.user)) return false;
     try {
       await mergeGuestCartOnLogin();
     } catch {

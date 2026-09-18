@@ -155,7 +155,12 @@ async function requireUser(): Promise<User> {
     data: { user },
     error,
   } = await supabase.auth.getUser();
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (/auth session missing/i.test(error.message) || !user) {
+      throw new AuthRequiredError();
+    }
+    throw new Error(error.message);
+  }
   if (!user) throw new AuthRequiredError();
   return user;
 }

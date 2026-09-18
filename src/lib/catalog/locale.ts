@@ -89,6 +89,7 @@ export function localizedSiteRoutes(locale: Locale) {
     accountWatch: (id: string) => loc(siteRoutes.accountWatch(id)),
     accountProfile: loc(siteRoutes.accountProfile),
     accountOrders: loc(siteRoutes.accountOrders),
+    support: loc(siteRoutes.support),
     accountSupport: loc(siteRoutes.accountSupport),
     accountExpired: loc(siteRoutes.accountExpired),
   };

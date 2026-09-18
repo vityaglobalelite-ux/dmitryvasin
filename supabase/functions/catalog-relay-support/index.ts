@@ -108,9 +108,10 @@ function ticketText(params: {
   userId: string;
   body: string;
   filename?: string;
+  guest?: boolean;
 }): string {
   const lines = [
-    "Тикет с сайта каталога",
+    params.guest ? "Тикет с сайта каталога (гость)" : "Тикет с сайта каталога",
     `Email: ${params.email}`,
     `user_id: ${params.userId}`,
   ];
@@ -253,10 +254,18 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (profileErr) throw profileErr;
 
-    const email =
+    const guest =
+      user.is_anonymous === true ||
+      user.user_metadata?.catalog_guest === true ||
+      /@guest\.betango\.internal$/i.test(user.email ?? "");
+    const rawEmail =
       (profileRow as ProfileRow | null)?.email?.trim() ||
       user.email?.trim() ||
-      "—";
+      "";
+    const email =
+      guest && /@guest\.betango\.internal$/i.test(rawEmail)
+        ? "гость сайта"
+        : rawEmail || (guest ? "гость сайта" : "—");
 
     const storagePath = message.storage_path?.trim() || null;
     if (storagePath) {
@@ -272,6 +281,7 @@ Deno.serve(async (req) => {
       userId: user.id,
       body: message.body,
       filename,
+      guest,
     });
     const keyboard = replyKeyboard(user.id);
 

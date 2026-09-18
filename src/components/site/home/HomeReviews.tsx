@@ -43,7 +43,20 @@ const reviewShotsEn = {
 } as const;
 
 function reviewShots(locale: Locale) {
-  return locale === "en" ? reviewShotsEn : reviewShotsRu;
+  if (locale !== "en") return reviewShotsRu;
+  return {
+    shot35: `${reviewShotsEn.shot35}?v=sharp`,
+    shot36: `${reviewShotsEn.shot36}?v=sharp`,
+    shot37: `${reviewShotsEn.shot37}?v=sharp`,
+    shot38: `${reviewShotsEn.shot38}?v=sharp`,
+    shot39: `${reviewShotsEn.shot39}?v=sharp`,
+    shot40: `${reviewShotsEn.shot40}?v=sharp`,
+    shot41: `${reviewShotsEn.shot41}?v=sharp`,
+    shot42: `${reviewShotsEn.shot42}?v=sharp`,
+    shot43: `${reviewShotsEn.shot43}?v=sharp`,
+    shot44: `${reviewShotsEn.shot44}?v=sharp`,
+    shot45: `${reviewShotsEn.shot45}?v=sharp`,
+  };
 }
 
 type ReviewItem = ReturnType<typeof homeT>["reviews"][number];

@@ -1,8 +1,11 @@
-export const supportCopy = {
+import type { Locale } from "@/lib/catalog/types";
+
+const ru = {
   title: "Поддержка",
-  emptyTitle: "Напишите нам — ответим в этом чате",
+  lede: "Можно писать без регистрации — даже до покупки. Ответ появится в этом чате.",
+  emptyTitle: "Напишите нам — ответим здесь",
   emptyBody:
-    "Вопрос об уроке, доступе или оплате. Можно прикрепить скриншот или файл. Ответ появится здесь и в уведомлениях.",
+    "Вопрос об уроке, доступе или оплате. Можно прикрепить скриншот или файл.",
   errorTitle: "Не получилось загрузить переписку",
   errorBody: "Проверьте соединение и попробуйте ещё раз.",
   retry: "Повторить",
@@ -15,7 +18,7 @@ export const supportCopy = {
   agent: "Поддержка",
   fileTooLarge: "Файл больше 12 МБ — выберите файл поменьше.",
   sendError: "Не получилось отправить. Проверьте интернет и попробуйте ещё раз.",
-  sendErrorAuth: "Сессия истекла. Войдите снова и отправьте сообщение.",
+  sendErrorAuth: "Сессия истекла. Обновите страницу и отправьте сообщение снова.",
   sendErrorEmpty: "Файл пустой. Выберите другой.",
   openPhoto: "Открыть фото",
   closePhoto: "Закрыть",
@@ -25,4 +28,73 @@ export const supportCopy = {
   deliveryPending: "Отправляем…",
   deliveryFailed: "Не доставлено",
   deliveryRetry: "Повторить",
+  backToAccount: "В кабинет",
+  keepTitle: "Чтобы не потерять ответ",
+  keepBody:
+    "Мы запомнили этот чат в этом браузере. С другого устройства его не увидеть — оставьте email или создайте аккаунт.",
+  keepEmailLabel: "Email",
+  keepEmailPlaceholder: "you@email.com",
+  keepSave: "Сохранить",
+  keepSaving: "Сохраняем…",
+  keepSaved: "Записали. Если понадобится — поддержка сможет написать вам на почту.",
+  keepInvalid: "Проверьте адрес почты.",
+  keepError: "Не получилось сохранить email. Попробуйте ещё раз.",
+  keepSignup: "Создать аккаунт",
+  identifiedHint: "Переписка привязана к вашему аккаунту — откроется с любого устройства.",
+  sendErrorGuest:
+    "Не получилось открыть диалог. Обновите страницу и попробуйте ещё раз.",
 } as const;
+
+const en = {
+  title: "Support",
+  lede: "You can write without signing up — even before you buy. The reply will appear in this chat.",
+  emptyTitle: "Write to us — we’ll reply here",
+  emptyBody:
+    "A question about a lesson, access, or payment. You can attach a screenshot or a file.",
+  errorTitle: "Couldn’t load the conversation",
+  errorBody: "Check your connection and try again.",
+  retry: "Try again",
+  placeholder: "Message",
+  attach: "File",
+  preparing: "Preparing image…",
+  send: "Send",
+  sending: "Sending…",
+  you: "You",
+  agent: "Support",
+  fileTooLarge: "The file is over 12 MB — choose a smaller one.",
+  sendError: "Couldn’t send. Check your connection and try again.",
+  sendErrorAuth: "The session expired. Refresh the page and send again.",
+  sendErrorEmpty: "The file is empty. Choose another one.",
+  openPhoto: "Open photo",
+  closePhoto: "Close",
+  removeFile: "Remove file",
+  download: "Download",
+  composerNeedContent: "Write a message or attach a file.",
+  deliveryPending: "Sending…",
+  deliveryFailed: "Not delivered",
+  deliveryRetry: "Retry",
+  backToAccount: "Account",
+  keepTitle: "Don’t lose the reply",
+  keepBody:
+    "We saved this chat in this browser. It won’t follow you to another device — leave an email or create an account.",
+  keepEmailLabel: "Email",
+  keepEmailPlaceholder: "you@email.com",
+  keepSave: "Save",
+  keepSaving: "Saving…",
+  keepSaved: "Saved. Support can reach you by email if needed.",
+  keepInvalid: "Check the email address.",
+  keepError: "Couldn’t save the email. Try again.",
+  keepSignup: "Create an account",
+  identifiedHint: "This conversation is on your account — it opens on any device.",
+  sendErrorGuest:
+    "Couldn’t open the conversation. Refresh the page and try again.",
+};
+
+export type SupportCopy = { [K in keyof typeof ru]: string };
+
+export function supportT(locale: Locale): SupportCopy {
+  return locale === "en" ? en : ru;
+}
+
+/** @deprecated use supportT(locale) */
+export const supportCopy = ru;
