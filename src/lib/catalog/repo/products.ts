@@ -2,6 +2,7 @@ import type { Locale, Product, PublicProductType } from "@/lib/catalog/types";
 import { getSupabase } from "@/lib/supabase/client";
 import {
   mapProductRow,
+  PRODUCT_LIST_SELECT,
   PRODUCT_SELECT,
   PRODUCT_SELECT_LEGACY,
   catalogSelectWithFallback,
@@ -50,7 +51,7 @@ export async function listPublishedProducts(
       .in("type", types);
 
   const { data, error } = await catalogSelectWithFallback(
-    PRODUCT_SELECT,
+    PRODUCT_LIST_SELECT,
     PRODUCT_SELECT_LEGACY,
     run,
   );

@@ -248,22 +248,21 @@ function CoverStage({
 
   return (
     <div className="relative h-[263px] shrink-0 overflow-hidden rounded-[20px] bg-white max-[600px]:h-[180px] max-[600px]:rounded-[10px]">
-      {frames.map((src, frameIndex) => (
+      {frames[safeIndex] ? (
         <Image
-          key={`${src}-${frameIndex}`}
-          src={src}
-          alt={frameIndex === safeIndex ? alt : ""}
+          key={frames[safeIndex]}
+          src={frames[safeIndex]}
+          alt={alt}
           fill
           className={[
-            "object-cover transition-[opacity,transform] duration-500 ease-out",
-            frameIndex === safeIndex ? "opacity-100" : "opacity-0",
-            !locked && frameIndex === safeIndex ? "group-hover:scale-[1.04]" : "",
+            "object-cover transition-transform duration-500 ease-out",
+            !locked ? "group-hover:scale-[1.04]" : "",
           ].join(" ")}
           sizes="(max-width: 600px) 320px, 467px"
           loading="lazy"
           unoptimized
         />
-      ))}
+      ) : null}
       {locked ? (
         <div className="pointer-events-none absolute inset-0 z-[8] bg-black/60 transition-colors duration-200 ease-out group-hover:bg-black/45 motion-reduce:transition-none" />
       ) : null}

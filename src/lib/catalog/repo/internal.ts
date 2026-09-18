@@ -332,8 +332,16 @@ const PRODUCT_COLUMNS_LEGACY =
 const I18N_EMBED =
   "catalog_product_i18n ( locale, title, short, description, program )";
 
+const PRODUCT_LIST_EMBEDS = `
+  catalog_product_i18n ( locale, title, short ),
+  catalog_product_media ( sort, url, kind )
+`;
+
 /** Public product columns — never kinescope / videos. */
 export const PRODUCT_SELECT = `${PRODUCT_COLUMNS}, ${PRODUCT_EMBEDS}`;
+
+/** Catalog/home cards: covers + titles only, no program/gifs/long bodies. */
+export const PRODUCT_LIST_SELECT = `${PRODUCT_COLUMNS}, ${PRODUCT_LIST_EMBEDS}`;
 
 /** Pre-023 schema: instance has not applied catalog_product_model yet. */
 export const PRODUCT_SELECT_LEGACY = `${PRODUCT_COLUMNS_LEGACY}, ${I18N_EMBED}`;

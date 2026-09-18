@@ -85,7 +85,8 @@ function CoverCarousel({ urls, alt }: { urls: string[]; alt: string }) {
               className="object-cover"
               sizes="(max-width: 600px) 320px, 710px"
               unoptimized
-              priority={i === 0}
+              priority={i === 0 || undefined}
+              loading={i === 0 ? undefined : "lazy"}
             />
           </div>
         ))}
