@@ -23,7 +23,7 @@ export function HomeHowToDesktop() {
     <>
       <Layer
         x={239.91}
-        y={5004}
+        y={5675}
         w={1440}
         h={682}
         z={1}
@@ -34,11 +34,11 @@ export function HomeHowToDesktop() {
         alt=""
         width={841}
         height={830}
-        className="pointer-events-none absolute left-[219.86px] top-[4951px] z-[2] h-[829.6px] w-[841.41px] max-w-none"
+        className="pointer-events-none absolute left-[219.86px] top-[5622px] z-[2] h-[829.6px] w-[841.41px] max-w-none"
       />
       <Layer
         x={299.91}
-        y={5526.18}
+        y={6197.18}
         w={400}
         h={100}
         z={8}
@@ -62,7 +62,7 @@ export function HomeHowToDesktop() {
           </p>
         )}
       </Layer>
-      <Layer x={965.91} y={5054.18} w={688} h={110} z={8}>
+      <Layer x={965.91} y={5725.18} w={688} h={110} z={8}>
         {ru ? (
           <FigLines
             as="h2"
@@ -75,7 +75,7 @@ export function HomeHowToDesktop() {
           </h2>
         )}
       </Layer>
-      <Layer x={965.91} y={5194.18} w={654} h={372} z={8} className="flex flex-col gap-2.5">
+      <Layer x={965.91} y={5865.18} w={654} h={372} z={8} className="flex flex-col gap-2.5">
         {steps.map((text, index) => (
           <div
             key={index}
@@ -95,7 +95,7 @@ export function HomeHowToDesktop() {
           </div>
         ))}
       </Layer>
-      <Layer x={982.91} y={5596.18} w={628} h={30} z={8} className="flex items-center gap-2.5">
+      <Layer x={982.91} y={6267.18} w={628} h={58} z={8} className="flex items-start gap-2.5">
         <HomeImg
           src={homeAssets.iconSupport}
           alt=""
@@ -105,7 +105,7 @@ export function HomeHowToDesktop() {
         />
         <a
           href={routes.accountSupport}
-          className="whitespace-nowrap text-[24px] font-medium leading-[1.2] text-white transition-opacity hover:opacity-80"
+          className="text-[20px] font-medium leading-[1.2] text-white transition-opacity hover:opacity-80"
         >
           {copy.howSupport}
         </a>

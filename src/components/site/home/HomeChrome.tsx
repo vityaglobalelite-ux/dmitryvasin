@@ -224,7 +224,7 @@ export function HomeFooterDesktop() {
   return (
     <footer
       id="contacts"
-      className="absolute left-0 top-[8380px] z-20 h-[324px] w-[1920px] bg-light-gray"
+      className="absolute left-0 top-[9051px] z-20 h-[324px] w-[1920px] bg-light-gray"
     >
       <div className="absolute left-[241px] top-[100px] w-[520px] text-[16px] leading-[1.5] text-text">
         {copy.footer.rights.split("\n").map((line) => (

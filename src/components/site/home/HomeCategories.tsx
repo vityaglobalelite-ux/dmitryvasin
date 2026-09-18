@@ -16,10 +16,10 @@ const photos = {
 } as const;
 
 const desktopCards = [
-  { x: 241, y: 3188, photoX: 281, photoY: 3134, photoW: 256, photoH: 256, textX: 261, textY: 3369, textH: 135, btnX: 261 },
-  { x: 605, y: 3188, photoX: 645, photoY: 3187, photoW: 221, photoH: 221, textX: 627, textY: 3369, textH: 111, btnX: 625 },
-  { x: 970, y: 3188, photoX: 1040, photoY: 3167, photoW: 190, photoH: 190, textX: 990, textY: 3369, textH: 135, btnX: 990 },
-  { x: 1334, y: 3188, photoX: 1418, photoY: 3177, photoW: 162, photoH: 163, textX: 1358, textY: 3369, textH: 135, btnX: 1354 },
+  { x: 241, y: 3802, photoX: 281, photoY: 3748, photoW: 256, photoH: 256, textX: 261, textY: 3983, textH: 135, btnX: 261 },
+  { x: 605, y: 3802, photoX: 645, photoY: 3801, photoW: 221, photoH: 221, textX: 627, textY: 3983, textH: 111, btnX: 625 },
+  { x: 970, y: 3802, photoX: 1040, photoY: 3781, photoW: 190, photoH: 190, textX: 990, textY: 3983, textH: 135, btnX: 990 },
+  { x: 1334, y: 3802, photoX: 1418, photoY: 3791, photoW: 162, photoH: 163, textX: 1358, textY: 3983, textH: 135, btnX: 1354 },
 ] as const;
 
 export function HomeCategoriesDesktop() {
@@ -30,57 +30,84 @@ export function HomeCategoriesDesktop() {
 
   return (
     <>
-      <HomeImg
-        src={homeAssets.quoteOpen}
-        alt=""
-        width={102}
-        height={102}
-        className="absolute left-[240px] top-[3044px] z-[1] size-[102px]"
-      />
-      <Layer x={242} y={2966} w={839} h={55} z={2}>
+      <Layer x={242} y={2994} w={425} h={220} z={2}>
         <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
           {copy.requestTitleLead}
           <span className="font-bold">{copy.requestTitleEm}</span>
+          {copy.requestTitleMid}
+          <span className="font-bold">{copy.requestTitleGoal}</span>.
         </h2>
       </Layer>
-      <Layer x={360} y={3052} w={974} h={87} z={2}>
-        {ru ? (
-          <p className="text-[24px] font-medium leading-[1.2] text-text">
-            {"И\u00a0иногда достаточно простого "}
+      <div className="absolute left-[848px] top-[2994px] z-[2] flex w-[832px] flex-col gap-[30px] rounded-[30px] bg-light-gray p-[30px]">
+        <div className="flex w-full items-start justify-between">
+          <HomeImg
+            src={homeAssets.requestPortrait}
+            alt=""
+            width={120}
+            height={120}
+            className="size-[120px] rounded-full object-cover"
+          />
+          <HomeImg
+            src={homeAssets.quoteClose}
+            alt=""
+            width={35}
+            height={35}
+            className="size-[35px]"
+          />
+        </div>
+        <div className="w-[705px] text-[24px] font-medium leading-[1.2] text-text">
+          <p>
+            {ru ? "Одни ищут простые " : copy.requestBodyLead}
             <span className="font-bold">{copy.lifehackWord}</span>
-            {" или\u00a0тематического "}
+            {ru ? " или тематические " : copy.requestBodyMid}
             <span className="font-bold">{copy.lessonWord}</span>
-            {","}
-            <br />
-            {
-              "чтобы\u00a0иначе увидеть и\u00a0попрактиковать движение. А\u00a0иногда\u00a0— погрузиться"
-            }
-            <br />
-            {"в\u00a0тему целиком и\u00a0исследовать её\u00a0шаг за\u00a0шагом через\u00a0"}
-            <span className="font-bold">{copy.courseWord}</span>
-            {" или\u00a0"}
-            <span className="font-bold">{copy.researchWord}</span>
+            {ru
+              ? ", чтобы по-новому увидеть и попрактиковать движение."
+              : copy.requestOneTail}
           </p>
-        ) : (
-          <p className="text-[24px] font-medium leading-[1.2] text-text">
-            {copy.requestBodyLead}
-            <span className="font-bold">{copy.lifehackWord}</span>
-            {copy.requestBodyMid}
-            <span className="font-bold">{copy.lessonWord}</span>
-            {copy.requestBodyMid2}
+          <p className="mt-[29px]">
+            {ru
+              ? "А другие хотят погрузиться в тему целиком и исследовать её шаг за шагом через "
+              : copy.requestTwoLead}
             <span className="font-bold">{copy.courseWord}</span>
             {copy.requestBodyOr}
-            <span className="font-bold">{copy.researchWord}</span>
+            <span className="font-bold">{copy.researchWord}</span>.
           </p>
-        )}
-      </Layer>
+        </div>
+      </div>
+      <div className="pointer-events-none absolute left-[469px] top-[3114px] z-[4] flex h-[422px] w-[458px] items-center justify-center">
+        <HomeImg
+          src={homeAssets.requestCurve}
+          alt=""
+          width={426}
+          height={201}
+          className="h-[201px] w-[426px] -rotate-[38.33deg]"
+        />
+      </div>
       <HomeImg
-        src={homeAssets.quoteClose}
+        src={homeAssets.requestChat}
         alt=""
-        width={35}
-        height={35}
-        className="absolute left-[1402px] top-[3099px] z-[1] size-[35px]"
+        width={218}
+        height={218}
+        className="pointer-events-none absolute left-[454px] top-[3165px] z-[5] size-[218px]"
       />
+      <Layer
+        x={413}
+        y={3549}
+        w={1095}
+        h={214}
+        z={2}
+        className="flex flex-col items-center gap-5 text-center"
+      >
+        <p className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
+          {copy.developed}
+        </p>
+        <p className="text-[24px] font-medium leading-[1.2] text-text">
+          {copy.variantsLead}
+          <span className="font-bold">{copy.variantsEm}</span>
+          {copy.variantsTail}
+        </p>
+      </Layer>
 
       {categories.map((cat, i) => {
         const box = desktopCards[i];
@@ -120,7 +147,7 @@ export function HomeCategoriesDesktop() {
                 <p className="mt-[10px] text-[16px] leading-[1.5] text-text">{cat.text}</p>
               )}
             </Layer>
-            <Layer x={box.btnX} y={3522} w={304} h={60} z={3}>
+            <Layer x={box.btnX} y={4136} w={304} h={60} z={3}>
               <Button
                 href={catalogFilterHref(cat.type, locale)}
                 className="h-[60px] w-[304px] px-0"
@@ -134,7 +161,7 @@ export function HomeCategoriesDesktop() {
 
       <Layer
         x={241}
-        y={3622}
+        y={4236}
         w={1437}
         h={224}
         z={2}
@@ -230,27 +257,22 @@ export function HomeCategoriesMobile() {
             </h2>
             <p className="w-[319px] text-[13px] leading-[1.5] text-text">
               <span className="whitespace-nowrap">
-                И{"\u00a0"}иногда достаточно простого{" "}
-                <span className="font-semibold">лайфхака</span>
+                Одни ищут простые <span className="font-semibold">лайфхаки</span> или
               </span>
               <br />
               <span className="whitespace-nowrap">
-                или{"\u00a0"}тематического{" "}
-                <span className="font-semibold">урока</span>, чтобы{"\u00a0"}иначе увидеть
+                тематические <span className="font-semibold">уроки</span>, чтобы по-новому
+              </span>
+              <br />
+              <span className="whitespace-nowrap">увидеть и попрактиковать движение.</span>
+              <br />
+              <span className="whitespace-nowrap">
+                А другие хотят шаг за шагом через
               </span>
               <br />
               <span className="whitespace-nowrap">
-                и{"\u00a0"}попрактиковать движение. А{"\u00a0"}иногда{"\u00a0"}—
-              </span>
-              <br />
-              <span className="whitespace-nowrap">
-                погрузиться в{"\u00a0"}тему целиком и{"\u00a0"}исследовать
-              </span>
-              <br />
-              <span className="whitespace-nowrap">
-                её{"\u00a0"}шаг за{"\u00a0"}шагом через{"\u00a0"}
-                <span className="font-semibold">курс</span> или{"\u00a0"}
-                <span className="font-semibold">исследование</span>.
+                <span className="font-semibold">курсы</span> или{" "}
+                <span className="font-semibold">исследования</span>.
               </span>
             </p>
           </div>
@@ -259,6 +281,8 @@ export function HomeCategoriesMobile() {
             <h2 className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text">
               {copy.requestTitleLead}
               <span className="font-bold">{copy.requestTitleEm}</span>
+              {copy.requestTitleMid}
+              <span className="font-bold">{copy.requestTitleGoal}</span>
             </h2>
             <p className="text-[13px] leading-[1.5] text-text">
               {copy.requestBodyLead}

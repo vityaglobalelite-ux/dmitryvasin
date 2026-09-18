@@ -16,7 +16,7 @@ export function HomeSupportDesktop() {
   return (
     <Layer
       x={240}
-      y={5888}
+      y={6559}
       w={1440}
       h={330}
       z={2}

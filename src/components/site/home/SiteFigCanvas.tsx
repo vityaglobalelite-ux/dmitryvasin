@@ -18,7 +18,7 @@ import {
 } from "@/lib/catalog/breakpoint";
 
 /** Figma «Главная десктоп» 572:1864 */
-export const SITE_DESKTOP_CANVAS = { w: 1920, h: 8704 } as const;
+export const SITE_DESKTOP_CANVAS = { w: 1920, h: 9375 } as const;
 /** Figma «Главная_360» 722:4311 */
 export const SITE_MOBILE_CANVAS = { w: 360, h: 10116 } as const;
 

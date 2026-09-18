@@ -8,14 +8,15 @@ export const homeCopy = {
   repeat: "Повторяй.",
   dance: "Танцуй!",
   bubbleLook:
-    "Включай обучающие видео из любой точки мира, с любого гаджета и разбирай движения вместе со мной.",
-  bubbleLookLead: "Включай обучающие видео",
+    "Включайте обучающие видео из любой точки мира, с любого устройства в удобное время и разбирайте движения вместе со мной.",
+  bubbleLookLead: "Включайте обучающие видео",
   bubbleLookRest:
-    " из любой точки мира, с любого гаджета и разбирай движения вместе со мной.",
-  bubbleDoLead: "Выполняй движения",
-  bubbleDoRest: " шаг за шагом, последовательно и анализируя.",
-  bubbleDanceLead: "Собирай движения в танец",
-  bubbleDanceRest: " и двигайся уверенно и в удовольствие!",
+    " из любой точки мира, с любого устройства в удобное время и разбирайте движения вместе со мной.",
+  bubbleDoLead: "Следуйте моим пошаговым инструкциям",
+  bubbleDoRest:
+    " в обучающих видео, анализируйте свои движения и улучшайте навыки.",
+  bubbleDanceLead: "Собирайте движения",
+  bubbleDanceRest: " в красивый танец, двигайтесь уверенно и легко!",
   approach:
     "Мой подход появился благодаря тысячам часов в студиях, на уроках, репетициях, выступлениях и соревнованиях.",
   approachMethod:
@@ -24,21 +25,32 @@ export const homeCopy = {
   peopleRest: ": их вопросы, открытия, трудности и неожиданные инсайты.",
   directionsTitle:
     "Я собрал опыт, наблюдения и практику вокруг 5 направлений исследования танго,",
-  directionsSub:
-    "которые становятся ключевыми для танцоров — независимо от уровня.",
+  directionsSub: "которые важны для танцоров любого уровня.",
   teacherName: "Дмитрий Васин",
   teacherTitle: "Чемпион мира по аргентинскому танго",
-  requestTitleLead: "У каждого танцора — ",
-  requestTitleEm: "свой запрос",
-  requestBodyLead: "И иногда достаточно простого ",
-  lifehackWord: "лайфхака",
-  requestBodyMid: " или тематического ",
-  lessonWord: "урока",
+  requestTitleLead: "У каждого танцора — свой ",
+  requestTitleEm: "запрос",
+  requestTitleMid: " и свои ",
+  requestTitleGoal: "цели",
+  requestBodyLead: "Одни ищут простые ",
+  requestBodyMid: " или тематические ",
   requestBodyMid2:
-    ", чтобы иначе увидеть и попрактиковать движение. А иногда — погрузиться в тему целиком и исследовать её шаг за шагом через ",
-  courseWord: "курс",
+    ", чтобы по-новому увидеть и попрактиковать движение. А другие хотят погрузиться в тему целиком и исследовать её шаг за шагом через ",
+  requestOneLead: "Одни ищут простые ",
+  lifehackWord: "лайфхаки",
+  requestOneMid: " или тематические ",
+  lessonWord: "уроки",
+  requestOneTail: ", чтобы по-новому увидеть и попрактиковать движение.",
+  requestTwoLead:
+    "А другие хотят погрузиться в тему целиком и исследовать её шаг за шагом через ",
+  courseWord: "курсы",
   requestBodyOr: " или ",
-  researchWord: "исследование.",
+  researchWord: "исследования",
+  developed:
+    "Поэтому я разработал разные обучающие видео, которые помогут каждому танцору найти именно то, что ему нужно.",
+  variantsLead: "Давайте рассмотрим, какие ",
+  variantsEm: "варианты обучающих видео",
+  variantsTail: " у меня есть:",
   catalogTitle: "Каталог обучающих видео",
   showMore: "Показать ещё",
   emptyTitle: "В каталоге пока нет опубликованных видео",
@@ -51,15 +63,20 @@ export const homeCopy = {
     "Выбирайте то, что нужно вам сейчас. Комбинируйте видео и собирайте собственный путь обучения.",
   extraGain: "И чем больше вы выбираете, тем больше ваша выгода!",
   howTitle: "Как оплатить и смотреть обучающие видео?",
-  how1: "Регистрируетесь на сайте и получаете подтверждение на email.",
-  how2: "Добавляете продукты в корзину и оплачиваете из любой точки мира в любой валюте. Больше продуктов — автоматически выше скидка.",
-  how3: "Заходите под логином и паролем в личный кабинет и смотрите обучающие видео.",
-  howSupport: "Если есть вопросы — обращаетесь в поддержку.",
+  how1Title: "Регистрация",
+  how1: "Зарегистрируйтесь на сайте и получите подтверждение на email.",
+  how2Title: "Оплата",
+  how2: "Добавьте продукты в корзину и оплачивайте из любой точки мира в любой валюте. Чем больше продуктов, тем выше ваша скидка.",
+  how3Title: "Доступ",
+  how3: "Войдите в личный кабинет под логином и паролем, чтобы смотреть обучающие видео. У каждого продукта есть свой срок доступа.",
+  how4Title: "Поддержка",
+  howSupport:
+    "Если у вас есть вопросы, обращайтесь в поддержку. Я и моя команда постараемся быстро вам помочь!",
   howAccess: "У каждого продукта — свой срок доступа.",
   supportTitle:
     "Если у вас есть вопросы — напишите в поддержку, и вам помогут",
   supportCta: "Написать в поддержку",
-  reviewsTitle: "Отзывы участников",
+  reviewsTitle: "Отзывы тех, кто прошёл мои курсы",
   reviewsResults:
     "А вот такие результаты получают ученики, работая со мной в онлайн и оффлайн.",
   reviewsHint: "Листайте и читайте →",
@@ -136,8 +153,8 @@ export const homeDirectionsTitleLines = [
 ] as const;
 
 export const homeDirectionsSubLines = [
-  "которые становятся ключевыми для",
-  "танцоров — независимо от уровня.",
+  "которые важны для танцоров",
+  "любого уровня.",
 ] as const;
 
 /** Desktop 572:1864 wraps only. */
@@ -155,17 +172,17 @@ export const homeDesktopBreaks = {
   ],
   howTitle: ["Как оплатить и смотреть", "обучающие видео?"],
   how1: [
-    "Регистрируетесь на\u00a0сайте и\u00a0получаете",
+    "Зарегистрируйтесь на\u00a0сайте и\u00a0получите",
     "подтверждение на\u00a0email.",
   ],
   how2: [
-    "Добавляете продукты в\u00a0корзину и\u00a0оплачиваете из\u00a0любой точки",
-    "мира в\u00a0любой валюте. Больше продуктов\u00a0— автоматически",
-    "выше скидка.",
+    "Добавьте продукты в\u00a0корзину и\u00a0оплачивайте из\u00a0любой",
+    "точки мира в\u00a0любой валюте. Чем больше продуктов,",
+    "тем выше ваша скидка.",
   ],
   how3: [
-    "Заходите под\u00a0логином и\u00a0паролем в\u00a0личный кабинет и\u00a0смотрите",
-    "обучающие видео.",
+    "Войдите в\u00a0личный кабинет под\u00a0логином и\u00a0паролем,",
+    "чтобы смотреть обучающие видео.",
   ],
   howAccess: ["У\u00a0каждого продукта\u00a0—", "свой срок доступа."],
   supportTitle: [
@@ -194,11 +211,7 @@ export const homeMobileBreaks = {
     "вокруг 5\u00a0направлений",
     "исследования танго,",
   ],
-  dirSub: [
-    "которые становятся ключевыми",
-    "для\u00a0танцоров\u00a0— независимо",
-    "от\u00a0уровня.",
-  ],
+  dirSub: ["которые важны для танцоров", "любого уровня."],
   dirTexts: [
     [
       "Учимся замечать не\u00a0только",
@@ -228,17 +241,18 @@ export const homeMobileBreaks = {
     ],
   ],
   bubbleLook: [
-    "Включай обучающие видео из\u00a0любой",
-    "точки мира, с\u00a0любого гаджета и",
-    "разбирай движения вместе со\u00a0мной.",
+    "Включайте обучающие видео из любой",
+    "точки мира, с любого устройства,",
+    "в удобное время и разбирайте со мной.",
   ],
   bubbleDo: [
-    "Выполняй движения шаг\u00a0за\u00a0шагом,",
-    "последовательно и\u00a0анализируя.",
+    "Следуйте моим пошаговым",
+    "инструкциям в обучающих видео,",
+    "анализируйте движения и навыки.",
   ],
   bubbleDance: [
-    "Собирай движения в\u00a0танец и\u00a0двигайся",
-    "уверенно и\u00a0в\u00a0удовольствие!",
+    "Собирайте движения в\u00a0красивый",
+    "танец, двигайтесь уверенно и\u00a0легко!",
   ],
   approach: [
     "Мой\u00a0подход появился",
@@ -260,7 +274,7 @@ export const homeMobileBreaks = {
     "ЛЮДИ: их\u00a0вопросы, открытия,",
     "трудности и\u00a0неожиданные инсайты.",
   ],
-  requestTitle: ["У\u00a0каждого танцора\u00a0—", "свой запрос"],
+  requestTitle: ["У\u00a0каждого танцора\u00a0—", "свой запрос и\u00a0свои цели"],
   requestBody: [
     "И\u00a0иногда достаточно простого лайфхака",
     "или\u00a0тематического урока, чтобы\u00a0иначе увидеть",
@@ -288,23 +302,25 @@ export const homeMobileBreaks = {
     "посмотреть отзывы",
   ],
   howTitle: ["Как оплатить и смотреть", "обучающие видео?"],
-  howSupport: ["Если есть вопросы - обращаетесь", "в\u00a0поддержку."],
+  howSupport: [
+    "Если есть вопросы, обращайтесь",
+    "в\u00a0поддержку. Мы\u00a0быстро поможем!",
+  ],
   how1: [
-    "Регистрируетесь на\u00a0сайте",
-    "и\u00a0получаете подтверждение",
+    "Зарегистрируйтесь на\u00a0сайте",
+    "и\u00a0получите подтверждение",
     "на\u00a0email.",
   ],
   how2: [
-    "Добавляете продукты в\u00a0корзину",
-    "и\u00a0оплачиваете из\u00a0любой точки",
-    "мира в\u00a0любой валюте. Больше",
-    "продуктов\u00a0— автоматически",
-    "выше скидка.",
+    "Добавьте продукты в\u00a0корзину",
+    "и\u00a0оплачивайте из\u00a0любой точки",
+    "мира в\u00a0любой валюте. Чем больше",
+    "продуктов, тем выше скидка.",
   ],
   how3: [
-    "Заходите под\u00a0логином",
-    "и\u00a0паролем в\u00a0личный кабинет",
-    "и\u00a0смотрите обучающие видео.",
+    "Войдите под\u00a0логином и\u00a0паролем",
+    "в\u00a0личный кабинет и\u00a0смотрите",
+    "обучающие видео.",
   ],
   howAccess: ["У\u00a0каждого продукта\u00a0—", "свой срок доступа."],
   supportTitle: [
@@ -424,14 +440,15 @@ const enCopy = {
   repeat: "Practice",
   dance: "Dance!",
   bubbleLook:
-    "Play training videos from anywhere in the world, on any device, and break down the movement with me.",
+    "Play training videos from anywhere in the world, on any device, at a time that suits you, and break the movements down with me.",
   bubbleLookLead: "Play training videos",
   bubbleLookRest:
-    " from anywhere in the world, on any device, and break down the movement with me.",
-  bubbleDoLead: "Do the movements",
-  bubbleDoRest: " step by step, in sequence, and with analysis.",
-  bubbleDanceLead: "Gather the movements into a dance",
-  bubbleDanceRest: " and move with confidence and pleasure!",
+    " from anywhere in the world, on any device, at a time that suits you, and break the movements down with me.",
+  bubbleDoLead: "Follow my step-by-step instructions",
+  bubbleDoRest:
+    " in the training videos, analyse your own movement, and improve your skills.",
+  bubbleDanceLead: "Gather the movements",
+  bubbleDanceRest: " into a beautiful dance, and move with confidence and ease!",
   approach:
     "My approach grew out of thousands of hours in studios, lessons, rehearsals, performances, and competitions.",
   approachMethod:
@@ -441,21 +458,32 @@ const enCopy = {
     ": their questions, discoveries, difficulties, and unexpected insights.",
   directionsTitle:
     "I gathered experience, observation, and practice around 5 directions of tango research,",
-  directionsSub:
-    "that become essential for dancers — regardless of level.",
+  directionsSub: "that matter for dancers at any level.",
   teacherName: "Dmitry Vasin",
   teacherTitle: "World champion in Argentine tango",
-  requestTitleLead: "Every dancer has ",
-  requestTitleEm: "their own request",
-  requestBodyLead: "And sometimes a simple ",
-  lifehackWord: "lifehack",
-  requestBodyMid: " or a focused ",
-  lessonWord: "lesson",
+  requestTitleLead: "Every dancer has their own ",
+  requestTitleEm: "request",
+  requestTitleMid: " and their own ",
+  requestTitleGoal: "goals",
+  requestBodyLead: "Some look for simple ",
+  requestBodyMid: " or focused ",
   requestBodyMid2:
-    " is enough to see and practice a movement differently. And sometimes — to go all the way into a topic, step by step, through a ",
-  courseWord: "course",
+    ", so they can see a movement in a new way and practice it. Others want to go all the way into a topic and explore it step by step through ",
+  requestOneLead: "Some look for simple ",
+  lifehackWord: "lifehacks",
+  requestOneMid: " or focused ",
+  lessonWord: "lessons",
+  requestOneTail: ", so they can see a movement in a new way and practice it.",
+  requestTwoLead:
+    "Others want to go all the way into a topic and explore it step by step through ",
+  courseWord: "courses",
   requestBodyOr: " or ",
-  researchWord: "research.",
+  researchWord: "research",
+  developed:
+    "That is why I made different training videos, so every dancer can find exactly what they need.",
+  variantsLead: "Let’s look at the ",
+  variantsEm: "kinds of training videos",
+  variantsTail: " I have:",
   catalogTitle: "Training video catalog",
   showMore: "Show more",
   emptyTitle: "No published videos in the catalog yet",
@@ -468,15 +496,20 @@ const enCopy = {
     "Choose what you need right now. Combine videos and build your own learning path.",
   extraGain: "And the more you choose, the greater your benefit!",
   howTitle: "How do I pay and watch training videos?",
-  how1: "You register on the site and receive a confirmation email.",
-  how2: "You add products to the cart and pay from anywhere in the world, in any currency. More products — a higher discount, automatically.",
-  how3: "You sign in with your login and password and watch training videos in your account.",
-  howSupport: "If you have questions — you write to support.",
+  how1Title: "Registration",
+  how1: "Register on the site and get a confirmation email.",
+  how2Title: "Payment",
+  how2: "Add products to the cart and pay from anywhere in the world, in any currency. The more products you add, the higher your discount.",
+  how3Title: "Access",
+  how3: "Sign in to your account to watch the training videos. Each product has its own access period.",
+  how4Title: "Support",
+  howSupport:
+    "If you have questions, contact support. My team and I will do our best to help you quickly.",
   howAccess: "Each product has its own access period.",
   supportTitle:
     "If you have questions — write to support, and we’ll help",
   supportCta: "Write to support",
-  reviewsTitle: "Participant reviews",
+  reviewsTitle: "Reviews from people who have taken my courses",
   reviewsResults:
     "And these are the results students get working with me online and offline.",
   reviewsHint: "Scroll and read →",

@@ -77,7 +77,7 @@ export function HomeHeroDesktop() {
       <div
         className="absolute z-[12] h-[174.84px]"
         style={{
-          left: ru ? 881.58 : 890,
+          left: ru ? 931 : 890,
           top: ru ? 281.65 : 284.67,
           width: ru ? 592.85 : 526.08,
         }}
@@ -122,61 +122,43 @@ export function HomeHeroDesktop() {
       </p>
 
       <div
-        className={`absolute z-[15] flex h-[82px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        className={`absolute z-[15] flex items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
         style={{
-          left: ru ? 1002 : 902,
-          top: 174,
-          width: ru ? 511 : 457,
+          left: ru ? 1004 : 902,
+          top: ru ? 164 : 174,
+          width: ru ? 416 : 457,
         }}
       >
-        <p className="text-[16px] leading-[1.3] text-text">
+        <p
+          className="text-[16px] leading-[1.3] text-text"
+          style={{ width: ru ? 376 : undefined }}
+        >
           <span className="font-bold">{copy.bubbleLookLead}</span>
-          {ru ? (
-            <>
-              {" из\u00a0любой точки мира,"}
-              <br />
-              {"с\u00a0любого гаджета и\u00a0разбирай движения вместе со\u00a0мной."}
-            </>
-          ) : (
-            copy.bubbleLookRest
-          )}
+          {copy.bubbleLookRest}
         </p>
       </div>
       <div
-        className={`absolute z-[5] flex h-[82px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        className={`absolute z-[5] flex items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
         style={{
-          left: ru ? 535 : 566,
-          top: 332,
-          width: ru ? 327 : 298,
+          left: ru ? 537 : 566,
+          top: ru ? 322 : 332,
+          width: ru ? 379 : 298,
         }}
       >
-        <p className="text-[16px] leading-[1.3] text-text">
+        <p
+          className="text-[16px] leading-[1.3] text-text"
+          style={{ width: ru ? 339 : undefined }}
+        >
           <span className="font-bold">{copy.bubbleDoLead}</span>
-          {ru ? (
-            <>
-              {" шаг\u00a0за\u00a0шагом,"}
-              <br />
-              {"последовательно и\u00a0анализируя."}
-            </>
-          ) : (
-            copy.bubbleDoRest
-          )}
+          {copy.bubbleDoRest}
         </p>
       </div>
       <div
-        className={`absolute left-[868px] top-[470px] z-[15] flex h-[82px] w-[367px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
+        className={`absolute left-[870px] top-[470px] z-[15] flex w-[367px] items-center rounded-[20px] bg-white p-5 ${bubbleShadow}`}
       >
-        <p className="text-[16px] leading-[1.3] text-text">
+        <p className="w-[327px] text-[16px] leading-[1.3] text-text">
           <span className="font-bold">{copy.bubbleDanceLead}</span>
-          {ru ? (
-            <>
-              {" и\u00a0двигайся"}
-              <br />
-              {"уверенно и\u00a0в\u00a0удовольствие!"}
-            </>
-          ) : (
-            copy.bubbleDanceRest
-          )}
+          {copy.bubbleDanceRest}
         </p>
       </div>
 
@@ -247,7 +229,7 @@ export function HomeHeroMobile() {
       />
 
       <div
-        className={`absolute left-5 top-[132px] z-[5] flex h-[71px] w-[249px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+        className={`absolute left-5 top-[132px] z-[5] flex h-[71px] w-[300px] items-center overflow-hidden rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
         {ru ? (
           <FigLines
@@ -308,7 +290,7 @@ export function HomeHeroMobile() {
       </div>
 
       <div
-        className={`absolute left-[79px] top-[300px] z-[5] flex h-[54px] w-[220px] items-center rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
+        className={`absolute left-[79px] top-[300px] z-[5] flex h-[70px] w-[250px] items-center overflow-hidden rounded-[10px] bg-white px-[15px] py-2.5 ${bubbleShadow}`}
       >
         {ru ? (
           <FigLines

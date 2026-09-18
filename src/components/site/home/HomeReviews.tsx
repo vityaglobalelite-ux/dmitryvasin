@@ -98,8 +98,8 @@ export function HomeReviewsDesktop() {
 
   return (
     <>
-      <Layer x={0} y={6328} w={1920} h={1020} z={0} className="bg-light-gray" />
-      <Layer x={829} y={6427} w={459} h={55} z={2}>
+      <Layer x={0} y={6999} w={1920} h={1020} z={0} className="bg-light-gray" />
+      <Layer x={360} y={7098} w={1200} h={55} z={2}>
         <h2
           id="reviews"
           className="text-center text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text"
@@ -111,66 +111,66 @@ export function HomeReviewsDesktop() {
       <HomeImg
         src={shots.shot37}
         alt=""
-        className="absolute left-[339px] top-[6522px] z-[1] h-[632px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[339px] top-[7193px] z-[1] h-[632px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot35}
         alt=""
-        className="absolute left-[704px] top-[6522px] z-[1] h-[73px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[704px] top-[7193px] z-[1] h-[73px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot36}
         alt=""
-        className="absolute left-[704px] top-[6615px] z-[1] h-[156px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[704px] top-[7286px] z-[1] h-[156px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot39}
         alt=""
-        className="absolute left-[704px] top-[6791px] z-[1] h-[180px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[704px] top-[7462px] z-[1] h-[180px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot41}
         alt=""
-        className="absolute left-[704px] top-[6991px] z-[1] h-[106px] w-[344px] rounded-[10px] object-cover"
+        className="absolute left-[704px] top-[7662px] z-[1] h-[106px] w-[344px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot38}
         alt=""
-        className="absolute left-[1069px] top-[6522px] z-[1] h-[265px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[1069px] top-[7193px] z-[1] h-[265px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot43}
         alt=""
-        className="absolute left-[1069px] top-[6807px] z-[1] h-[98px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[1069px] top-[7478px] z-[1] h-[98px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot44}
         alt=""
-        className="absolute left-[1069px] top-[6925px] z-[1] h-[222px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[1069px] top-[7596px] z-[1] h-[222px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot40}
         alt=""
-        className="absolute left-[1434px] top-[6522px] z-[1] h-[173px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[1434px] top-[7193px] z-[1] h-[173px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot42}
         alt=""
-        className="absolute left-[1434px] top-[6715px] z-[1] h-[309px] w-[345px] rounded-[10px] object-cover"
+        className="absolute left-[1434px] top-[7386px] z-[1] h-[309px] w-[345px] rounded-[10px] object-cover"
       />
       <HomeImg
         src={shots.shot45}
         alt=""
-        className="absolute left-[1434px] top-[7044px] z-[1] h-[82px] w-[343px] rounded-[10px] object-cover"
+        className="absolute left-[1434px] top-[7715px] z-[1] h-[82px] w-[343px] rounded-[10px] object-cover"
       />
 
-      <Layer x={806} y={7189} w={309} h={60} z={3}>
+      <Layer x={806} y={7860} w={309} h={60} z={3}>
         <Button href={routes.catalog} className="h-[60px] w-[309px] px-0">
           {copy.chooseVideos}
         </Button>
       </Layer>
 
-      <Layer x={240} y={7467} w={1057} h={159} z={2}>
+      <Layer x={240} y={8138} w={1057} h={159} z={2}>
         {ru ? (
           <FigLines
             lines={homeDesktopBreaks.reviewsResults}
@@ -183,7 +183,7 @@ export function HomeReviewsDesktop() {
         )}
       </Layer>
 
-      <div className="absolute left-[240px] top-[7666px] z-[2] flex w-[1440px] items-start gap-5">
+      <div className="absolute left-[240px] top-[8337px] z-[2] flex w-[1440px] items-start gap-5">
         {reviews.map((review) => (
           <div key={review.name} className="w-[467px] shrink-0">
             <ReviewCard {...review} />
@@ -204,10 +204,10 @@ export function HomeReviewsMobile() {
   return (
     <>
       <Layer x={0} y={7892} w={360} h={817} z={0} className="bg-light-gray" />
-      <Layer x={20} y={7952} w={221} h={26} z={2}>
+      <Layer x={20} y={7952} w={320} h={26} z={2}>
         <h2
           id="reviews"
-          className="text-[24px] font-medium leading-[1.1] tracking-[-0.72px] text-text"
+          className="whitespace-nowrap text-[17px] font-medium leading-[1.1] tracking-[-0.4px] text-text"
         >
           {copy.reviewsTitle}
         </h2>

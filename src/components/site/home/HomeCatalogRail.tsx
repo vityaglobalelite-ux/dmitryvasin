@@ -128,13 +128,13 @@ export function HomeCatalogRailDesktop() {
 
   return (
     <>
-      <Layer x={242} y={3989} w={833} h={55} z={2}>
+      <Layer x={242} y={4660} w={833} h={55} z={2}>
         <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
           {rail.copy.catalogTitle}
         </h2>
       </Layer>
       <div
-        className="absolute left-[242px] top-[4064px] z-[2] flex h-[69px] items-center gap-5"
+        className="absolute left-[242px] top-[4735px] z-[2] flex h-[69px] items-center gap-5"
         role="tablist"
         aria-label={rail.catalogCopy.catalog.filterAria}
       >
@@ -150,7 +150,7 @@ export function HomeCatalogRailDesktop() {
         ))}
       </div>
 
-      <Layer x={239} y={4173} w={1441} h={631} z={2}>
+      <Layer x={239} y={4844} w={1441} h={631} z={2}>
         {rail.loading ? (
           <div className="flex h-full gap-5" aria-busy="true">
             {Array.from({ length: DESKTOP_COUNT }, (_, i) => (

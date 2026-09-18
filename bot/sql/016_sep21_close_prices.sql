@@ -1,6 +1,6 @@
 -- New public list prices for buyers on the current list.
 -- Grandfathered amounts live in tariff_prices.price_list = 'legacy' (017).
--- Sales window: close new enrollment 22 Sep 2026 00:00 America/New_York (Miami).
+-- Sales window: close new enrollment 24 Sep 2026 00:00 America/New_York (Miami).
 -- Safe to re-run. After 017, only touches the public list.
 
 update public.tariff_prices set
@@ -33,7 +33,7 @@ where tariff = 'month2_3'
   and coalesce(price_list, 'current') = 'current';
 
 insert into public.bot_settings (key, value, updated_at)
-values ('price_increase_at', '2026-09-22T00:00:00-04:00', now())
+values ('price_increase_at', '2026-09-24T00:00:00-04:00', now())
 on conflict (key) do update
 set value = excluded.value, updated_at = now();
 
