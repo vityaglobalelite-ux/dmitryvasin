@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { isCatalogGuest } from "../_shared/catalog-guest.ts";
 import {
+  describeCatalogPerson,
   escapeHtml,
   whoHtml,
   type CatalogPerson,
@@ -165,6 +166,64 @@ function ticketHtml(params: {
   return lines.join("\n");
 }
 
+function ticketPlain(params: {
+  person: CatalogPerson;
+  body: string;
+  filename?: string;
+}): string {
+  const who = describeCatalogPerson(params.person);
+  const lines = [
+    "Новый вопрос с сайта",
+    params.person.guest ? "гость" : "аккаунт",
+    "",
+    who.headline,
+    ...who.details,
+  ];
+  if (params.filename) {
+    lines.push(`Файл: ${params.filename}`);
+  }
+  const body = previewText(params.body, PREVIEW_LIMIT);
+  if (body && body !== "—") {
+    lines.push("", body);
+  }
+  lines.push("", "Нажмите «Ответить» — сообщение придёт в чат на сайте.");
+  return lines.join("\n");
+}
+
+function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
+  if (!error) return false;
+  const code = error.code ?? "";
+  const message = (error.message ?? "").toLowerCase();
+  return (
+    code === "PGRST204" ||
+    code === "42703" ||
+    message.includes("does not exist") ||
+    message.includes("schema cache") ||
+    message.includes("could not find")
+  );
+}
+
+async function loadProfile(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<ProfileRow | null> {
+  const full = await admin
+    .from("catalog_profiles")
+    .select("email, first_name, last_name")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!full.error) return (full.data as ProfileRow | null) ?? null;
+  if (!isMissingColumn(full.error)) throw full.error;
+
+  const legacy = await admin
+    .from("catalog_profiles")
+    .select("email")
+    .eq("id", userId)
+    .maybeSingle();
+  if (legacy.error) throw legacy.error;
+  return (legacy.data as ProfileRow | null) ?? null;
+}
+
 async function telegramJson(
   token: string,
   method: string,
@@ -176,7 +235,8 @@ async function telegramJson(
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
-    console.error("catalog-relay-support telegram", method, res.status);
+    const detail = (await res.text().catch(() => "")).slice(0, 400);
+    console.error("catalog-relay-support telegram", method, res.status, detail);
     return false;
   }
   return true;
@@ -202,7 +262,8 @@ async function telegramFile(
     body: form,
   });
   if (!res.ok) {
-    console.error("catalog-relay-support telegram file", method, res.status);
+    const detail = (await res.text().catch(() => "")).slice(0, 400);
+    console.error("catalog-relay-support telegram file", method, res.status, detail);
     return false;
   }
   return true;
@@ -291,18 +352,13 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: "forbidden" }, 403);
     }
 
-    const { data: profileRow, error: profileErr } = await admin
-      .from("catalog_profiles")
-      .select("email, first_name, last_name")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (profileErr) throw profileErr;
+    const profileRow = await loadProfile(admin, user.id);
 
     const guest = isCatalogGuest(user);
     const person = personFromUser(
       user.id,
       guest,
-      (profileRow as ProfileRow | null) ?? null,
+      profileRow,
       user,
     );
 
@@ -315,11 +371,9 @@ Deno.serve(async (req) => {
     }
 
     const filename = storagePath ? filenameFromPath(storagePath) : undefined;
-    const text = ticketHtml({
-      person,
-      body: message.body,
-      filename,
-    });
+    const ticket = { person, body: message.body, filename };
+    const htmlText = ticketHtml(ticket);
+    const plainText = ticketPlain(ticket);
     const keyboard = replyKeyboard(user.id);
 
     let attachment: { blob: Blob; filename: string; image: boolean } | null =
@@ -350,7 +404,7 @@ Deno.serve(async (req) => {
             adminId,
             attachment.blob,
             attachment.filename,
-            text,
+            htmlText,
             keyboard,
           );
           if (!ok && attachment.image) {
@@ -360,19 +414,28 @@ Deno.serve(async (req) => {
               adminId,
               attachment.blob,
               attachment.filename,
-              text,
+              htmlText,
               keyboard,
             );
           }
         }
         if (!ok) {
+          const markup = JSON.parse(keyboard);
           ok = await telegramJson(botToken, "sendMessage", {
             chat_id: adminId,
-            text,
+            text: htmlText,
             parse_mode: "HTML",
             disable_web_page_preview: true,
-            reply_markup: JSON.parse(keyboard),
+            reply_markup: markup,
           });
+          if (!ok) {
+            ok = await telegramJson(botToken, "sendMessage", {
+              chat_id: adminId,
+              text: plainText,
+              disable_web_page_preview: true,
+              reply_markup: markup,
+            });
+          }
         }
         if (ok) delivered += 1;
       } catch (err) {

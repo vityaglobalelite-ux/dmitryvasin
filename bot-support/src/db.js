@@ -145,13 +145,20 @@ function sanitizeFilename(name) {
 
 async function getCatalogProfile(userId) {
   if (!UUID_RE.test(String(userId || ""))) return null;
-  const { data, error } = await supabase
+  const full = await supabase
     .from("catalog_profiles")
     .select("id, email, first_name, last_name")
     .eq("id", userId)
     .maybeSingle();
-  if (error) throw error;
-  return data;
+  if (!full.error) return full.data;
+  if (full.error.code !== "42703") throw full.error;
+  const legacy = await supabase
+    .from("catalog_profiles")
+    .select("id, email")
+    .eq("id", userId)
+    .maybeSingle();
+  if (legacy.error) throw legacy.error;
+  return legacy.data;
 }
 
 async function addCatalogAgentMessage({ userId, body, storagePath = null }) {
