@@ -2,9 +2,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.8";
 import { corsHeaders, jsonResponse } from "../_shared/cors.ts";
 import { isCatalogGuest } from "../_shared/catalog-guest.ts";
 import {
-  describeCatalogPerson,
-  escapeHtml,
-  whoHtml,
+  ticketHtml,
+  ticketPlain,
   type CatalogPerson,
 } from "../_shared/catalog-who.ts";
 
@@ -12,7 +11,6 @@ const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const TELEGRAM_API = "https://api.telegram.org";
-const PREVIEW_LIMIT = 800;
 const CAPTION_LIMIT = 1024;
 const SUPPORT_BUCKET = "catalog-support";
 const IMAGE_EXT_RE = /\.(png|jpe?g|gif|webp|bmp|avif)$/i;
@@ -133,61 +131,57 @@ function personFromUser(
   };
 }
 
-function replyKeyboard(userId: string): string {
-  return JSON.stringify({
-    inline_keyboard: [
-      [{ text: "Ответить", callback_data: `catreply:${userId}` }],
-    ],
+function ticketKeyboard(userId: string, hasHistory: boolean): Record<string, unknown> {
+  const rows: { text: string; callback_data: string }[][] = [
+    [{ text: "✍️ Ответить", callback_data: `catreply:${userId}` }],
+  ];
+  const second: { text: string; callback_data: string }[] = [];
+  if (hasHistory) {
+    second.push({ text: "📜 История", callback_data: `cathist:${userId}` });
+  }
+  second.push({ text: "✓ Прочитано", callback_data: `catread:${userId}` });
+  rows.push(second);
+  return { inline_keyboard: rows };
+}
+
+type ThreadStatus = {
+  total_messages: number;
+  waiting_count: number;
+};
+
+async function loadThreadStatus(
+  admin: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<ThreadStatus> {
+  const rpc = await admin.rpc("catalog_support_thread_status", {
+    p_user_id: userId,
   });
-}
+  const payload = !rpc.error ? rpc.data : null;
+  const row = Array.isArray(payload) ? payload[0] : payload;
+  if (row && typeof row === "object") {
+    return {
+      total_messages: Number(row.total_messages) || 0,
+      waiting_count: Number(row.waiting_count) || 0,
+    };
+  }
 
-function ticketHtml(params: {
-  person: CatalogPerson;
-  body: string;
-  filename?: string;
-}): string {
-  const lines = [
-    "<b>Новый вопрос с сайта</b>",
-    params.person.guest ? "гость" : "аккаунт",
-    "",
-    whoHtml(params.person),
-  ];
-  if (params.filename) {
-    lines.push(`Файл: <code>${escapeHtml(params.filename)}</code>`);
+  const listed = await admin
+    .from("catalog_support_messages")
+    .select("from_role, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (listed.error || !listed.data) {
+    return { total_messages: 1, waiting_count: 1 };
   }
-  const body = previewText(params.body, PREVIEW_LIMIT);
-  if (body && body !== "—") {
-    lines.push("", escapeHtml(body));
+  const rows = listed.data as { from_role: string; created_at: string }[];
+  let lastAgent = "";
+  for (const item of rows) {
+    if (item.from_role === "agent") lastAgent = item.created_at;
   }
-  lines.push(
-    "",
-    "<i>Нажмите «Ответить» — сообщение придёт в чат на сайте.</i>",
-  );
-  return lines.join("\n");
-}
-
-function ticketPlain(params: {
-  person: CatalogPerson;
-  body: string;
-  filename?: string;
-}): string {
-  const who = describeCatalogPerson(params.person);
-  const lines = [
-    "Новый вопрос с сайта",
-    params.person.guest ? "гость" : "аккаунт",
-    "",
-    who.headline,
-    ...who.details,
-  ];
-  if (params.filename) {
-    lines.push(`Файл: ${params.filename}`);
-  }
-  const body = previewText(params.body, PREVIEW_LIMIT);
-  if (body && body !== "—") {
-    lines.push("", body);
-  }
-  lines.push("", "Нажмите «Ответить» — сообщение придёт в чат на сайте.");
-  return lines.join("\n");
+  const waiting = rows.filter(
+    (item) => item.from_role === "user" && (!lastAgent || item.created_at > lastAgent),
+  ).length;
+  return { total_messages: rows.length, waiting_count: waiting };
 }
 
 function isMissingColumn(error: { code?: string; message?: string } | null): boolean {
@@ -249,13 +243,11 @@ async function telegramFile(
   file: Blob,
   filename: string,
   caption: string,
-  replyMarkup: string,
 ): Promise<boolean> {
   const form = new FormData();
   form.set("chat_id", String(chatId));
-  form.set("caption", previewText(caption, CAPTION_LIMIT));
-  form.set("parse_mode", "HTML");
-  form.set("reply_markup", replyMarkup);
+  const short = previewText(caption, CAPTION_LIMIT);
+  if (short) form.set("caption", short);
   form.set(method === "sendPhoto" ? "photo" : "document", file, filename);
   const res = await fetch(`${TELEGRAM_API}/bot${token}/${method}`, {
     method: "POST",
@@ -371,10 +363,18 @@ Deno.serve(async (req) => {
     }
 
     const filename = storagePath ? filenameFromPath(storagePath) : undefined;
-    const ticket = { person, body: message.body, filename };
+    const status = await loadThreadStatus(admin, user.id);
+    const ticket = {
+      person,
+      body: message.body,
+      filename,
+      createdAt: message.created_at,
+      waitingCount: status.waiting_count,
+      timeZone: Deno.env.get("DISPLAY_TZ")?.trim() || "Europe/Moscow",
+    };
     const htmlText = ticketHtml(ticket);
     const plainText = ticketPlain(ticket);
-    const keyboard = replyKeyboard(user.id);
+    const markup = ticketKeyboard(user.id, status.total_messages > 1);
 
     let attachment: { blob: Blob; filename: string; image: boolean } | null =
       null;
@@ -396,45 +396,42 @@ Deno.serve(async (req) => {
     let delivered = 0;
     for (const adminId of adminIds) {
       try {
-        let ok = false;
-        if (attachment) {
-          ok = await telegramFile(
+        let ok = await telegramJson(botToken, "sendMessage", {
+          chat_id: adminId,
+          text: htmlText,
+          parse_mode: "HTML",
+          disable_web_page_preview: true,
+          reply_markup: markup,
+        });
+        if (!ok) {
+          ok = await telegramJson(botToken, "sendMessage", {
+            chat_id: adminId,
+            text: plainText,
+            disable_web_page_preview: true,
+            reply_markup: markup,
+          });
+        }
+        if (ok && attachment) {
+          let fileOk = await telegramFile(
             botToken,
             attachment.image ? "sendPhoto" : "sendDocument",
             adminId,
             attachment.blob,
             attachment.filename,
-            htmlText,
-            keyboard,
+            attachment.filename,
           );
-          if (!ok && attachment.image) {
-            ok = await telegramFile(
+          if (!fileOk && attachment.image) {
+            fileOk = await telegramFile(
               botToken,
               "sendDocument",
               adminId,
               attachment.blob,
               attachment.filename,
-              htmlText,
-              keyboard,
+              attachment.filename,
             );
           }
-        }
-        if (!ok) {
-          const markup = JSON.parse(keyboard);
-          ok = await telegramJson(botToken, "sendMessage", {
-            chat_id: adminId,
-            text: htmlText,
-            parse_mode: "HTML",
-            disable_web_page_preview: true,
-            reply_markup: markup,
-          });
-          if (!ok) {
-            ok = await telegramJson(botToken, "sendMessage", {
-              chat_id: adminId,
-              text: plainText,
-              disable_web_page_preview: true,
-              reply_markup: markup,
-            });
+          if (!fileOk) {
+            console.error("catalog-relay-support attachment failed", adminId);
           }
         }
         if (ok) delivered += 1;

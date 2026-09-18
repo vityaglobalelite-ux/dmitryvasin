@@ -1,4 +1,5 @@
 const GUEST_EMAIL_RE = /@guest\.betango\.internal$/i;
+const DEFAULT_TZ = "Europe/Moscow";
 
 function clean(value) {
   return typeof value === "string" ? value.trim() : "";
@@ -51,19 +52,57 @@ function escapeHtml(value) {
     .replace(/>/g, "&gt;");
 }
 
-function whoHtml(person) {
-  const who = describeCatalogPerson(person);
-  const lines = [`<b>${escapeHtml(who.headline)}</b>`];
-  for (const detail of who.details) {
-    const safe = escapeHtml(detail);
-    lines.push(detail.startsWith("G-") ? `<code>${safe}</code>` : safe);
+function formatSupportTime(value, timeZone = DEFAULT_TZ) {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat("ru-RU", {
+      timeZone,
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString();
   }
+}
+
+function personHeaderHtml(person) {
+  const described = describeCatalogPerson(person);
+  if (described.guest) {
+    const code =
+      described.details.find((item) => item.startsWith("G-")) ||
+      guestCode(person.id);
+    const rest = described.details.filter((item) => item !== code);
+    const title =
+      described.headline === "Гость"
+        ? `Гость · <code>${escapeHtml(code)}</code>`
+        : `<b>${escapeHtml(described.headline)}</b>\nГость · <code>${escapeHtml(code)}</code>`;
+    return [title, ...rest.map((item) => escapeHtml(item))].join("\n");
+  }
+  const lines = [`<b>${escapeHtml(described.headline)}</b>`];
+  for (const detail of described.details) lines.push(escapeHtml(detail));
   return lines.join("\n");
+}
+
+function whoHtml(person) {
+  return personHeaderHtml(person);
+}
+
+function personButtonLabel(person) {
+  if (person?.guest) return guestCode(person.id);
+  const name = displayName(person?.firstName, person?.lastName);
+  if (name) return name.length > 28 ? `${name.slice(0, 27)}…` : name;
+  const email = contactEmail(person?.email);
+  if (email) return email.length > 28 ? `${email.slice(0, 27)}…` : email;
+  return "Аккаунт";
 }
 
 function personFromProfile(profile, guest) {
   return {
-    id: profile?.id || "",
+    id: profile?.id || profile?.user_id || "",
     guest: Boolean(guest),
     email: profile?.email || null,
     firstName: profile?.first_name || null,
@@ -75,12 +114,21 @@ function isGuestProfile(profile) {
   return GUEST_EMAIL_RE.test(profile?.email || "");
 }
 
+function personFromRow(row) {
+  return personFromProfile(row, isGuestProfile(row));
+}
+
 module.exports = {
   guestCode,
   contactEmail,
   displayName,
   describeCatalogPerson,
+  escapeHtml,
+  formatSupportTime,
+  personHeaderHtml,
   whoHtml,
+  personButtonLabel,
   personFromProfile,
   isGuestProfile,
+  personFromRow,
 };

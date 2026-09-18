@@ -1,4 +1,5 @@
 const GUEST_EMAIL_RE = /@guest\.betango\.internal$/i;
+const DEFAULT_TZ = "Europe/Moscow";
 
 export type CatalogPerson = {
   id: string;
@@ -12,6 +13,15 @@ export type CatalogWho = {
   guest: boolean;
   headline: string;
   details: string[];
+};
+
+export type TicketView = {
+  person: CatalogPerson;
+  body: string;
+  filename?: string;
+  createdAt?: string;
+  waitingCount?: number;
+  timeZone?: string;
 };
 
 function clean(value: unknown): string {
@@ -69,12 +79,103 @@ export function escapeHtml(value: string): string {
     .replaceAll(">", "&gt;");
 }
 
-export function whoHtml(person: CatalogPerson): string {
+export function formatSupportTime(
+  value?: string | Date | null,
+  timeZone = DEFAULT_TZ,
+): string {
+  if (!value) return "";
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat("ru-RU", {
+      timeZone,
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  } catch {
+    return date.toISOString();
+  }
+}
+
+export function personHeaderHtml(person: CatalogPerson): string {
   const who = describeCatalogPerson(person);
+  if (who.guest) {
+    const code = who.details.find((item) => item.startsWith("G-")) ||
+      guestCode(person.id);
+    const rest = who.details.filter((item) => item !== code);
+    const title =
+      who.headline === "Гость"
+        ? `Гость · <code>${escapeHtml(code)}</code>`
+        : `<b>${escapeHtml(who.headline)}</b>\nГость · <code>${escapeHtml(code)}</code>`;
+    return [title, ...rest.map((item) => escapeHtml(item))].join("\n");
+  }
   const lines = [`<b>${escapeHtml(who.headline)}</b>`];
-  for (const detail of who.details) {
-    const safe = escapeHtml(detail);
-    lines.push(detail.startsWith("G-") ? `<code>${safe}</code>` : safe);
+  for (const detail of who.details) lines.push(escapeHtml(detail));
+  return lines.join("\n");
+}
+
+export function whoHtml(person: CatalogPerson): string {
+  return personHeaderHtml(person);
+}
+
+function previewText(value: string, limit: number): string {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === "—") return "";
+  if (trimmed.length <= limit) return trimmed;
+  return `${trimmed.slice(0, limit)}…`;
+}
+
+export function ticketHtml(params: TicketView): string {
+  const waiting = Number(params.waitingCount) || 0;
+  const timeLabel = formatSupportTime(params.createdAt, params.timeZone);
+  const lines = [
+    "🆕 <b>Новое сообщение с сайта</b>",
+    personHeaderHtml(params.person),
+  ];
+  if (params.person.guest) {
+    lines.push("<i>Тот же код — тот же человек в этом браузере</i>");
+  }
+  const meta: string[] = [];
+  if (timeLabel) meta.push(`🕓 ${escapeHtml(timeLabel)}`);
+  if (waiting > 1) meta.push(`⏳ без ответа: ${waiting}`);
+  if (meta.length) lines.push(meta.join(" · "));
+  if (params.filename) {
+    lines.push(`📎 <code>${escapeHtml(params.filename)}</code>`);
+  }
+  const body = previewText(params.body, 800);
+  if (body) {
+    lines.push("", escapeHtml(body));
   }
   return lines.join("\n");
+}
+
+export function ticketPlain(params: TicketView): string {
+  const who = describeCatalogPerson(params.person);
+  const waiting = Number(params.waitingCount) || 0;
+  const timeLabel = formatSupportTime(params.createdAt, params.timeZone);
+  const lines = ["Новое сообщение с сайта", who.headline, ...who.details];
+  if (params.person.guest) {
+    lines.push("Тот же код — тот же человек в этом браузере");
+  }
+  const meta: string[] = [];
+  if (timeLabel) meta.push(timeLabel);
+  if (waiting > 1) meta.push(`без ответа: ${waiting}`);
+  if (meta.length) lines.push(meta.join(" · "));
+  if (params.filename) lines.push(`Файл: ${params.filename}`);
+  const body = previewText(params.body, 800);
+  if (body) {
+    lines.push("", body);
+  }
+  return lines.join("\n");
+}
+
+export function personButtonLabel(person: CatalogPerson): string {
+  if (person.guest) return guestCode(person.id);
+  const name = displayName(person.firstName, person.lastName);
+  if (name) return name.length > 28 ? `${name.slice(0, 27)}…` : name;
+  const email = contactEmail(person.email);
+  if (email) return email.length > 28 ? `${email.slice(0, 27)}…` : email;
+  return "Аккаунт";
 }
