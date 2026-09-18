@@ -14,11 +14,14 @@ import { HomeHowToDesktop, HomeHowToMobile } from "@/components/site/home/HomeHo
 import { HomeReviewsDesktop, HomeReviewsMobile } from "@/components/site/home/HomeReviews";
 import { HomeSupportDesktop, HomeSupportMobile } from "@/components/site/home/HomeSupport";
 import { HomeTeacherDesktop, HomeTeacherMobile } from "@/components/site/home/HomeTeacher";
-import { SiteFigCanvas } from "@/components/site/home/SiteFigCanvas";
+import { SiteFigCanvas, SITE_DESKTOP_CANVAS, SITE_MOBILE_CANVAS } from "@/components/site/home/SiteFigCanvas";
 
 function HomeDesktopCanvas() {
   return (
-    <div className="relative h-[8704px] w-[1920px] overflow-hidden bg-white">
+    <div
+      className="relative w-[1920px] overflow-hidden bg-white"
+      style={{ height: SITE_DESKTOP_CANVAS.h }}
+    >
       <div className="contents" data-eager-images>
         <HomeHeroDesktop />
         <HomeTeacherDesktop />
@@ -37,7 +40,10 @@ function HomeDesktopCanvas() {
 
 function HomeMobileCanvas() {
   return (
-    <div className="relative h-[10116px] w-[360px] overflow-hidden bg-white">
+    <div
+      className="relative w-[360px] overflow-hidden bg-white"
+      style={{ height: SITE_MOBILE_CANVAS.h }}
+    >
       <div className="contents" data-eager-images>
         <HomeHeroMobile />
         <HomeHeaderMobile />
