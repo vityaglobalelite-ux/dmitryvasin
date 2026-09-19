@@ -18,6 +18,7 @@ function gifPosterUrl(url: string): string | undefined {
 }
 
 const warmedGifs = new Set<string>();
+const warmHold = new Set<HTMLImageElement>();
 
 function warmImage(url: string, priority: "high" | "low") {
   if (!url || warmedGifs.has(url)) return;
@@ -25,6 +26,17 @@ function warmImage(url: string, priority: "high" | "low") {
   const img = new Image();
   img.decoding = "async";
   img.fetchPriority = priority;
+  const release = () => {
+    img.onload = null;
+    img.onerror = null;
+    warmHold.delete(img);
+  };
+  img.onload = release;
+  img.onerror = () => {
+    warmedGifs.delete(url);
+    release();
+  };
+  warmHold.add(img);
   img.src = url;
 }
 
@@ -111,6 +123,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
   const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const skipScrollSync = useRef(false);
+  const goTimer = useRef(0);
   const reduced = usePrefersReducedMotion();
   const inView = useInView(root);
   const [index, setIndex] = useState(0);
@@ -131,7 +144,8 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
         left: target * el.clientWidth,
         behavior: reduced ? "auto" : "smooth",
       });
-      window.setTimeout(() => {
+      window.clearTimeout(goTimer.current);
+      goTimer.current = window.setTimeout(() => {
         skipScrollSync.current = false;
       }, 480);
     },
@@ -139,21 +153,30 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
   );
 
   useEffect(() => {
+    return () => window.clearTimeout(goTimer.current);
+  }, []);
+
+  useEffect(() => {
     const el = scroller.current;
     if (!el || count < 2) return;
+    let snapTimer = 0;
     const snap = () => {
       skipScrollSync.current = true;
       el.scrollTo({
         left: indexRef.current * el.clientWidth,
         behavior: "auto",
       });
-      window.setTimeout(() => {
+      window.clearTimeout(snapTimer);
+      snapTimer = window.setTimeout(() => {
         skipScrollSync.current = false;
       }, 50);
     };
     const observer = new ResizeObserver(snap);
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(snapTimer);
+    };
   }, [count]);
 
   if (count === 0) return null;
@@ -218,14 +241,16 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
           role="tablist"
           aria-label={label}
           onKeyDown={(event) => {
-            if (event.key === "ArrowLeft") {
-              event.preventDefault();
-              go(safeIndex - 1);
-            }
-            if (event.key === "ArrowRight") {
-              event.preventDefault();
-              go(safeIndex + 1);
-            }
+            if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+            event.preventDefault();
+            const next =
+              event.key === "ArrowLeft" ? safeIndex - 1 : safeIndex + 1;
+            const target = (next + count) % count;
+            go(next);
+            const tabs = event.currentTarget.querySelectorAll<HTMLElement>(
+              '[role="tab"]',
+            );
+            tabs[target]?.focus();
           }}
         >
           {urls.map((url, i) => {
@@ -237,6 +262,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
                 type="button"
                 role="tab"
                 aria-selected={active}
+                tabIndex={active ? 0 : -1}
                 aria-label={ui.coverDot.replace("{n}", String(i + 1))}
                 onClick={() => go(i)}
                 className={[
