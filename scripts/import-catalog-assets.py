@@ -225,6 +225,30 @@ def import_gifs(gif_zip: pathlib.Path) -> None:
         gif_to_cover_webps(src, dest, still)
 
     shutil.rmtree(scratch, ignore_errors=True)
+    copy_posture_photo_covers()
+
+
+def copy_posture_photo_covers() -> None:
+    """Course cards use still photos, not lesson GIFs. Same 3-frame rhythm as peeks."""
+    covers = OUT / "covers"
+    b1 = OUT / "gifs/posture/block1"
+    b2 = OUT / "gifs/posture/block2"
+    copies = [
+        (b1 / "01-still.webp", covers / "posture-1.webp"),
+        (b1 / "05-still.webp", covers / "posture-2.webp"),
+        (b2 / "03-still.webp", covers / "posture-3.webp"),
+        (b1 / "01-still.webp", covers / "posture-b1-1.webp"),
+        (b1 / "05-still.webp", covers / "posture-b1-2.webp"),
+        (b1 / "03-11-still.webp", covers / "posture-b1-3.webp"),
+        (b2 / "01-still.webp", covers / "posture-b2-1.webp"),
+        (b2 / "03-still.webp", covers / "posture-b2-2.webp"),
+        (b2 / "04-still.webp", covers / "posture-b2-3.webp"),
+    ]
+    for src, dest in copies:
+        if not src.is_file():
+            print(f"warn: missing still {src.name}", file=sys.stderr)
+            continue
+        shutil.copyfile(src, dest)
 
 
 def main() -> None:

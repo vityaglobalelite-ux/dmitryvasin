@@ -20,6 +20,7 @@ const ru = {
   coverDot: "Кадр {n}",
   coverPrev: "Предыдущий кадр",
   coverNext: "Следующий кадр",
+  lessonClips: "Кадры урока",
 } as const;
 
 const en = {
@@ -41,6 +42,7 @@ const en = {
   coverDot: "Frame {n}",
   coverPrev: "Previous frame",
   coverNext: "Next frame",
+  lessonClips: "Lesson clips",
 } as const;
 
 export type ProductUiCopy = { [K in keyof typeof ru]: string };

@@ -12,45 +12,44 @@ import sys
 import urllib.error
 import urllib.request
 
-GIF = "/assets/site/catalog/gifs/posture"
-BALLS = [
-    f"{GIF}/block1/01.webp",
-    f"{GIF}/block1/02.webp",
-    f"{GIF}/block1/03.webp",
-    f"{GIF}/block1/03-1.webp",
-    f"{GIF}/block1/03-11.webp",
-    f"{GIF}/block1/04.webp",
-    f"{GIF}/block1/05.webp",
-]
-BANDS = [
-    f"{GIF}/block2/01.webp",
-    f"{GIF}/block2/02.webp",
-    f"{GIF}/block2/03.webp",
-    f"{GIF}/block2/04.webp",
-]
 COURSE_2 = [
     "/assets/site/catalog/covers/course-2-1.webp",
     "/assets/site/catalog/covers/course-2-2.webp",
     "/assets/site/catalog/covers/course-2-3.webp",
 ]
+POSTURE = [
+    "/assets/site/catalog/covers/posture-1.webp",
+    "/assets/site/catalog/covers/posture-2.webp",
+    "/assets/site/catalog/covers/posture-3.webp",
+]
+POSTURE_B1 = [
+    "/assets/site/catalog/covers/posture-b1-1.webp",
+    "/assets/site/catalog/covers/posture-b1-2.webp",
+    "/assets/site/catalog/covers/posture-b1-3.webp",
+]
+POSTURE_B2 = [
+    "/assets/site/catalog/covers/posture-b2-1.webp",
+    "/assets/site/catalog/covers/posture-b2-2.webp",
+    "/assets/site/catalog/covers/posture-b2-3.webp",
+]
 
 PRODUCTS = [
     {
         "id": "d0230001-0001-4000-8000-000000000001",
-        "cover": BALLS[0],
-        "covers": BALLS + BANDS,
+        "cover": POSTURE[0],
+        "covers": POSTURE,
         "sort_index": 1,
     },
     {
         "id": "d0230001-0002-4000-8000-000000000002",
-        "cover": BALLS[0],
-        "covers": BALLS,
+        "cover": POSTURE_B1[0],
+        "covers": POSTURE_B1,
         "sort_index": 101,
     },
     {
         "id": "d0230001-0003-4000-8000-000000000003",
-        "cover": BANDS[0],
-        "covers": BANDS,
+        "cover": POSTURE_B2[0],
+        "covers": POSTURE_B2,
         "sort_index": 102,
     },
     {

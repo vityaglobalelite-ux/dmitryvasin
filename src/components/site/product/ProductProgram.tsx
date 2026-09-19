@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { productAssets } from "@/components/site/product/assets";
 import { productUi } from "@/components/site/product/copy";
-import { LessonGifRow } from "@/components/site/product/LessonGif";
+import {
+  LessonGifRow,
+  usePrefetchLessonGifs,
+} from "@/components/site/product/LessonGif";
 import { Button } from "@/components/site/ui/Button";
 import { CatalogMoney, CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { formatAccessLabel, lessonNoun } from "@/components/site/catalog/display";
@@ -78,6 +81,11 @@ export function ProductProgram({
   const ui = productUi(locale);
   const routes = useLocalizedRoutes();
   const blocks = product.programBlocks.blocks;
+  usePrefetchLessonGifs(
+    blocks.flatMap((block) =>
+      block.lessons.flatMap((lesson) => lesson.gifUrls),
+    ),
+  );
   const isBlockSku = Boolean(product.bundleParentId);
   const fullProduct = isBlockSku ? parent : product;
   const lead = isBlockSku ? ui.programLeadBlock : ui.programLead;
@@ -242,7 +250,7 @@ function ProgramBlockCard({
               <div
                 key={`${block.blockKey}-${lesson.sort}-${lesson.title}`}
                 role="listitem"
-                className="flex flex-col gap-2.5 rounded-[10px] bg-white p-2.5"
+                className="flex flex-col gap-3 rounded-[10px] bg-white p-3 max-[600px]:gap-2.5 max-[600px]:p-2.5"
               >
                 <div className="flex items-center gap-2.5">
                   <span className="flex size-[17px] shrink-0 items-center justify-center rounded-full bg-[image:var(--brand-gradient)] text-[12px] font-semibold text-white">

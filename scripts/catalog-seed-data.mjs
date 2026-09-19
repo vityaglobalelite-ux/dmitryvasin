@@ -146,23 +146,15 @@ export function buildPeekProducts() {
 
 const GIF = "/assets/site/catalog/gifs/posture";
 
-const POSTURE_BALL_COVERS = [
-  `${GIF}/block1/01.webp`,
-  `${GIF}/block1/02.webp`,
-  `${GIF}/block1/03.webp`,
-  `${GIF}/block1/03-1.webp`,
-  `${GIF}/block1/03-11.webp`,
-  `${GIF}/block1/04.webp`,
-  `${GIF}/block1/05.webp`,
-];
-const POSTURE_BAND_COVERS = [
-  `${GIF}/block2/01.webp`,
-  `${GIF}/block2/02.webp`,
-  `${GIF}/block2/03.webp`,
-  `${GIF}/block2/04.webp`,
-];
-/** Full posture course: balls first, then resistance bands. */
-const POSTURE_COVERS = [...POSTURE_BALL_COVERS, ...POSTURE_BAND_COVERS];
+const POSTURE_COVERS = [1, 2, 3].map(
+  (n) => `/assets/site/catalog/covers/posture-${n}.webp`,
+);
+const POSTURE_BLOCK1_COVERS = [1, 2, 3].map(
+  (n) => `/assets/site/catalog/covers/posture-b1-${n}.webp`,
+);
+const POSTURE_BLOCK2_COVERS = [1, 2, 3].map(
+  (n) => `/assets/site/catalog/covers/posture-b2-${n}.webp`,
+);
 const COURSE_2_COVERS = [1, 2, 3].map(
   (n) => `/assets/site/catalog/covers/course-2-${n}.webp`,
 );
@@ -362,8 +354,8 @@ export function buildCourseProducts() {
     price_minor: 2500000,
     currency: "rub",
     access_days: 180,
-    cover_url: POSTURE_BALL_COVERS[0],
-    cover_urls: POSTURE_BALL_COVERS,
+    cover_url: POSTURE_BLOCK1_COVERS[0],
+    cover_urls: POSTURE_BLOCK1_COVERS,
     duration_sec: 5 * 45 * 60,
     level: "2",
     skills: ["awareness", "technique"],
@@ -393,8 +385,8 @@ export function buildCourseProducts() {
     price_minor: 2500000,
     currency: "rub",
     access_days: 180,
-    cover_url: POSTURE_BAND_COVERS[0],
-    cover_urls: POSTURE_BAND_COVERS,
+    cover_url: POSTURE_BLOCK2_COVERS[0],
+    cover_urls: POSTURE_BLOCK2_COVERS,
     duration_sec: 4 * 45 * 60,
     level: "2",
     skills: ["technique", "interaction"],
