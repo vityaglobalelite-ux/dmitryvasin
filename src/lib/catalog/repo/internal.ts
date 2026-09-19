@@ -334,7 +334,8 @@ const I18N_EMBED =
 
 const PRODUCT_LIST_EMBEDS = `
   catalog_product_i18n ( locale, title, short ),
-  catalog_product_media ( sort, url, kind )
+  catalog_product_media ( sort, url, kind ),
+  bundle_parent:catalog_product_bundles!catalog_product_bundles_child_id_fkey ( parent_id )
 `;
 
 /** Public product columns — never kinescope / videos. */

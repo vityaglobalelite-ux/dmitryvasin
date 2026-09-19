@@ -22,11 +22,23 @@ export type ListPublishedProductsOpts = {
   locale?: Locale;
 };
 
+const TYPE_ORDER: Record<string, number> = {
+  course: 0,
+  peek: 1,
+  lesson: 2,
+  lifehack: 3,
+  extra: 4,
+  research: 5,
+};
+
 function comparePublishedProducts(a: Product, b: Product): number {
+  const ta = TYPE_ORDER[a.type] ?? 9;
+  const tb = TYPE_ORDER[b.type] ?? 9;
+  if (ta !== tb) return ta - tb;
+  const ai = a.sortIndex ?? Number.MAX_SAFE_INTEGER;
+  const bi = b.sortIndex ?? Number.MAX_SAFE_INTEGER;
+  if (ai !== bi) return ai - bi;
   if (a.type === "peek" && b.type === "peek") {
-    const ai = a.sortIndex ?? Number.MAX_SAFE_INTEGER;
-    const bi = b.sortIndex ?? Number.MAX_SAFE_INTEGER;
-    if (ai !== bi) return ai - bi;
     const at = a.availableAt ? Date.parse(a.availableAt) : 0;
     const bt = b.availableAt ? Date.parse(b.availableAt) : 0;
     if (at !== bt) return at - bt;

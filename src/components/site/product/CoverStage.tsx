@@ -1,7 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 import { siteFocusRing } from "@/components/site/ui/Button";
 import { productAssets } from "@/components/site/product/assets";
 import { productUi } from "@/components/site/product/copy";
@@ -24,7 +30,12 @@ export function CoverStage({
   return (
     <div className={FRAME}>
       {urls.length > 1 ? (
-        <CoverCarousel urls={urls} alt={alt} />
+        <CoverCarousel
+          urls={urls}
+          alt={alt}
+          sizes="(max-width: 600px) 320px, 710px"
+          tone="light"
+        />
       ) : urls[0] ? (
         <Image
           src={urls[0]}
@@ -41,89 +52,274 @@ export function CoverStage({
   );
 }
 
-function CoverCarousel({ urls, alt }: { urls: string[]; alt: string }) {
+function coverPosterUrl(url: string): string | undefined {
+  if (!url.includes("/gifs/")) return undefined;
+  return url.replace(/(\.[a-z0-9]+)$/i, "-still$1");
+}
+
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setReduced(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+  return reduced;
+}
+
+function useInView(ref: RefObject<HTMLDivElement | null>) {
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
+      { threshold: 0.4 },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref]);
+  return inView;
+}
+
+export function CoverCarousel({
+  urls,
+  alt,
+  sizes,
+  autoPlay = true,
+  intervalMs = 5200,
+  tone = "brand",
+  hoverZoom = false,
+}: {
+  urls: string[];
+  alt: string;
+  sizes: string;
+  autoPlay?: boolean;
+  intervalMs?: number;
+  tone?: "light" | "brand";
+  hoverZoom?: boolean;
+}) {
   const locale = useLocale();
   const ui = productUi(locale);
-  const scroller = useRef<HTMLDivElement>(null);
+  const root = useRef<HTMLDivElement>(null);
+  const reduced = usePrefersReducedMotion();
+  const inView = useInView(root);
   const [index, setIndex] = useState(0);
-
-  const onScroll = useCallback(() => {
-    const el = scroller.current;
-    if (!el || el.clientWidth <= 0) return;
-    const next = Math.round(el.scrollLeft / el.clientWidth);
-    setIndex(Math.min(urls.length - 1, Math.max(0, next)));
-  }, [urls.length]);
+  const [paused, setPaused] = useState(false);
+  const safeIndex = urls.length === 0 ? 0 : Math.min(index, urls.length - 1);
+  const count = urls.length;
 
   const go = useCallback(
     (next: number) => {
-      const el = scroller.current;
-      if (!el) return;
-      const clamped = Math.min(urls.length - 1, Math.max(0, next));
-      el.scrollTo({ left: clamped * el.clientWidth, behavior: "smooth" });
+      if (count === 0) return;
+      setIndex((next + count) % count);
     },
-    [urls.length],
+    [count],
   );
 
+  useEffect(() => {
+    const node = root.current?.parentElement;
+    if (!node) return;
+    const enter = () => setPaused(true);
+    const leave = () => setPaused(false);
+    node.addEventListener("mouseenter", enter);
+    node.addEventListener("mouseleave", leave);
+    return () => {
+      node.removeEventListener("mouseenter", enter);
+      node.removeEventListener("mouseleave", leave);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!autoPlay || reduced || paused || !inView || count < 2) return;
+    const id = window.setInterval(() => go(safeIndex + 1), intervalMs);
+    return () => window.clearInterval(id);
+  }, [autoPlay, count, go, inView, intervalMs, paused, reduced, safeIndex]);
+
+  if (count === 0) return null;
+
   return (
-    <>
-      <div
-        ref={scroller}
-        onScroll={onScroll}
-        className="flex h-full snap-x snap-mandatory overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        aria-roledescription="carousel"
-        aria-label={alt}
-      >
-        {urls.map((url, i) => (
+    <div
+      ref={root}
+      className="absolute inset-0 z-20 pointer-events-none"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}
+      aria-roledescription="carousel"
+      aria-label={alt}
+    >
+      {urls.map((url, i) => {
+        const active = i === safeIndex;
+        const poster = coverPosterUrl(url);
+        const prev = (safeIndex + count - 1) % count;
+        const next = (safeIndex + 1) % count;
+        const playAnimated = active || i === next || i === prev;
+        return (
           <div
             key={`${url}-${i}`}
-            className="relative h-full w-full shrink-0 snap-center"
+            className={[
+              "absolute inset-0 transition-opacity duration-700 ease-out motion-reduce:transition-none",
+              active ? "opacity-100" : "pointer-events-none opacity-0",
+            ].join(" ")}
+            aria-hidden={!active}
           >
-            <Image
-              src={url}
-              alt={i === 0 ? alt : ""}
-              fill
-              className="object-cover"
-              sizes="(max-width: 600px) 320px, 710px"
-              unoptimized
-              priority={i === 0 || undefined}
-              loading={i === 0 ? undefined : "lazy"}
+            <img
+              src={poster ?? url}
+              alt={active ? alt : ""}
+              sizes={sizes}
+              className={[
+                "absolute inset-0 size-full object-cover",
+                hoverZoom
+                  ? "transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                  : "",
+              ].join(" ")}
+              draggable={false}
             />
+            {poster && playAnimated && !reduced ? (
+              <img
+                src={url}
+                alt=""
+                sizes={sizes}
+                className={[
+                  "absolute inset-0 size-full object-cover",
+                  hoverZoom
+                    ? "transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                    : "",
+                ].join(" ")}
+                draggable={false}
+                aria-hidden
+              />
+            ) : null}
           </div>
-        ))}
-      </div>
-      <div className="absolute bottom-5 left-1/2 z-[3] flex -translate-x-1/2 items-center gap-2 max-[600px]:bottom-2.5">
-        <button
-          type="button"
-          className="sr-only"
-          onClick={() => go(index - 1)}
-        >
-          {ui.coverPrev}
-        </button>
-        {urls.map((_, i) => (
+        );
+      })}
+
+      {count > 1 ? (
+        <>
+          <button
+            type="button"
+            className="sr-only pointer-events-auto"
+            onClick={() => go(safeIndex - 1)}
+          >
+            {ui.coverPrev}
+          </button>
+          <button
+            type="button"
+            className="sr-only pointer-events-auto"
+            onClick={() => go(safeIndex + 1)}
+          >
+            {ui.coverNext}
+          </button>
+          <div
+            className="pointer-events-auto absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 max-[600px]:bottom-2.5"
+            role="tablist"
+            aria-label={alt}
+          >
+            {count > 8 ? (
+              <CoverProgress
+                count={count}
+                index={safeIndex}
+                tone={tone}
+                onSelect={go}
+                label={ui.coverDot}
+              />
+            ) : (
+              urls.map((_, i) => {
+                const active = i === safeIndex;
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-label={ui.coverDot.replace("{n}", String(i + 1))}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      go(i);
+                    }}
+                    className={[
+                      "size-2.5 rounded-full transition-[transform,opacity,background-color] duration-200",
+                      siteFocusRing,
+                      active
+                        ? tone === "brand"
+                          ? "scale-110 bg-[image:var(--brand-gradient)]"
+                          : "scale-110 bg-white"
+                        : tone === "brand"
+                          ? "bg-[#D9D9D9] hover:bg-[#c4c4c8]"
+                          : "bg-white/45 hover:bg-white/70",
+                    ].join(" ")}
+                  />
+                );
+              })
+            )}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function CoverProgress({
+  count,
+  index,
+  tone,
+  onSelect,
+  label,
+}: {
+  count: number;
+  index: number;
+  tone: "light" | "brand";
+  onSelect: (next: number) => void;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div
+        className={[
+          "flex h-1.5 w-[min(220px,46vw)] overflow-hidden rounded-full",
+          tone === "brand" ? "bg-black/15" : "bg-white/30",
+        ].join(" ")}
+      >
+        {Array.from({ length: count }, (_, i) => (
           <button
             key={i}
             type="button"
-            aria-label={ui.coverDot.replace("{n}", String(i + 1))}
-            aria-current={i === index}
-            onClick={() => go(i)}
+            role="tab"
+            aria-selected={i === index}
+            aria-label={label.replace("{n}", String(i + 1))}
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onSelect(i);
+            }}
             className={[
-              "size-2.5 rounded-full transition-[transform,background-color] duration-200",
-              siteFocusRing,
+              "h-full min-w-0 flex-1 transition-colors duration-200",
               i === index
-                ? "scale-110 bg-white"
-                : "bg-white/45 hover:bg-white/70",
+                ? tone === "brand"
+                  ? "bg-[image:var(--brand-gradient)]"
+                  : "bg-white"
+                : "bg-transparent",
             ].join(" ")}
           />
         ))}
-        <button
-          type="button"
-          className="sr-only"
-          onClick={() => go(index + 1)}
-        >
-          {ui.coverNext}
-        </button>
       </div>
-    </>
+      <span
+        className={[
+          "rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums leading-none backdrop-blur-[10px]",
+          tone === "brand"
+            ? "bg-white/88 text-text-dark"
+            : "bg-black/35 text-white",
+        ].join(" ")}
+      >
+        {index + 1}/{count}
+      </span>
+    </div>
   );
 }
 

@@ -52,7 +52,7 @@ export const homeCopy = {
   variantsEm: "варианты обучающих видео",
   variantsTail: " у меня есть:",
   catalogTitle: "Каталог обучающих видео",
-  showMore: "Показать ещё",
+  seeAll: "Смотреть все",
   emptyTitle: "В каталоге пока нет опубликованных видео",
   emptyBody:
     "Как только уроки, курсы и лайфхаки появятся в базе, карточки встанут на это место — без скачка сетки.",
@@ -505,7 +505,7 @@ const enCopy = {
   variantsEm: "kinds of training videos",
   variantsTail: " I have:",
   catalogTitle: "Training video catalog",
-  showMore: "Show more",
+  seeAll: "See all",
   emptyTitle: "No published videos in the catalog yet",
   emptyBody:
     "As soon as lessons, courses, and lifehacks appear in the database, cards will sit here — without a layout jump.",

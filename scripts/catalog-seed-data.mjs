@@ -146,6 +146,27 @@ export function buildPeekProducts() {
 
 const GIF = "/assets/site/catalog/gifs/posture";
 
+const POSTURE_BALL_COVERS = [
+  `${GIF}/block1/01.webp`,
+  `${GIF}/block1/02.webp`,
+  `${GIF}/block1/03.webp`,
+  `${GIF}/block1/03-1.webp`,
+  `${GIF}/block1/03-11.webp`,
+  `${GIF}/block1/04.webp`,
+  `${GIF}/block1/05.webp`,
+];
+const POSTURE_BAND_COVERS = [
+  `${GIF}/block2/01.webp`,
+  `${GIF}/block2/02.webp`,
+  `${GIF}/block2/03.webp`,
+  `${GIF}/block2/04.webp`,
+];
+/** Full posture course: balls first, then resistance bands. */
+const POSTURE_COVERS = [...POSTURE_BALL_COVERS, ...POSTURE_BAND_COVERS];
+const COURSE_2_COVERS = [1, 2, 3].map(
+  (n) => `/assets/site/catalog/covers/course-2-${n}.webp`,
+);
+
 export function postureProgramRows(productId, blocks) {
   const rows = [];
   for (const block of blocks) {
@@ -208,31 +229,35 @@ const BLOCK1 = {
   lessons: [
     {
       sort: 0,
-      gifUrls: [`${GIF}/block1/01.gif`],
+      gifUrls: [`${GIF}/block1/01.webp`],
       ru: "Выравниваем осанку в момент движения вперёд, назад и в сторону.",
       en: "Aligning posture while moving forward, backward, and sideways.",
     },
     {
       sort: 1,
-      gifUrls: [`${GIF}/block1/02.gif`],
+      gifUrls: [`${GIF}/block1/02.webp`],
       ru: "Детальный разбор скручивания в движении вперёд и назад.",
       en: "A detailed look at spiraling in forward and backward movement.",
     },
     {
       sort: 2,
-      gifUrls: [`${GIF}/block1/03.gif`, `${GIF}/block1/03-1.gif`, `${GIF}/block1/03-11.gif`],
+      gifUrls: [
+        `${GIF}/block1/03.webp`,
+        `${GIF}/block1/03-1.webp`,
+        `${GIF}/block1/03-11.webp`,
+      ],
       ru: "Как перестать падать в момент вращения тела в пространстве.",
       en: "How to stop collapsing while rotating the body in space.",
     },
     {
       sort: 3,
-      gifUrls: [`${GIF}/block1/04.gif`],
+      gifUrls: [`${GIF}/block1/04.webp`],
       ru: "Пивот, очо, хиро, и всё это с контролем и без потери баланса.",
       en: "Pivot, ocho, hero — with control and without losing balance.",
     },
     {
       sort: 4,
-      gifUrls: [`${GIF}/block1/05.gif`],
+      gifUrls: [`${GIF}/block1/05.webp`],
       ru: "Работаем в позициях рук для партнерши и партнера.",
       en: "Working in arm positions for leaders and followers.",
     },
@@ -269,7 +294,7 @@ const BLOCK2 = {
   lessons: [
     {
       sort: 0,
-      gifUrls: [`${GIF}/block2/01.gif`],
+      gifUrls: [`${GIF}/block2/01.webp`],
       ru:
         "Как добиться легкого и естественного шага? Разбираем перекат стопы и перенос веса.",
       en:
@@ -277,19 +302,19 @@ const BLOCK2 = {
     },
     {
       sort: 1,
-      gifUrls: [`${GIF}/block2/02.gif`],
+      gifUrls: [`${GIF}/block2/02.webp`],
       ru: "Скручивания и координация работы ног.",
       en: "Spirals and coordinating the legs.",
     },
     {
       sort: 2,
-      gifUrls: [`${GIF}/block2/03.gif`],
+      gifUrls: [`${GIF}/block2/03.webp`],
       ru: "Пивот, очо и хиро.",
       en: "Pivot, ocho, and hero.",
     },
     {
       sort: 3,
-      gifUrls: [`${GIF}/block2/04.gif`],
+      gifUrls: [`${GIF}/block2/04.webp`],
       ru: "Как убрать давление руками в паре? Ищем опору и ясность без зажима.",
       en: "How to remove arm pressure in the couple? Finding support and clarity without gripping.",
     },
@@ -308,11 +333,13 @@ export function buildCourseProducts() {
     price_minor: 4000000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/course-2-1.webp",
+    cover_url: POSTURE_COVERS[0],
+    cover_urls: POSTURE_COVERS,
     duration_sec: 9 * 45 * 60,
     level: "2",
     skills: ["awareness", "technique"],
     lesson_count: 9,
+    sort_index: 1,
     bundle_children: [IDS.postureBlock1, IDS.postureBlock2],
     program_blocks: [BLOCK1, BLOCK2],
     i18n: {
@@ -335,11 +362,13 @@ export function buildCourseProducts() {
     price_minor: 2500000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/course-2-2.webp",
+    cover_url: POSTURE_BALL_COVERS[0],
+    cover_urls: POSTURE_BALL_COVERS,
     duration_sec: 5 * 45 * 60,
     level: "2",
     skills: ["awareness", "technique"],
     lesson_count: 5,
+    sort_index: 101,
     bundle_parent: IDS.postureFull,
     program_blocks: [BLOCK1],
     i18n: {
@@ -364,11 +393,13 @@ export function buildCourseProducts() {
     price_minor: 2500000,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/course-2-3.webp",
+    cover_url: POSTURE_BAND_COVERS[0],
+    cover_urls: POSTURE_BAND_COVERS,
     duration_sec: 4 * 45 * 60,
     level: "2",
     skills: ["technique", "interaction"],
     lesson_count: 4,
+    sort_index: 102,
     bundle_parent: IDS.postureFull,
     program_blocks: [BLOCK2],
     i18n: {
@@ -393,14 +424,13 @@ export function buildCourseProducts() {
     price_minor: 0,
     currency: "rub",
     access_days: 180,
-    cover_url: "/assets/site/catalog/covers/course-2-1.webp",
+    cover_url: COURSE_2_COVERS[0],
     duration_sec: 7 * 45 * 60,
     level: "2",
     skills: ["technique"],
     lesson_count: 7,
-    cover_urls: [1, 2, 3].map(
-      (n) => `/assets/site/catalog/covers/course-2-${n}.webp`,
-    ),
+    sort_index: 2,
+    cover_urls: COURSE_2_COVERS,
     program_blocks: [],
     i18n: {
       ru: {

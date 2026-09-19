@@ -93,3 +93,12 @@ export function dropPostureBlocksIfFullCovered(
   set.delete(POSTURE_BUNDLE.block2Id);
   return [...set];
 }
+
+/** Catalog/home grids: parent courses only. Block SKUs stay on the course page. */
+export function isStorefrontListingProduct(product: {
+  id: string;
+  bundleParentId: string | null;
+}): boolean {
+  if (isPostureBundleBlock(product.id)) return false;
+  return !product.bundleParentId;
+}

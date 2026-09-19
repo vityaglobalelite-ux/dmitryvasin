@@ -43,6 +43,7 @@ import {
 } from "@/components/site/product/ProductStates";
 import { SiteTrail } from "@/components/site/SiteTrail";
 import { isPeekWatchable } from "@/lib/catalog/access";
+import { isStorefrontListingProduct } from "@/lib/catalog/bundles";
 import {
   POSTURE_COURSE_BLOCK1_ID,
   POSTURE_COURSE_BLOCK2_ID,
@@ -688,7 +689,11 @@ function RelatedProducts({
   const inCartIds = useCartProductIds();
   const { data, loading } = useProducts({ locale });
   const related = useMemo(
-    () => data.filter((item) => item.id !== currentId).slice(0, 3),
+    () =>
+      data
+        .filter(isStorefrontListingProduct)
+        .filter((item) => item.id !== currentId)
+        .slice(0, 3),
     [currentId, data],
   );
 

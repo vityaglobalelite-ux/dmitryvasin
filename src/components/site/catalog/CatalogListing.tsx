@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { CatalogEmpty } from "@/components/site/catalog/CatalogEmpty";
 import {
   CatalogProductGrid,
@@ -25,6 +25,7 @@ import {
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
 import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
+import { isStorefrontListingProduct } from "@/lib/catalog/bundles";
 import type { Product, ProductType } from "@/lib/catalog/types";
 
 const SKELETON_COUNT = 6;
@@ -51,6 +52,10 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
   const products = useProducts({ type, locale });
   const addToCart = useAddToCart();
   const inCartIds = useCartProductIds();
+  const listing = useMemo(
+    () => products.data.filter(isStorefrontListingProduct),
+    [products.data],
+  );
 
   return (
     <>
@@ -58,7 +63,7 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
         type={type}
         loading={products.loading}
         error={products.error}
-        products={products.data}
+        products={listing}
         pendingId={addToCart.pendingId}
         inCartIds={inCartIds}
         onAdd={(product) => {

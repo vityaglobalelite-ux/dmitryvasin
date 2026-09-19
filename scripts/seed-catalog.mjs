@@ -146,9 +146,14 @@ try {
   });
 
   if (mediaRows.length > 0) {
-    await rest("/rest/v1/catalog_product_media?on_conflict=product_id,sort,kind", {
+    const mediaProductIds = [...new Set(mediaRows.map((row) => row.product_id))];
+    await rest(
+      `/rest/v1/catalog_product_media?product_id=in.(${mediaProductIds.join(",")})`,
+      { method: "DELETE", prefer: "return=minimal" },
+    );
+    await rest("/rest/v1/catalog_product_media", {
       method: "POST",
-      prefer: "return=minimal,resolution=merge-duplicates",
+      prefer: "return=minimal",
       body: mediaRows,
     });
   }

@@ -1,13 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { ProductCard } from "@/components/site/catalog/ProductCard";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import { Layer } from "@/components/site/home/HomeFrame";
 import { Button, siteFocusRing } from "@/components/site/ui/Button";
+import { siteAssets } from "@/lib/catalog/assets";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { homeT } from "@/lib/catalog/home-copy";
+import { isStorefrontListingProduct } from "@/lib/catalog/bundles";
 import { useProducts } from "@/lib/catalog/hooks";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
@@ -56,7 +59,11 @@ function useHomeCatalogRail(count: number) {
   };
 
   const items = useMemo(
-    () => data.filter((product) => product.type === displayedType).slice(0, count),
+    () =>
+      data
+        .filter((product) => product.type === displayedType)
+        .filter(isStorefrontListingProduct)
+        .slice(0, count),
     [count, data, displayedType],
   );
 
@@ -67,6 +74,9 @@ function useHomeCatalogRail(count: number) {
   const onAdd = (product: Product) => {
     void addToCart.add(product.id);
   };
+
+  const seeAllFilterLabel =
+    filters.find((chip) => chip.type === selectedType)?.label ?? "";
 
   return {
     copy,
@@ -89,6 +99,8 @@ function useHomeCatalogRail(count: number) {
     inCartIds,
     modalOpen: addToCart.modalOpen,
     closeModal: addToCart.closeModal,
+    seeAllHref: catalogFilterHref(selectedType, locale),
+    seeAllFilterLabel,
   };
 }
 
@@ -125,6 +137,42 @@ function HomeFilterChip({
   );
 }
 
+function CatalogSeeAll({
+  href,
+  label,
+  filterLabel,
+  compact = false,
+}: {
+  href: string;
+  label: string;
+  filterLabel: string;
+  compact?: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={filterLabel ? `${label}, ${filterLabel}` : label}
+      className={[
+        "group inline-flex items-center whitespace-nowrap font-medium text-text",
+        "rounded-[4px] py-3.5 -my-3.5 transition-opacity duration-200 ease-out hover:opacity-70",
+        "motion-reduce:transition-none",
+        siteFocusRing,
+        compact ? "gap-2 text-[16px] leading-none" : "gap-3 text-[20px] leading-none",
+      ].join(" ")}
+    >
+      {label}
+      <img
+        src={siteAssets.breadcrumb}
+        alt=""
+        width={19}
+        height={7}
+        aria-hidden
+        className="h-[7px] w-[18px] shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
+      />
+    </Link>
+  );
+}
+
 export function HomeCatalogRailDesktop() {
   const rail = useHomeCatalogRail(DESKTOP_COUNT);
 
@@ -134,6 +182,20 @@ export function HomeCatalogRailDesktop() {
         <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text">
           {rail.copy.catalogTitle}
         </h2>
+      </Layer>
+      <Layer
+        x={1360}
+        y={4660}
+        w={320}
+        h={55}
+        z={3}
+        className="flex items-end justify-end pb-[7px]"
+      >
+        <CatalogSeeAll
+          href={rail.seeAllHref}
+          label={rail.copy.seeAll}
+          filterLabel={rail.seeAllFilterLabel}
+        />
       </Layer>
       <div
         className="absolute left-[242px] top-[4735px] z-[2] flex h-[69px] items-center gap-5"
@@ -194,6 +256,7 @@ export function HomeCatalogRailDesktop() {
           <div
             className={[
               "flex h-full gap-5 transition-[opacity,transform] duration-200 ease-out",
+              rail.items.length < DESKTOP_COUNT ? "justify-center" : "",
               rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
             ].join(" ")}
           >
@@ -317,14 +380,14 @@ export function HomeCatalogRailMobile() {
                 </Layer>
               ))}
 
-      {!rail.loading && !rail.emptyCatalog && !rail.failed ? (
-        <Layer x={50} y={6443} w={259} h={50} z={3}>
-          <Button
-            href={catalogFilterHref(rail.selectedType, rail.locale)}
-            className="h-[50px] w-[259px] px-0 text-[13px]"
-          >
-            {rail.copy.showMore}
-          </Button>
+      {!rail.emptyCatalog && !rail.failed ? (
+        <Layer x={20} y={6444} w={320} h={22} z={3} className="flex items-center justify-end">
+          <CatalogSeeAll
+            href={rail.seeAllHref}
+            label={rail.copy.seeAll}
+            filterLabel={rail.seeAllFilterLabel}
+            compact
+          />
         </Layer>
       ) : null}
       <WholesaleModal open={rail.modalOpen} onClose={rail.closeModal} />

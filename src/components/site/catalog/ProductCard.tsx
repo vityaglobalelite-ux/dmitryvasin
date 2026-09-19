@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
@@ -17,6 +17,7 @@ import {
   skillIconSrc,
   typeBadgeIcon,
 } from "@/components/site/catalog/display";
+import { CoverCarousel } from "@/components/site/product/CoverStage";
 import { productAssets } from "@/components/site/product/assets";
 import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { CatalogPrice } from "@/components/site/ui/CatalogPrice";
@@ -242,16 +243,19 @@ function CoverStage({
   opensLabel?: string;
   children: ReactNode;
 }) {
-  const [index, setIndex] = useState(0);
-  const safeIndex = frames.length === 0 ? 0 : Math.min(index, frames.length - 1);
-  const showDots = frames.length > 1;
-
   return (
     <div className="relative h-[263px] shrink-0 overflow-hidden rounded-[20px] bg-white max-[600px]:h-[180px] max-[600px]:rounded-[10px]">
-      {frames[safeIndex] ? (
+      {frames.length > 1 ? (
+        <CoverCarousel
+          urls={frames}
+          alt={alt}
+          sizes="(max-width: 600px) 320px, 467px"
+          tone="brand"
+          hoverZoom={!locked}
+        />
+      ) : frames[0] ? (
         <Image
-          key={frames[safeIndex]}
-          src={frames[safeIndex]}
+          src={frames[0]}
           alt={alt}
           fill
           className={[
@@ -299,38 +303,6 @@ function CoverStage({
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-wrap gap-[9px] p-[10px] max-[600px]:gap-1.5 max-[600px]:p-2">
         {children}
       </div>
-      {showDots ? (
-        <div
-          className="absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2.5 max-[600px]:bottom-2.5"
-          role="tablist"
-          aria-label={alt}
-        >
-          {frames.map((src, frameIndex) => {
-            const active = frameIndex === safeIndex;
-            return (
-              <button
-                key={src}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                aria-label={`${frameIndex + 1} / ${frames.length}`}
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setIndex(frameIndex);
-                }}
-                className={[
-                  "size-2.5 rounded-full transition-[transform,opacity] duration-200",
-                  siteFocusRing,
-                  active
-                    ? "bg-[image:var(--brand-gradient)]"
-                    : "bg-[#D9D9D9]",
-                ].join(" ")}
-              />
-            );
-          })}
-        </div>
-      ) : null}
     </div>
   );
 }
