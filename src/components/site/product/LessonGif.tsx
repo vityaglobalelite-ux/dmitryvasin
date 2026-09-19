@@ -18,29 +18,21 @@ function gifPosterUrl(url: string): string | undefined {
 }
 
 const warmedGifs = new Set<string>();
-const warmHold = new Set<HTMLImageElement>();
 
-function warmImage(url: string, priority: "high" | "low") {
+function warmUrl(url: string) {
   if (!url || warmedGifs.has(url)) return;
   warmedGifs.add(url);
-  const img = new Image();
-  img.decoding = "async";
-  img.fetchPriority = priority;
-  const release = () => {
-    img.onload = null;
-    img.onerror = null;
-    warmHold.delete(img);
+  const init: RequestInit & { priority?: RequestPriority } = {
+    cache: "force-cache",
+    credentials: "same-origin",
+    priority: "low",
   };
-  img.onload = release;
-  img.onerror = () => {
+  void fetch(url, init).catch(() => {
     warmedGifs.delete(url);
-    release();
-  };
-  warmHold.add(img);
-  img.src = url;
+  });
 }
 
-/** Cache stills immediately, then all clips at idle so the program is warm on scroll. */
+/** Cache stills immediately, then clip bytes at idle so the program is warm on scroll. */
 export function usePrefetchLessonGifs(urls: readonly string[]) {
   const key = urls.join("\n");
   useEffect(() => {
@@ -49,16 +41,13 @@ export function usePrefetchLessonGifs(urls: readonly string[]) {
 
     for (const url of unique) {
       const poster = gifPosterUrl(url);
-      if (poster) warmImage(poster, "low");
+      if (poster) warmUrl(poster);
     }
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) return;
 
     let idleId = 0;
     let timeoutId = 0;
     const warmAnims = () => {
-      for (const url of unique) warmImage(url, "low");
+      for (const url of unique) warmUrl(url);
     };
     const start = () => {
       if (typeof window.requestIdleCallback === "function") {
@@ -100,7 +89,7 @@ function useInView(ref: RefObject<HTMLDivElement | null>) {
     if (!node) return;
     const observer = new IntersectionObserver(
       ([entry]) => setInView(Boolean(entry?.isIntersecting)),
-      { threshold: 0.35 },
+      { rootMargin: "160px 0px", threshold: 0.01 },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -196,8 +185,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
             <LessonFrame
               url={urls[0]}
               alt=""
-              play={inView && !reduced}
-              sizes="(max-width: 600px) 90vw, 72vw"
+              play={inView}
             />
           </div>
         ) : (
@@ -222,8 +210,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
                   <LessonFrame
                     url={url}
                     alt={active ? ui.coverDot.replace("{n}", String(i + 1)) : ""}
-                    play={active && inView && !reduced}
-                    sizes="(max-width: 600px) 90vw, 72vw"
+                    play={active && inView}
                   />
                 </div>
               );
@@ -293,54 +280,59 @@ function LessonFrame({
   url,
   alt,
   play,
-  sizes,
 }: {
   url: string;
   alt: string;
   play: boolean;
-  sizes: string;
 }) {
   const poster = gifPosterUrl(url);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
-  const [usePoster, setUsePoster] = useState(Boolean(poster));
-  const still = usePoster && poster ? poster : url;
+  const [live, setLive] = useState(false);
+
+  useEffect(() => {
+    if (!play) setLive(false);
+  }, [play]);
+
+  useEffect(() => {
+    setLive(false);
+  }, [url]);
+
+  const still = poster ?? url;
 
   return (
     <>
-      {phase !== "ready" ? (
+      {phase !== "ready" && !live ? (
         <Skeleton className="absolute inset-0 rounded-[10px]" />
       ) : null}
-      {phase !== "error" ? (
+      {!live && phase !== "error" ? (
         <img
           src={still}
-          alt={alt}
-          sizes={sizes}
+          alt={play ? "" : alt}
           decoding="async"
-          loading="lazy"
           draggable={false}
           className={[
             "absolute inset-0 size-full object-contain",
             phase === "ready" ? "opacity-100" : "opacity-0",
           ].join(" ")}
           onLoad={() => setPhase("ready")}
-          onError={() => {
-            if (usePoster && poster) {
-              setUsePoster(false);
-              return;
-            }
-            setPhase("error");
-          }}
+          onError={() => setPhase("error")}
         />
       ) : null}
-      {play && usePoster && poster && phase === "ready" ? (
+      {play ? (
         <img
+          key={url}
           src={url}
-          alt=""
-          sizes={sizes}
-          decoding="async"
+          alt={alt}
           draggable={false}
           className="absolute inset-0 size-full object-contain"
-          aria-hidden
+          onLoad={() => {
+            setLive(true);
+            setPhase("ready");
+          }}
+          onError={() => {
+            setLive(false);
+            if (!poster) setPhase("error");
+          }}
         />
       ) : null}
     </>
