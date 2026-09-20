@@ -3,113 +3,18 @@
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
-  type ReactNode,
+  type RefObject,
 } from "react";
 import { productUi } from "@/components/site/product/copy";
 import { siteFocusRing } from "@/components/site/ui/Button";
 import { Skeleton } from "@/components/site/ui/Skeleton";
+import { lessonClip, type LessonClip } from "@/lib/catalog/lesson-clip";
 import { useLocale } from "@/lib/catalog/locale-context";
 
-function gifPosterUrl(url: string): string | undefined {
-  if (!url.includes("/gifs/") || url.includes("-still.")) return undefined;
-  return url.replace(/(\.[a-z0-9]+)$/i, "-still$1");
-}
-
-const warmed = new Set<string>();
-const inflight = new Map<string, Promise<void>>();
-const warmListeners = new Set<(url: string) => void>();
-let warmGeneration = 0;
-let warmKey = "";
-
-function notifyWarmed(url: string) {
-  warmed.add(url);
-  for (const listener of warmListeners) listener(url);
-}
-
-function warmUrl(url: string): Promise<void> {
-  if (!url || warmed.has(url)) return Promise.resolve();
-  const pending = inflight.get(url);
-  if (pending) return pending;
-  const init: RequestInit & { priority?: RequestPriority } = {
-    cache: "force-cache",
-    credentials: "same-origin",
-    priority: "high",
-  };
-  const task = fetch(url, init)
-    .then(async (response) => {
-      if (!response.ok) throw new Error(String(response.status));
-      await response.arrayBuffer();
-      notifyWarmed(url);
-    })
-    .catch(() => undefined)
-    .finally(() => {
-      inflight.delete(url);
-    });
-  inflight.set(url, task);
-  return task;
-}
-
-function startTopDownWarm(urls: readonly string[]) {
-  const key = urls.join("\n");
-  if (key === warmKey) return;
-  warmKey = key;
-  const generation = ++warmGeneration;
-  void (async () => {
-    for (const url of urls) {
-      if (generation !== warmGeneration) return;
-      const still = gifPosterUrl(url);
-      if (still) await warmUrl(still);
-      if (generation !== warmGeneration) return;
-      await warmUrl(url);
-    }
-  })();
-}
-
-function useWarmed(url: string) {
-  const [ready, setReady] = useState(() => Boolean(url) && warmed.has(url));
-  useEffect(() => {
-    if (!url) {
-      setReady(false);
-      return;
-    }
-    if (warmed.has(url)) {
-      setReady(true);
-      return;
-    }
-    setReady(false);
-    const onReady = (done: string) => {
-      if (done === url) setReady(true);
-    };
-    warmListeners.add(onReady);
-    return () => {
-      warmListeners.delete(onReady);
-    };
-  }, [url]);
-  return ready;
-}
-
-export function LessonGifPlaybackProvider({
-  urls,
-  children,
-}: {
-  urls: readonly string[];
-  children: ReactNode;
-}) {
-  const key = urls.join("\n");
-  const order = useMemo(
-    () => [...new Set(key.split("\n").filter(Boolean))],
-    [key],
-  );
-
-  useEffect(() => {
-    startTopDownWarm(order);
-  }, [order]);
-
-  return children;
-}
+/** Start fetching a clip this far before it scrolls into view. */
+const PRELOAD_MARGIN = "600px 0px";
 
 function usePrefersReducedMotion() {
   const [reduced, setReduced] = useState(false);
@@ -123,8 +28,39 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-export function LessonGif({ src }: { src: string }) {
-  return <LessonGifGallery urls={[src]} />;
+/**
+ * Splits "close enough to start downloading" from "actually on screen", so a
+ * clip is ready by the time it is reached but only decodes while visible.
+ *
+ * `near` deliberately goes back to false once the gallery is well away: a long
+ * programme has more clips than a browser will keep media pipelines for (iOS
+ * caps them), so videos far from the viewport give their element back and the
+ * poster holds the stage until they are approached again.
+ */
+function useViewport(ref: RefObject<HTMLElement | null>) {
+  const [near, setNear] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const approach = new IntersectionObserver(
+      ([entry]) => setNear(Boolean(entry?.isIntersecting)),
+      { rootMargin: PRELOAD_MARGIN },
+    );
+    const onScreen = new IntersectionObserver(
+      ([entry]) => setVisible(Boolean(entry?.isIntersecting)),
+      { threshold: 0.15 },
+    );
+    approach.observe(node);
+    onScreen.observe(node);
+    return () => {
+      approach.disconnect();
+      onScreen.disconnect();
+    };
+  }, [ref]);
+
+  return { near, visible };
 }
 
 export function LessonGifRow({ urls }: { urls: string[] }) {
@@ -135,15 +71,20 @@ export function LessonGifRow({ urls }: { urls: string[] }) {
 function LessonGifGallery({ urls }: { urls: string[] }) {
   const locale = useLocale();
   const ui = productUi(locale);
+  const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const skipScrollSync = useRef(false);
   const goTimer = useRef(0);
   const reduced = usePrefersReducedMotion();
+  const { near, visible } = useViewport(root);
   const [index, setIndex] = useState(0);
   const count = urls.length;
   const safeIndex = count === 0 ? 0 : Math.min(index, count - 1);
+  // Read asynchronously by the resize snap below, so an effect write is enough.
   const indexRef = useRef(safeIndex);
-  indexRef.current = safeIndex;
+  useEffect(() => {
+    indexRef.current = safeIndex;
+  }, [safeIndex]);
 
   const go = useCallback(
     (next: number) => {
@@ -198,6 +139,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
 
   return (
     <div
+      ref={root}
       className="mx-auto flex w-full max-w-[480px] flex-col gap-2 max-[600px]:max-w-none"
       aria-label={label}
       aria-roledescription={count > 1 ? "carousel" : undefined}
@@ -205,7 +147,13 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
       <div className="relative overflow-hidden rounded-[10px] bg-[#141416] shadow-[0_10px_28px_rgba(20,20,22,0.14)]">
         {count === 1 ? (
           <div className="relative aspect-video w-full">
-            <LessonFrame url={urls[0]} alt="" play={!reduced} />
+            <LessonFrame
+              key={urls[0]}
+              url={urls[0]}
+              alt=""
+              load={near && !reduced}
+              play={visible && !reduced}
+            />
           </div>
         ) : (
           <div
@@ -220,6 +168,12 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
           >
             {urls.map((url, i) => {
               const active = i === safeIndex;
+              // Keep the neighbours buffered as well, so stepping through the
+              // thumbs never tears the element down and refetches it.
+              const staged =
+                active ||
+                i === (safeIndex + 1) % count ||
+                i === (safeIndex + count - 1) % count;
               return (
                 <div
                   key={`${url}-${i}`}
@@ -229,7 +183,10 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
                   <LessonFrame
                     url={url}
                     alt={active ? ui.coverDot.replace("{n}", String(i + 1)) : ""}
-                    play={!reduced}
+                    // Only the slide on stage plays; the rest hold their poster
+                    // so swiping never lands on an empty frame.
+                    load={near && staged && !reduced}
+                    play={visible && active && !reduced}
                   />
                 </div>
               );
@@ -262,7 +219,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
           {urls.map((url, i) => (
             <LessonGifThumb
               key={`${url}-thumb-${i}`}
-              src={gifPosterUrl(url) ?? url}
+              src={lessonClip(url)?.poster ?? url}
               active={i === safeIndex}
               label={ui.coverDot.replace("{n}", String(i + 1))}
               onSelect={() => go(i)}
@@ -285,7 +242,6 @@ function LessonGifThumb({
   label: string;
   onSelect: () => void;
 }) {
-  const ready = useWarmed(src);
   return (
     <button
       type="button"
@@ -302,81 +258,130 @@ function LessonGifThumb({
           : "opacity-55 hover:opacity-100",
       ].join(" ")}
     >
-      {ready ? (
-        <img
-          src={src}
-          alt=""
-          draggable={false}
-          className="absolute inset-0 size-full object-contain"
-          aria-hidden
-        />
-      ) : null}
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        draggable={false}
+        className="absolute inset-0 size-full object-contain"
+        aria-hidden
+      />
     </button>
   );
 }
 
+/**
+ * The poster is the floor of the stage: it stays put for the whole life of the
+ * frame, so whenever the video is absent, still buffering or refused, what
+ * shows is the clip's first frame rather than a hole.
+ */
 function LessonFrame({
   url,
   alt,
+  load,
   play,
 }: {
   url: string;
   alt: string;
+  /** Mount the video element and let it start buffering. */
+  load: boolean;
+  /** Run playback; pausing offscreen keeps decoders free for visible clips. */
   play: boolean;
 }) {
-  const poster = gifPosterUrl(url);
-  const still = poster ?? url;
-  const stillReady = useWarmed(still);
-  const animReady = useWarmed(url);
-  const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
-  const [live, setLive] = useState(false);
-
-  useEffect(() => {
-    if (!play) setLive(false);
-  }, [play]);
-
-  useEffect(() => {
-    setLive(false);
-    setPhase("loading");
-  }, [url]);
+  const clip = lessonClip(url);
+  const poster = clip?.poster ?? url;
+  const [posterLoaded, setPosterLoaded] = useState(false);
+  const [posterFailed, setPosterFailed] = useState(false);
 
   return (
     <>
-      {phase !== "ready" && !live ? (
+      {!posterLoaded && !posterFailed ? (
         <Skeleton className="absolute inset-0 rounded-[10px]" />
       ) : null}
-      {!live && stillReady && phase !== "error" ? (
+      {!posterFailed ? (
         <img
-          src={still}
+          src={poster}
           alt={play ? "" : alt}
+          loading="lazy"
           decoding="async"
           draggable={false}
           className={[
-            "absolute inset-0 size-full object-contain",
-            phase === "ready" ? "opacity-100" : "opacity-0",
+            "absolute inset-0 size-full object-contain transition-opacity duration-200",
+            posterLoaded ? "opacity-100" : "opacity-0",
           ].join(" ")}
-          onLoad={() => setPhase("ready")}
-          onError={() => setPhase("error")}
+          onLoad={() => setPosterLoaded(true)}
+          onError={() => setPosterFailed(true)}
         />
       ) : null}
-      {play && animReady ? (
-        <img
-          key={url}
-          src={url}
-          alt={alt}
-          decoding="async"
-          draggable={false}
-          className="absolute inset-0 size-full object-contain"
-          onLoad={() => {
-            setLive(true);
-            setPhase("ready");
-          }}
-          onError={() => {
-            setLive(false);
-            if (!poster) setPhase("error");
-          }}
-        />
+      {clip && load ? (
+        <LessonVideo clip={clip} alt={alt} play={play} />
       ) : null}
     </>
+  );
+}
+
+/**
+ * Owns its own readiness, so unmounting when the gallery scrolls away resets it
+ * and the element never reappears opaque before it has a frame to show.
+ */
+function LessonVideo({
+  clip,
+  alt,
+  play,
+}: {
+  clip: LessonClip;
+  alt: string;
+  play: boolean;
+}) {
+  const video = useRef<HTMLVideoElement>(null);
+  const [decoded, setDecoded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const el = video.current;
+    if (!el) return;
+    // React does not always reflect `muted` onto the element, and an unmuted
+    // video is blocked by autoplay policies.
+    el.muted = true;
+    if (!play) {
+      el.pause();
+      return;
+    }
+    const started = el.play();
+    // Autoplay can still be refused (iOS Low Power Mode); the poster stays up.
+    if (started) started.catch(() => undefined);
+  }, [play]);
+
+  if (failed) return null;
+
+  return (
+    <video
+      ref={video}
+      aria-label={alt || undefined}
+      aria-hidden={alt ? undefined : true}
+      muted
+      loop
+      playsInline
+      preload="auto"
+      disablePictureInPicture
+      disableRemotePlayback
+      className={[
+        "absolute inset-0 size-full object-contain transition-opacity duration-200",
+        decoded ? "opacity-100" : "opacity-0",
+      ].join(" ")}
+      onLoadedData={() => setDecoded(true)}
+      onError={() => setFailed(true)}
+    >
+      <source src={clip.webm} type="video/webm" />
+      {/* Last candidate: if this one errors, every source has been tried. A
+          media element with <source> children fires no error of its own when
+          the candidate list runs out, so it has to be caught here. */}
+      <source
+        src={clip.mp4}
+        type="video/mp4"
+        onError={() => setFailed(true)}
+      />
+    </video>
   );
 }

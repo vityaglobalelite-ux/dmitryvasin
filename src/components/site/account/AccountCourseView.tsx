@@ -12,10 +12,7 @@ import { accountT, type AccountCopy } from "@/components/site/account/copy";
 import { remainingAccess } from "@/components/site/account/remaining";
 import { useAccessEntry } from "@/components/site/account/use-access-entry";
 import { useAccountGate } from "@/components/site/account/use-account-gate";
-import {
-  LessonGifPlaybackProvider,
-  LessonGifRow,
-} from "@/components/site/product/LessonGif";
+import { LessonGifRow } from "@/components/site/product/LessonGif";
 import { isAccessActive } from "@/lib/catalog/access";
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import { useMyAccess } from "@/lib/catalog/hooks-account";
@@ -157,11 +154,6 @@ export function AccountCourseView() {
   const copy = productCopy(product, locale);
   const remaining = remainingAccess(access, new Date(), locale);
   const blocks = product.programBlocks.blocks;
-  const lessonGifUrls = blocks.flatMap((block) =>
-    [...block.lessons]
-      .sort((a, b) => a.sort - b.sort)
-      .flatMap((lesson) => lesson.gifUrls),
-  );
 
   return (
     <AccountShell email={gate.user?.email} active="materials">
@@ -180,18 +172,16 @@ export function AccountCourseView() {
               {copyUi.programEmpty}
             </p>
           ) : (
-            <LessonGifPlaybackProvider urls={lessonGifUrls}>
-              <div className="mt-8 flex flex-col gap-10 max-[600px]:gap-8">
-                {blocks.map((block) => (
-                  <CourseProgramBlock
-                    key={block.blockKey}
-                    block={block}
-                    ui={copyUi}
-                    showBlockTitle={blocks.length > 1}
-                  />
-                ))}
-              </div>
-            </LessonGifPlaybackProvider>
+            <div className="mt-8 flex flex-col gap-10 max-[600px]:gap-8">
+              {blocks.map((block) => (
+                <CourseProgramBlock
+                  key={block.blockKey}
+                  block={block}
+                  ui={copyUi}
+                  showBlockTitle={blocks.length > 1}
+                />
+              ))}
+            </div>
           )}
         </section>
       </div>

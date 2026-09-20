@@ -3,10 +3,7 @@
 import Link from "next/link";
 import { productAssets } from "@/components/site/product/assets";
 import { productUi } from "@/components/site/product/copy";
-import {
-  LessonGifPlaybackProvider,
-  LessonGifRow,
-} from "@/components/site/product/LessonGif";
+import { LessonGifRow } from "@/components/site/product/LessonGif";
 import { Button } from "@/components/site/ui/Button";
 import { CatalogMoney, CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { formatAccessLabel, lessonNoun } from "@/components/site/catalog/display";
@@ -81,11 +78,6 @@ export function ProductProgram({
   const ui = productUi(locale);
   const routes = useLocalizedRoutes();
   const blocks = product.programBlocks.blocks;
-  const lessonGifUrls = blocks.flatMap((block) =>
-    [...block.lessons]
-      .sort((a, b) => a.sort - b.sort)
-      .flatMap((lesson) => lesson.gifUrls),
-  );
   const isBlockSku = Boolean(product.bundleParentId);
   const fullProduct = isBlockSku ? parent : product;
   const lead = isBlockSku ? ui.programLeadBlock : ui.programLead;
@@ -116,20 +108,18 @@ export function ProductProgram({
       {blocks.length === 0 ? (
         <ProgramSoon />
       ) : (
-        <LessonGifPlaybackProvider urls={lessonGifUrls}>
-          <div className="mt-10 flex flex-col gap-10 max-[600px]:mt-5 max-[600px]:gap-5">
-            {blocks.map((block, index) => (
-              <ProgramBlockCard
-                key={block.blockKey}
-                block={block}
-                index={index}
-                product={product}
-                sku={isBlockSku ? product : skuForBlock(block, children, index)}
-                cart={cart}
-              />
-            ))}
-          </div>
-        </LessonGifPlaybackProvider>
+        <div className="mt-10 flex flex-col gap-10 max-[600px]:mt-5 max-[600px]:gap-5">
+          {blocks.map((block, index) => (
+            <ProgramBlockCard
+              key={block.blockKey}
+              block={block}
+              index={index}
+              product={product}
+              sku={isBlockSku ? product : skuForBlock(block, children, index)}
+              cart={cart}
+            />
+          ))}
+        </div>
       )}
 
       {fullProduct && hasShopPrice(fullProduct) ? (

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "optimize:images": "node scripts/optimize-landing-images.mjs",
     "optimize:site-home": "node scripts/optimize-landing-images.mjs public/assets/site/home",
+    "encode:clips": "python scripts/encode-lesson-clips.py",
     "og:image": "python scripts/generate-og-image.py",
     "og:catalog": "python scripts/generate-og-catalog.py"
   },
