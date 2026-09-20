@@ -32,8 +32,11 @@ export type { SiteCanvasMode };
  */
 export function SiteFigCanvas({
   children,
+  mobileHeight,
 }: {
   children: (mode: SiteCanvasMode) => ReactNode;
+  /** Shorter than Figma when the home catalog rail has fewer than 3 cards. */
+  mobileHeight?: number;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
@@ -42,7 +45,9 @@ export function SiteFigCanvas({
   const [ready, setReady] = useState(false);
 
   const canvas =
-    mode === "mobile" ? SITE_MOBILE_CANVAS : SITE_DESKTOP_CANVAS;
+    mode === "mobile"
+      ? { w: SITE_MOBILE_CANVAS.w, h: mobileHeight ?? SITE_MOBILE_CANVAS.h }
+      : SITE_DESKTOP_CANVAS;
 
   useLayoutEffect(() => {
     const applyMode = () => {

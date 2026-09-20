@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -13,6 +12,10 @@ import { accountT, type AccountCopy } from "@/components/site/account/copy";
 import { remainingAccess } from "@/components/site/account/remaining";
 import { useAccessEntry } from "@/components/site/account/use-access-entry";
 import { useAccountGate } from "@/components/site/account/use-account-gate";
+import {
+  LessonGifPlaybackProvider,
+  LessonGifRow,
+} from "@/components/site/product/LessonGif";
 import { isAccessActive } from "@/lib/catalog/access";
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import { useMyAccess } from "@/lib/catalog/hooks-account";
@@ -154,6 +157,11 @@ export function AccountCourseView() {
   const copy = productCopy(product, locale);
   const remaining = remainingAccess(access, new Date(), locale);
   const blocks = product.programBlocks.blocks;
+  const lessonGifUrls = blocks.flatMap((block) =>
+    [...block.lessons]
+      .sort((a, b) => a.sort - b.sort)
+      .flatMap((lesson) => lesson.gifUrls),
+  );
 
   return (
     <AccountShell email={gate.user?.email} active="materials">
@@ -172,16 +180,18 @@ export function AccountCourseView() {
               {copyUi.programEmpty}
             </p>
           ) : (
-            <div className="mt-8 flex flex-col gap-10 max-[600px]:gap-8">
-              {blocks.map((block) => (
-                <CourseProgramBlock
-                  key={block.blockKey}
-                  block={block}
-                  ui={copyUi}
-                  showBlockTitle={blocks.length > 1}
-                />
-              ))}
-            </div>
+            <LessonGifPlaybackProvider urls={lessonGifUrls}>
+              <div className="mt-8 flex flex-col gap-10 max-[600px]:gap-8">
+                {blocks.map((block) => (
+                  <CourseProgramBlock
+                    key={block.blockKey}
+                    block={block}
+                    ui={copyUi}
+                    showBlockTitle={blocks.length > 1}
+                  />
+                ))}
+              </div>
+            </LessonGifPlaybackProvider>
           )}
         </section>
       </div>
@@ -227,40 +237,26 @@ function CourseProgramBlock({
       ) : null}
       {hasLessons ? (
         <ol className="flex flex-col gap-3">
-          {block.lessons.map((lesson, index) => (
-            <li
-              key={`${block.blockKey}-lesson-${lesson.sort}`}
-              className="flex flex-col gap-3 rounded-[10px] bg-white p-3 max-[600px]:p-2.5"
-            >
-              <div className="flex items-start gap-2.5">
-                <span className="mt-0.5 flex size-[17px] shrink-0 items-center justify-center rounded-full bg-[image:var(--brand-gradient)] text-[12px] font-semibold text-white">
-                  {index + 1}
-                </span>
-                <span className="text-[16px] leading-normal text-text max-[600px]:text-[13px]">
-                  {lesson.title}
-                </span>
-              </div>
-              {lesson.gifUrls.length > 0 ? (
-                <div className="flex flex-wrap gap-2 pl-[27px] max-[600px]:pl-0">
-                  {lesson.gifUrls.map((url) => (
-                    <div
-                      key={url}
-                      className="relative h-[120px] w-[160px] overflow-hidden rounded-[10px] bg-light-gray max-[600px]:h-[100px] max-[600px]:w-full max-[600px]:max-w-[280px]"
-                    >
-                      <Image
-                        src={url}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="160px"
-                        unoptimized
-                      />
-                    </div>
-                  ))}
+          {[...block.lessons]
+            .sort((a, b) => a.sort - b.sort)
+            .map((lesson, index) => (
+              <li
+                key={`${block.blockKey}-lesson-${lesson.sort}`}
+                className="flex flex-col gap-3 rounded-[10px] bg-white p-3 max-[600px]:p-2.5"
+              >
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex size-[17px] shrink-0 items-center justify-center rounded-full bg-[image:var(--brand-gradient)] text-[12px] font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <span className="text-[16px] leading-normal text-text max-[600px]:text-[13px]">
+                    {lesson.title}
+                  </span>
                 </div>
-              ) : null}
-            </li>
-          ))}
+                {lesson.gifUrls.length > 0 ? (
+                  <LessonGifRow urls={lesson.gifUrls} />
+                ) : null}
+              </li>
+            ))}
         </ol>
       ) : null}
     </div>

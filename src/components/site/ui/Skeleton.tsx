@@ -24,10 +24,12 @@ export function ProductCardSkeleton() {
     >
       <Skeleton className="h-[263px] w-full shrink-0 rounded-none max-[600px]:h-[180px]" />
       <div className="flex flex-1 flex-col gap-4 p-5 max-[600px]:gap-3 max-[600px]:p-[15px]">
-        <div className="flex items-center gap-3.5 max-[600px]:gap-1.5">
-          <Skeleton className="h-10 w-[144px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[104px]" />
-          <Skeleton className="h-10 w-[102px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[74px]" />
-          <Skeleton className="h-[18px] w-[118px] max-[600px]:h-3.5 max-[600px]:w-24" />
+        <div className="flex flex-col items-start gap-2.5 max-[600px]:gap-2">
+          <div className="flex items-center gap-2.5 max-[600px]:gap-1.5">
+            <Skeleton className="h-10 w-[144px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[104px]" />
+            <Skeleton className="h-10 w-[102px] rounded-[10px] max-[600px]:h-6 max-[600px]:w-[74px]" />
+          </div>
+          <Skeleton className="h-[18px] w-[148px] rounded-[6px] max-[600px]:h-3.5 max-[600px]:w-[120px]" />
         </div>
         <Skeleton className="h-[58px] w-full max-[600px]:h-[42px]" />
         <Skeleton className="h-[120px] w-full max-[600px]:h-[105px]" />

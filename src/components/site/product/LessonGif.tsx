@@ -1,10 +1,15 @@
 "use client";
 
 import {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
+  useId,
+  useMemo,
   useRef,
   useState,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { productUi } from "@/components/site/product/copy";
@@ -17,57 +22,160 @@ function gifPosterUrl(url: string): string | undefined {
   return url.replace(/(\.[a-z0-9]+)$/i, "-still$1");
 }
 
-const warmedGifs = new Set<string>();
+const warmed = new Set<string>();
+const inflight = new Map<string, Promise<void>>();
+const warmListeners = new Set<(url: string) => void>();
+let warmGeneration = 0;
+let warmKey = "";
 
-function warmUrl(url: string) {
-  if (!url || warmedGifs.has(url)) return;
-  warmedGifs.add(url);
+function notifyWarmed(url: string) {
+  warmed.add(url);
+  for (const listener of warmListeners) listener(url);
+}
+
+function warmUrl(url: string): Promise<void> {
+  if (!url || warmed.has(url)) return Promise.resolve();
+  const pending = inflight.get(url);
+  if (pending) return pending;
   const init: RequestInit & { priority?: RequestPriority } = {
     cache: "force-cache",
     credentials: "same-origin",
-    priority: "low",
+    priority: "high",
   };
-  void fetch(url, init).catch(() => {
-    warmedGifs.delete(url);
-  });
+  const task = fetch(url, init)
+    .then(async (response) => {
+      if (!response.ok) throw new Error(String(response.status));
+      await response.arrayBuffer();
+      notifyWarmed(url);
+    })
+    .catch(() => undefined)
+    .finally(() => {
+      inflight.delete(url);
+    });
+  inflight.set(url, task);
+  return task;
 }
 
-/** Cache stills immediately, then clip bytes at idle so the program is warm on scroll. */
-export function usePrefetchLessonGifs(urls: readonly string[]) {
+function startTopDownWarm(urls: readonly string[]) {
   const key = urls.join("\n");
-  useEffect(() => {
-    const unique = [...new Set(key.split("\n").filter(Boolean))];
-    if (unique.length === 0) return;
-
-    for (const url of unique) {
-      const poster = gifPosterUrl(url);
-      if (poster) warmUrl(poster);
+  if (key === warmKey) return;
+  warmKey = key;
+  const generation = ++warmGeneration;
+  void (async () => {
+    for (const url of urls) {
+      if (generation !== warmGeneration) return;
+      const still = gifPosterUrl(url);
+      if (still) await warmUrl(still);
+      if (generation !== warmGeneration) return;
+      await warmUrl(url);
     }
+  })();
+}
 
-    let idleId = 0;
-    let timeoutId = 0;
-    const warmAnims = () => {
-      for (const url of unique) warmUrl(url);
+function useWarmed(url: string) {
+  const [ready, setReady] = useState(() => Boolean(url) && warmed.has(url));
+  useEffect(() => {
+    if (!url) {
+      setReady(false);
+      return;
+    }
+    if (warmed.has(url)) {
+      setReady(true);
+      return;
+    }
+    setReady(false);
+    const onReady = (done: string) => {
+      if (done === url) setReady(true);
     };
-    const start = () => {
-      if (typeof window.requestIdleCallback === "function") {
-        idleId = window.requestIdleCallback(warmAnims, { timeout: 900 });
-      } else {
-        timeoutId = window.setTimeout(warmAnims, 180);
-      }
-    };
-
-    if (document.readyState === "complete") start();
-    else window.addEventListener("load", start, { once: true });
-
+    warmListeners.add(onReady);
     return () => {
-      window.removeEventListener("load", start);
-      if (idleId && typeof window.cancelIdleCallback === "function") {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId) window.clearTimeout(timeoutId);
+      warmListeners.delete(onReady);
     };
-  }, [key]);
+  }, [url]);
+  return ready;
+}
+
+type Slot = { ratio: number; dist: number };
+
+type PlaybackApi = {
+  activeId: string | null;
+  report: (id: string, slot: Slot) => void;
+  forget: (id: string) => void;
+};
+
+const PlaybackContext = createContext<PlaybackApi | null>(null);
+
+function pickActive(slots: Map<string, Slot>): string | null {
+  let best: string | null = null;
+  let bestDist = Infinity;
+  for (const [id, slot] of slots) {
+    if (slot.ratio < 0.14) continue;
+    if (slot.dist < bestDist) {
+      bestDist = slot.dist;
+      best = id;
+    }
+  }
+  return best;
+}
+
+export function LessonGifPlaybackProvider({
+  urls,
+  children,
+}: {
+  urls: readonly string[];
+  children: ReactNode;
+}) {
+  const slots = useRef(new Map<string, Slot>());
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const raf = useRef(0);
+  const key = urls.join("\n");
+  const order = useMemo(
+    () => [...new Set(key.split("\n").filter(Boolean))],
+    [key],
+  );
+
+  useEffect(() => {
+    startTopDownWarm(order);
+  }, [order]);
+
+  const flush = useCallback(() => {
+    raf.current = 0;
+    const next = pickActive(slots.current);
+    setActiveId((prev) => (prev === next ? prev : next));
+  }, []);
+
+  const report = useCallback(
+    (id: string, slot: Slot) => {
+      slots.current.set(id, slot);
+      if (raf.current) return;
+      raf.current = window.requestAnimationFrame(flush);
+    },
+    [flush],
+  );
+
+  const forget = useCallback(
+    (id: string) => {
+      slots.current.delete(id);
+      if (raf.current) return;
+      raf.current = window.requestAnimationFrame(flush);
+    },
+    [flush],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (raf.current) window.cancelAnimationFrame(raf.current);
+    };
+  }, []);
+
+  const api = useMemo(
+    () => ({ activeId, report, forget }),
+    [activeId, report, forget],
+  );
+
+  return (
+    <PlaybackContext.Provider value={api}>{children}</PlaybackContext.Provider>
+  );
 }
 
 function usePrefersReducedMotion() {
@@ -82,19 +190,40 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-function useInView(ref: RefObject<HTMLDivElement | null>) {
-  const [inView, setInView] = useState(false);
+function usePlaybackFocus(ref: RefObject<HTMLDivElement | null>, id: string) {
+  const playback = useContext(PlaybackContext);
+  const playbackRef = useRef(playback);
+  playbackRef.current = playback;
+  const [fallback, setFallback] = useState(false);
+
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setInView(Boolean(entry?.isIntersecting)),
-      { rootMargin: "160px 0px", threshold: 0.01 },
+      ([entry]) => {
+        if (!entry) return;
+        const api = playbackRef.current;
+        if (!api) {
+          setFallback(entry.isIntersecting);
+          return;
+        }
+        const mid =
+          (entry.boundingClientRect.top + entry.boundingClientRect.bottom) / 2;
+        api.report(id, {
+          ratio: entry.intersectionRatio,
+          dist: Math.abs(mid - window.innerHeight / 2),
+        });
+      },
+      { threshold: [0, 0.12, 0.28, 0.45, 0.6, 0.8, 1] },
     );
     observer.observe(node);
-    return () => observer.disconnect();
-  }, [ref]);
-  return inView;
+    return () => {
+      observer.disconnect();
+      playbackRef.current?.forget(id);
+    };
+  }, [id, ref]);
+
+  return playback ? playback.activeId === id : fallback;
 }
 
 export function LessonGif({ src }: { src: string }) {
@@ -109,12 +238,13 @@ export function LessonGifRow({ urls }: { urls: string[] }) {
 function LessonGifGallery({ urls }: { urls: string[] }) {
   const locale = useLocale();
   const ui = productUi(locale);
+  const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const skipScrollSync = useRef(false);
   const goTimer = useRef(0);
   const reduced = usePrefersReducedMotion();
-  const inView = useInView(root);
+  const focused = usePlaybackFocus(root, id);
   const [index, setIndex] = useState(0);
   const count = urls.length;
   const safeIndex = count === 0 ? 0 : Math.min(index, count - 1);
@@ -175,18 +305,14 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
   return (
     <div
       ref={root}
-      className="flex flex-col gap-2.5"
+      className="mx-auto flex w-full max-w-[480px] flex-col gap-2 max-[600px]:max-w-none"
       aria-label={label}
       aria-roledescription={count > 1 ? "carousel" : undefined}
     >
-      <div className="relative overflow-hidden rounded-[10px] bg-[#141416]">
+      <div className="relative overflow-hidden rounded-[10px] bg-[#141416] shadow-[0_10px_28px_rgba(20,20,22,0.14)]">
         {count === 1 ? (
           <div className="relative aspect-video w-full">
-            <LessonFrame
-              url={urls[0]}
-              alt=""
-              play={inView}
-            />
+            <LessonFrame url={urls[0]} alt="" play={focused} />
           </div>
         ) : (
           <div
@@ -210,7 +336,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
                   <LessonFrame
                     url={url}
                     alt={active ? ui.coverDot.replace("{n}", String(i + 1)) : ""}
-                    play={active && inView}
+                    play={active && focused}
                   />
                 </div>
               );
@@ -221,7 +347,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
 
       {count > 1 ? (
         <div
-          className="grid gap-2"
+          className="grid gap-1.5"
           style={{
             gridTemplateColumns: `repeat(${Math.min(count, 3)}, minmax(0, 1fr))`,
           }}
@@ -240,39 +366,59 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
             tabs[target]?.focus();
           }}
         >
-          {urls.map((url, i) => {
-            const active = i === safeIndex;
-            const poster = gifPosterUrl(url) ?? url;
-            return (
-              <button
-                key={`${url}-thumb-${i}`}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                tabIndex={active ? 0 : -1}
-                aria-label={ui.coverDot.replace("{n}", String(i + 1))}
-                onClick={() => go(i)}
-                className={[
-                  "relative aspect-video overflow-hidden rounded-[8px] bg-[#141416] transition-[opacity,box-shadow] duration-200",
-                  siteFocusRing,
-                  active
-                    ? "ring-2 ring-plum ring-offset-2 ring-offset-white"
-                    : "opacity-55 hover:opacity-100",
-                ].join(" ")}
-              >
-                <img
-                  src={poster}
-                  alt=""
-                  draggable={false}
-                  className="absolute inset-0 size-full object-contain"
-                  aria-hidden
-                />
-              </button>
-            );
-          })}
+          {urls.map((url, i) => (
+            <LessonGifThumb
+              key={`${url}-thumb-${i}`}
+              src={gifPosterUrl(url) ?? url}
+              active={i === safeIndex}
+              label={ui.coverDot.replace("{n}", String(i + 1))}
+              onSelect={() => go(i)}
+            />
+          ))}
         </div>
       ) : null}
     </div>
+  );
+}
+
+function LessonGifThumb({
+  src,
+  active,
+  label,
+  onSelect,
+}: {
+  src: string;
+  active: boolean;
+  label: string;
+  onSelect: () => void;
+}) {
+  const ready = useWarmed(src);
+  return (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active}
+      tabIndex={active ? 0 : -1}
+      aria-label={label}
+      onClick={onSelect}
+      className={[
+        "relative aspect-video overflow-hidden rounded-[8px] bg-[#141416] transition-[opacity,box-shadow] duration-200",
+        siteFocusRing,
+        active
+          ? "ring-2 ring-plum ring-offset-2 ring-offset-white"
+          : "opacity-55 hover:opacity-100",
+      ].join(" ")}
+    >
+      {ready ? (
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 size-full object-contain"
+          aria-hidden
+        />
+      ) : null}
+    </button>
   );
 }
 
@@ -286,6 +432,9 @@ function LessonFrame({
   play: boolean;
 }) {
   const poster = gifPosterUrl(url);
+  const still = poster ?? url;
+  const stillReady = useWarmed(still);
+  const animReady = useWarmed(url);
   const [phase, setPhase] = useState<"loading" | "ready" | "error">("loading");
   const [live, setLive] = useState(false);
 
@@ -295,16 +444,15 @@ function LessonFrame({
 
   useEffect(() => {
     setLive(false);
+    setPhase("loading");
   }, [url]);
-
-  const still = poster ?? url;
 
   return (
     <>
       {phase !== "ready" && !live ? (
         <Skeleton className="absolute inset-0 rounded-[10px]" />
       ) : null}
-      {!live && phase !== "error" ? (
+      {!live && stillReady && phase !== "error" ? (
         <img
           src={still}
           alt={play ? "" : alt}
@@ -318,11 +466,12 @@ function LessonFrame({
           onError={() => setPhase("error")}
         />
       ) : null}
-      {play ? (
+      {play && animReady ? (
         <img
           key={url}
           src={url}
           alt={alt}
+          decoding="async"
           draggable={false}
           className="absolute inset-0 size-full object-contain"
           onLoad={() => {

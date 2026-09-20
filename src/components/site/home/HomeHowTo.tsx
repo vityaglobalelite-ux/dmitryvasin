@@ -114,6 +114,9 @@ export function HomeHowToDesktop() {
   );
 }
 
+/** First mobile layer after the home catalog rail. Figma «Главная_360». */
+export const HOME_MOBILE_HOW_TO_Y = 6573;
+
 export function HomeHowToMobile() {
   const locale = useLocale();
   const { copy } = homeT(locale);
@@ -131,7 +134,7 @@ export function HomeHowToMobile() {
     <>
       <Layer
         x={20}
-        y={6573}
+        y={HOME_MOBILE_HOW_TO_Y}
         w={320}
         h={828}
         z={1}

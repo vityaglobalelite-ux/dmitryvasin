@@ -131,7 +131,7 @@ function CoverBody({
         {access ? <OverlayChip dim>{access}</OverlayChip> : null}
       </CoverStage>
       <div className="flex min-h-0 flex-1 flex-col gap-5 p-5 max-[600px]:p-[15px]">
-        <MetaRow product={product} stacked={false} />
+        <MetaRow product={product} />
         <Link href={href} className={`flex min-h-0 flex-1 flex-col gap-2.5 rounded-[8px] ${siteFocusRing}`}>
           <h2 className="line-clamp-2 min-h-[calc(1.2em*2)] overflow-hidden break-words text-[24px] font-medium leading-[1.2] text-black transition-opacity duration-150 group-hover:opacity-90 max-[600px]:min-h-[calc(1.3em*2)] max-[600px]:text-[16px] max-[600px]:leading-[1.3]">
             {copy.title}
@@ -213,7 +213,7 @@ function PeekBody({
         <p className="line-clamp-3 min-h-[calc(1.5em*3)] overflow-hidden break-words text-[16px] leading-[1.5] text-text-dark max-[600px]:min-h-[calc(20px*3)] max-[600px]:text-[13px] max-[600px]:leading-5">
           {copy.short}
         </p>
-        <MetaRow product={product} stacked />
+        <MetaRow product={product} />
         <PriceRow
           product={product}
           href={href}
@@ -357,7 +357,7 @@ function SkillChip({ skill }: { skill: SkillKey }) {
   return (
     <span
       title={label}
-      className="inline-flex min-w-0 items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
+      className="inline-flex max-w-full shrink-0 items-center gap-1.5 rounded-[10px] bg-white p-2.5 max-[600px]:h-6 max-[600px]:gap-1 max-[600px]:rounded-[6px] max-[600px]:px-1.5 max-[600px]:py-1"
     >
       {icon ? (
         <img
@@ -375,50 +375,32 @@ function SkillChip({ skill }: { skill: SkillKey }) {
   );
 }
 
-function MetaRow({
-  product,
-  stacked,
-}: {
-  product: Product;
-  stacked: boolean;
-}) {
+function MetaRow({ product }: { product: Product }) {
   const t = useCatalogT();
   const skills = product.skills.slice(0, 2);
   const difficulty = parseDifficulty(product.level);
-  const stars = (
-    <span className="inline-flex shrink-0 items-center gap-1.5 max-[600px]:gap-1">
-      <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
-        {t.catalog.difficulty}
-      </span>
-      <img
-        src={catalogCardAssets.difficulty[difficulty]}
-        alt=""
-        width={72}
-        height={18}
-        className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
-      />
-    </span>
-  );
 
-  if (stacked) {
-    return (
-      <div className="flex w-full flex-col items-start justify-center gap-2.5">
-        <div className="flex flex-wrap items-center gap-1.5">
+  return (
+    <div className="flex w-full flex-col items-start gap-2.5 max-[600px]:gap-2">
+      {skills.length > 0 ? (
+        <div className="flex max-w-full flex-wrap items-center gap-2.5 max-[600px]:gap-1.5">
           {skills.map((skill) => (
             <SkillChip key={skill} skill={skill} />
           ))}
         </div>
-        {stars}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex w-full items-center gap-3.5 max-[600px]:gap-1.5">
-      {skills.map((skill) => (
-        <SkillChip key={skill} skill={skill} />
-      ))}
-      {stars}
+      ) : null}
+      <span className="inline-flex items-center gap-1.5 max-[600px]:gap-1">
+        <span className="text-[14px] font-medium leading-normal text-text-dark max-[600px]:text-[13px]">
+          {t.catalog.difficulty}
+        </span>
+        <img
+          src={catalogCardAssets.difficulty[difficulty]}
+          alt=""
+          width={72}
+          height={18}
+          className="h-[18px] w-[72px] max-[600px]:h-3.5 max-[600px]:w-14"
+        />
+      </span>
     </div>
   );
 }

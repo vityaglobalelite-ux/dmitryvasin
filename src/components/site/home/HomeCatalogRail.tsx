@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { ProductCard } from "@/components/site/catalog/ProductCard";
 import { catalogFilterHref } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
@@ -19,6 +26,9 @@ import type { Product, ProductType } from "@/lib/catalog/types";
 const DESKTOP_COUNT = 3;
 const MOBILE_COUNT = 3;
 const SWAP_MS = 180;
+const MOBILE_RAIL_Y = 4883;
+/** Figma: first card top (4883) → see-all bottom (6444+22). */
+const MOBILE_RAIL_RESERVED_H = 6466 - MOBILE_RAIL_Y;
 
 const homeCatalogFilterTypes = ["lifehack", "lesson", "course", "peek"] as const;
 type HomeFilter = (typeof homeCatalogFilterTypes)[number];
@@ -278,9 +288,88 @@ export function HomeCatalogRailDesktop() {
   );
 }
 
-export function HomeCatalogRailMobile() {
+export function HomeCatalogRailMobile({
+  onRailShift,
+}: {
+  onRailShift?: (shift: number) => void;
+}) {
   const rail = useHomeCatalogRail(MOBILE_COUNT);
-  const cardY = [4883, 5403, 5923] as const;
+  const stackRef = useRef<HTMLDivElement>(null);
+  const showSeeAll = !rail.emptyCatalog && !rail.failed;
+
+  useLayoutEffect(() => {
+    if (!onRailShift) return;
+    const el = stackRef.current;
+    if (!el) return;
+    const publish = () => {
+      onRailShift(MOBILE_RAIL_RESERVED_H - el.offsetHeight);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [
+    onRailShift,
+    rail.loading,
+    rail.emptyCatalog,
+    rail.failed,
+    rail.emptyFilter,
+    rail.items,
+    rail.displayedType,
+  ]);
+
+  useLayoutEffect(() => {
+    return () => onRailShift?.(0);
+  }, [onRailShift]);
+
+  let stack: ReactNode;
+  if (rail.loading) {
+    stack = Array.from({ length: MOBILE_COUNT }, (_, i) => (
+      <div
+        key={i}
+        className="h-[500px] overflow-hidden rounded-[10px] bg-light-gray"
+      >
+        <ProductCardSkeleton />
+      </div>
+    ));
+  } else if (rail.emptyCatalog || rail.failed) {
+    stack = (
+      <div className="flex min-h-[500px] flex-col items-start justify-center rounded-[10px] bg-light-gray p-5">
+        <p className="text-[16px] font-medium leading-[1.3] text-text">
+          {rail.failed ? rail.copy.errorTitle : rail.copy.emptyTitle}
+        </p>
+        <p className="mt-3 text-[13px] leading-[1.5] text-text/70">
+          {rail.failed ? rail.copy.errorBody : rail.copy.emptyBody}
+        </p>
+        <Button href={rail.routes.catalog} className="mt-6 h-[50px] w-full px-0 text-[13px]">
+          {rail.copy.emptyCta}
+        </Button>
+      </div>
+    );
+  } else if (rail.emptyFilter) {
+    stack = Array.from({ length: MOBILE_COUNT }, (_, i) => (
+      <div key={`empty-${rail.displayedType}-${i}`} className="h-[500px]">
+        <EmptyRailCard
+          featured={i === 0}
+          compact
+          title={rail.emptyFilterCopy[rail.displayedType].title}
+          body={rail.emptyFilterCopy[rail.displayedType].body}
+          cta={rail.copy.emptyFilterCta}
+          href={rail.routes.catalog}
+        />
+      </div>
+    ));
+  } else {
+    stack = rail.items.map((product) => (
+      <ProductCard
+        key={`${rail.displayedType}-${product.id}`}
+        product={product}
+        onAdd={rail.onAdd}
+        adding={rail.pendingId === product.id}
+        inCart={rail.inCartIds.has(product.id)}
+      />
+    ));
+  }
 
   return (
     <>
@@ -307,89 +396,27 @@ export function HomeCatalogRailMobile() {
         ))}
       </div>
 
-      {rail.loading
-        ? cardY.map((y) => (
-            <Layer key={y} x={20} y={y} w={320} h={500} z={2} className="overflow-hidden rounded-[10px] bg-light-gray">
-              <ProductCardSkeleton />
-            </Layer>
-          ))
-        : rail.emptyCatalog || rail.failed
-          ? (
-            <Layer
-              x={20}
-              y={4883}
-              w={320}
-              h={500}
-              z={2}
-              className="flex flex-col items-start justify-center rounded-[10px] bg-light-gray p-5"
-            >
-              <p className="text-[16px] font-medium leading-[1.3] text-text">
-                {rail.failed ? rail.copy.errorTitle : rail.copy.emptyTitle}
-              </p>
-              <p className="mt-3 text-[13px] leading-[1.5] text-text/70">
-                {rail.failed ? rail.copy.errorBody : rail.copy.emptyBody}
-              </p>
-              <Button href={rail.routes.catalog} className="mt-6 h-[50px] w-full px-0 text-[13px]">
-                {rail.copy.emptyCta}
-              </Button>
-            </Layer>
-            )
-          : rail.emptyFilter
-            ? cardY.map((y, i) => (
-                <Layer
-                  key={`empty-${rail.displayedType}-${y}`}
-                  x={20}
-                  y={y}
-                  w={320}
-                  h={500}
-                  z={2}
-                  className={[
-                    "transition-[opacity,transform] duration-200 ease-out",
-                    rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-                  ].join(" ")}
-                >
-                  <EmptyRailCard
-                    featured={i === 0}
-                    compact
-                    title={rail.emptyFilterCopy[rail.displayedType].title}
-                    body={rail.emptyFilterCopy[rail.displayedType].body}
-                    cta={rail.copy.emptyFilterCta}
-                    href={rail.routes.catalog}
-                  />
-                </Layer>
-              ))
-            : rail.items.map((product, i) => (
-                <Layer
-                  key={`${rail.displayedType}-${product.id}`}
-                  x={20}
-                  y={cardY[i] ?? 4883}
-                  w={320}
-                  h={500}
-                  z={2}
-                  className={[
-                    "transition-[opacity,transform] duration-200 ease-out",
-                    rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
-                  ].join(" ")}
-                >
-                  <ProductCard
-                    product={product}
-                    onAdd={rail.onAdd}
-                    adding={rail.pendingId === product.id}
-                    inCart={rail.inCartIds.has(product.id)}
-                  />
-                </Layer>
-              ))}
-
-      {!rail.emptyCatalog && !rail.failed ? (
-        <Layer x={20} y={6444} w={320} h={22} z={3} className="flex items-center justify-end">
-          <CatalogSeeAll
-            href={rail.seeAllHref}
-            label={rail.copy.seeAll}
-            filterLabel={rail.seeAllFilterLabel}
-            compact
-          />
-        </Layer>
-      ) : null}
+      <Layer x={20} y={MOBILE_RAIL_Y} w={320} z={2}>
+        <div
+          ref={stackRef}
+          className={[
+            "flex flex-col gap-5 transition-[opacity,transform] duration-200 ease-out",
+            rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
+          ].join(" ")}
+        >
+          {stack}
+          {showSeeAll ? (
+            <div className="flex h-[22px] items-center justify-end">
+              <CatalogSeeAll
+                href={rail.seeAllHref}
+                label={rail.copy.seeAll}
+                filterLabel={rail.seeAllFilterLabel}
+                compact
+              />
+            </div>
+          ) : null}
+        </div>
+      </Layer>
       <WholesaleModal open={rail.modalOpen} onClose={rail.closeModal} />
     </>
   );
