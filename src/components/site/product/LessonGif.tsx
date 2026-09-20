@@ -1,16 +1,12 @@
 "use client";
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
-  useId,
   useMemo,
   useRef,
   useState,
   type ReactNode,
-  type RefObject,
 } from "react";
 import { productUi } from "@/components/site/product/copy";
 import { siteFocusRing } from "@/components/site/ui/Button";
@@ -95,29 +91,6 @@ function useWarmed(url: string) {
   return ready;
 }
 
-type Slot = { ratio: number; dist: number };
-
-type PlaybackApi = {
-  activeId: string | null;
-  report: (id: string, slot: Slot) => void;
-  forget: (id: string) => void;
-};
-
-const PlaybackContext = createContext<PlaybackApi | null>(null);
-
-function pickActive(slots: Map<string, Slot>): string | null {
-  let best: string | null = null;
-  let bestDist = Infinity;
-  for (const [id, slot] of slots) {
-    if (slot.ratio < 0.14) continue;
-    if (slot.dist < bestDist) {
-      bestDist = slot.dist;
-      best = id;
-    }
-  }
-  return best;
-}
-
 export function LessonGifPlaybackProvider({
   urls,
   children,
@@ -125,9 +98,6 @@ export function LessonGifPlaybackProvider({
   urls: readonly string[];
   children: ReactNode;
 }) {
-  const slots = useRef(new Map<string, Slot>());
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const raf = useRef(0);
   const key = urls.join("\n");
   const order = useMemo(
     () => [...new Set(key.split("\n").filter(Boolean))],
@@ -138,44 +108,7 @@ export function LessonGifPlaybackProvider({
     startTopDownWarm(order);
   }, [order]);
 
-  const flush = useCallback(() => {
-    raf.current = 0;
-    const next = pickActive(slots.current);
-    setActiveId((prev) => (prev === next ? prev : next));
-  }, []);
-
-  const report = useCallback(
-    (id: string, slot: Slot) => {
-      slots.current.set(id, slot);
-      if (raf.current) return;
-      raf.current = window.requestAnimationFrame(flush);
-    },
-    [flush],
-  );
-
-  const forget = useCallback(
-    (id: string) => {
-      slots.current.delete(id);
-      if (raf.current) return;
-      raf.current = window.requestAnimationFrame(flush);
-    },
-    [flush],
-  );
-
-  useEffect(() => {
-    return () => {
-      if (raf.current) window.cancelAnimationFrame(raf.current);
-    };
-  }, []);
-
-  const api = useMemo(
-    () => ({ activeId, report, forget }),
-    [activeId, report, forget],
-  );
-
-  return (
-    <PlaybackContext.Provider value={api}>{children}</PlaybackContext.Provider>
-  );
+  return children;
 }
 
 function usePrefersReducedMotion() {
@@ -190,42 +123,6 @@ function usePrefersReducedMotion() {
   return reduced;
 }
 
-function usePlaybackFocus(ref: RefObject<HTMLDivElement | null>, id: string) {
-  const playback = useContext(PlaybackContext);
-  const playbackRef = useRef(playback);
-  playbackRef.current = playback;
-  const [fallback, setFallback] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry) return;
-        const api = playbackRef.current;
-        if (!api) {
-          setFallback(entry.isIntersecting);
-          return;
-        }
-        const mid =
-          (entry.boundingClientRect.top + entry.boundingClientRect.bottom) / 2;
-        api.report(id, {
-          ratio: entry.intersectionRatio,
-          dist: Math.abs(mid - window.innerHeight / 2),
-        });
-      },
-      { threshold: [0, 0.12, 0.28, 0.45, 0.6, 0.8, 1] },
-    );
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      playbackRef.current?.forget(id);
-    };
-  }, [id, ref]);
-
-  return playback ? playback.activeId === id : fallback;
-}
-
 export function LessonGif({ src }: { src: string }) {
   return <LessonGifGallery urls={[src]} />;
 }
@@ -238,13 +135,10 @@ export function LessonGifRow({ urls }: { urls: string[] }) {
 function LessonGifGallery({ urls }: { urls: string[] }) {
   const locale = useLocale();
   const ui = productUi(locale);
-  const id = useId();
-  const root = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const skipScrollSync = useRef(false);
   const goTimer = useRef(0);
   const reduced = usePrefersReducedMotion();
-  const focused = usePlaybackFocus(root, id);
   const [index, setIndex] = useState(0);
   const count = urls.length;
   const safeIndex = count === 0 ? 0 : Math.min(index, count - 1);
@@ -304,7 +198,6 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
 
   return (
     <div
-      ref={root}
       className="mx-auto flex w-full max-w-[480px] flex-col gap-2 max-[600px]:max-w-none"
       aria-label={label}
       aria-roledescription={count > 1 ? "carousel" : undefined}
@@ -312,7 +205,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
       <div className="relative overflow-hidden rounded-[10px] bg-[#141416] shadow-[0_10px_28px_rgba(20,20,22,0.14)]">
         {count === 1 ? (
           <div className="relative aspect-video w-full">
-            <LessonFrame url={urls[0]} alt="" play={focused} />
+            <LessonFrame url={urls[0]} alt="" play={!reduced} />
           </div>
         ) : (
           <div
@@ -336,7 +229,7 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
                   <LessonFrame
                     url={url}
                     alt={active ? ui.coverDot.replace("{n}", String(i + 1)) : ""}
-                    play={active && focused}
+                    play={!reduced}
                   />
                 </div>
               );
