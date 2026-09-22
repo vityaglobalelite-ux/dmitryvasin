@@ -72,8 +72,8 @@ function ReviewCard({
     <article
       className={
         compact
-          ? "flex w-full flex-col items-start gap-[30px] rounded-[10px] bg-light-gray p-[15px]"
-          : "flex w-full flex-col rounded-[30px] bg-light-gray px-[30px] pb-8 pt-[30px]"
+          ? "flex w-[290px] shrink-0 flex-col items-start gap-[30px] self-stretch rounded-[10px] bg-light-gray p-[15px]"
+          : "flex w-[467px] shrink-0 flex-col self-stretch rounded-[30px] bg-light-gray px-[30px] pb-8 pt-[30px]"
       }
     >
       <HomeImg
@@ -94,7 +94,7 @@ function ReviewCard({
           <p className="mt-2.5 text-[14px] leading-[1.5] text-text/60">{role}</p>
         </>
       )}
-      <p className={compact ? "text-[13px] leading-[1.5] text-text" : "mt-[30px] text-[16px] leading-[1.5] text-text"}>
+      <p className={compact ? "text-[13px] leading-[1.5] text-text" : "mt-[30px] flex-1 text-[16px] leading-[1.5] text-text"}>
         {compact ? "„" : "“"}
         {quote}
       </p>
@@ -196,11 +196,9 @@ export function HomeReviewsDesktop() {
         )}
       </Layer>
 
-      <div className="absolute left-[240px] top-[8337px] z-[2] flex w-[1440px] items-start gap-5">
+      <div className="absolute left-[240px] top-[8337px] z-[2] flex w-[1440px] items-stretch gap-5">
         {reviews.map((review) => (
-          <div key={review.name} className="w-[467px] shrink-0">
-            <ReviewCard {...review} />
-          </div>
+          <ReviewCard key={review.name} {...review} />
         ))}
       </div>
     </>
@@ -272,11 +270,9 @@ export function HomeReviewsMobile() {
         )}
       </Layer>
 
-      <div className="absolute left-5 top-[8953px] z-[2] flex w-[320px] items-start gap-5 overflow-x-auto">
+      <div className="absolute left-5 top-[8953px] z-[2] flex w-[320px] items-stretch gap-5 overflow-x-auto">
         {reviews.map((review) => (
-          <div key={review.name} className="w-[290px] shrink-0">
-            <ReviewCard {...review} compact />
-          </div>
+          <ReviewCard key={review.name} {...review} compact />
         ))}
       </div>
     </>

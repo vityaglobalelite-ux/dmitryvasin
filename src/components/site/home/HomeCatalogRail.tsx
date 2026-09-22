@@ -30,12 +30,12 @@ const MOBILE_RAIL_Y = 4883;
 const MOBILE_RAIL_RESERVED_H = 6466 - MOBILE_RAIL_Y;
 
 const homeCatalogFilterTypes = ["lifehack", "lesson", "course", "peek"] as const;
-type HomeFilter = "all" | (typeof homeCatalogFilterTypes)[number];
-const DEFAULT_FILTER: HomeFilter = "all";
+type HomeFilter = (typeof homeCatalogFilterTypes)[number];
+const DEFAULT_FILTER: HomeFilter = "course";
 
 function useHomeCatalogRail() {
   const locale = useLocale();
-  const { copy, filters: typeFilters, emptyFilter: emptyFilterCopy } = homeT(locale);
+  const { copy, filters, emptyFilter: emptyFilterCopy } = homeT(locale);
   const catalogCopy = useCatalogT();
   const routes = useLocalizedRoutes();
   const { data, loading, error } = useProducts({ locale });
@@ -68,27 +68,15 @@ function useHomeCatalogRail() {
     [data],
   );
 
-  const items = useMemo(() => {
-    if (displayedType === "all") return listing;
-    return listing.filter((product) => product.type === displayedType);
-  }, [displayedType, listing]);
-
-  const filters = useMemo(
-    () => [
-      { type: "all" as const, label: locale === "en" ? "All" : "Все" },
-      ...typeFilters,
-    ],
-    [locale, typeFilters],
+  const items = useMemo(
+    () => listing.filter((product) => product.type === displayedType),
+    [displayedType, listing],
   );
 
   const failed = !loading && Boolean(error);
   const emptyCatalog = !loading && !error && listing.length === 0;
   const emptyFilter =
-    displayedType !== "all" &&
-    !loading &&
-    !error &&
-    listing.length > 0 &&
-    items.length === 0;
+    !loading && !error && listing.length > 0 && items.length === 0;
 
   const onAdd = (product: Product) => {
     void addToCart.add(product.id);
@@ -118,10 +106,7 @@ function useHomeCatalogRail() {
     inCartIds,
     modalOpen: addToCart.modalOpen,
     closeModal: addToCart.closeModal,
-    seeAllHref:
-      selectedType === "all"
-        ? routes.catalog
-        : catalogFilterHref(selectedType, locale),
+    seeAllHref: catalogFilterHref(selectedType, locale),
     seeAllFilterLabel,
   };
 }
@@ -206,7 +191,6 @@ function CatalogSeeAll({
 
 export function HomeCatalogRailDesktop() {
   const rail = useHomeCatalogRail();
-  const emptyType = rail.displayedType === "all" ? null : rail.displayedType;
 
   return (
     <>
@@ -215,33 +199,28 @@ export function HomeCatalogRailDesktop() {
           {rail.copy.catalogTitle}
         </h2>
       </Layer>
-      <Layer
-        x={1288}
-        y={4656}
-        w={392}
-        h={56}
-        z={3}
-        className="flex items-center justify-end"
-      >
-        <CatalogSeeAll
-          href={rail.seeAllHref}
-          label={rail.copy.seeAll}
-          filterLabel={rail.seeAllFilterLabel}
-        />
-      </Layer>
-      <div
-        className="absolute left-[242px] top-[4735px] z-[2] flex h-[69px] items-center gap-5"
-        role="tablist"
-        aria-label={rail.catalogCopy.catalog.filterAria}
-      >
-        {rail.filters.map((chip) => (
-          <HomeFilterChip
-            key={chip.type}
-            label={chip.label}
-            selected={rail.selectedType === chip.type}
-            onSelect={() => rail.selectType(chip.type)}
+      <div className="absolute left-[242px] top-[4735px] z-[3] flex h-[69px] w-[1438px] items-center gap-5">
+        <div
+          className="flex min-w-0 items-center gap-5"
+          role="tablist"
+          aria-label={rail.catalogCopy.catalog.filterAria}
+        >
+          {rail.filters.map((chip) => (
+            <HomeFilterChip
+              key={chip.type}
+              label={chip.label}
+              selected={rail.selectedType === chip.type}
+              onSelect={() => rail.selectType(chip.type)}
+            />
+          ))}
+        </div>
+        <div className="ml-auto shrink-0">
+          <CatalogSeeAll
+            href={rail.seeAllHref}
+            label={rail.copy.seeAll}
+            filterLabel={rail.seeAllFilterLabel}
           />
-        ))}
+        </div>
       </div>
 
       <Layer x={239} y={4844} w={1681} h={631} z={2}>
@@ -263,7 +242,7 @@ export function HomeCatalogRailDesktop() {
               </Button>
             }
           />
-        ) : rail.emptyFilter && emptyType ? (
+        ) : rail.emptyFilter ? (
           <div
             className={[
               "flex h-full gap-5 transition-[opacity,transform] duration-200 ease-out",
@@ -271,11 +250,11 @@ export function HomeCatalogRailDesktop() {
             ].join(" ")}
           >
             {Array.from({ length: DESKTOP_COUNT }, (_, i) => (
-              <div key={`empty-${emptyType}-${i}`} className="h-full w-[467px] shrink-0">
+              <div key={`empty-${rail.displayedType}-${i}`} className="h-full w-[467px] shrink-0">
                 <EmptyRailCard
                   featured={i === 0}
-                  title={rail.emptyFilterCopy[emptyType].title}
-                  body={rail.emptyFilterCopy[emptyType].body}
+                  title={rail.emptyFilterCopy[rail.displayedType].title}
+                  body={rail.emptyFilterCopy[rail.displayedType].body}
                   cta={rail.copy.emptyFilterCta}
                   href={rail.routes.catalog}
                 />
@@ -319,7 +298,6 @@ export function HomeCatalogRailMobile({
   onRailShift?: (shift: number) => void;
 }) {
   const rail = useHomeCatalogRail();
-  const emptyType = rail.displayedType === "all" ? null : rail.displayedType;
   const stackRef = useRef<HTMLDivElement>(null);
   const showSeeAll = !rail.emptyCatalog && !rail.failed;
 
@@ -376,13 +354,13 @@ export function HomeCatalogRailMobile({
         </Button>
       </div>
     );
-  } else if (rail.emptyFilter && emptyType) {
+  } else if (rail.emptyFilter) {
     stack = (
       <EmptyRailCard
         featured
         compact
-        title={rail.emptyFilterCopy[emptyType].title}
-        body={rail.emptyFilterCopy[emptyType].body}
+        title={rail.emptyFilterCopy[rail.displayedType].title}
+        body={rail.emptyFilterCopy[rail.displayedType].body}
         cta={rail.copy.emptyFilterCta}
         href={rail.routes.catalog}
       />
