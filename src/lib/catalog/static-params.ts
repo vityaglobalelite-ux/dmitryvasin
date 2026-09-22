@@ -1,5 +1,6 @@
 import {
   COURSE_2_ID,
+  LIFEHACK_IDS,
   POSTURE_COURSE_BLOCK1_ID,
   POSTURE_COURSE_BLOCK2_ID,
   POSTURE_COURSE_FULL_ID,
@@ -21,6 +22,9 @@ export async function catalogIdStaticParams(): Promise<{ id: string }[]> {
   ids.add(POSTURE_COURSE_BLOCK1_ID);
   ids.add(POSTURE_COURSE_BLOCK2_ID);
   ids.add(COURSE_2_ID);
+  for (const id of LIFEHACK_IDS) {
+    ids.add(id);
+  }
   for (let n = 1; n <= 24; n += 1) {
     ids.add(peekProductId(n));
   }

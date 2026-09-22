@@ -40,6 +40,7 @@ const DEV_WHOLESALE_TIERS = [
 
 /** Club trial list 16900₽ / $195 / €170. Figma 607:399 posture prices. */
 const COURSE_FOREIGN_MINOR = {
+  0: { usd: 0, eur: 0 },
   4000000: { usd: 46200, eur: 40200 },
   2500000: { usd: 28900, eur: 25100 },
   990000: { usd: 11500, eur: 9900 },
@@ -247,7 +248,10 @@ console.log(
 );
 console.log("  unpublished every catalog_products row, then re-published seed");
 console.log(
-  `  upserted ${PRODUCTS.length} products (24 peeks + posture bundle + course-2)`,
+  `  upserted ${PRODUCTS.length} products (24 peeks + posture bundle + course-2 + lifehacks)`,
 );
 console.log(`  posture full ${IDS.postureFull}, blocks ${IDS.postureBlock1}/${IDS.postureBlock2}`);
+console.log(
+  `  lifehacks ${IDS.lifehack1}, ${IDS.lifehack2}, ${IDS.lifehack3}`,
+);
 console.log("  kinescope videos: none");

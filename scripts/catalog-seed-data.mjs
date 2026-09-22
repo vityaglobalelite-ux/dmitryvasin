@@ -17,6 +17,9 @@ export const IDS = {
   postureBlock1: "d0230001-0002-4000-8000-000000000002",
   postureBlock2: "d0230001-0003-4000-8000-000000000003",
   course2: "d0230001-0004-4000-8000-000000000004",
+  lifehack1: "d0230001-2001-4000-8000-000000000001",
+  lifehack2: "d0230001-2001-4000-8000-000000000002",
+  lifehack3: "d0230001-2001-4000-8000-000000000003",
 };
 
 export function peekId(n) {
@@ -441,6 +444,99 @@ export function buildCourseProducts() {
   return [full, block1, block2, course2];
 }
 
+function lifehackCovers(n) {
+  return [1, 2, 3].map(
+    (frame) =>
+      `/assets/site/catalog/covers/lifehack-${String(n).padStart(2, "0")}-${frame}.webp`,
+  );
+}
+
+/**
+ * Plaques from «Плашки под сайт_каталог (2).zip» / Лайфхаки.
+ * Folder 4 «Близкие объятия» is empty — skipped until assets arrive.
+ * TEMP: price 0 = not announced (same pattern as course 2).
+ */
+export function buildLifehackProducts() {
+  const PLACEHOLDER_RU =
+    "Описание и цена появятся позже. Плашки обложки уже на месте.";
+  const PLACEHOLDER_EN =
+    "Description and price coming soon. Cover plaques are ready.";
+
+  const items = [
+    {
+      id: IDS.lifehack1,
+      sort_index: 1,
+      skills: ["technique"],
+      ru: {
+        title: "Последовательное движение — часть 1",
+        short: PLACEHOLDER_RU,
+        description: PLACEHOLDER_RU,
+      },
+      en: {
+        title: "Sequential movement — part 1",
+        short: PLACEHOLDER_EN,
+        description: PLACEHOLDER_EN,
+      },
+    },
+    {
+      id: IDS.lifehack2,
+      sort_index: 2,
+      skills: ["technique"],
+      ru: {
+        title: "Последовательное движение — часть 2",
+        short: PLACEHOLDER_RU,
+        description: PLACEHOLDER_RU,
+      },
+      en: {
+        title: "Sequential movement — part 2",
+        short: PLACEHOLDER_EN,
+        description: PLACEHOLDER_EN,
+      },
+    },
+    {
+      id: IDS.lifehack3,
+      sort_index: 3,
+      skills: ["technique", "variability"],
+      ru: {
+        title: "Маленький шаг для эффективной смены направления",
+        short: PLACEHOLDER_RU,
+        description: PLACEHOLDER_RU,
+      },
+      en: {
+        title: "A small step for an effective change of direction",
+        short: PLACEHOLDER_EN,
+        description: PLACEHOLDER_EN,
+      },
+    },
+  ];
+
+  return items.map((item) => {
+    const coverUrls = lifehackCovers(item.sort_index);
+    return {
+      id: item.id,
+      type: "lifehack",
+      price_minor: 0,
+      currency: "rub",
+      access_days: 180,
+      cover_url: coverUrls[0],
+      duration_sec: 0,
+      level: "2",
+      skills: item.skills,
+      lesson_count: null,
+      sort_index: item.sort_index,
+      cover_urls: coverUrls,
+      i18n: {
+        ru: item.ru,
+        en: item.en,
+      },
+    };
+  });
+}
+
 export function allSeedProducts() {
-  return [...buildPeekProducts(), ...buildCourseProducts()];
+  return [
+    ...buildPeekProducts(),
+    ...buildCourseProducts(),
+    ...buildLifehackProducts(),
+  ];
 }

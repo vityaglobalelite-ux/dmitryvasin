@@ -21,9 +21,11 @@ OUT = ROOT / "public/assets/site/catalog"
 DOWNLOADS = pathlib.Path.home() / "Downloads"
 
 PLAQUE_NAMES = (
+    "Плашки под сайт_каталог (2).zip",
     "Плашки под сайт_каталог (1).zip",
     "Плашки под сайт_каталог.zip",
 )
+PLAQUE_ZIP_SIZES = (32_519_136, 17_948_107)
 GIF_NAMES = (
     "gif-20260919T221519Z-1-001.zip",
 )
@@ -57,7 +59,12 @@ def find_plaque_zip() -> pathlib.Path:
         path = DOWNLOADS / name
         if path.is_file():
             return path
-    return find_zip_by_size(17_948_107)
+    for size in PLAQUE_ZIP_SIZES:
+        try:
+            return find_zip_by_size(size)
+        except SystemExit:
+            continue
+    raise SystemExit(f"plaque zip not found in {DOWNLOADS}")
 
 
 def find_gif_zip() -> pathlib.Path:
@@ -178,6 +185,43 @@ def import_plaques(plaque_zip: pathlib.Path) -> None:
                 continue
             to_webp_still(zf.read(entry), covers / f"course-2-{frame}.webp")
 
+        import_lifehack_plaques(zf, names, covers)
+
+
+def import_lifehack_plaques(
+    zf: zipfile.ZipFile,
+    names: list[str],
+    covers: pathlib.Path,
+) -> None:
+    """Lifehack folders: «N лайфхак …/1.png» → covers/lifehack-0N-F.webp."""
+    for n in range(1, 10):
+        for frame in range(1, 4):
+            def lifehack_match(
+                name: str, hack: int = n, frame_n: int = frame
+            ) -> bool:
+                norm = name.replace("\\", "/")
+                low = norm.lower()
+                if "лайфхак" not in low:
+                    return False
+                # «1 лайфхак …/1.png» — number before «лайфхак», not the empty «4 …/» dir
+                if not re.search(rf"(^|/){hack}\s+лайфхак", low):
+                    return False
+                return low.endswith(
+                    (f"/{frame_n}.png", f"/{frame_n}.jpg", f"/{frame_n}.jpeg"),
+                )
+
+            entry = next((name for name in names if lifehack_match(name)), None)
+            if not entry:
+                if n <= 3:
+                    print(
+                        f"warn: lifehack {n} frame {frame} missing",
+                        file=sys.stderr,
+                    )
+                continue
+            dest = covers / f"lifehack-{n:02d}-{frame}.webp"
+            print(f"lifehack {n}/{frame} -> {dest.relative_to(ROOT)}")
+            to_webp_still(zf.read(entry), dest)
+
 
 def import_gifs(gif_zip: pathlib.Path) -> None:
     scratch = ROOT / ".tmp" / "catalog-gifs"
@@ -253,10 +297,13 @@ def copy_posture_photo_covers() -> None:
 
 def main() -> None:
     plaque_zip = find_plaque_zip()
-    gif_zip = find_gif_zip()
     print(f"plaques: {plaque_zip}")
-    print(f"gifs:    {gif_zip}")
     import_plaques(plaque_zip)
+    if "--plaques-only" in sys.argv:
+        print("Catalog plaque assets imported (--plaques-only).")
+        return
+    gif_zip = find_gif_zip()
+    print(f"gifs:    {gif_zip}")
     import_gifs(gif_zip)
     print("Catalog assets imported.")
 
