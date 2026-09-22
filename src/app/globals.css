@@ -70,6 +70,8 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   overflow-x: clip;
+  /* Horizontal rubber-band is what Chrome turns into pull-to-refresh at the edges. */
+  overscroll-behavior-x: none;
 }
 
 .site-skip-link {
@@ -109,6 +111,7 @@ html {
 
 body {
   overflow-x: clip;
+  overscroll-behavior-x: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
@@ -121,6 +124,7 @@ body {
 
 .fig-canvas-shell {
   max-width: 100%;
+  min-width: 0;
 }
 
 /* Figma hero display lines: 106px line boxes */

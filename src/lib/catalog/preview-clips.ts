@@ -7,37 +7,24 @@ type ClipSource = {
 
 const PREVIEW_COUNT = 3;
 
-function hashString(value: string): number {
-  let hash = 2166136261;
-  for (let i = 0; i < value.length; i += 1) {
-    hash ^= value.charCodeAt(i);
-    hash = Math.imul(hash, 16777619);
+function lessonUrls(row: ClipSource): string[] {
+  const seen = new Set<string>();
+  const urls: string[] = [];
+  for (const url of row.gif_urls ?? []) {
+    const trimmed = url.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    urls.push(trimmed);
   }
-  return hash >>> 0;
+  return urls;
 }
 
 /**
- * Stable sample: the same product always shows the same clips, in lesson order,
- * but not mechanically the first three. A fresh random pick would flicker
- * between visits and disagree with the server render.
+ * Catalog cards: the lesson that already has several clips, in stored order.
+ * That is the posture sequence «Как перестать падать…» (03, 03-1, 03-11).
+ * A course with only single clips keeps one frame from each, up to three.
  */
-function pickStable<T>(seed: string, items: T[], count: number): T[] {
-  if (items.length <= count) return items;
-  const ranked = items.map((item, index) => ({
-    item,
-    index,
-    score: hashString(`${seed}:${index}`),
-  }));
-  ranked.sort((a, b) => a.score - b.score || a.index - b.index);
-  return ranked
-    .slice(0, count)
-    .sort((a, b) => a.index - b.index)
-    .map((row) => row.item);
-}
-
-/** One showcase clip per lesson, then three spread through the course. */
 export function pickPreviewClips(
-  seed: string,
   rows: ClipSource[] | null | undefined,
 ): string[] {
   const lessons = [...(rows ?? [])]
@@ -46,16 +33,15 @@ export function pickPreviewClips(
       (a, b) =>
         a.sort - b.sort ||
         (a.block_key ?? "").localeCompare(b.block_key ?? ""),
-    );
+    )
+    .map(lessonUrls)
+    .filter((urls) => urls.length > 0);
 
-  const candidates: string[] = [];
-  const seen = new Set<string>();
-  for (const lesson of lessons) {
-    const url = (lesson.gif_urls ?? []).find((item) => item.trim());
-    if (!url || seen.has(url)) continue;
-    seen.add(url);
-    candidates.push(url);
-  }
+  const showcase = lessons.find((urls) => urls.length >= PREVIEW_COUNT);
+  if (showcase) return showcase.slice(0, PREVIEW_COUNT);
 
-  return pickStable(seed, candidates, PREVIEW_COUNT);
+  const richest = [...lessons].sort((a, b) => b.length - a.length)[0];
+  if (richest && richest.length > 1) return richest.slice(0, PREVIEW_COUNT);
+
+  return lessons.slice(0, PREVIEW_COUNT).map((urls) => urls[0]);
 }

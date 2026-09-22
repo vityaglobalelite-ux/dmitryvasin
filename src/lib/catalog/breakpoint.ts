@@ -80,7 +80,12 @@ export function getSiteCanvasZoom(canvasWidth: number, mode: SiteCanvasMode) {
   const { w, h } = getSiteZoomViewportSize();
 
   if (mode === "mobile") {
-    return w / canvasWidth;
+    const layout = document.documentElement.clientWidth || w;
+    // Floor so 360 × zoom cannot round above the layout viewport.
+    // A fraction of a pixel of horizontal overflow makes Chrome arm
+    // pull-to-refresh on the left and right edges.
+    const zoom = Math.floor((layout * 1000) / canvasWidth) / 1000;
+    return zoom > 0 ? zoom : layout / canvasWidth;
   }
 
   return Math.min(

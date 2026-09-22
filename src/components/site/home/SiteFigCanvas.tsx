@@ -91,16 +91,23 @@ export function SiteFigCanvas({
         el.style.zoom = "";
         el.style.transform = `scale(${next})`;
         el.style.transformOrigin = "top left";
-        shell.style.width = `${canvas.w * next}px`;
+        const fitted =
+          mode === "mobile"
+            ? Math.min(canvas.w * next, document.documentElement.clientWidth)
+            : canvas.w * next;
+        shell.style.width = `${fitted}px`;
         shell.style.height = `${canvas.h * next}px`;
         shell.style.overflow = "hidden";
       } else {
         el.style.zoom = String(next);
         el.style.transform = "";
         el.style.transformOrigin = "";
-        shell.style.width = "";
+        // CSS zoom rounds the border box up. A specified shell width clips
+        // that fraction so the document never scrolls sideways.
+        shell.style.width = mode === "mobile" ? "100%" : "";
+        shell.style.minWidth = mode === "mobile" ? "0" : "";
         shell.style.height = "";
-        shell.style.overflow = "";
+        shell.style.overflow = mode === "mobile" ? "hidden" : "";
       }
 
       setReady(true);

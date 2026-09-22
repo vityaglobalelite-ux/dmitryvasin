@@ -14,7 +14,10 @@ import { catalogFilterHref } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import { Layer } from "@/components/site/home/HomeFrame";
 import { Button, siteFocusRing } from "@/components/site/ui/Button";
-import { HorizontalRail } from "@/components/site/ui/HorizontalRail";
+import {
+  HorizontalRail,
+  useContainHorizontalOverscroll,
+} from "@/components/site/ui/HorizontalRail";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { homeT } from "@/lib/catalog/home-copy";
 import { isStorefrontListingProduct } from "@/lib/catalog/bundles";
@@ -299,7 +302,27 @@ export function HomeCatalogRailMobile({
 }) {
   const rail = useHomeCatalogRail();
   const stackRef = useRef<HTMLDivElement>(null);
+  const filtersRef = useRef<HTMLDivElement>(null);
+  const [filtersOverflow, setFiltersOverflow] = useState(false);
+  useContainHorizontalOverscroll(filtersRef);
   const showSeeAll = !rail.emptyCatalog && !rail.failed;
+
+  useEffect(() => {
+    const el = filtersRef.current;
+    if (!el) return;
+    const sync = () => {
+      const max = el.scrollWidth - el.clientWidth;
+      setFiltersOverflow(max > 2 && el.scrollLeft < max - 2);
+    };
+    sync();
+    el.addEventListener("scroll", sync, { passive: true });
+    const observer = new ResizeObserver(sync);
+    observer.observe(el);
+    return () => {
+      el.removeEventListener("scroll", sync);
+      observer.disconnect();
+    };
+  }, [rail.filters]);
 
   useLayoutEffect(() => {
     if (!onRailShift) return;
@@ -329,7 +352,7 @@ export function HomeCatalogRailMobile({
   let stack: ReactNode;
   if (rail.loading) {
     stack = (
-      <div className="flex gap-3 overflow-hidden" aria-busy="true">
+      <div className="flex gap-3 overflow-hidden px-5" aria-busy="true">
         {Array.from({ length: 2 }, (_, i) => (
           <div
             key={i}
@@ -342,7 +365,7 @@ export function HomeCatalogRailMobile({
     );
   } else if (rail.emptyCatalog || rail.failed) {
     stack = (
-      <div className="flex min-h-[280px] flex-col items-start justify-center rounded-[10px] bg-light-gray p-5">
+      <div className="mx-5 flex min-h-[280px] flex-col items-start justify-center rounded-[10px] bg-light-gray p-5">
         <p className="text-[16px] font-medium leading-[1.3] text-text">
           {rail.failed ? rail.copy.errorTitle : rail.copy.emptyTitle}
         </p>
@@ -356,23 +379,29 @@ export function HomeCatalogRailMobile({
     );
   } else if (rail.emptyFilter) {
     stack = (
-      <EmptyRailCard
-        featured
-        compact
-        title={rail.emptyFilterCopy[rail.displayedType].title}
-        body={rail.emptyFilterCopy[rail.displayedType].body}
-        cta={rail.copy.emptyFilterCta}
-        href={rail.routes.catalog}
-      />
+      <div className="px-5">
+        <EmptyRailCard
+          featured
+          compact
+          title={rail.emptyFilterCopy[rail.displayedType].title}
+          body={rail.emptyFilterCopy[rail.displayedType].body}
+          cta={rail.copy.emptyFilterCta}
+          href={rail.routes.catalog}
+        />
+      </div>
     );
   } else {
     stack = (
-      <HorizontalRail token={rail.displayedType} scrollerClassName="items-stretch pb-1">
+      <HorizontalRail
+        token={rail.displayedType}
+        className="w-full"
+        scrollerClassName="items-stretch scroll-px-5 px-5 pb-1"
+      >
         {rail.items.map((product) => (
           <div
             key={`${rail.displayedType}-${product.id}`}
             data-rail-card
-            className="w-[280px] shrink-0 snap-start"
+            className="w-[300px] shrink-0 snap-start"
           >
             <ProductCard
               product={product}
@@ -393,23 +422,32 @@ export function HomeCatalogRailMobile({
           {rail.copy.catalogTitle}
         </h2>
       </Layer>
-      <div
-        className="absolute left-5 top-[4828px] z-[2] flex h-[35px] w-[320px] items-center gap-[7px] overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        role="tablist"
-        aria-label={rail.catalogCopy.catalog.filterAria}
-      >
-        {rail.filters.map((chip) => (
-          <HomeFilterChip
-            key={chip.type}
-            label={chip.label}
-            selected={rail.selectedType === chip.type}
-            onSelect={() => rail.selectType(chip.type)}
-            compact
+      <div className="absolute left-0 top-[4828px] z-[2] h-[35px] w-[360px]">
+        <div
+          ref={filtersRef}
+          className="flex h-full items-center gap-[5px] overflow-x-auto overscroll-x-none px-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          aria-label={rail.catalogCopy.catalog.filterAria}
+        >
+          {rail.filters.map((chip) => (
+            <HomeFilterChip
+              key={chip.type}
+              label={chip.label}
+              selected={rail.selectedType === chip.type}
+              onSelect={() => rail.selectType(chip.type)}
+              compact
+            />
+          ))}
+        </div>
+        {filtersOverflow ? (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent"
           />
-        ))}
+        ) : null}
       </div>
 
-      <Layer x={20} y={MOBILE_RAIL_Y} w={320} z={2}>
+      <Layer x={0} y={MOBILE_RAIL_Y} w={360} z={2}>
         <div
           ref={stackRef}
           className={[
@@ -419,12 +457,14 @@ export function HomeCatalogRailMobile({
         >
           {stack}
           {showSeeAll ? (
-            <CatalogSeeAll
-              href={rail.seeAllHref}
-              label={rail.copy.seeAll}
-              filterLabel={rail.seeAllFilterLabel}
-              compact
-            />
+            <div className="px-5">
+              <CatalogSeeAll
+                href={rail.seeAllHref}
+                label={rail.copy.seeAll}
+                filterLabel={rail.seeAllFilterLabel}
+                compact
+              />
+            </div>
           ) : null}
         </div>
       </Layer>

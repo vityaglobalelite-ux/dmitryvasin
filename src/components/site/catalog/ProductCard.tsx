@@ -252,6 +252,7 @@ function CoverStage({
           sizes="(max-width: 600px) 320px, 467px"
           tone="brand"
           hoverZoom={!locked}
+          controls="frame"
         />
       ) : frames[0] ? (
         <Image
@@ -421,24 +422,24 @@ function PriceRow({
   const t = useCatalogT();
   const showPrice = !isCatalogPriceUnset(product);
   return (
-    <div className="mt-auto flex flex-nowrap items-end justify-between gap-2.5">
+    <div className="mt-auto flex min-w-0 items-end justify-between gap-2">
       {showPrice ? (
-        <div className="flex w-max max-w-full shrink-0 flex-col gap-[3px]">
-          <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60">
+        <div className="flex min-w-0 flex-col gap-[3px]">
+          <p className="text-[14px] font-semibold uppercase leading-[1.5] text-text/60 max-[600px]:text-[11px]">
             {t.catalog.cost}
           </p>
-          <p className="w-max whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[466px]:text-[22px] max-[600px]:text-[22px]">
+          <p className="whitespace-nowrap bg-[image:var(--brand-gradient)] bg-clip-text text-[30px] font-bold leading-[1.2] text-transparent @max-[466px]:text-[22px] max-[600px]:text-[22px]">
             <CatalogPrice product={product} />
           </p>
         </div>
       ) : (
         <span />
       )}
-      <div className="flex shrink-0 items-center gap-2.5 @max-[466px]:gap-2 max-[600px]:gap-2">
+      <div className="flex shrink-0 items-center gap-2">
         <Button
           href={href}
           variant="secondary"
-          className="shrink-0 @max-[466px]:h-[50px] @max-[466px]:px-4 @max-[466px]:text-[13px] max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
+          className="h-[50px] px-3.5 text-[13px] @max-[466px]:h-[46px] @max-[466px]:px-3 @max-[466px]:text-[13px] max-[600px]:h-[46px] max-[600px]:px-3 max-[600px]:text-[13px]"
         >
           {t.catalog.details}
         </Button>

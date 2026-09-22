@@ -22,8 +22,8 @@ import {
   formatAccessLabel,
   formatDurationClock,
   lessonNoun,
+  coverFrames,
   parseDifficulty,
-  stageFrames,
 } from "@/components/site/catalog/display";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { Button } from "@/components/site/ui/Button";
@@ -105,7 +105,7 @@ function lessonLabel(count: number, locale: Locale): string {
 }
 
 function coverList(product: Product): string[] {
-  return stageFrames(product);
+  return coverFrames(product);
 }
 
 function siblingBlockId(productId: string): string | null {

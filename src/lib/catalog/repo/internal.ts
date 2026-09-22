@@ -323,7 +323,7 @@ export function mapProductRow(
       : EMPTY_PROGRAM,
     previewClipUrls:
       row.type === "course"
-        ? pickPreviewClips(row.id, row.catalog_product_program)
+        ? pickPreviewClips(row.catalog_product_program)
         : [],
     i18n: buildProductI18n(row.catalog_product_i18n),
     published: row.published,

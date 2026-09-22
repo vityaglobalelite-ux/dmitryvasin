@@ -96,6 +96,7 @@ export function CoverCarousel({
   tone = "brand",
   hoverZoom = false,
   eager = false,
+  controls = "stage",
 }: {
   urls: string[];
   alt: string;
@@ -105,6 +106,8 @@ export function CoverCarousel({
   tone?: "light" | "brand";
   hoverZoom?: boolean;
   eager?: boolean;
+  /** stage: always-on hero arrows. frame: quiet card arrows, shown on hover. */
+  controls?: "stage" | "frame";
 }) {
   const locale = useLocale();
   const ui = productUi(locale);
@@ -195,17 +198,24 @@ export function CoverCarousel({
           <CarouselArrow
             dir="prev"
             label={ui.coverPrev}
+            variant={controls === "frame" ? "frame" : "stage"}
+            reveal={controls === "frame"}
             tone={tone === "light" ? "glass" : "solid"}
             onClick={() => go(safeIndex - 1)}
           />
           <CarouselArrow
             dir="next"
             label={ui.coverNext}
+            variant={controls === "frame" ? "frame" : "stage"}
+            reveal={controls === "frame"}
             tone={tone === "light" ? "glass" : "solid"}
             onClick={() => go(safeIndex + 1)}
           />
           <div
-            className="pointer-events-auto absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 max-[600px]:bottom-2.5"
+            className={[
+              "pointer-events-auto absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center max-[600px]:bottom-2.5",
+              controls === "frame" ? "gap-1.5" : "gap-2",
+            ].join(" ")}
             role="tablist"
             aria-label={alt}
           >
@@ -233,14 +243,14 @@ export function CoverCarousel({
                       go(i);
                     }}
                     className={[
-                      "size-2.5 rounded-full transition-[transform,opacity,background-color] duration-200",
+                      "size-2 rounded-full transition-[transform,opacity,background-color] duration-200",
                       siteFocusRing,
                       active
                         ? tone === "brand"
-                          ? "scale-110 bg-[image:var(--brand-gradient)]"
+                          ? "scale-110 bg-[image:var(--brand-gradient)] shadow-[0_0_0_1.5px_rgba(255,255,255,0.92)]"
                           : "scale-110 bg-white"
                         : tone === "brand"
-                          ? "bg-[#D9D9D9] hover:bg-[#c4c4c8]"
+                          ? "bg-white/70 shadow-[0_1px_3px_rgba(0,0,0,0.35)] hover:bg-white"
                           : "bg-white/45 hover:bg-white/70",
                     ].join(" ")}
                   />

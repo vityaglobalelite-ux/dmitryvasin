@@ -8,6 +8,50 @@ import {
   type ReactNode,
 } from "react";
 import { CarouselArrow } from "@/components/site/ui/CarouselArrow";
+import { useLocale } from "@/lib/catalog/locale-context";
+
+const railLabels = {
+  ru: { prev: "Предыдущие карточки", next: "Следующие карточки" },
+  en: { prev: "Previous cards", next: "Next cards" },
+} as const;
+
+/** Vertical center of the desktop ProductCard cover (263px). Phones scroll the rail. */
+const railControlTop = "top-[131.5px] max-[600px]:hidden";
+
+/** Stop a sideways drag past the ends from becoming Chrome pull-to-refresh. */
+export function useContainHorizontalOverscroll(
+  ref: React.RefObject<HTMLElement | null>,
+) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let startX = 0;
+    let startY = 0;
+    const onStart = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      startX = touch.clientX;
+      startY = touch.clientY;
+    };
+    const onMove = (event: TouchEvent) => {
+      const touch = event.touches[0];
+      if (!touch || !event.cancelable) return;
+      const dx = touch.clientX - startX;
+      const dy = touch.clientY - startY;
+      if (Math.abs(dx) <= Math.abs(dy)) return;
+      const max = el.scrollWidth - el.clientWidth;
+      const pastStart = el.scrollLeft <= 0 && dx > 0;
+      const pastEnd = el.scrollLeft >= max - 1 && dx < 0;
+      if (pastStart || pastEnd) event.preventDefault();
+    };
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+    };
+  }, [ref]);
+}
 
 function useRailEdges(ref: React.RefObject<HTMLDivElement | null>, token: string) {
   const [edges, setEdges] = useState({ prev: false, next: false });
@@ -53,6 +97,7 @@ export function HorizontalRail({
   fade?: boolean;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
+  const locale = useLocale();
   const { edges } = useRailEdges(scroller, token);
 
   useEffect(() => {
@@ -60,6 +105,8 @@ export function HorizontalRail({
     if (!el) return;
     el.scrollTo({ left: 0, behavior: "auto" });
   }, [token]);
+
+  useContainHorizontalOverscroll(scroller);
 
   const scrollByDir = (dir: -1 | 1) => {
     const el = scroller.current;
@@ -75,7 +122,8 @@ export function HorizontalRail({
       <div
         ref={scroller}
         className={[
-          "flex h-full snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-contain scroll-smooth",
+          "flex h-full snap-x snap-mandatory gap-5 overflow-x-auto overscroll-x-none scroll-smooth",
+          "max-[600px]:scroll-auto max-[600px]:gap-3",
           "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
           scrollerClassName,
         ]
@@ -87,20 +135,32 @@ export function HorizontalRail({
       {fade && edges.prev ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-white to-transparent max-[600px]:w-6"
+          className="pointer-events-none absolute inset-y-0 left-0 z-20 w-10 bg-gradient-to-r from-white to-transparent max-[600px]:hidden"
         />
       ) : null}
       {fade && edges.next ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-white to-transparent max-[600px]:w-8"
+          className="pointer-events-none absolute inset-y-0 right-0 z-20 w-16 bg-gradient-to-l from-white to-transparent max-[600px]:hidden"
         />
       ) : null}
       {edges.prev ? (
-        <CarouselArrow dir="prev" onClick={() => scrollByDir(-1)} />
+        <CarouselArrow
+          dir="prev"
+          variant="rail"
+          label={railLabels[locale].prev}
+          className={`left-3 ${railControlTop}`}
+          onClick={() => scrollByDir(-1)}
+        />
       ) : null}
       {edges.next ? (
-        <CarouselArrow dir="next" onClick={() => scrollByDir(1)} />
+        <CarouselArrow
+          dir="next"
+          variant="rail"
+          label={railLabels[locale].next}
+          className={`right-3 ${railControlTop}`}
+          onClick={() => scrollByDir(1)}
+        />
       ) : null}
     </div>
   );
