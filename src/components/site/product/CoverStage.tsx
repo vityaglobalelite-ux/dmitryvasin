@@ -9,6 +9,8 @@ import {
   type RefObject,
 } from "react";
 import { siteFocusRing } from "@/components/site/ui/Button";
+import { CarouselArrow } from "@/components/site/ui/CarouselArrow";
+import { lessonClip, type LessonClip } from "@/lib/catalog/lesson-clip";
 import { productAssets } from "@/components/site/product/assets";
 import { productUi } from "@/components/site/product/copy";
 import { useLocale } from "@/lib/catalog/locale-context";
@@ -35,6 +37,7 @@ export function CoverStage({
           alt={alt}
           sizes="(max-width: 600px) 320px, 710px"
           tone="light"
+          eager
         />
       ) : urls[0] ? (
         <Image
@@ -92,6 +95,7 @@ export function CoverCarousel({
   intervalMs = 5200,
   tone = "brand",
   hoverZoom = false,
+  eager = false,
 }: {
   urls: string[];
   alt: string;
@@ -100,6 +104,7 @@ export function CoverCarousel({
   intervalMs?: number;
   tone?: "light" | "brand";
   hoverZoom?: boolean;
+  eager?: boolean;
 }) {
   const locale = useLocale();
   const ui = productUi(locale);
@@ -155,10 +160,11 @@ export function CoverCarousel({
     >
       {urls.map((url, i) => {
         const active = i === safeIndex;
-        const poster = coverPosterUrl(url);
-        const prev = (safeIndex + count - 1) % count;
-        const next = (safeIndex + 1) % count;
-        const playAnimated = active || i === next || i === prev;
+        const clip = lessonClip(url);
+        const poster = clip?.poster ?? coverPosterUrl(url);
+        const zoom = hoverZoom
+          ? "transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          : "";
         return (
           <div
             key={`${url}-${i}`}
@@ -172,28 +178,13 @@ export function CoverCarousel({
               src={poster ?? url}
               alt={active ? alt : ""}
               sizes={sizes}
-              className={[
-                "absolute inset-0 size-full object-cover",
-                hoverZoom
-                  ? "transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                  : "",
-              ].join(" ")}
+              className={["absolute inset-0 size-full object-cover", zoom].join(" ")}
               draggable={false}
+              loading={eager && active ? "eager" : "lazy"}
+              decoding="async"
             />
-            {poster && playAnimated && !reduced ? (
-              <img
-                src={url}
-                alt=""
-                sizes={sizes}
-                className={[
-                  "absolute inset-0 size-full object-cover",
-                  hoverZoom
-                    ? "transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                    : "",
-                ].join(" ")}
-                draggable={false}
-                aria-hidden
-              />
+            {clip && active && inView && !reduced ? (
+              <CoverClipVideo clip={clip} zoom={zoom} />
             ) : null}
           </div>
         );
@@ -201,20 +192,18 @@ export function CoverCarousel({
 
       {count > 1 ? (
         <>
-          <button
-            type="button"
-            className="sr-only pointer-events-auto"
+          <CarouselArrow
+            dir="prev"
+            label={ui.coverPrev}
+            tone={tone === "light" ? "glass" : "solid"}
             onClick={() => go(safeIndex - 1)}
-          >
-            {ui.coverPrev}
-          </button>
-          <button
-            type="button"
-            className="sr-only pointer-events-auto"
+          />
+          <CarouselArrow
+            dir="next"
+            label={ui.coverNext}
+            tone={tone === "light" ? "glass" : "solid"}
             onClick={() => go(safeIndex + 1)}
-          >
-            {ui.coverNext}
-          </button>
+          />
           <div
             className="pointer-events-auto absolute bottom-[14px] left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 max-[600px]:bottom-2.5"
             role="tablist"
@@ -262,6 +251,40 @@ export function CoverCarousel({
         </>
       ) : null}
     </div>
+  );
+}
+
+function CoverClipVideo({ clip, zoom }: { clip: LessonClip; zoom: string }) {
+  const video = useRef<HTMLVideoElement>(null);
+  const [decoded, setDecoded] = useState(false);
+
+  useEffect(() => {
+    const el = video.current;
+    if (!el) return;
+    el.muted = true;
+    const started = el.play();
+    if (started) started.catch(() => undefined);
+    return () => el.pause();
+  }, []);
+
+  return (
+    <video
+      ref={video}
+      muted
+      loop
+      playsInline
+      preload="auto"
+      aria-hidden
+      className={[
+        "absolute inset-0 size-full object-cover transition-opacity duration-300",
+        decoded ? "opacity-100" : "opacity-0",
+        zoom,
+      ].join(" ")}
+      onLoadedData={() => setDecoded(true)}
+    >
+      <source src={clip.webm} type="video/webm" />
+      <source src={clip.mp4} type="video/mp4" />
+    </video>
   );
 }
 

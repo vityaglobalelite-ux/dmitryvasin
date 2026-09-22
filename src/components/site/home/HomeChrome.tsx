@@ -288,7 +288,6 @@ export function HomeFooterMobile() {
       <div className="flex items-center gap-2.5">
         <Social size={24} />
       </div>
-      <p className="text-[12px] leading-[1.5] text-text">{copy.footer.metaBan}</p>
       <nav className="flex flex-col gap-2.5 text-[13px] leading-[1.5] text-text">
         {legal.map((item) => (
           <a

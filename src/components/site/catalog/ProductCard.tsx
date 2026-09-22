@@ -6,7 +6,7 @@ import { type ReactNode } from "react";
 import { catalogCardAssets } from "@/components/site/catalog/assets";
 import {
   catalogTypeLabel,
-  coverFrames,
+  stageFrames,
   formatAccessLabel,
   formatDurationClock,
   formatPeekUnlockDate,
@@ -123,7 +123,7 @@ function CoverBody({
       <CoverStage
         href={href}
         alt={coverAlt}
-        frames={coverFrames(product)}
+        frames={stageFrames(product)}
         locked={false}
       >
         <TypeBadge type={product.type} />
@@ -169,7 +169,7 @@ function PeekBody({
   const t = useCatalogT();
   const copy = productCopy(product, locale);
   const coverAlt = copy.title || t.pages.product;
-  const frames = coverFrames(product);
+  const frames = stageFrames(product);
   const locked = !isPeekWatchable(product);
   const unlockDate =
     locked && product.availableAt

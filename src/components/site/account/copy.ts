@@ -13,6 +13,12 @@ const ru = {
   remainingDays: "Осталось: {left} из {total} {unit}",
   remainingHours: "Осталось: {hours} {unit} из {total} {dayUnit}",
   catalogCta: "Перейти в каталог",
+  discoverEyebrow: "Каталог",
+  discoverTitle: "Ещё не в вашей библиотеке",
+  discoverLead:
+    "Эти видео можно добавить сейчас. После оплаты они появятся здесь, рядом с тем, что уже куплено.",
+  discoverAll: "Весь каталог",
+  discoverError: "Не получилось показать остальные видео.",
   emptyTitle: "Пока нет купленных материалов",
   emptyBody:
     "После оплаты уроки и курсы появятся здесь. Выберите видео в каталоге и оформите заказ.",
@@ -91,6 +97,12 @@ const en = {
   remainingDays: "Remaining: {left} of {total} {unit}",
   remainingHours: "Remaining: {hours} {unit} of {total} {dayUnit}",
   catalogCta: "Go to catalog",
+  discoverEyebrow: "Catalog",
+  discoverTitle: "Not in your library yet",
+  discoverLead:
+    "Add these videos now. After payment they appear here, next to what you already own.",
+  discoverAll: "Full catalog",
+  discoverError: "Couldn’t show the rest of the videos.",
   emptyTitle: "No purchased materials yet",
   emptyBody:
     "After payment, lessons and courses will appear here. Choose videos in the catalog and place an order.",

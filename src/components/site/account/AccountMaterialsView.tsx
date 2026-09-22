@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { accountAssets } from "@/components/site/account/assets";
+import { AccountDiscover } from "@/components/site/account/AccountDiscover";
 import { AccountMaterialsEmpty } from "@/components/site/account/AccountMaterialsEmpty";
 import { accountT } from "@/components/site/account/copy";
 import { AccessMeter } from "@/components/site/account/AccessMeter";
@@ -186,6 +187,13 @@ export function AccountMaterialsView() {
     [access.data, fullCourseProduct],
   );
 
+  const ownedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const row of access.data) ids.add(row.productId);
+    for (const row of libraryRows) ids.add(row.productId);
+    return ids;
+  }, [access.data, libraryRows]);
+
   const grouped = useMemo(() => {
     const byType = new Map<ProductType, Access[]>();
     for (const row of libraryRows) {
@@ -235,13 +243,17 @@ export function AccountMaterialsView() {
   if (grouped.length === 0) {
     return (
       <AccountShell email={gate.user?.email} active="materials">
-        <AccountMaterialsEmpty />
+        <div className="flex flex-col gap-12">
+          <AccountMaterialsEmpty />
+          <AccountDiscover ownedIds={ownedIds} />
+        </div>
       </AccountShell>
     );
   }
 
   return (
     <AccountShell email={gate.user?.email} active="materials">
+      <div className="flex flex-col gap-12">
       <div className="flex flex-col gap-5">
         <h1 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-text max-[600px]:text-[28px] max-[600px]:tracking-[-0.84px]">
           {copy.materialsTitle}
@@ -263,6 +275,8 @@ export function AccountMaterialsView() {
             </div>
           </section>
         ))}
+      </div>
+      <AccountDiscover ownedIds={ownedIds} />
       </div>
     </AccountShell>
   );

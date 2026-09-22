@@ -21,7 +21,7 @@ export function HomeTeacherDesktop() {
         z={10}
         className="overflow-hidden rounded-[40px] bg-[image:var(--brand-gradient)]"
       />
-      <Layer x={278} y={830} w={834} h={220} z={12}>
+      <Layer x={278} y={830} w={834} h={168} z={12}>
         {ru ? (
           <FigLines
             as="h2"
@@ -29,9 +29,21 @@ export function HomeTeacherDesktop() {
             className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white"
           />
         ) : (
-          <h2 className="text-[50px] font-medium leading-[1.1] tracking-[-1.5px] text-white">
+          <h2 className="text-[46px] font-medium leading-[1.1] tracking-[-1.2px] text-white">
             {copy.approach}
           </h2>
+        )}
+      </Layer>
+      <Layer x={278} y={1012} w={720} h={96} z={12}>
+        {ru ? (
+          <FigLines
+            lines={homeDesktopBreaks.systemBody}
+            className="text-[20px] font-medium leading-[1.4] text-white/95"
+          />
+        ) : (
+          <p className="max-w-[640px] text-[20px] font-medium leading-[1.4] text-white/95">
+            {copy.approachMethod}
+          </p>
         )}
       </Layer>
       <Layer
@@ -136,23 +148,22 @@ export function HomeTeacherMobile() {
             </>
           )}
         </div>
-        <div className="relative h-[90px] w-[290px] shrink-0">
-          <div className="flex h-[90px] w-[290px] items-center rounded-[10px] bg-white py-[15px] pl-[14px] pr-[15px] shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]">
+        <div className="relative min-h-[108px] w-[290px] shrink-0">
+          <div className="flex min-h-[108px] w-[290px] items-center rounded-[10px] bg-white py-[14px] pl-[14px] pr-[58px] shadow-[0_4px_21.5px_rgba(0,0,0,0.09)]">
             {ru ? (
-              <p className="w-[261px] text-[13px] leading-[1.5] text-text">
-                <span className="whitespace-nowrap">{homeMobileBreaks.people[0]}</span>
+              <p className="text-[13px] leading-[1.45] text-text">
+                {homeMobileBreaks.people[0]}
                 <br />
-                <span className="whitespace-nowrap">
-                  ЛЮДИ:{" "}
-                  <span className="font-semibold">их{"\u00a0"}вопросы, открытия,</span>
-                </span>
-                <br />
-                <span className="whitespace-nowrap font-semibold">
+                <span className="font-semibold">
+                  {homeMobileBreaks.people[1]}
+                  <br />
                   {homeMobileBreaks.people[2]}
+                  <br />
+                  {homeMobileBreaks.people[3]}
                 </span>
               </p>
             ) : (
-              <p className="w-[261px] text-[13px] leading-[1.5] text-text">
+              <p className="text-[13px] leading-[1.45] text-text">
                 {copy.peopleLead}
                 <span className="font-semibold">{copy.peopleRest}</span>
               </p>
@@ -163,7 +174,7 @@ export function HomeTeacherMobile() {
             alt=""
             width={67}
             height={90}
-            className="absolute left-[241px] top-0 z-[1] h-[90px] w-[67px]"
+            className="absolute right-0 top-1/2 z-[1] h-[90px] w-[67px] -translate-y-1/2"
           />
         </div>
       </Layer>

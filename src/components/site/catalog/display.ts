@@ -177,6 +177,16 @@ export function isCatalogPriceUnset(product: Pick<Product, "priceMinor">): boole
   return product.priceMinor <= 0;
 }
 
+/** Course cards and heroes play lesson clips; everything else keeps cover stills. */
+export function stageFrames(
+  product: Pick<Product, "type" | "coverUrl" | "coverUrls" | "previewClipUrls">,
+): string[] {
+  if (product.type === "course" && product.previewClipUrls.length > 0) {
+    return product.previewClipUrls;
+  }
+  return coverFrames(product);
+}
+
 export function coverFrames(product: Pick<Product, "coverUrl" | "coverUrls">): string[] {
   if (product.coverUrls.length > 0) return product.coverUrls;
   if (product.coverUrl) return [product.coverUrl];

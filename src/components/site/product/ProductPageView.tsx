@@ -23,6 +23,7 @@ import {
   formatDurationClock,
   lessonNoun,
   parseDifficulty,
+  stageFrames,
 } from "@/components/site/catalog/display";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { Button } from "@/components/site/ui/Button";
@@ -104,9 +105,7 @@ function lessonLabel(count: number, locale: Locale): string {
 }
 
 function coverList(product: Product): string[] {
-  if (product.coverUrls.length > 0) return product.coverUrls;
-  if (product.coverUrl) return [product.coverUrl];
-  return [];
+  return stageFrames(product);
 }
 
 function siblingBlockId(productId: string): string | null {

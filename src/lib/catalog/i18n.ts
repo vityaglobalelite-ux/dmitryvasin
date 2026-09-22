@@ -27,7 +27,6 @@ const ru = {
     dmca: "Политика DMCA (Сообщение о случаях нарушения авторских прав)",
     mailing:
       "Согласие на получение рекламной и информационной рассылки",
-    metaBan: "*Meta запрещена на территории РФ",
     telegram: "Telegram",
     vk: "VK",
     email: "Email",
@@ -182,7 +181,6 @@ const en = {
     offer: "Offer agreement",
     dmca: "DMCA Policy (Copyright infringement notice)",
     mailing: "Consent to receive promotional and informational emails",
-    metaBan: "*Meta is banned in the Russian Federation",
     telegram: "Telegram",
     vk: "VK",
     email: "Email",

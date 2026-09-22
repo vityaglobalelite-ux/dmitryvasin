@@ -9,6 +9,7 @@ import {
 } from "react";
 import { productUi } from "@/components/site/product/copy";
 import { siteFocusRing } from "@/components/site/ui/Button";
+import { CarouselArrow } from "@/components/site/ui/CarouselArrow";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { lessonClip, type LessonClip } from "@/lib/catalog/lesson-clip";
 import { useLocale } from "@/lib/catalog/locale-context";
@@ -193,6 +194,22 @@ function LessonGifGallery({ urls }: { urls: string[] }) {
             })}
           </div>
         )}
+        {count > 1 ? (
+          <>
+            <CarouselArrow
+              dir="prev"
+              tone="glass"
+              label={ui.coverPrev}
+              onClick={() => go(safeIndex - 1)}
+            />
+            <CarouselArrow
+              dir="next"
+              tone="glass"
+              label={ui.coverNext}
+              onClick={() => go(safeIndex + 1)}
+            />
+          </>
+        ) : null}
       </div>
 
       {count > 1 ? (

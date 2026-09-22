@@ -18,11 +18,12 @@ export const homeCopy = {
   bubbleDanceLead: "Собирайте движения",
   bubbleDanceRest: " в красивый танец, двигайтесь уверенно и легко!",
   approach:
-    "Мой подход появился благодаря тысячам часов в студиях, на уроках, репетициях, выступлениях и соревнованиях.",
+    "Теперь давайте поговорим о системе, на которой основано моё обучение.",
   approachMethod:
-    "Этот исследовательский метод появился благодаря тысячам часов, проведённых в студиях, на уроках, репетициях, выступлениях и соревнованиях.",
-  peopleLead: "Но больше всего на него повлияли ЛЮДИ",
-  peopleRest: ": их вопросы, открытия, трудности и неожиданные инсайты.",
+    "Моя система сформировалась на основе тысяч часов практики в студиях, на уроках и соревнованиях.",
+  peopleLead: "Но наибольшее влияние оказали ЛЮДИ",
+  peopleRest:
+    " — их вопросы, открытия и неожиданные инсайты, которые обогатили мой опыт",
   directionsTitle:
     "Я собрал опыт, наблюдения и практику вокруг 5 направлений исследования танго,",
   directionsSub: "которые важны для танцоров любого уровня.",
@@ -161,15 +162,19 @@ export const homeDirectionsSubLines = [
 /** Desktop 572:1864 wraps only. */
 export const homeDesktopBreaks = {
   approach: [
-    "Мой\u00a0подход появился благодаря",
-    "тысячам часов в\u00a0студиях,",
-    "на\u00a0уроках, репетициях,",
-    "выступлениях и\u00a0соревнованиях.",
+    "Теперь давайте поговорим",
+    "о\u00a0системе, на\u00a0которой",
+    "основано моё обучение.",
+  ],
+  systemBody: [
+    "Моя система сформировалась на\u00a0основе",
+    "тысяч часов практики в\u00a0студиях,",
+    "на\u00a0уроках и\u00a0соревнованиях.",
   ],
   people: [
-    "Но\u00a0больше всего на\u00a0него повлияли ЛЮДИ:",
-    "их\u00a0вопросы, открытия, трудности",
-    "и\u00a0неожиданные инсайты.",
+    "Но\u00a0наибольшее влияние оказали ЛЮДИ\u00a0—",
+    "их\u00a0вопросы, открытия и\u00a0неожиданные",
+    "инсайты, которые обогатили мой опыт",
   ],
   howTitle: ["Как оплатить и смотреть", "обучающие видео?"],
   how1: [
@@ -256,24 +261,22 @@ export const homeMobileBreaks = {
     "танец, двигайтесь уверенно и\u00a0легко!",
   ],
   approach: [
-    "Мой\u00a0подход появился",
-    "благодаря тысячам",
-    "часов в\u00a0студиях, на",
-    "уроках, репетициях,",
-    "выступлениях и",
-    "соревнованиях.",
+    "Теперь давайте",
+    "поговорим о\u00a0системе,",
+    "на\u00a0которой основано",
+    "моё обучение.",
   ],
   approachMethod: [
-    "Этот\u00a0исследовательский метод",
-    "появился благодаря тысячам часов,",
-    "проведённых в\u00a0студиях, на\u00a0уроках,",
-    "репетициях, выступлениях и",
-    "соревнованиях.",
+    "Моя система сформировалась",
+    "на\u00a0основе тысяч часов",
+    "практики в\u00a0студиях, на\u00a0уроках",
+    "и\u00a0соревнованиях.",
   ],
   people: [
-    "Но\u00a0больше всего на\u00a0него повлияли",
-    "ЛЮДИ: их\u00a0вопросы, открытия,",
-    "трудности и\u00a0неожиданные инсайты.",
+    "Но\u00a0наибольшее влияние",
+    "оказали ЛЮДИ\u00a0— их\u00a0вопросы,",
+    "открытия и\u00a0неожиданные инсайты,",
+    "которые обогатили мой опыт",
   ],
   requestTitle: ["У\u00a0каждого танцора\u00a0—", "свой запрос и\u00a0свои цели"],
   requestBody: [
@@ -448,7 +451,7 @@ export const homeReviews = [
     name: "Екатерина Цыброва",
     role: "Абсолютная чемпионка России 2023",
     quote:
-      "Я всегда всем говорю, что именно ты меня научил танцевать танго. И я считаю, что очень даже на хорошем уровне. То, как я сейчас преподаю танго — это также твоя заслуга, то есть, моя логика построена на знаниях, которые я получила на твоих уроках. И конечно, я всегда благодарна тебе за те возможности, которые ты мне давал. А это участие и в телепроектах, и в",
+      "Я всегда всем говорю, что именно ты меня научил танцевать танго. И я считаю, что очень даже на хорошем уровне. То, как я сейчас преподаю танго — это также твоя заслуга, то есть, моя логика построена на знаниях, которые я получила на твоих уроках. И конечно, я всегда благодарна тебе за те возможности, которые ты мне давал. А это участие и в телепроектах, и в спектаклях, и в концертах. Спасибо за то, что так научил танцевать, что чемпионы мира на милонгах меня кабесеют и танцуют ни один раз на разных милонгах!",
     avatar: "avatarEkaterina",
   },
 ] as const;
@@ -470,12 +473,12 @@ const enCopy = {
   bubbleDanceLead: "Gather the movements",
   bubbleDanceRest: " into a beautiful dance, and move with confidence and ease!",
   approach:
-    "My approach grew out of thousands of hours in studios, lessons, rehearsals, performances, and competitions.",
+    "Now let’s talk about the system my teaching is built on.",
   approachMethod:
-    "This research method grew out of thousands of hours spent in studios, lessons, rehearsals, performances, and competitions.",
-  peopleLead: "But PEOPLE shaped it most of all",
+    "My system took shape from thousands of hours of practice in studios, in lessons, and at competitions.",
+  peopleLead: "But PEOPLE had the greatest influence",
   peopleRest:
-    ": their questions, discoveries, difficulties, and unexpected insights.",
+    " — their questions, discoveries, and unexpected insights that enriched my experience",
   directionsTitle:
     "I gathered experience, observation, and practice around 5 directions of tango research,",
   directionsSub: "that matter for dancers at any level.",
@@ -642,7 +645,7 @@ const enReviews = [
     name: "Ekaterina Tsybrova",
     role: "Absolute champion of Russia 2023",
     quote:
-      "I always tell everyone that you were the one who taught me to dance tango. And I believe I dance at a very good level. The way I teach tango now is also your doing — my logic is built on the knowledge I received in your lessons. And of course I am always grateful for the opportunities you gave me, including television projects and",
+      "I always tell everyone that you were the one who taught me to dance tango. And I believe I dance at a very good level. The way I teach tango now is also your doing — my logic is built on the knowledge I received in your lessons. And of course I am always grateful for the opportunities you gave me, including television projects, theatre, and concerts. Thank you for teaching me to dance so well that world champions cabeceo me at milongas and dance with me more than once, at different milongas.",
     avatar: "avatarEkaterina",
   },
 ] as const;

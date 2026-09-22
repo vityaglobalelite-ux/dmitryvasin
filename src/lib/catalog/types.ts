@@ -57,6 +57,11 @@ export type Product = {
   coverUrl: string;
   /** Cover carousel frames (kind=cover), sorted. */
   coverUrls: string[];
+  /**
+   * Up to three lesson clips for course covers. Empty for other types and
+   * when a course has no clips yet — callers fall back to `coverUrls`.
+   */
+  previewClipUrls: string[];
   durationSec: number;
   level: string;
   skills: SkillKey[];

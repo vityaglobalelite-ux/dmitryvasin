@@ -74,7 +74,6 @@ export function SiteFooter() {
           <SocialRow items={social} iconSize={24} />
           <LangDesktop />
         </div>
-        <p className="text-[12px] leading-[1.5] text-text">{copy.footer.metaBan}</p>
         <nav className="flex flex-col gap-2.5 text-[13px] leading-[1.5] text-text">
           {legalMobile.map((item) => (
             <a

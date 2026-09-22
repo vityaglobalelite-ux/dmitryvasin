@@ -14,33 +14,28 @@ import { catalogFilterHref } from "@/components/site/catalog/display";
 import { WholesaleModal } from "@/components/site/cart/WholesaleModal";
 import { Layer } from "@/components/site/home/HomeFrame";
 import { Button, siteFocusRing } from "@/components/site/ui/Button";
-import { siteAssets } from "@/lib/catalog/assets";
+import { HorizontalRail } from "@/components/site/ui/HorizontalRail";
 import { ProductCardSkeleton } from "@/components/site/ui/Skeleton";
 import { homeT } from "@/lib/catalog/home-copy";
 import { isStorefrontListingProduct } from "@/lib/catalog/bundles";
 import { useProducts } from "@/lib/catalog/hooks";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
-import type { Product, ProductType } from "@/lib/catalog/types";
+import type { Product } from "@/lib/catalog/types";
 
 const DESKTOP_COUNT = 3;
-const MOBILE_COUNT = 3;
 const SWAP_MS = 180;
 const MOBILE_RAIL_Y = 4883;
 /** Figma: first card top (4883) → see-all bottom (6444+22). */
 const MOBILE_RAIL_RESERVED_H = 6466 - MOBILE_RAIL_Y;
 
 const homeCatalogFilterTypes = ["lifehack", "lesson", "course", "peek"] as const;
-type HomeFilter = (typeof homeCatalogFilterTypes)[number];
-const DEFAULT_FILTER: HomeFilter = "course";
+type HomeFilter = "all" | (typeof homeCatalogFilterTypes)[number];
+const DEFAULT_FILTER: HomeFilter = "all";
 
-function isHomeFilter(type: ProductType): type is HomeFilter {
-  return (homeCatalogFilterTypes as readonly string[]).includes(type);
-}
-
-function useHomeCatalogRail(count: number) {
+function useHomeCatalogRail() {
   const locale = useLocale();
-  const { copy, filters, emptyFilter: emptyFilterCopy } = homeT(locale);
+  const { copy, filters: typeFilters, emptyFilter: emptyFilterCopy } = homeT(locale);
   const catalogCopy = useCatalogT();
   const routes = useLocalizedRoutes();
   const { data, loading, error } = useProducts({ locale });
@@ -68,18 +63,32 @@ function useHomeCatalogRail(count: number) {
     }, SWAP_MS);
   };
 
-  const items = useMemo(
-    () =>
-      data
-        .filter((product) => product.type === displayedType)
-        .filter(isStorefrontListingProduct)
-        .slice(0, count),
-    [count, data, displayedType],
+  const listing = useMemo(
+    () => data.filter(isStorefrontListingProduct),
+    [data],
+  );
+
+  const items = useMemo(() => {
+    if (displayedType === "all") return listing;
+    return listing.filter((product) => product.type === displayedType);
+  }, [displayedType, listing]);
+
+  const filters = useMemo(
+    () => [
+      { type: "all" as const, label: locale === "en" ? "All" : "Все" },
+      ...typeFilters,
+    ],
+    [locale, typeFilters],
   );
 
   const failed = !loading && Boolean(error);
-  const emptyCatalog = !loading && !error && data.length === 0;
-  const emptyFilter = !loading && !error && data.length > 0 && items.length === 0;
+  const emptyCatalog = !loading && !error && listing.length === 0;
+  const emptyFilter =
+    displayedType !== "all" &&
+    !loading &&
+    !error &&
+    listing.length > 0 &&
+    items.length === 0;
 
   const onAdd = (product: Product) => {
     void addToCart.add(product.id);
@@ -109,7 +118,10 @@ function useHomeCatalogRail(count: number) {
     inCartIds,
     modalOpen: addToCart.modalOpen,
     closeModal: addToCart.closeModal,
-    seeAllHref: catalogFilterHref(selectedType, locale),
+    seeAllHref:
+      selectedType === "all"
+        ? routes.catalog
+        : catalogFilterHref(selectedType, locale),
     seeAllFilterLabel,
   };
 }
@@ -163,28 +175,38 @@ function CatalogSeeAll({
       href={href}
       aria-label={filterLabel ? `${label}, ${filterLabel}` : label}
       className={[
-        "group inline-flex items-center whitespace-nowrap font-medium text-text",
-        "rounded-[4px] py-3.5 -my-3.5 transition-opacity duration-200 ease-out hover:opacity-70",
-        "motion-reduce:transition-none",
+        "group inline-flex items-center justify-center gap-3 rounded-full bg-[image:var(--brand-gradient)] font-semibold text-white",
+        "shadow-[0_12px_32px_rgba(219,12,37,0.28)]",
+        "transition-[transform,filter] duration-200 ease-out hover:-translate-y-0.5 hover:brightness-105 active:scale-[0.98]",
+        "motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100",
         siteFocusRing,
-        compact ? "gap-2 text-[16px] leading-none" : "gap-3 text-[20px] leading-none",
+        compact
+          ? "h-[50px] w-full px-5 text-[15px]"
+          : "h-[56px] px-7 text-[18px] tracking-[0.2px]",
       ].join(" ")}
     >
-      {label}
-      <img
-        src={siteAssets.breadcrumb}
-        alt=""
-        width={19}
-        height={7}
+      <span>{label}</span>
+      <span
         aria-hidden
-        className="h-[7px] w-[18px] shrink-0 transition-transform duration-200 ease-out group-hover:translate-x-1 motion-reduce:transition-none motion-reduce:group-hover:translate-x-0"
-      />
+        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/20 transition-transform duration-200 ease-out group-hover:translate-x-0.5 motion-reduce:transition-none"
+      >
+        <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
+          <path
+            d="M6.5 3.5L12 9l-5.5 5.5"
+            stroke="currentColor"
+            strokeWidth="1.75"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </span>
     </Link>
   );
 }
 
 export function HomeCatalogRailDesktop() {
-  const rail = useHomeCatalogRail(DESKTOP_COUNT);
+  const rail = useHomeCatalogRail();
+  const emptyType = rail.displayedType === "all" ? null : rail.displayedType;
 
   return (
     <>
@@ -194,12 +216,12 @@ export function HomeCatalogRailDesktop() {
         </h2>
       </Layer>
       <Layer
-        x={1360}
-        y={4660}
-        w={320}
-        h={55}
+        x={1288}
+        y={4656}
+        w={392}
+        h={56}
         z={3}
-        className="flex items-end justify-end pb-[7px]"
+        className="flex items-center justify-end"
       >
         <CatalogSeeAll
           href={rail.seeAllHref}
@@ -217,14 +239,12 @@ export function HomeCatalogRailDesktop() {
             key={chip.type}
             label={chip.label}
             selected={rail.selectedType === chip.type}
-            onSelect={() => {
-              if (isHomeFilter(chip.type)) rail.selectType(chip.type);
-            }}
+            onSelect={() => rail.selectType(chip.type)}
           />
         ))}
       </div>
 
-      <Layer x={239} y={4844} w={1441} h={631} z={2}>
+      <Layer x={239} y={4844} w={1681} h={631} z={2}>
         {rail.loading ? (
           <div className="flex h-full gap-5" aria-busy="true">
             {Array.from({ length: DESKTOP_COUNT }, (_, i) => (
@@ -243,7 +263,7 @@ export function HomeCatalogRailDesktop() {
               </Button>
             }
           />
-        ) : rail.emptyFilter ? (
+        ) : rail.emptyFilter && emptyType ? (
           <div
             className={[
               "flex h-full gap-5 transition-[opacity,transform] duration-200 ease-out",
@@ -251,11 +271,11 @@ export function HomeCatalogRailDesktop() {
             ].join(" ")}
           >
             {Array.from({ length: DESKTOP_COUNT }, (_, i) => (
-              <div key={`empty-${rail.displayedType}-${i}`} className="h-full w-[467px] shrink-0">
+              <div key={`empty-${emptyType}-${i}`} className="h-full w-[467px] shrink-0">
                 <EmptyRailCard
                   featured={i === 0}
-                  title={rail.emptyFilterCopy[rail.displayedType].title}
-                  body={rail.emptyFilterCopy[rail.displayedType].body}
+                  title={rail.emptyFilterCopy[emptyType].title}
+                  body={rail.emptyFilterCopy[emptyType].body}
                   cta={rail.copy.emptyFilterCta}
                   href={rail.routes.catalog}
                 />
@@ -263,15 +283,20 @@ export function HomeCatalogRailDesktop() {
             ))}
           </div>
         ) : (
-          <div
+          <HorizontalRail
+            token={rail.displayedType}
             className={[
-              "flex h-full gap-5 transition-[opacity,transform] duration-200 ease-out",
-              rail.items.length < DESKTOP_COUNT ? "justify-center" : "",
+              "h-full transition-[opacity,transform] duration-200 ease-out",
               rail.cardsVisible ? "translate-y-0 opacity-100" : "translate-y-1 opacity-0",
             ].join(" ")}
+            scrollerClassName="h-full items-stretch pr-10"
           >
             {rail.items.map((product) => (
-              <div key={product.id} className="h-full w-[467px] shrink-0">
+              <div
+                key={product.id}
+                data-rail-card
+                className="h-full w-[467px] shrink-0 snap-start"
+              >
                 <ProductCard
                   product={product}
                   onAdd={rail.onAdd}
@@ -280,7 +305,7 @@ export function HomeCatalogRailDesktop() {
                 />
               </div>
             ))}
-          </div>
+          </HorizontalRail>
         )}
       </Layer>
       <WholesaleModal open={rail.modalOpen} onClose={rail.closeModal} />
@@ -293,7 +318,8 @@ export function HomeCatalogRailMobile({
 }: {
   onRailShift?: (shift: number) => void;
 }) {
-  const rail = useHomeCatalogRail(MOBILE_COUNT);
+  const rail = useHomeCatalogRail();
+  const emptyType = rail.displayedType === "all" ? null : rail.displayedType;
   const stackRef = useRef<HTMLDivElement>(null);
   const showSeeAll = !rail.emptyCatalog && !rail.failed;
 
@@ -324,17 +350,21 @@ export function HomeCatalogRailMobile({
 
   let stack: ReactNode;
   if (rail.loading) {
-    stack = Array.from({ length: MOBILE_COUNT }, (_, i) => (
-      <div
-        key={i}
-        className="h-[500px] overflow-hidden rounded-[10px] bg-light-gray"
-      >
-        <ProductCardSkeleton />
+    stack = (
+      <div className="flex gap-3 overflow-hidden" aria-busy="true">
+        {Array.from({ length: 2 }, (_, i) => (
+          <div
+            key={i}
+            className="h-[500px] w-[280px] shrink-0 overflow-hidden rounded-[10px] bg-light-gray"
+          >
+            <ProductCardSkeleton />
+          </div>
+        ))}
       </div>
-    ));
+    );
   } else if (rail.emptyCatalog || rail.failed) {
     stack = (
-      <div className="flex min-h-[500px] flex-col items-start justify-center rounded-[10px] bg-light-gray p-5">
+      <div className="flex min-h-[280px] flex-col items-start justify-center rounded-[10px] bg-light-gray p-5">
         <p className="text-[16px] font-medium leading-[1.3] text-text">
           {rail.failed ? rail.copy.errorTitle : rail.copy.emptyTitle}
         </p>
@@ -346,29 +376,36 @@ export function HomeCatalogRailMobile({
         </Button>
       </div>
     );
-  } else if (rail.emptyFilter) {
-    stack = Array.from({ length: MOBILE_COUNT }, (_, i) => (
-      <div key={`empty-${rail.displayedType}-${i}`} className="h-[500px]">
-        <EmptyRailCard
-          featured={i === 0}
-          compact
-          title={rail.emptyFilterCopy[rail.displayedType].title}
-          body={rail.emptyFilterCopy[rail.displayedType].body}
-          cta={rail.copy.emptyFilterCta}
-          href={rail.routes.catalog}
-        />
-      </div>
-    ));
-  } else {
-    stack = rail.items.map((product) => (
-      <ProductCard
-        key={`${rail.displayedType}-${product.id}`}
-        product={product}
-        onAdd={rail.onAdd}
-        adding={rail.pendingId === product.id}
-        inCart={rail.inCartIds.has(product.id)}
+  } else if (rail.emptyFilter && emptyType) {
+    stack = (
+      <EmptyRailCard
+        featured
+        compact
+        title={rail.emptyFilterCopy[emptyType].title}
+        body={rail.emptyFilterCopy[emptyType].body}
+        cta={rail.copy.emptyFilterCta}
+        href={rail.routes.catalog}
       />
-    ));
+    );
+  } else {
+    stack = (
+      <HorizontalRail token={rail.displayedType} scrollerClassName="items-stretch pb-1">
+        {rail.items.map((product) => (
+          <div
+            key={`${rail.displayedType}-${product.id}`}
+            data-rail-card
+            className="w-[280px] shrink-0 snap-start"
+          >
+            <ProductCard
+              product={product}
+              onAdd={rail.onAdd}
+              adding={rail.pendingId === product.id}
+              inCart={rail.inCartIds.has(product.id)}
+            />
+          </div>
+        ))}
+      </HorizontalRail>
+    );
   }
 
   return (
@@ -388,9 +425,7 @@ export function HomeCatalogRailMobile({
             key={chip.type}
             label={chip.label}
             selected={rail.selectedType === chip.type}
-            onSelect={() => {
-              if (isHomeFilter(chip.type)) rail.selectType(chip.type);
-            }}
+            onSelect={() => rail.selectType(chip.type)}
             compact
           />
         ))}
@@ -406,14 +441,12 @@ export function HomeCatalogRailMobile({
         >
           {stack}
           {showSeeAll ? (
-            <div className="flex h-[22px] items-center justify-end">
-              <CatalogSeeAll
-                href={rail.seeAllHref}
-                label={rail.copy.seeAll}
-                filterLabel={rail.seeAllFilterLabel}
-                compact
-              />
-            </div>
+            <CatalogSeeAll
+              href={rail.seeAllHref}
+              label={rail.copy.seeAll}
+              filterLabel={rail.seeAllFilterLabel}
+              compact
+            />
           ) : null}
         </div>
       </Layer>

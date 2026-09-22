@@ -9,6 +9,7 @@ import type {
   ProgramBlock,
   ProgramLesson,
 } from "@/lib/catalog/types";
+import { pickPreviewClips } from "@/lib/catalog/preview-clips";
 import { filterSkillKeys } from "@/lib/catalog/skills";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -265,6 +266,17 @@ function bundleChildIdsFromRow(row: ProductRow): string[] {
     .filter(Boolean);
 }
 
+function programRowsHaveCopy(
+  rows: ProductProgramRow[] | null | undefined,
+): boolean {
+  for (const row of rows ?? []) {
+    for (const item of row.catalog_product_program_i18n ?? []) {
+      if (item.body?.trim()) return true;
+    }
+  }
+  return false;
+}
+
 function bundleParentIdFromRow(row: ProductRow): string | null {
   const embedded = row.bundle_parent;
   if (!embedded) return null;
@@ -306,7 +318,13 @@ export function mapProductRow(
     sortIndex: row.sort_index ?? undefined,
     bundleParentId: bundleParentIdFromRow(row),
     bundleChildIds: bundleChildIdsFromRow(row),
-    programBlocks: buildCourseProgram(row.catalog_product_program, locale),
+    programBlocks: programRowsHaveCopy(row.catalog_product_program)
+      ? buildCourseProgram(row.catalog_product_program, locale)
+      : EMPTY_PROGRAM,
+    previewClipUrls:
+      row.type === "course"
+        ? pickPreviewClips(row.id, row.catalog_product_program)
+        : [],
     i18n: buildProductI18n(row.catalog_product_i18n),
     published: row.published,
   };
@@ -335,13 +353,14 @@ const I18N_EMBED =
 const PRODUCT_LIST_EMBEDS = `
   catalog_product_i18n ( locale, title, short ),
   catalog_product_media ( sort, url, kind ),
-  bundle_parent:catalog_product_bundles!catalog_product_bundles_child_id_fkey ( parent_id )
+  bundle_parent:catalog_product_bundles!catalog_product_bundles_child_id_fkey ( parent_id ),
+  catalog_product_program ( block_key, sort, kind, gif_urls )
 `;
 
 /** Public product columns — never kinescope / videos. */
 export const PRODUCT_SELECT = `${PRODUCT_COLUMNS}, ${PRODUCT_EMBEDS}`;
 
-/** Catalog/home cards: covers + titles only, no program/gifs/long bodies. */
+/** Catalog/home cards: covers, titles, and course preview clips — no lesson copy. */
 export const PRODUCT_LIST_SELECT = `${PRODUCT_COLUMNS}, ${PRODUCT_LIST_EMBEDS}`;
 
 /** Pre-023 schema: instance has not applied catalog_product_model yet. */
