@@ -2,12 +2,12 @@
  * Club sales window + list prices.
  * Keep in sync with src/lib/tariff-stage3.ts and supabase/functions/_shared/legacy-prices.ts.
  *
- * ACCESS_CLOSE_ISO / bot_settings.price_increase_at — 24 Sep 2026 00:00 Miami:
+ * ACCESS_CLOSE_ISO / bot_settings.price_increase_at — 26 Sep 2026 00:00 Miami:
  * countdown until then, then new enrollment closes. Existing members keep access.
  * Amounts: tariff_prices.price_list current|legacy, locked on bot_users.pricing_cohort.
  * LEGACY_PRICES is the frozen snapshot for that list — not applied because someone paid.
  */
-const ACCESS_CLOSE_ISO = "2026-09-24T00:00:00-04:00";
+const ACCESS_CLOSE_ISO = "2026-09-26T00:00:00-04:00";
 /** @deprecated historical Aug-21 cutover; sales window now ACCESS_CLOSE_ISO */
 const CLUB_CUTOVER_ISO = ACCESS_CLOSE_ISO;
 const PRICE_INCREASE_KEY = "price_increase_at";

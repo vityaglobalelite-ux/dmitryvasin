@@ -64,7 +64,7 @@ function phaseFor(target: Date | null, now: number): SalesPhase {
 }
 
 /**
- * Cutover from bot_settings.price_increase_at (fallback: 24 Sep 2026 00:00 Miami).
+ * Cutover from bot_settings.price_increase_at (fallback: 26 Sep 2026 00:00 Miami).
  * countdown — access still open, timer running
  * closed — new enrollment stopped
  * open — no deadline in settings

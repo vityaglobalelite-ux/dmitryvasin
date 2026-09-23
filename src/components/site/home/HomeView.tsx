@@ -1,12 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  HomeHeaderDesktop,
-  HomeHeaderMobile,
-  HomeFooterDesktop,
-  HomeFooterMobile,
-} from "@/components/site/home/HomeChrome";
+import { HomeFooterDesktop, HomeFooterMobile } from "@/components/site/home/HomeChrome";
 import { HomeCatalogRailDesktop, HomeCatalogRailMobile } from "@/components/site/home/HomeCatalogRail";
 import { HomeCategoriesDesktop, HomeCategoriesMobile } from "@/components/site/home/HomeCategories";
 import { HomeDirectionsDesktop, HomeDirectionsMobile } from "@/components/site/home/HomeDirections";
@@ -30,7 +25,6 @@ function HomeDesktopCanvas() {
       <div className="contents" data-eager-images>
         <HomeHeroDesktop />
         <HomeTeacherDesktop />
-        <HomeHeaderDesktop />
       </div>
       <HomeDirectionsDesktop />
       <HomeCategoriesDesktop />
@@ -57,7 +51,6 @@ function HomeMobileCanvas({
     >
       <div className="contents" data-eager-images>
         <HomeHeroMobile />
-        <HomeHeaderMobile />
       </div>
       <HomeTeacherMobile />
       <HomeDirectionsMobile />

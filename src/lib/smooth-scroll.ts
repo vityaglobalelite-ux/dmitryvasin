@@ -27,9 +27,13 @@ function stickyOffset(): number {
 /**
  * Visual scrollY so the element sits just below the sticky nav.
  * getBoundingClientRect is reliable with CSS zoom (matches window.scrollY units).
+ * `offset` defaults to the privateclub landing nav.
  */
-export function getSectionScrollTop(el: Element): number {
-  const top = window.scrollY + el.getBoundingClientRect().top - stickyOffset();
+export function getSectionScrollTop(
+  el: Element,
+  offset: number = stickyOffset(),
+): number {
+  const top = window.scrollY + el.getBoundingClientRect().top - offset;
   const max =
     Math.max(
       document.documentElement.scrollHeight,
@@ -180,10 +184,16 @@ export function smoothScrollToY(target: number | (() => number)): Promise<void> 
 
 export function smoothScrollToId(
   id: string,
-  opts?: { updateHash?: boolean; delayMs?: number },
+  opts?: {
+    updateHash?: boolean;
+    delayMs?: number;
+    /** Sticky chrome height, re-read every frame; defaults to the landing nav. */
+    offset?: () => number;
+  },
 ): Promise<boolean> {
   const updateHash = opts?.updateHash ?? true;
   const delayMs = opts?.delayMs ?? 0;
+  const offset = opts?.offset;
 
   const run = async () => {
     const el = document.getElementById(id);
@@ -198,7 +208,9 @@ export function smoothScrollToId(
     }
 
     // Live target — re-measured every frame (menu close / layout settle)
-    await smoothScrollToY(() => getSectionScrollTop(el));
+    await smoothScrollToY(() =>
+      getSectionScrollTop(el, offset ? offset() : stickyOffset()),
+    );
 
     if (updateHash) {
       const next = `#${id}`;
@@ -210,8 +222,14 @@ export function smoothScrollToId(
   };
 
   if (delayMs > 0) {
+    // Any scroll started or cancelled meanwhile supersedes this one
+    const token = scrollToken;
     return new Promise((resolve) => {
       window.setTimeout(() => {
+        if (token !== scrollToken) {
+          resolve(false);
+          return;
+        }
         void run().then(resolve);
       }, delayMs);
     });

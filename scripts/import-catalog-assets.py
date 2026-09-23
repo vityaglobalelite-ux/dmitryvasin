@@ -2,6 +2,7 @@
 Unpack Figma plaque zip + posture gifs → public/assets/site/catalog/
 
   python scripts/import-catalog-assets.py
+  python scripts/import-catalog-assets.py --course-2-plaques
   node scripts/import-catalog-assets.mjs
 """
 from __future__ import annotations
@@ -26,6 +27,9 @@ PLAQUE_NAMES = (
     "Плашки под сайт_каталог.zip",
 )
 PLAQUE_ZIP_SIZES = (32_519_136, 17_948_107)
+COURSE_2_PLAQUE_NAMES = (
+    "Для курса плашки.zip",
+)
 GIF_NAMES = (
     "gif-20260919T221519Z-1-001.zip",
 )
@@ -67,6 +71,33 @@ def find_plaque_zip() -> pathlib.Path:
     raise SystemExit(f"plaque zip not found in {DOWNLOADS}")
 
 
+def find_course2_plaque_zip() -> pathlib.Path | None:
+    for name in COURSE_2_PLAQUE_NAMES:
+        path = DOWNLOADS / name
+        if path.is_file():
+            return path
+    return None
+
+
+def import_course2_plaques(plaque_zip: pathlib.Path) -> None:
+    """Dedicated zip: «Для курса плашки/{1,2,3}.png|jpg» → covers/course-2-N.webp."""
+    covers = OUT / "covers"
+    covers.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(plaque_zip) as zf:
+        names = zf.namelist()
+        for frame in range(1, 4):
+            pat = re.compile(rf"(^|/){frame}\.(png|jpe?g)$", re.I)
+            entry = next(
+                (name for name in names if pat.search(name.replace("\\", "/"))),
+                None,
+            )
+            if not entry:
+                raise SystemExit(f"course-2 plaque {frame} missing in {plaque_zip.name}")
+            dest = covers / f"course-2-{frame}.webp"
+            print(f"course-2/{frame} <- {entry}")
+            to_webp_still(zf.read(entry), dest)
+
+
 def find_gif_zip() -> pathlib.Path:
     for name in GIF_NAMES:
         path = DOWNLOADS / name
@@ -92,7 +123,8 @@ def ffmpeg_bin() -> str:
 def to_webp_still(data: bytes, dest: pathlib.Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     image = Image.open(io.BytesIO(data))
-    image.save(dest, format="WEBP", quality=86)
+    image = image.convert("RGB")
+    image.save(dest, format="WEBP", quality=86, method=6)
 
 
 def run_ffmpeg(args: list[str]) -> None:
@@ -296,9 +328,22 @@ def copy_posture_photo_covers() -> None:
 
 
 def main() -> None:
+    if "--course-2-plaques" in sys.argv:
+        course2_zip = find_course2_plaque_zip()
+        if not course2_zip:
+            raise SystemExit("Для курса плашки.zip not found in Downloads")
+        print(f"course-2 plaques: {course2_zip}")
+        import_course2_plaques(course2_zip)
+        print("Course 2 plaques imported.")
+        return
+
     plaque_zip = find_plaque_zip()
     print(f"plaques: {plaque_zip}")
     import_plaques(plaque_zip)
+    course2_zip = find_course2_plaque_zip()
+    if course2_zip:
+        print(f"course-2 plaques: {course2_zip}")
+        import_course2_plaques(course2_zip)
     if "--plaques-only" in sys.argv:
         print("Catalog plaque assets imported (--plaques-only).")
         return

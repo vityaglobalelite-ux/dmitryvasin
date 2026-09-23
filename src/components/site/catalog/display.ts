@@ -177,7 +177,7 @@ export function isCatalogPriceUnset(product: Pick<Product, "priceMinor">): boole
   return product.priceMinor <= 0;
 }
 
-/** Course cards play the showcase clips. Product heroes keep cover stills. */
+/** Course cards play distinct lesson clips (balls + band). Product heroes keep cover stills. */
 export function stageFrames(
   product: Pick<Product, "type" | "coverUrl" | "coverUrls" | "previewClipUrls">,
 ): string[] {

@@ -1,8 +1,8 @@
 /**
- * Public list prices + sales-window close (24 Sep 2026 00:00 Miami).
+ * Public list prices + sales-window close (26 Sep 2026 00:00 Miami).
  * Keep in sync with bot/src/club-cutover.js NEW_LIST_PRICES.
  */
-export const CLUB_CUTOVER_ISO = "2026-09-24T00:00:00-04:00";
+export const CLUB_CUTOVER_ISO = "2026-09-26T00:00:00-04:00";
 
 export const CLUB_CLOSED_ID = "club-closed";
 

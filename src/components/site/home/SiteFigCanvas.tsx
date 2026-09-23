@@ -7,12 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useRegisterCanvasOverlayHost } from "@/components/site/auth/overlay-host";
 import {
   getSiteCanvasZoom,
   invalidateSiteZoomViewportLock,
   isSiteMobileViewport,
   prefersTransformCanvasScale,
+  SITE_CANVAS_WIDTH_VAR,
   supportsCssZoom,
   type SiteCanvasMode,
 } from "@/lib/catalog/breakpoint";
@@ -40,7 +40,6 @@ export function SiteFigCanvas({
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
-  const overlayHostRef = useRegisterCanvasOverlayHost();
   const [mode, setMode] = useState<SiteCanvasMode>("desktop");
   const [ready, setReady] = useState(false);
 
@@ -85,7 +84,11 @@ export function SiteFigCanvas({
       const useTransform =
         prefersTransformCanvasScale() || !supportsCssZoom();
 
-      el.dataset.canvasScale = String(next);
+      /* Site header lives outside the canvas — it aligns to the canvas column */
+      document.documentElement.style.setProperty(
+        SITE_CANVAS_WIDTH_VAR,
+        `${Math.min(canvas.w * next, document.documentElement.clientWidth)}px`,
+      );
 
       if (useTransform) {
         el.style.zoom = "";
@@ -123,6 +126,7 @@ export function SiteFigCanvas({
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onOrientation);
       window.visualViewport?.removeEventListener("resize", onResize);
+      document.documentElement.style.removeProperty(SITE_CANVAS_WIDTH_VAR);
     };
   }, [canvas.h, canvas.w, mode]);
 
@@ -159,10 +163,6 @@ export function SiteFigCanvas({
         data-site-canvas={mode}
       >
         <div className="relative z-0">{children(mode)}</div>
-        <div
-          ref={overlayHostRef}
-          className="pointer-events-none absolute inset-0 z-[200] has-[dialog]:pointer-events-auto"
-        />
       </div>
     </div>
   );

@@ -17,6 +17,7 @@ function isHomePath(pathname: string) {
 
 export function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? "/";
+  // Home draws its footer inside the Figma canvas; the header is shared
   const hideChrome = isHomePath(pathname);
   useRouteScrollTop();
 
@@ -32,7 +33,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
               data-site-home={hideChrome ? "true" : undefined}
             >
               <SiteSkipLink />
-              {hideChrome ? null : <SiteNav />}
+              <SiteNav />
               <SiteMain>{children}</SiteMain>
               {hideChrome ? null : <SiteFooter />}
             </div>

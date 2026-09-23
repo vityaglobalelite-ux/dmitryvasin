@@ -77,51 +77,17 @@ const CLOSE_MS = 280;
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-function getCanvasScale(canvas: HTMLElement): number {
-  const named = Number(canvas.dataset.canvasScale);
-  if (Number.isFinite(named) && named > 0) return named;
-  const zoom = Number(canvas.style.zoom);
-  if (Number.isFinite(zoom) && zoom > 0) return zoom;
-  const width = canvas.offsetWidth;
-  return width > 0 ? canvas.getBoundingClientRect().width / width : 1;
-}
-
-function syncDialogToVisibleFrame(node: HTMLDialogElement, host: HTMLElement) {
-  const canvas = host.closest<HTMLElement>("[data-site-canvas]");
+/** Pin the dialog to the visible viewport (mobile keyboard shrinks it). */
+function syncDialogToVisibleFrame(node: HTMLDialogElement) {
   const vv = window.visualViewport;
-  const viewTop = vv?.offsetTop ?? 0;
-  const viewLeft = vv?.offsetLeft ?? 0;
-  const viewW = vv?.width ?? window.innerWidth;
-  const viewH = vv?.height ?? window.innerHeight;
-
-  if (!canvas) {
-    node.style.top = `${viewTop}px`;
-    node.style.left = `${viewLeft}px`;
-    node.style.width = `${viewW}px`;
-    node.style.height = `${viewH}px`;
-    return;
-  }
-
-  const scale = getCanvasScale(canvas);
-  const canvasRect = canvas.getBoundingClientRect();
-  node.style.top = `${(viewTop - canvasRect.top) / scale}px`;
-  node.style.left = `${(viewLeft - canvasRect.left) / scale}px`;
-  node.style.width = `${viewW / scale}px`;
-  node.style.height = `${viewH / scale}px`;
+  node.style.top = `${vv?.offsetTop ?? 0}px`;
+  node.style.left = `${vv?.offsetLeft ?? 0}px`;
+  node.style.width = `${vv?.width ?? window.innerWidth}px`;
+  node.style.height = `${vv?.height ?? window.innerHeight}px`;
 }
 
 function inertBackground(host: HTMLElement): Element[] {
   const inerted: Element[] = [];
-  const canvas = host.closest("[data-site-canvas]");
-  if (canvas) {
-    for (const child of canvas.children) {
-      if (child !== host) {
-        child.setAttribute("inert", "");
-        inerted.push(child);
-      }
-    }
-    return inerted;
-  }
   const chrome = document.querySelector("[data-site-chrome]");
   if (chrome && !chrome.contains(host)) {
     chrome.setAttribute("inert", "");
@@ -334,7 +300,7 @@ function AuthDialog({
       node.style.left = "";
     };
 
-    const syncViewport = () => syncDialogToVisibleFrame(node, host);
+    const syncViewport = () => syncDialogToVisibleFrame(node);
     syncViewport();
     window.visualViewport?.addEventListener("resize", syncViewport);
     window.visualViewport?.addEventListener("scroll", syncViewport);

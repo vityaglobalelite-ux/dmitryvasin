@@ -10,6 +10,12 @@ export const SITE_DESKTOP_VIEWPORT_FRAME_H = 900;
 /** Never blow past Figma 1:1 on wide monitors. */
 export const SITE_MAX_DESKTOP_CANVAS_ZOOM = 1;
 
+/**
+ * Visual (scaled) home canvas width in px, set on <html> while the canvas is
+ * mounted. The site header lives outside the canvas and aligns to its column.
+ */
+export const SITE_CANVAS_WIDTH_VAR = "--site-canvas-w";
+
 /** Relock zoom viewport only on real width / orientation changes — not URL-bar show/hide. */
 const VIEWPORT_WIDTH_RELOCK_PX = 48;
 
