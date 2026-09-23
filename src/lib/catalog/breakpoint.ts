@@ -29,12 +29,14 @@ type LockedZoomViewport = {
 
 let lockedZoomViewport: LockedZoomViewport | null = null;
 
+/**
+ * Layout viewport, not the visual one. The on-screen keyboard and pinch-zoom
+ * shrink `visualViewport` — a portrait phone with the keyboard up reads as
+ * landscape and would swap the 360 canvas for the 1920 one mid-typing.
+ */
 export function getSiteViewportSize() {
-  const w =
-    window.visualViewport?.width ?? document.documentElement.clientWidth;
-  const h =
-    window.visualViewport?.height ?? document.documentElement.clientHeight;
-  return { w, h };
+  const root = document.documentElement;
+  return { w: root.clientWidth, h: root.clientHeight };
 }
 
 function aspectOf(w: number, h: number): "portrait" | "landscape" {
