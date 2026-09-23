@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
 
 export const siteFocusRing =
   "outline-none focus-visible:ring-2 focus-visible:ring-plum/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
@@ -29,6 +29,7 @@ type ButtonAsLink = CommonProps & {
   href: string;
   type?: never;
   disabled?: boolean;
+  style?: CSSProperties;
 };
 
 export type SiteButtonProps = ButtonAsButton | ButtonAsLink;
@@ -64,7 +65,12 @@ export function Button(props: SiteButtonProps) {
 
   if ("href" in props && props.href) {
     return (
-      <Link href={props.href} className={cls} aria-disabled={props.disabled}>
+      <Link
+        href={props.href}
+        className={cls}
+        style={props.style}
+        aria-disabled={props.disabled}
+      >
         {children}
       </Link>
     );
