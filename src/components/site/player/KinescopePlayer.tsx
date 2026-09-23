@@ -1,7 +1,13 @@
 "use client";
 
 import { load } from "@kinescope/player-iframe-api-loader";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useEffectEvent,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Button } from "@/components/site/ui/Button";
 import { catalogT } from "@/lib/catalog/i18n";
 import { useAuthModal } from "@/components/site/auth/AuthModal";
@@ -18,6 +24,7 @@ import {
   upsertWatchProgress,
 } from "@/lib/catalog/repo/progress";
 import type { Locale } from "@/lib/catalog/types";
+import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 import {
   isWatchComplete,
   resumeSeekSeconds,
@@ -158,10 +165,9 @@ function KinescopeFrame({
   onError: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const onReadyRef = useRef(onReady);
-  const onErrorRef = useRef(onError);
-  onReadyRef.current = onReady;
-  onErrorRef.current = onError;
+  // Latest callbacks without rebuilding the player when the parent re-renders.
+  const handleReady = useEffectEvent(() => onReady());
+  const handleError = useEffectEvent(() => onError());
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -236,7 +242,7 @@ function KinescopeFrame({
         void instance.destroy();
         return;
       }
-      onReadyRef.current();
+      handleReady();
 
       instance.on(instance.Events.DurationChange, (event) => {
         const duration = event.data.duration;
@@ -293,7 +299,7 @@ function KinescopeFrame({
       });
 
       instance.on(instance.Events.Error, () => {
-        if (!cancelled) onErrorRef.current();
+        if (!cancelled) handleError();
       });
     };
 
@@ -324,7 +330,7 @@ function KinescopeFrame({
         iframe.style.inset = "0";
         attach(created);
       } catch {
-        if (!cancelled) onErrorRef.current();
+        if (!cancelled) handleError();
       }
     })();
 
@@ -376,6 +382,7 @@ export function KinescopePlayer({
   const [state, setState] = useState<PlayerState>({ kind: "loading" });
   const [iframeReady, setIframeReady] = useState(false);
   const [overlayGone, setOverlayGone] = useState(false);
+  const reducedMotion = usePrefersReducedMotion();
   const [applied, setApplied] = useState({ productId, locale, retryTick });
   const retriedUser = useRef<string | null>(null);
 
@@ -445,16 +452,14 @@ export function KinescopePlayer({
     setRetryTick((n) => n + 1);
   }, [auth.data?.id, auth.loading, state]);
 
+  // Fallback in case transitionend never fires; reduced motion skips the fade.
   useEffect(() => {
-    if (state.kind !== "ready" || !iframeReady || overlayGone) return;
-    if (typeof window === "undefined") return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setOverlayGone(true);
+    if (state.kind !== "ready" || !iframeReady || overlayGone || reducedMotion) {
       return;
     }
     const id = window.setTimeout(() => setOverlayGone(true), 800);
     return () => window.clearTimeout(id);
-  }, [iframeReady, overlayGone, state.kind]);
+  }, [iframeReady, overlayGone, reducedMotion, state.kind]);
 
   const compactBtn =
     "max-[600px]:h-10 max-[600px]:px-6 max-[600px]:text-[13px]";
@@ -519,8 +524,8 @@ export function KinescopePlayer({
     );
   }
 
-  const showOverlay = !overlayGone;
   const overlayFading = state.kind === "ready" && iframeReady;
+  const showOverlay = !overlayGone && !(reducedMotion && overlayFading);
 
   return (
     <PlayerFrame busy={showOverlay && !overlayFading}>

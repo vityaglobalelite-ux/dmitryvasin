@@ -12,6 +12,7 @@ import {
   useIsMobile,
 } from "@/lib/landing-mode";
 import { lockPageScroll } from "@/lib/scroll-lock";
+import { useIsClient } from "@/lib/use-is-client";
 
 const nav = {
   left: [
@@ -43,7 +44,7 @@ const DMITRY_H = 711;
 function HeroMobile() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [closing, setClosing] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const zoom = useCanvasZoom();
   const [scrolled, setScrolled] = useState(false);
   const menuVisible = menuOpen || closing;
@@ -62,10 +63,6 @@ function HeroMobile() {
     if (menuOpen) closeMenu();
     else openMenu();
   };
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);

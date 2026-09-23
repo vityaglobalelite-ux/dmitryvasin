@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { addGuestItem, getGuestCart } from "@/lib/catalog/cart";
 import { isPostureBundleBlock } from "@/lib/catalog/bundles";
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
@@ -45,54 +51,86 @@ export function markWholesaleModalSeen(): void {
 
 export type AddToCartResult = "added" | "exists" | "error";
 
+const NO_IDS = new Set<string>();
+
+/* Guest cart lives in localStorage — an external store. The snapshot is
+   reused while the stored ids are unchanged, as useSyncExternalStore needs. */
+let guestIdsSnapshot: { key: string; ids: Set<string> } | null = null;
+
+function readGuestIds(): Set<string> {
+  const list = getGuestCart().map((item) => item.productId);
+  const key = list.join("\n");
+  if (guestIdsSnapshot?.key !== key) {
+    guestIdsSnapshot = { key, ids: new Set(list) };
+  }
+  return guestIdsSnapshot.ids;
+}
+
+function subscribeCartChanges(onChange: (event: Event) => void): () => void {
+  window.addEventListener(CART_CHANGED_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(CART_CHANGED_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function withId(ids: Set<string>, id: string, present: boolean): Set<string> {
+  if (ids.has(id) === present) return ids;
+  const next = new Set(ids);
+  if (present) next.add(id);
+  else next.delete(id);
+  return next;
+}
+
 export function useCartProductIds(): Set<string> {
   const { data: user, loading: authLoading } = useAuthUser();
-  const [ids, setIds] = useState<Set<string>>(() => {
-    if (typeof window === "undefined") return new Set();
-    return new Set(getGuestCart().map((item) => item.productId));
-  });
-
-  const refresh = useCallback(async () => {
-    if (authLoading) return;
-    try {
-      const items = user ? await listCartItems() : getGuestCart();
-      setIds(new Set(items.map((item) => item.productId)));
-    } catch {
-      setIds(new Set(getGuestCart().map((item) => item.productId)));
-    }
-  }, [authLoading, user]);
+  const userId = user?.id ?? null;
+  // Empty on the server and during hydration, so the markup matches.
+  const guestIds = useSyncExternalStore(subscribeCartChanges, readGuestIds, () => NO_IDS);
+  const [server, setServer] = useState<{ userId: string; ids: Set<string> } | null>(null);
 
   useEffect(() => {
-    void refresh();
+    if (authLoading || !userId) return;
+    let cancelled = false;
+    let latest = 0;
+
+    const load = async () => {
+      const run = ++latest;
+      try {
+        const items = await listCartItems();
+        // Only the newest response for this user may land.
+        if (cancelled || run !== latest) return;
+        setServer({ userId, ids: new Set(items.map((item) => item.productId)) });
+      } catch {
+        /* Keep what is shown; the next cart change retries. */
+      }
+    };
+
     const onChange = (event: Event) => {
       const detail = (event as CustomEvent<CartChangedDetail>).detail;
-      if (detail?.added) {
-        setIds((current) => {
-          if (current.has(detail.added!)) return current;
-          const next = new Set(current);
-          next.add(detail.added!);
-          return next;
+      if (detail?.added || detail?.removed) {
+        setServer((prev) => {
+          if (prev?.userId !== userId) return prev;
+          let ids = prev.ids;
+          if (detail.added) ids = withId(ids, detail.added, true);
+          if (detail.removed) ids = withId(ids, detail.removed, false);
+          return ids === prev.ids ? prev : { userId, ids };
         });
       }
-      if (detail?.removed) {
-        setIds((current) => {
-          if (!current.has(detail.removed!)) return current;
-          const next = new Set(current);
-          next.delete(detail.removed!);
-          return next;
-        });
-      }
-      void refresh();
+      void load();
     };
-    window.addEventListener(CART_CHANGED_EVENT, onChange);
-    window.addEventListener("storage", onChange);
-    return () => {
-      window.removeEventListener(CART_CHANGED_EVENT, onChange);
-      window.removeEventListener("storage", onChange);
-    };
-  }, [refresh]);
 
-  return ids;
+    void load();
+    const unsubscribe = subscribeCartChanges(onChange);
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [authLoading, userId]);
+
+  if (userId && server?.userId === userId) return server.ids;
+  return guestIds;
 }
 
 export function useAddToCart() {

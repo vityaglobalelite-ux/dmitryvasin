@@ -81,6 +81,8 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, "")} МБ`;
 }
 
+const NO_MESSAGES: SupportMessage[] = [];
+
 function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error("support");
 }
@@ -96,9 +98,19 @@ export function SupportChatView() {
   const session = useSessionUser();
   const identified = isIdentifiedUser(session.data);
   const visitorId = session.data?.id ?? null;
-  const [messages, setMessages] = useState<SupportMessage[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<Error | null>(null);
+  const [attempt, setAttempt] = useState(0);
+  const [thread, setThread] = useState<{
+    key: string;
+    messages: SupportMessage[];
+    error: Error | null;
+  } | null>(null);
+  const refreshRef = useRef<(() => Promise<void>) | null>(null);
+  // A thread belongs to one visitor and load attempt; anything else is loading.
+  const threadKey = visitorId ? `${visitorId}:${attempt}` : null;
+  const current = thread?.key === threadKey ? thread : null;
+  const messages = current?.messages ?? NO_MESSAGES;
+  const error = current?.error ?? null;
+  const loading = Boolean(visitorId) && !current;
   const [signed, setSigned] = useState<Record<string, string>>({});
   const [fullSigned, setFullSigned] = useState<Record<string, string>>({});
   const [viewer, setViewer] = useState<ViewerState | null>(null);
@@ -158,33 +170,6 @@ export function SupportChatView() {
     }
   }, []);
 
-  const refresh = useCallback(async () => {
-    const rows = await listSupportMessages();
-    setMessages(rows);
-    setError(null);
-    await hydrateSigned(rows);
-    await markSupportNotificationsRead().catch(() => {
-      /* unread badge can retry on next poll */
-    });
-  }, [hydrateSigned]);
-
-  const load = useCallback(async () => {
-    try {
-      const rows = await listSupportMessages();
-      setMessages(rows);
-      setError(null);
-      setLoading(false);
-      await hydrateSigned(rows);
-      await markSupportNotificationsRead().catch(() => {
-        /* unread badge can retry on next poll */
-      });
-    } catch (err) {
-      setError(toError(err));
-      setMessages([]);
-      setLoading(false);
-    }
-  }, [hydrateSigned]);
-
   const rememberLocal = useCallback((path: string, file: File) => {
     const url = URL.createObjectURL(file);
     localUrlsRef.current.push(url);
@@ -242,54 +227,40 @@ export function SupportChatView() {
   }, []);
 
   useEffect(() => {
-    if (session.loading) return;
-    if (!visitorId) {
-      setMessages([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (session.loading || !visitorId) return;
+    const key = `${visitorId}:${attempt}`;
     let cancelled = false;
-    (async () => {
+    let latest = 0;
+    let loaded = false;
+
+    // Initial load, poll, realtime and "just sent" overlap — newest answer wins.
+    const refreshThread = async () => {
+      const run = ++latest;
       try {
         const rows = await listSupportMessages();
-        if (cancelled) return;
-        setMessages(rows);
-        setError(null);
-        setLoading(false);
+        if (cancelled || run !== latest) return;
+        loaded = true;
+        setThread({ key, messages: rows, error: null });
         await hydrateSigned(rows);
         await markSupportNotificationsRead().catch(() => {
           /* unread badge can retry on next poll */
         });
       } catch (err) {
-        if (cancelled) return;
-        setError(toError(err));
-        setMessages([]);
-        setLoading(false);
+        if (cancelled || run !== latest) return;
+        // Once a thread is on screen, a failed refresh keeps it.
+        if (loaded) return;
+        window.clearInterval(poll);
+        setThread({ key, messages: NO_MESSAGES, error: toError(err) });
       }
-    })();
-    return () => {
-      cancelled = true;
     };
-  }, [hydrateSigned, session.loading, visitorId]);
 
-  useEffect(() => {
-    if (session.loading || !visitorId || error) return;
-    const id = window.setInterval(() => {
-      void refresh().catch(() => {
-        /* keep last good thread */
-      });
-    }, POLL_MS);
-    return () => window.clearInterval(id);
-  }, [error, refresh, session.loading, visitorId]);
+    const poll = window.setInterval(() => void refreshThread(), POLL_MS);
+    refreshRef.current = refreshThread;
+    void refreshThread();
 
-  useEffect(() => {
-    if (session.loading || !visitorId) return;
     const supabase = getSupabase();
-    if (!supabase) return;
     const channel = supabase
-      .channel(`catalog_support_messages:${visitorId}`)
+      ?.channel(`catalog_support_messages:${visitorId}`)
       .on(
         "postgres_changes",
         {
@@ -298,17 +269,21 @@ export function SupportChatView() {
           table: "catalog_support_messages",
           filter: `user_id=eq.${visitorId}`,
         },
-        () => {
-          void refresh().catch(() => {
-            /* polling remains */
-          });
-        },
+        () => void refreshThread(),
       )
       .subscribe();
+
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (refreshRef.current === refreshThread) refreshRef.current = null;
+      window.clearInterval(poll);
+      if (supabase && channel) void supabase.removeChannel(channel);
     };
-  }, [refresh, session.loading, visitorId]);
+  }, [attempt, hydrateSigned, session.loading, visitorId]);
+
+  const refresh = useCallback(async () => {
+    await refreshRef.current?.();
+  }, []);
 
   const pending = session.loading;
 
@@ -367,11 +342,7 @@ export function SupportChatView() {
             <Button
               type="button"
               className="mt-8"
-              onClick={() => {
-                setError(null);
-                setLoading(true);
-                void load();
-              }}
+              onClick={() => setAttempt((value) => value + 1)}
             >
               {copy.retry}
             </Button>
@@ -646,14 +617,11 @@ function SupportPhoto({
   onBroken: () => void;
 }) {
   const copy = supportT(useLocale());
-  const [loaded, setLoaded] = useState(false);
-  const [src, setSrc] = useState(signedUrl);
+  const src = signedUrl;
+  // Loaded state belongs to one URL — a re-signed URL starts hidden again.
+  const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const loaded = Boolean(src) && loadedSrc === src;
   const triedFallback = useRef(false);
-
-  useEffect(() => {
-    setSrc(signedUrl);
-    setLoaded(false);
-  }, [signedUrl]);
 
   if (!src) {
     return (
@@ -686,14 +654,14 @@ function SupportPhoto({
         draggable={false}
         loading="lazy"
         decoding="async"
-        onLoad={() => setLoaded(true)}
+        onLoad={() => setLoadedSrc(src)}
         onError={() => {
           if (!triedFallback.current) {
             triedFallback.current = true;
             onBroken();
             return;
           }
-          setLoaded(true);
+          setLoadedSrc(src);
         }}
         className={[
           "max-h-[280px] w-auto max-w-full cursor-zoom-in object-contain",
@@ -726,23 +694,33 @@ function SupportComposer({
   const copy = supportT(useLocale());
   const fileId = useId();
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [picked, setPicked] = useState<{
+    file: File;
+    preview: string | null;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
   const [preparing, setPreparing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const pickId = useRef(0);
   const textRef = useRef<HTMLTextAreaElement>(null);
+  const previewUrlRef = useRef<string | null>(null);
+  const file = picked?.file ?? null;
+  const preview = picked?.preview ?? null;
 
-  useEffect(() => {
-    if (!file || !isSupportImageFile(file)) {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
+  /** Swaps the attachment and its thumbnail URL together; the old URL is freed. */
+  function setFile(next: File | null) {
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const url = next && isSupportImageFile(next) ? URL.createObjectURL(next) : null;
+    previewUrlRef.current = url;
+    setPicked(next ? { file: next, preview: url } : null);
+  }
+
+  useEffect(
+    () => () => {
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    },
+    [],
+  );
 
   async function onPick(event: ChangeEvent<HTMLInputElement>) {
     const next = event.target.files?.[0] ?? null;

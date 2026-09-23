@@ -11,6 +11,7 @@ import { getWholesaleTiers } from "@/lib/catalog/repo/settings";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import type { WholesaleTier } from "@/lib/catalog/types";
 import { lockPageScroll } from "@/lib/scroll-lock";
+import { useIsClient } from "@/lib/use-is-client";
 
 type WholesaleModalProps = {
   open: boolean;
@@ -21,9 +22,8 @@ const CLOSE_MS = 240;
 
 export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
   const [tiers, setTiers] = useState<WholesaleTier[] | null>(null);
-  const [host, setHost] = useState<HTMLElement | null>(null);
+  const isClient = useIsClient();
   const [shown, setShown] = useState(open);
-  const [closing, setClosing] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const locale = useLocale();
   const copy = cartT(locale);
@@ -31,24 +31,15 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
   const pathname = usePathname() ?? "/";
   const onCatalog = stripLocalePrefix(pathname).startsWith("/catalog/");
 
-  useEffect(() => {
-    setHost(document.body);
-  }, []);
+  // Stays mounted after `open` drops, for the exit animation.
+  if (open && !shown) setShown(true);
+  const closing = shown && !open;
 
   useEffect(() => {
-    if (open) {
-      setShown(true);
-      setClosing(false);
-      return;
-    }
-    if (!shown) return;
-    setClosing(true);
-    const timer = window.setTimeout(() => {
-      setShown(false);
-      setClosing(false);
-    }, CLOSE_MS);
+    if (!closing) return;
+    const timer = window.setTimeout(() => setShown(false), CLOSE_MS);
     return () => window.clearTimeout(timer);
-  }, [open, shown]);
+  }, [closing]);
 
   useEffect(() => {
     if (!open) return;
@@ -79,7 +70,7 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
     };
   }, [shown, closing, onClose]);
 
-  if (!shown || !host) return null;
+  if (!shown || !isClient) return null;
 
   return createPortal(
     <div
@@ -167,6 +158,6 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
         </div>
       </div>
     </div>,
-    host,
+    document.body,
   );
 }

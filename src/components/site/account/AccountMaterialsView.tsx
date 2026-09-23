@@ -14,6 +14,7 @@ import {
   AccountShellSkeleton,
 } from "@/components/site/account/AccountShell";
 import { useAccountGate } from "@/components/site/account/use-account-gate";
+import { usePostureFullProduct } from "@/components/site/account/use-posture-full-product";
 import {
   formatAccessLabel,
   formatDurationClock,
@@ -33,7 +34,6 @@ import {
   useLocale,
   useLocalizedRoutes,
 } from "@/lib/catalog/locale-context";
-import { getPublishedProduct } from "@/lib/catalog/repo/products";
 import type {
   Access,
   Locale,
@@ -149,11 +149,6 @@ export function AccountMaterialsView() {
   const now = useNow();
   const copy = accountT(useLocale());
   const locale = useLocale();
-  const [fullCourse, setFullCourse] = useState<{
-    locale: Locale;
-    product: Product | null;
-  } | null>(null);
-
   const needsPostureFullProduct = useMemo(() => {
     const ids = new Set(access.data.map((row) => row.productId));
     return (
@@ -163,24 +158,9 @@ export function AccountMaterialsView() {
     );
   }, [access.data]);
 
-  useEffect(() => {
-    if (!needsPostureFullProduct) return undefined;
-    let cancelled = false;
-    getPublishedProduct(POSTURE_BUNDLE.fullId, locale)
-      // Without it both blocks stay listed on their own — nothing is lost.
-      .catch(() => null)
-      .then((product) => {
-        if (!cancelled) setFullCourse({ locale, product });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [needsPostureFullProduct, locale]);
-
-  const fullCourseProduct =
-    needsPostureFullProduct && fullCourse?.locale === locale
-      ? fullCourse.product
-      : null;
+  // Without it both blocks stay listed on their own — nothing is lost.
+  const fullCourse = usePostureFullProduct(needsPostureFullProduct, locale);
+  const fullCourseProduct = fullCourse.product;
 
   const progressByProduct = useMemo(() => {
     const map = new Map<string, WatchProgress>();
@@ -217,7 +197,11 @@ export function AccountMaterialsView() {
     );
   }, [libraryRows]);
 
-  if (gate.pending || (access.loading && access.data.length === 0 && !access.error)) {
+  if (
+    gate.pending ||
+    (access.loading && access.data.length === 0 && !access.error) ||
+    fullCourse.pending
+  ) {
     return <AccountShellSkeleton variant="cards" />;
   }
 

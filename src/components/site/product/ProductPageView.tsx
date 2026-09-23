@@ -211,7 +211,7 @@ function ProductLoaded({
             product={product}
             cart={cart}
             parent={neighbors.parent}
-            children={neighbors.children}
+            bundleChildren={neighbors.children}
           />
         ) : null}
 
@@ -496,12 +496,17 @@ function useProductCart(authReady: boolean): ProductCart {
   };
 }
 
-function useBundleNeighbors(product: Product, locale: Locale) {
-  const [parent, setParent] = useState<Product | null>(null);
-  const [children, setChildren] = useState<Product[]>([]);
+type BundleNeighbors = { parent: Product | null; children: Product[] };
+
+const NO_NEIGHBORS: BundleNeighbors = { parent: null, children: [] };
+
+function useBundleNeighbors(product: Product, locale: Locale): BundleNeighbors {
+  const key = `${product.id}:${locale}`;
+  const [loaded, setLoaded] = useState<BundleNeighbors & { key: string } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const requestKey = `${product.id}:${locale}`;
     const sibling = siblingBlockId(product.id);
     const childIds = product.bundleChildIds;
     const ids = [
@@ -510,38 +515,38 @@ function useBundleNeighbors(product: Product, locale: Locale) {
       sibling,
     ].filter((id): id is string => Boolean(id) && id !== product.id);
 
-    if (ids.length === 0) {
-      setParent(null);
-      setChildren([]);
-      return;
-    }
+    if (ids.length === 0) return;
 
-    void Promise.all(ids.map((id) => getPublishedProduct(id, locale))).then(
-      (rows) => {
-        if (cancelled) return;
-        const byId = new Map(
-          rows.filter((row): row is Product => Boolean(row)).map((row) => [row.id, row]),
-        );
-        setParent(product.bundleParentId ? byId.get(product.bundleParentId) ?? null : null);
-        const childRows = childIds
-          .map((id) => byId.get(id))
-          .filter((row): row is Product => Boolean(row));
-        if (sibling) {
-          const extra = byId.get(sibling);
-          if (extra && !childRows.some((row) => row.id === extra.id)) {
-            childRows.push(extra);
-          }
+    // One neighbour failing to load must not hide the others.
+    void Promise.all(
+      ids.map((id) => getPublishedProduct(id, locale).catch(() => null)),
+    ).then((rows) => {
+      if (cancelled) return;
+      const byId = new Map(
+        rows.filter((row): row is Product => Boolean(row)).map((row) => [row.id, row]),
+      );
+      const childRows = childIds
+        .map((id) => byId.get(id))
+        .filter((row): row is Product => Boolean(row));
+      if (sibling) {
+        const extra = byId.get(sibling);
+        if (extra && !childRows.some((row) => row.id === extra.id)) {
+          childRows.push(extra);
         }
-        setChildren(childRows);
-      },
-    );
+      }
+      setLoaded({
+        key: requestKey,
+        parent: product.bundleParentId ? byId.get(product.bundleParentId) ?? null : null,
+        children: childRows,
+      });
+    });
 
     return () => {
       cancelled = true;
     };
   }, [locale, product.bundleChildIds, product.bundleParentId, product.id]);
 
-  return { parent, children };
+  return loaded?.key === key ? loaded : NO_NEIGHBORS;
 }
 
 function BuyRow({

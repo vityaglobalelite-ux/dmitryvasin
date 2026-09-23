@@ -1,11 +1,7 @@
 import type { Currency, Locale } from "@/lib/catalog/types";
 import { formatMoney } from "@/lib/geo-currency";
 
-export function formatPriceMinor(
-  minor: number,
-  currency: Currency,
-  _locale: Locale = "ru",
-): string {
+export function formatPriceMinor(minor: number, currency: Currency): string {
   const major = minor / 100;
   const formatted = formatMoney(major, currency);
   return formatted.replace(/ /g, "\u00A0");

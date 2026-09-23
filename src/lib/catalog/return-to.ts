@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useSyncExternalStore } from "react";
 import { stripLocalePrefix } from "@/lib/catalog/locale";
 
 const STORAGE_KEY = "catalog:return-to";
@@ -43,11 +42,17 @@ export function isHomeHref(href: string): boolean {
   return stripLocalePrefix(pathOnly(href)) === "/";
 }
 
+const noopSubscribe = () => () => {};
+
+/**
+ * Read on every render (navigations re-render), from sessionStorage — so the
+ * server and hydration pass use `fallback`, and the client swaps in the saved
+ * listing right after.
+ */
 export function useCatalogReturnHref(fallback: string): string {
-  const pathname = usePathname() ?? "/";
-  const [href, setHref] = useState(fallback);
-  useEffect(() => {
-    setHref(readReturnTo(fallback));
-  }, [fallback, pathname]);
-  return href;
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => readReturnTo(fallback),
+    () => fallback,
+  );
 }

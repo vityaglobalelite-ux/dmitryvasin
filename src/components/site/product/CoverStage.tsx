@@ -14,6 +14,7 @@ import { lessonClip, type LessonClip } from "@/lib/catalog/lesson-clip";
 import { productAssets } from "@/components/site/product/assets";
 import { productUi } from "@/components/site/product/copy";
 import { useLocale } from "@/lib/catalog/locale-context";
+import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
 const FRAME =
   "group/cover relative h-[564px] w-full overflow-hidden rounded-[20px] bg-light-gray max-[600px]:h-[180px] max-[600px]:rounded-[10px] min-[601px]:row-span-2";
@@ -58,18 +59,6 @@ export function CoverStage({
 function coverPosterUrl(url: string): string | undefined {
   if (!url.includes("/gifs/")) return undefined;
   return url.replace(/(\.[a-z0-9]+)$/i, "-still$1");
-}
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduced(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-  return reduced;
 }
 
 function useInView(ref: RefObject<HTMLDivElement | null>) {

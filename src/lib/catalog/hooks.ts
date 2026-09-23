@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import {
   getPublishedProduct,
@@ -33,79 +33,84 @@ function publicProductTypeFilter(
     : undefined;
 }
 
+/** A fetch result tagged with the request it answers. */
+type Answer<T> = { key: string; data: T; error: Error | null };
+
+const NO_PRODUCTS: Product[] = [];
+
 export function useProducts(
   opts: { type?: ProductType; locale?: Locale } = {},
 ): QueryState<Product[]> {
-  const [state, setState] = useState<QueryState<Product[]>>({
-    data: [],
-    loading: true,
-    error: null,
-  });
+  const type = publicProductTypeFilter(opts.type);
   const locale = opts.locale ?? "ru";
+  const key = `${type ?? ""}:${locale}`;
+  const [answer, setAnswer] = useState<Answer<Product[]> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setState({ data: [], loading: true, error: null });
-    listPublishedProducts({
-      type: publicProductTypeFilter(opts.type),
-      locale,
-    })
+    const requestKey = `${type ?? ""}:${locale}`;
+    listPublishedProducts({ type, locale })
       .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: null });
+        if (!cancelled) setAnswer({ key: requestKey, data, error: null });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setState({
-            data: [],
-            loading: false,
-            error: error instanceof Error ? error : new Error("products"),
-          });
-        }
+        if (cancelled) return;
+        setAnswer({
+          key: requestKey,
+          data: NO_PRODUCTS,
+          error: error instanceof Error ? error : new Error("products"),
+        });
       });
     return () => {
       cancelled = true;
     };
-  }, [opts.type, locale]);
+  }, [type, locale]);
 
-  return state;
+  // An answer for other filters is stale: show loading, never old rows.
+  return useMemo(
+    () =>
+      answer?.key === key
+        ? { data: answer.data, loading: false, error: answer.error }
+        : { data: NO_PRODUCTS, loading: true, error: null },
+    [answer, key],
+  );
 }
 
 export function useProduct(
   id: string | null,
   locale: Locale = "ru",
 ): QueryState<Product | null> {
-  const [state, setState] = useState<QueryState<Product | null>>({
-    data: null,
-    loading: Boolean(id),
-    error: null,
-  });
+  const key = id ? `${id}:${locale}` : null;
+  const [answer, setAnswer] = useState<Answer<Product | null> | null>(null);
 
   useEffect(() => {
-    if (!id) {
-      setState({ data: null, loading: false, error: null });
-      return;
-    }
+    if (!id) return;
     let cancelled = false;
-    setState({ data: null, loading: true, error: null });
+    const requestKey = `${id}:${locale}`;
     getPublishedProduct(id, locale)
       .then((data) => {
-        if (!cancelled) setState({ data, loading: false, error: null });
+        if (!cancelled) setAnswer({ key: requestKey, data, error: null });
       })
       .catch((error: unknown) => {
-        if (!cancelled) {
-          setState({
-            data: null,
-            loading: false,
-            error: error instanceof Error ? error : new Error("product"),
-          });
-        }
+        if (cancelled) return;
+        setAnswer({
+          key: requestKey,
+          data: null,
+          error: error instanceof Error ? error : new Error("product"),
+        });
       });
     return () => {
       cancelled = true;
     };
   }, [id, locale]);
 
-  return state;
+  return useMemo(() => {
+    if (!key) return { data: null, loading: false, error: null };
+    if (answer?.key === key) {
+      return { data: answer.data, loading: false, error: answer.error };
+    }
+    return { data: null, loading: true, error: null };
+  }, [answer, key]);
 }
 
 export function useAuthUser(): QueryState<AuthUser | null> {

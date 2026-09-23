@@ -26,35 +26,31 @@ export function AccountAvatar({
   label?: string;
   onClick?: () => void;
 }) {
-  const [broken, setBroken] = useState(false);
-  const [revealing, setRevealing] = useState(false);
-  const [photoReady, setPhotoReady] = useState(() => Boolean(src && loadedPhotos.has(src)));
+  // Load outcome of one src — a new src starts clean without a reset.
+  const [outcome, setOutcome] = useState<{ src: string; ok: boolean } | null>(null);
+  const [revealedKey, setRevealedKey] = useState(0);
+  const settled = src && outcome?.src === src ? outcome : null;
+  const broken = settled?.ok === false;
+  const photoReady = src ? loadedPhotos.has(src) || settled?.ok === true : false;
+  const revealing = revealKey !== 0 && revealedKey !== revealKey;
   const photo = src && !broken ? src : null;
 
+  const markLoaded = (loaded: string) => {
+    loadedPhotos.add(loaded);
+    setOutcome({ src: loaded, ok: true });
+  };
+
   useEffect(() => {
-    setBroken(false);
-    if (!src) {
-      setPhotoReady(false);
-      return;
-    }
-    if (loadedPhotos.has(src)) {
-      setPhotoReady(true);
-      return;
-    }
-    setPhotoReady(false);
+    if (!src || loadedPhotos.has(src)) return;
     let cancelled = false;
     const img = new Image();
-    const done = () => {
-      if (cancelled) return;
-      loadedPhotos.add(src);
-      setPhotoReady(true);
+    img.onload = () => {
+      if (!cancelled) markLoaded(src);
     };
-    img.onload = done;
     img.onerror = () => {
-      if (!cancelled) setBroken(true);
+      if (!cancelled) setOutcome({ src, ok: false });
     };
     img.src = src;
-    if (img.complete && img.naturalWidth > 0) done();
     return () => {
       cancelled = true;
     };
@@ -62,8 +58,7 @@ export function AccountAvatar({
 
   useEffect(() => {
     if (revealKey === 0) return;
-    setRevealing(true);
-    const timer = window.setTimeout(() => setRevealing(false), 1100);
+    const timer = window.setTimeout(() => setRevealedKey(revealKey), 1100);
     return () => window.clearTimeout(timer);
   }, [revealKey]);
 
@@ -101,11 +96,8 @@ export function AccountAvatar({
               height={size}
               className="account-avatar-photo"
               style={{ opacity: photoReady ? 1 : 0 }}
-              onLoad={() => {
-                if (src) loadedPhotos.add(src);
-                setPhotoReady(true);
-              }}
-              onError={() => setBroken(true)}
+              onLoad={() => markLoaded(photo)}
+              onError={() => setOutcome({ src: photo, ok: false })}
             />
           </>
         ) : (

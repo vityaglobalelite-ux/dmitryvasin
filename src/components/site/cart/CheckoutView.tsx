@@ -12,7 +12,7 @@ import {
   TotalsCard,
   cartColumnsClassName,
 } from "@/components/site/cart/CartPieces";
-import { cartT } from "@/components/site/cart/copy";
+import { cartT, type CartCopy } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
 import { Button } from "@/components/site/ui/Button";
 import { CatalogMoney } from "@/components/site/ui/CatalogPrice";
@@ -27,6 +27,7 @@ import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { useCatalogCurrency } from "@/lib/catalog/currency-context";
 import {
   CatalogCheckoutError,
+  type CatalogCheckoutFailure,
   clearPendingCheckoutOrderId,
   readPendingCheckoutOrderId,
   rememberPendingCheckoutOrderId,
@@ -145,7 +146,6 @@ type ProcessingPhase = "polling" | "confirmed" | "timeout" | "error";
 type CheckoutProcessingState = {
   active: boolean;
   phase: ProcessingPhase;
-  error: string | null;
   reload: () => void;
 };
 
@@ -163,13 +163,16 @@ function useCheckoutProcessing(
     return false;
   }, [checkoutFlag, searchParams, sessionId]);
 
-  const [phase, setPhase] = useState<ProcessingPhase>("polling");
-  const [error, setError] = useState<string | null>(null);
   const [pollToken, setPollToken] = useState(0);
+  /* An outcome belongs to one polling run; a new run starts at "polling". */
+  const runKey = shouldProcess ? `${sessionId ?? ""}:${pollToken}` : null;
+  const [outcome, setOutcome] = useState<{
+    key: string;
+    phase: ProcessingPhase;
+  } | null>(null);
+  if (outcome && outcome.key !== runKey) setOutcome(null);
 
   const reload = useCallback(() => {
-    setError(null);
-    setPhase("polling");
     setPollToken((value) => value + 1);
   }, []);
 
@@ -177,10 +180,12 @@ function useCheckoutProcessing(
     if (!shouldProcess) return;
 
     let cancelled = false;
+    let timer: number | undefined;
     const startedAt = Date.now();
-
-    setPhase("polling");
-    setError(null);
+    const key = `${sessionId ?? ""}:${pollToken}`;
+    const setPhase = (phase: ProcessingPhase) => {
+      setOutcome({ key, phase });
+    };
 
     const tick = async () => {
       try {
@@ -207,17 +212,14 @@ function useCheckoutProcessing(
         }
       } catch (err: unknown) {
         if (cancelled) return;
+        // The buyer gets localized copy; the raw cause is for debugging.
+        console.error("checkout status check failed", err);
         setPhase("error");
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Не удалось проверить статус заказа.",
-        );
         return;
       }
 
       if (!cancelled && Date.now() - startedAt < PROCESS_TIMEOUT_MS) {
-        window.setTimeout(() => void tick(), PROCESS_POLL_MS);
+        timer = window.setTimeout(() => void tick(), PROCESS_POLL_MS);
       } else if (!cancelled) {
         setPhase("timeout");
       }
@@ -227,13 +229,14 @@ function useCheckoutProcessing(
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [pollToken, sessionId, shouldProcess]);
 
+  const current = outcome?.key === runKey ? outcome : null;
   return {
     active: shouldProcess,
-    phase: shouldProcess ? phase : "polling",
-    error,
+    phase: current?.phase ?? "polling",
     reload,
   };
 }
@@ -294,41 +297,48 @@ function CheckoutProcessingPanel({
     );
   }
 
-  if (processing.phase === "timeout") {
-    return (
-      <section className="mt-10 max-[600px]:mt-8">
-        <CartMessage
-          title={copy.checkoutProcessingTimeoutTitle}
-          body={copy.checkoutProcessingTimeoutBody}
-          action={
-            <div className="flex flex-col items-center gap-3 sm:flex-row">
-              <Button type="button" onClick={processing.reload}>
-                {copy.checkoutProcessingRetry}
-              </Button>
-              <Button href={routes.accountOrders} variant="secondary">
-                {copy.checkoutConfirmedCta}
-              </Button>
-            </div>
-          }
-        />
-      </section>
-    );
-  }
-
+  // Timeout and a failed check look alike to the buyer: the charge may have
+  // gone through, so both offer a re-check and the order history.
+  const timedOut = processing.phase === "timeout";
   return (
     <section className="mt-10 max-[600px]:mt-8">
       <CartMessage
-        title={copy.errorTitle}
-        body={processing.error ?? copy.errorBody}
+        title={
+          timedOut
+            ? copy.checkoutProcessingTimeoutTitle
+            : copy.checkoutStatusErrorTitle
+        }
+        body={
+          timedOut
+            ? copy.checkoutProcessingTimeoutBody
+            : copy.checkoutStatusErrorBody
+        }
         action={
-          <Button type="button" onClick={processing.reload}>
-            {copy.retry}
-          </Button>
+          <div className="flex flex-col items-center gap-3 sm:flex-row">
+            <Button type="button" onClick={processing.reload}>
+              {copy.checkoutProcessingRetry}
+            </Button>
+            <Button href={routes.accountOrders} variant="secondary">
+              {copy.checkoutConfirmedCta}
+            </Button>
+          </div>
         }
       />
     </section>
   );
 }
+
+const PAY_ERROR_COPY: Record<CatalogCheckoutFailure, keyof CartCopy> = {
+  sign_in: "payErrorSignIn",
+  session_expired: "payErrorSessionExpired",
+  empty_cart: "payErrorEmptyCart",
+  currency: "payErrorCurrency",
+  unavailable_product: "payErrorUnavailableProduct",
+  not_connected: "payErrorNotConnected",
+  temporarily_unavailable: "payErrorTemporarilyUnavailable",
+  network: "payErrorNetwork",
+  start_failed: "payErrorFallback",
+};
 
 function PayRedirectPanel({ payableMinor }: { payableMinor: number }) {
   const copy = cartT(useLocale());
@@ -400,17 +410,19 @@ function CheckoutPayButton({
       window.location.assign(result.url);
     } catch (err: unknown) {
       onRedirectingChange(false);
-      if (err instanceof CatalogCheckoutError) {
-        setPayError(err.message);
-      } else if (err instanceof Error) {
-        setPayError(err.message);
-      } else {
-        setPayError(copy.payErrorFallback);
-      }
+      // The buyer gets localized copy; the raw cause is for debugging.
+      console.error("checkout start failed", err);
+      setPayError(
+        copy[
+          err instanceof CatalogCheckoutError
+            ? PAY_ERROR_COPY[err.reason]
+            : "payErrorFallback"
+        ],
+      );
       setPending(false);
     }
   }, [
-    copy.payErrorFallback,
+    copy,
     currency,
     locale,
     onRedirectingChange,

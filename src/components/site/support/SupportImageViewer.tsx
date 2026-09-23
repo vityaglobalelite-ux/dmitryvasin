@@ -7,6 +7,7 @@ import { supportT } from "@/components/site/support/copy";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useLocale } from "@/lib/catalog/locale-context";
 import { lockPageScroll } from "@/lib/scroll-lock";
+import { useIsClient } from "@/lib/use-is-client";
 
 const CLOSE_MS = 240;
 
@@ -28,52 +29,49 @@ export function SupportImageViewer({
   const copy = supportT(useLocale());
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
-  const [host, setHost] = useState<HTMLElement | null>(null);
+  const isClient = useIsClient();
   const [shown, setShown] = useState(open);
-  const [closing, setClosing] = useState(false);
-  const [fullReady, setFullReady] = useState(false);
-  const last = useRef({ previewUrl, fullUrl, alt });
-  if (open && (previewUrl || fullUrl)) {
-    last.current = { previewUrl, fullUrl, alt };
+  const [loadedFull, setLoadedFull] = useState<string | null>(null);
+  // Last photo shown — the parent clears the props before the exit animation ends.
+  const [content, setContent] = useState({ previewUrl, fullUrl, alt });
+  if (
+    open &&
+    (previewUrl || fullUrl) &&
+    (content.previewUrl !== previewUrl ||
+      content.fullUrl !== fullUrl ||
+      content.alt !== alt)
+  ) {
+    setContent({ previewUrl, fullUrl, alt });
   }
-  const shownPreview = previewUrl ?? last.current.previewUrl;
-  const shownFull = fullUrl ?? last.current.fullUrl;
-  const shownAlt = alt || last.current.alt;
+  const shownPreview = previewUrl ?? content.previewUrl;
+  const shownFull = fullUrl ?? content.fullUrl;
+  const shownAlt = alt || content.alt;
+  // Full size replaces the preview once decoded; a lone URL needs no swap.
+  const fullReady = Boolean(
+    shownFull &&
+      (!shownPreview || shownPreview === shownFull || loadedFull === shownFull),
+  );
   const src = fullReady && shownFull ? shownFull : shownPreview || shownFull;
 
-  useEffect(() => {
-    setHost(document.body);
-  }, []);
+  // Stays mounted after `open` drops, for the exit animation.
+  if (open && !shown) setShown(true);
+  const closing = shown && !open;
 
   useEffect(() => {
-    if (open) {
-      setShown(true);
-      setClosing(false);
-      setFullReady(false);
-      return;
-    }
-    if (!shown) return;
-    setClosing(true);
-    const timer = window.setTimeout(() => {
-      setShown(false);
-      setClosing(false);
-    }, CLOSE_MS);
+    if (!closing) return;
+    const timer = window.setTimeout(() => setShown(false), CLOSE_MS);
     return () => window.clearTimeout(timer);
-  }, [open, shown]);
+  }, [closing]);
 
   useEffect(() => {
-    if (!shownPreview || !shownFull || shownPreview === shownFull) {
-      if (shownFull) setFullReady(true);
-      return;
-    }
+    if (!shownPreview || !shownFull || shownPreview === shownFull) return;
     const image = document.createElement("img");
     image.decoding = "async";
-    image.onload = () => setFullReady(true);
-    image.onerror = () => setFullReady(false);
+    // On error the preview simply stays.
+    image.onload = () => setLoadedFull(shownFull);
     image.src = shownFull;
     return () => {
       image.onload = null;
-      image.onerror = null;
     };
   }, [shownFull, shownPreview]);
 
@@ -94,7 +92,7 @@ export function SupportImageViewer({
     };
   }, [shown, closing, onClose]);
 
-  if (!shown || !host) return null;
+  if (!shown || !isClient) return null;
 
   const ready = Boolean(src);
 
@@ -144,6 +142,6 @@ export function SupportImageViewer({
         )}
       </div>
     </div>,
-    host,
+    document.body,
   );
 }

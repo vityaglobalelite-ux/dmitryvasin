@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useEffectEvent,
   useMemo,
   useRef,
   useState,
@@ -50,97 +51,110 @@ function onSupportPath(pathname: string): boolean {
 }
 
 export function UnreadProvider({ children }: { children: ReactNode }) {
-  const { data: user, loading } = useSessionUser();
+  const { data: user } = useSessionUser();
+  const userId = user?.id ?? null;
   const pathname = usePathname() ?? "/";
   const locale = useLocale();
   const routes = useLocalizedRoutes();
   const copy = notificationT(locale);
-  const [unread, setUnread] = useState(0);
-  const [supportUnread, setSupportUnread] = useState(0);
+  const [counts, setCounts] = useState<{
+    userId: string;
+    unread: number;
+    support: number;
+  } | null>(null);
   const [toast, setToast] = useState<{ title: string; body: string } | null>(
     null,
   );
-  const supportUnreadRef = useRef(0);
-  const primedRef = useRef(false);
+  const loadRef = useRef<(() => Promise<void>) | null>(null);
   const toastTimer = useRef<number | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!user) {
-      setUnread(0);
-      setSupportUnread(0);
-      supportUnreadRef.current = 0;
-      primedRef.current = false;
-      return;
-    }
+  // Counts belong to one user; signed out (or another user) reads as zero.
+  const current = userId && counts?.userId === userId ? counts : null;
+  const unread = current?.unread ?? 0;
+  const supportUnread = current?.support ?? 0;
+
+  // Latest route and copy, without restarting polling on every navigation.
+  const announceSupportReply = useEffectEvent(async () => {
+    if (onSupportPath(pathname)) return;
+    let body = copy.toastBody;
     try {
-      const [all, support] = await Promise.all([
-        countUnreadNotifications(),
-        countUnreadNotifications(SUPPORT_REPLY_TYPE),
-      ]);
-      const previous = supportUnreadRef.current;
-      const primed = primedRef.current;
-      primedRef.current = true;
-      supportUnreadRef.current = support;
-      setUnread(all);
-      setSupportUnread(support);
-      if (primed && support > previous && !onSupportPath(pathname)) {
-        let body = copy.toastBody;
-        try {
-          const latest = await peekUnreadSupportReply();
-          if (latest?.body.trim()) body = latest.body.trim();
-        } catch {
-          /* keep fallback */
-        }
-        setToast({ title: copy.toastTitle, body });
-        if (toastTimer.current) window.clearTimeout(toastTimer.current);
-        toastTimer.current = window.setTimeout(() => {
-          setToast(null);
-        }, TOAST_MS);
-      }
+      const latest = await peekUnreadSupportReply();
+      if (latest?.body.trim()) body = latest.body.trim();
     } catch {
-      /* keep last counts */
+      /* keep fallback */
     }
-  }, [copy.toastBody, copy.toastTitle, pathname, user]);
+    setToast({ title: copy.toastTitle, body });
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => {
+      setToast(null);
+    }, TOAST_MS);
+  });
 
   useEffect(() => {
-    if (loading) return;
-    void refresh();
+    if (!userId) return;
+    let cancelled = false;
+    let latest = 0;
+    let primed = false;
+    let previousSupport = 0;
+
+    const load = async () => {
+      const run = ++latest;
+      try {
+        const [all, support] = await Promise.all([
+          countUnreadNotifications(),
+          countUnreadNotifications(SUPPORT_REPLY_TYPE),
+        ]);
+        // Poll, event and realtime overlap — only the newest answer lands.
+        if (cancelled || run !== latest) return;
+        const grew = primed && support > previousSupport;
+        primed = true;
+        previousSupport = support;
+        setCounts({ userId, unread: all, support });
+        if (grew) void announceSupportReply();
+      } catch {
+        /* keep last counts */
+      }
+    };
+
+    loadRef.current = load;
+    void load();
     const id = window.setInterval(() => {
-      void refresh();
+      void load();
     }, POLL_MS);
     const onChanged = () => {
-      void refresh();
+      void load();
     };
     window.addEventListener(UNREAD_CHANGED_EVENT, onChanged);
-    return () => {
-      window.clearInterval(id);
-      window.removeEventListener(UNREAD_CHANGED_EVENT, onChanged);
-    };
-  }, [loading, refresh]);
 
-  useEffect(() => {
-    if (!user) return;
     const supabase = getSupabase();
-    if (!supabase) return;
     const channel = supabase
-      .channel(`catalog_notifications:${user.id}`)
+      ?.channel(`catalog_notifications:${userId}`)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "catalog_notifications",
-          filter: `user_id=eq.${user.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         () => {
-          void refresh();
+          void load();
         },
       )
       .subscribe();
+
     return () => {
-      void supabase.removeChannel(channel);
+      cancelled = true;
+      if (loadRef.current === load) loadRef.current = null;
+      window.clearInterval(id);
+      window.removeEventListener(UNREAD_CHANGED_EVENT, onChanged);
+      if (supabase && channel) void supabase.removeChannel(channel);
     };
-  }, [refresh, user]);
+  }, [userId]);
+
+  const refresh = useCallback(async () => {
+    await loadRef.current?.();
+  }, []);
 
   useEffect(() => {
     const raw = document.title.replace(/^[●•]\s+/, "");

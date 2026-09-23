@@ -32,8 +32,7 @@ const MOBILE_RAIL_Y = 4883;
 /** Figma: first card top (4883) → see-all bottom (6444+22). */
 const MOBILE_RAIL_RESERVED_H = 6466 - MOBILE_RAIL_Y;
 
-const homeCatalogFilterTypes = ["lifehack", "lesson", "course", "peek"] as const;
-type HomeFilter = (typeof homeCatalogFilterTypes)[number];
+type HomeFilter = "lifehack" | "lesson" | "course" | "peek";
 const DEFAULT_FILTER: HomeFilter = "course";
 
 function useHomeCatalogRail() {

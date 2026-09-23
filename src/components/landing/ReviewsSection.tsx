@@ -7,6 +7,7 @@ import { ClubCta } from "@/components/landing/ClubCta";
 import { reviews } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
 import { lockPageScroll } from "@/lib/scroll-lock";
+import { useIsClient } from "@/lib/use-is-client";
 
 type Review = (typeof reviews)[number];
 
@@ -217,7 +218,7 @@ function ReviewReader({
   isMobile: boolean;
   onClose: () => void;
 }) {
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const [closing, setClosing] = useState(false);
 
   const requestClose = () => {
@@ -226,7 +227,6 @@ function ReviewReader({
   };
 
   useEffect(() => {
-    setMounted(true);
     const releaseScroll = lockPageScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setClosing(true);

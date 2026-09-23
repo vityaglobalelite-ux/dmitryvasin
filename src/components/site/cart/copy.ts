@@ -42,7 +42,20 @@ const ru = {
   checkoutEmptyBody: "Вернитесь в каталог, выберите видео и оформите заказ.",
   payPending: "Переходим к оплате…",
   payErrorTitle: "Не удалось начать оплату",
-  payErrorFallback: "Не удалось начать оплату. Попробуйте ещё раз.",
+  payErrorFallback: "Не удалось начать оплату. Попробуйте ещё раз или напишите в поддержку.",
+  payErrorSignIn: "Войдите в аккаунт, чтобы перейти к оплате.",
+  payErrorSessionExpired: "Сессия истекла. Войдите снова и повторите оплату.",
+  payErrorEmptyCart: "Корзина пуста. Добавьте видео и повторите оплату.",
+  payErrorCurrency: "Не удалось определить валюту оплаты. Обновите страницу и повторите.",
+  payErrorUnavailableProduct:
+    "Один из товаров больше недоступен. Обновите корзину и повторите.",
+  payErrorNotConnected: "Оплата на сайте ещё не подключена. Напишите в поддержку.",
+  payErrorTemporarilyUnavailable: "Оплата временно недоступна. Попробуйте чуть позже.",
+  payErrorNetwork:
+    "Не удалось связаться с сервером оплаты. Проверьте соединение и попробуйте ещё раз.",
+  checkoutStatusErrorTitle: "Не удалось проверить оплату",
+  checkoutStatusErrorBody:
+    "Связь с сервером прервалась. Если списание прошло, заказ появится в «Истории покупок». Проверьте соединение и обновите статус.",
   checkoutProcessingTitle: "Подтверждаем оплату",
   checkoutProcessingBody:
     "Ждём ответ от банка и Stripe. Обычно это занимает до минуты.",
@@ -98,7 +111,20 @@ const en = {
   checkoutEmptyBody: "Go back to the catalog, choose videos, and checkout.",
   payPending: "Taking you to payment…",
   payErrorTitle: "Couldn’t start payment",
-  payErrorFallback: "Couldn’t start payment. Please try again.",
+  payErrorFallback: "Couldn’t start payment. Please try again or contact support.",
+  payErrorSignIn: "Sign in to continue to payment.",
+  payErrorSessionExpired: "Your session has expired. Sign in again and retry the payment.",
+  payErrorEmptyCart: "Your cart is empty. Add videos and retry the payment.",
+  payErrorCurrency: "Couldn’t determine the payment currency. Refresh the page and try again.",
+  payErrorUnavailableProduct:
+    "One of the items is no longer available. Refresh your cart and try again.",
+  payErrorNotConnected: "Payments aren’t set up on the site yet. Please contact support.",
+  payErrorTemporarilyUnavailable: "Payment is temporarily unavailable. Please try again shortly.",
+  payErrorNetwork:
+    "Couldn’t reach the payment server. Check your connection and try again.",
+  checkoutStatusErrorTitle: "Couldn’t check the payment",
+  checkoutStatusErrorBody:
+    "The connection to the server dropped. If you were charged, the order will appear in Order history. Check your connection and refresh the status.",
   checkoutProcessingTitle: "Confirming payment",
   checkoutProcessingBody:
     "Waiting for the bank and Stripe. This usually takes up to a minute.",

@@ -65,13 +65,13 @@ export function ProductProgram({
   product,
   cart,
   parent,
-  children,
+  bundleChildren,
 }: {
   id: string;
   product: Product;
   cart: ProductCartApi;
   parent: Product | null;
-  children: Product[];
+  bundleChildren: Product[];
 }) {
   const locale = useLocale();
   const t = useCatalogT();
@@ -115,7 +115,7 @@ export function ProductProgram({
               block={block}
               index={index}
               product={product}
-              sku={isBlockSku ? product : skuForBlock(block, children, index)}
+              sku={isBlockSku ? product : skuForBlock(block, bundleChildren, index)}
               cart={cart}
             />
           ))}
@@ -127,8 +127,8 @@ export function ProductProgram({
           full={fullProduct}
           parts={
             isBlockSku
-              ? [product, ...children.filter((item) => item.id !== product.id)]
-              : children
+              ? [product, ...bundleChildren.filter((item) => item.id !== product.id)]
+              : bundleChildren
           }
           cart={cart}
           parentHref={

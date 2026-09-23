@@ -4,7 +4,6 @@ import {
   productsMapFromCart,
 } from "@/lib/catalog/bundle-pricing";
 import type { CartItem, Currency, Product, WholesaleTier } from "@/lib/catalog/types";
-import { catalogPriceMinor } from "@/lib/catalog/money";
 
 export type CartTotals = {
   subtotalMinor: number;

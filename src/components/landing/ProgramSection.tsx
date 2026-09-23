@@ -64,6 +64,10 @@ function useProgramMonth() {
     else lessonEls.current.delete(i);
   }, []);
 
+  const setBoardEl = useCallback((el: HTMLElement | null) => {
+    boardEl.current = el;
+  }, []);
+
   const scrollToLesson = useCallback((i: number) => {
     const token = ++scrollToken.current;
     const run = () => {
@@ -152,7 +156,7 @@ function useProgramMonth() {
     selectLessonFromMap,
     returnToProgram,
     setLessonEl,
-    boardEl,
+    setBoardEl,
     selectMonth,
     panelStyle,
     panelShown,
@@ -288,7 +292,7 @@ function ProgramMobile() {
     selectLessonFromMap,
     returnToProgram,
     setLessonEl,
-    boardEl,
+    setBoardEl,
     selectMonth,
     panelStyle,
     panelShown,
@@ -384,9 +388,7 @@ function ProgramMobile() {
 
       {/* Group 2338 — 20,5888 */}
       <div
-        ref={(el) => {
-          boardEl.current = el;
-        }}
+        ref={setBoardEl}
         data-program-board
         className="program-layout-ease absolute left-[20px] z-[1] rounded-[10px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ top: my(boardAbsTop), width: 320, height: boardH }}
@@ -623,7 +625,7 @@ function ProgramDesktop() {
     selectLessonFromMap,
     returnToProgram,
     setLessonEl,
-    boardEl,
+    setBoardEl,
     selectMonth,
     panelStyle,
     panelShown,
@@ -687,9 +689,7 @@ function ProgramDesktop() {
 
       {/* route board — height follows node stack; result card matches */}
       <div
-        ref={(el) => {
-          boardEl.current = el;
-        }}
+        ref={setBoardEl}
         data-program-board
         className="program-layout-ease absolute overflow-visible rounded-[20px] bg-white shadow-[0px_4px_24px_0px_rgba(0,0,0,0.08)]"
         style={{ left: 240, top: y(BOARD_TOP), width: 1075, height: boardH }}

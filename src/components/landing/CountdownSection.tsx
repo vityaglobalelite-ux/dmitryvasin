@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { ClubCta } from "@/components/landing/ClubCta";
 import { landingAssets } from "@/lib/landing-assets";
 import { useIsMobile } from "@/lib/landing-mode";
 import { useCountdownTail } from "@/lib/countdown-tail";
 import { CLUB_CLOSED_ID } from "@/lib/tariff-stage3";
 
-function getTimeLeft(target: Date) {
-  const diff = Math.max(0, target.getTime() - Date.now());
+function getTimeLeft(target: Date, nowMs: number) {
+  const diff = Math.max(0, target.getTime() - nowMs);
   const s = Math.floor(diff / 1000);
   return {
     days: Math.floor(s / 86400),
@@ -20,19 +20,43 @@ function getTimeLeft(target: Date) {
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function useCountdownDisplay(target: Date | null) {
-  const [time, setTime] = useState<ReturnType<typeof getTimeLeft> | null>(null);
+/* Wall clock in whole seconds as an external store — one interval while
+   anything listens; whole seconds keep the snapshot stable between ticks. */
+const clockListeners = new Set<() => void>();
+let clockSecond = 0;
+let clockTimer: number | undefined;
 
-  useEffect(() => {
-    if (!target) {
-      setTime(null);
-      return;
-    }
-    const tick = () => setTime(getTimeLeft(target));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [target]);
+const currentSecond = () => Math.floor(Date.now() / 1000);
+
+function subscribeClock(onTick: () => void): () => void {
+  clockListeners.add(onTick);
+  if (clockListeners.size === 1) {
+    clockSecond = currentSecond();
+    clockTimer = window.setInterval(() => {
+      clockSecond = currentSecond();
+      for (const listener of clockListeners) listener();
+    }, 1000);
+  }
+  return () => {
+    clockListeners.delete(onTick);
+    if (clockListeners.size === 0) window.clearInterval(clockTimer);
+  };
+}
+
+function readClock(): number {
+  return clockListeners.size > 0 ? clockSecond : currentSecond();
+}
+
+const noopSubscribe = () => () => {};
+
+function useCountdownDisplay(target: Date | null) {
+  // Null on the server and during hydration — the markup must match first.
+  const nowSec = useSyncExternalStore(
+    target ? subscribeClock : noopSubscribe,
+    readClock,
+    () => null,
+  );
+  const time = target && nowSec !== null ? getTimeLeft(target, nowSec * 1000) : null;
 
   return time
     ? `${pad(time.days)}:${pad(time.hours)}:${pad(time.minutes)}:${pad(time.seconds)}`

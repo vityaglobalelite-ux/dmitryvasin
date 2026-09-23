@@ -9,7 +9,12 @@ const STORAGE_KEY = "catalog.guest-cart.v1";
 
 function readWindow(): Storage | null {
   if (typeof window === "undefined") return null;
-  return window.localStorage;
+  try {
+    return window.localStorage;
+  } catch {
+    // Blocked site data (Safari, embedded views) — behave as an empty cart.
+    return null;
+  }
 }
 
 export function getGuestCart(): CartItem[] {

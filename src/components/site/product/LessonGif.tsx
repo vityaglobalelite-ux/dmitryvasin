@@ -13,21 +13,10 @@ import { CarouselArrow } from "@/components/site/ui/CarouselArrow";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { lessonClip, type LessonClip } from "@/lib/catalog/lesson-clip";
 import { useLocale } from "@/lib/catalog/locale-context";
+import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
 /** Start fetching a clip this far before it scrolls into view. */
 const PRELOAD_MARGIN = "600px 0px";
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduced(media.matches);
-    sync();
-    media.addEventListener("change", sync);
-    return () => media.removeEventListener("change", sync);
-  }, []);
-  return reduced;
-}
 
 /**
  * Splits "close enough to start downloading" from "actually on screen", so a

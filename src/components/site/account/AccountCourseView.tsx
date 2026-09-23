@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import {
   AccountBackLink,
   AccountShell,
@@ -12,6 +12,7 @@ import { accountT, type AccountCopy } from "@/components/site/account/copy";
 import { remainingAccess } from "@/components/site/account/remaining";
 import { useAccessEntry } from "@/components/site/account/use-access-entry";
 import { useAccountGate } from "@/components/site/account/use-account-gate";
+import { usePostureFullProduct } from "@/components/site/account/use-posture-full-product";
 import { LessonGifRow } from "@/components/site/product/LessonGif";
 import { isAccessActive } from "@/lib/catalog/access";
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
@@ -19,7 +20,6 @@ import { useMyAccess } from "@/lib/catalog/hooks-account";
 import { CATALOG_STATIC_PARAM_STUB } from "@/lib/catalog/static-params";
 import { productCopy } from "@/lib/catalog/locale";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
-import { getPublishedProduct } from "@/lib/catalog/repo/products";
 import type { Access, ProgramBlock, Product } from "@/lib/catalog/types";
 import { ProductNotFound } from "@/components/site/product/ProductStates";
 
@@ -72,10 +72,6 @@ export function AccountCourseView() {
   const locale = useLocale();
   const copyUi = accountT(locale);
   const routes = useLocalizedRoutes();
-  const [fullCourseProduct, setFullCourseProduct] = useState<Product | null>(
-    null,
-  );
-
   const needsPostureFullProduct =
     id === POSTURE_BUNDLE.fullId &&
     !entry.data?.product &&
@@ -89,19 +85,8 @@ export function AccountCourseView() {
         ),
     );
 
-  useEffect(() => {
-    if (!needsPostureFullProduct) {
-      setFullCourseProduct(null);
-      return undefined;
-    }
-    let cancelled = false;
-    void getPublishedProduct(POSTURE_BUNDLE.fullId, locale).then((product) => {
-      if (!cancelled) setFullCourseProduct(product);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [needsPostureFullProduct, locale]);
+  const fullCourse = usePostureFullProduct(needsPostureFullProduct, locale);
+  const fullCourseProduct = fullCourse.product;
 
   const access = useMemo((): Access | null => {
     const direct = entry.data;
@@ -115,6 +100,8 @@ export function AccountCourseView() {
   useEffect(() => {
     if (gate.pending || entry.loading || !id) return;
     if (allAccess.loading && id === POSTURE_BUNDLE.fullId) return;
+    // Both blocks owned: wait for the full-course product before judging access.
+    if (fullCourse.pending) return;
 
     if (!access || !access.product) {
       router.replace(routes.product(id));
@@ -131,6 +118,7 @@ export function AccountCourseView() {
     access,
     allAccess.loading,
     entry.loading,
+    fullCourse.pending,
     gate.pending,
     id,
     router,
@@ -141,7 +129,7 @@ export function AccountCourseView() {
   if (
     gate.pending ||
     entry.loading ||
-    (needsPostureFullProduct && !fullCourseProduct)
+    fullCourse.pending
   ) {
     return <AccountShellSkeleton variant="form" />;
   }

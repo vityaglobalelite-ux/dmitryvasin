@@ -25,13 +25,32 @@ export type CatalogCheckoutErrorCode =
   | "network"
   | "invalid_response";
 
+/** What the buyer is told — the UI maps each reason to localized copy. */
+export type CatalogCheckoutFailure =
+  | "sign_in"
+  | "session_expired"
+  | "empty_cart"
+  | "currency"
+  | "unavailable_product"
+  | "not_connected"
+  | "temporarily_unavailable"
+  | "network"
+  | "start_failed";
+
 export class CatalogCheckoutError extends Error {
   readonly code: CatalogCheckoutErrorCode;
+  readonly reason: CatalogCheckoutFailure;
 
-  constructor(code: CatalogCheckoutErrorCode, message: string) {
-    super(message);
+  /** `detail` is for logs only; never show it to the buyer. */
+  constructor(
+    code: CatalogCheckoutErrorCode,
+    reason: CatalogCheckoutFailure,
+    detail: string = reason,
+  ) {
+    super(detail);
     this.name = "CatalogCheckoutError";
     this.code = code;
+    this.reason = reason;
   }
 }
 
@@ -70,32 +89,23 @@ function defaultCheckoutUrls(): {
   };
 }
 
-function messageForServerError(
+function reasonForServerError(
   errorCode: string | undefined,
   status?: number,
-): string {
-  if (status === 401 || errorCode === "unauthorized") {
-    return "Сессия истекла. Войдите снова и повторите оплату.";
-  }
-  if (errorCode === "empty_cart") {
-    return "Корзина пуста. Добавьте уроки и повторите оплату.";
-  }
+): CatalogCheckoutFailure {
+  if (status === 401 || errorCode === "unauthorized") return "session_expired";
+  if (errorCode === "empty_cart") return "empty_cart";
   if (errorCode === "mixed_currencies" || errorCode === "invalid_currency") {
-    return "Не удалось определить валюту оплаты. Обновите страницу и повторите.";
+    return "currency";
   }
-  if (errorCode === "unpublished_product") {
-    return "Один из товаров больше недоступен. Обновите корзину и повторите.";
-  }
-  if (errorCode === "invalid_url" || errorCode === "invalid_amount") {
-    return "Не удалось начать оплату. Обновите страницу и попробуйте ещё раз.";
-  }
+  if (errorCode === "unpublished_product") return "unavailable_product";
   if (status === 503 || errorCode === "catalog_stripe_misconfigured") {
-    return "Оплата на сайте ещё не подключена. Напишите в поддержку.";
+    return "not_connected";
   }
   if (status === 501 || errorCode === "not_implemented") {
-    return "Оплата временно недоступна. Попробуйте чуть позже.";
+    return "temporarily_unavailable";
   }
-  return "Не удалось начать оплату. Попробуйте ещё раз или напишите в поддержку.";
+  return "start_failed";
 }
 
 function codeForServerError(
@@ -160,7 +170,8 @@ export async function startCatalogCheckout(
   if (!supabase) {
     throw new CatalogCheckoutError(
       "config",
-      "Сервис оплаты недоступен. Проверьте подключение и попробуйте позже.",
+      "temporarily_unavailable",
+      "Supabase client is not configured",
     );
   }
 
@@ -169,10 +180,7 @@ export async function startCatalogCheckout(
   } = await supabase.auth.getSession();
   const accessToken = session?.access_token?.trim();
   if (!accessToken || (session?.user && isGuestUser(session.user))) {
-    throw new CatalogCheckoutError(
-      "auth",
-      "Войдите в аккаунт, чтобы перейти к оплате.",
-    );
+    throw new CatalogCheckoutError("auth", "sign_in", "No signed-in session");
   }
 
   const defaults = defaultCheckoutUrls();
@@ -209,20 +217,19 @@ export async function startCatalogCheckout(
         : undefined;
       throw new CatalogCheckoutError(
         codeForServerError(serverCode, status),
-        messageForServerError(serverCode, status),
+        reasonForServerError(serverCode, status),
+        `catalog-create-checkout ${status}${serverCode ? ` ${serverCode}` : ""}`,
       );
     }
-    throw new CatalogCheckoutError(
-      "network",
-      "Не удалось связаться с сервером оплаты. Попробуйте ещё раз.",
-    );
+    throw new CatalogCheckoutError("network", "network", error.message);
   }
 
   const parsed = parseInvokeSuccess(data, successUrl);
   if (!parsed) {
     throw new CatalogCheckoutError(
       "invalid_response",
-      "Сервер вернул неожиданный ответ. Попробуйте позже.",
+      "start_failed",
+      "catalog-create-checkout returned no checkout url",
     );
   }
 

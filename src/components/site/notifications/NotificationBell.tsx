@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { notificationT } from "@/components/site/notifications/copy";
 import { useUnreadNotifications } from "@/components/site/notifications/UnreadProvider";
 import { supportAssets } from "@/components/site/support/assets";
@@ -40,43 +40,29 @@ export function NotificationBell() {
   const [listError, setListError] = useState(false);
   const [listLoading, setListLoading] = useState(false);
 
-  const refreshList = useCallback(async () => {
-    if (!user) return;
-    try {
-      const rows = await listNotifications();
-      setItems(rows);
-      setListError(false);
-    } catch {
-      setListError(true);
-    } finally {
-      setListLoading(false);
-    }
-  }, [user]);
+  const userId = user?.id ?? null;
 
+  /* Loads on open and again whenever the unread count moves while open;
+     a newer load cancels the one in flight. */
   useEffect(() => {
-    if (!open || !user) return;
+    if (!open || !userId) return;
     let cancelled = false;
-    (async () => {
-      try {
-        const rows = await listNotifications();
+    listNotifications()
+      .then((rows) => {
         if (cancelled) return;
         setItems(rows);
         setListError(false);
-      } catch {
+      })
+      .catch(() => {
         if (!cancelled) setListError(true);
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setListLoading(false);
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
-  }, [open, user]);
-
-  useEffect(() => {
-    if (!open) return;
-    void refreshList();
-  }, [open, refreshList, unread]);
+  }, [open, userId, unread]);
 
   useEffect(() => {
     if (!open) return;
