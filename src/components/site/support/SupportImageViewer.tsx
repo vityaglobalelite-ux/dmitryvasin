@@ -6,6 +6,7 @@ import { supportAssets } from "@/components/site/support/assets";
 import { supportT } from "@/components/site/support/copy";
 import { Skeleton } from "@/components/site/ui/Skeleton";
 import { useLocale } from "@/lib/catalog/locale-context";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 const CLOSE_MS = 240;
 
@@ -85,12 +86,11 @@ export function SupportImageViewer({
       }
     };
     window.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
     closeRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
+      releaseScroll();
     };
   }, [shown, closing, onClose]);
 

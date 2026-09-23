@@ -11,6 +11,7 @@ import {
   useCanvasZoom,
   useIsMobile,
 } from "@/lib/landing-mode";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 const nav = {
   left: [
@@ -84,14 +85,13 @@ function HeroMobile() {
 
   useEffect(() => {
     if (!menuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setClosing(true);
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      releaseScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [menuOpen]);

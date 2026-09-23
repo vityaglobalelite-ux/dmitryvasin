@@ -10,6 +10,7 @@ import { stripLocalePrefix } from "@/lib/catalog/locale";
 import { getWholesaleTiers } from "@/lib/catalog/repo/settings";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import type { WholesaleTier } from "@/lib/catalog/types";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 type WholesaleModalProps = {
   open: boolean;
@@ -70,12 +71,11 @@ export function WholesaleModal({ open, onClose }: WholesaleModalProps) {
       if (event.key === "Escape") onClose();
     };
     window.addEventListener("keydown", onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
     closeRef.current?.focus();
     return () => {
       window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = previous;
+      releaseScroll();
     };
   }, [shown, closing, onClose]);
 

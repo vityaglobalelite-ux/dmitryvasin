@@ -44,6 +44,7 @@ import { emitCartChanged } from "@/lib/catalog/use-add-to-cart";
 import { siteAssets } from "@/lib/catalog/assets";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { stripLocalePrefix } from "@/lib/catalog/locale";
+import { lockPageScroll } from "@/lib/scroll-lock";
 import {
   getSession,
   isAuthPromptSuppressed,
@@ -287,8 +288,7 @@ function AuthDialog({
     const node = dialogRef.current;
     if (!open || !node || !host) return;
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
     if (node.open) node.close();
     node.show();
     const inerted = inertBackground(host);
@@ -342,7 +342,7 @@ function AuthDialog({
       window.removeEventListener("scroll", syncViewport, true);
       window.removeEventListener("keydown", onKey);
       inerted.forEach((el) => el.removeAttribute("inert"));
-      document.body.style.overflow = previousOverflow;
+      releaseScroll();
       clearViewport();
       if (node.open) node.close();
     };
@@ -440,8 +440,11 @@ function AuthDialogForm({
   const needsPrivacy = mode === "login" || mode === "signup";
   const needsPair = mode === "signup" || mode === "reset";
 
-  useEffect(() => {
-    requestGen.current += 1;
+  /* Switching mode starts a clean step (email and consent carry over).
+     Reset during render — an effect would paint one frame of the old step. */
+  const [formMode, setFormMode] = useState(mode);
+  if (formMode !== mode) {
+    setFormMode(mode);
     setError(null);
     setPrivacyError(null);
     setPassword("");
@@ -449,6 +452,11 @@ function AuthDialogForm({
     setCheckEmail(null);
     setSentTo(null);
     setPending(false);
+  }
+
+  // Responses still in flight belong to the previous step — drop them
+  useLayoutEffect(() => {
+    requestGen.current += 1;
   }, [mode]);
 
   async function finishSignedIn() {

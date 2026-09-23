@@ -5,6 +5,7 @@ import {
   isMobileViewport,
   MOBILE_CANVAS,
 } from "@/lib/landing-mode";
+import { isPageScrollLocked } from "@/lib/scroll-lock";
 
 let activeRaf = 0;
 let scrollToken = 0;
@@ -42,12 +43,44 @@ export function getSectionScrollTop(
   return Math.max(0, Math.min(top, max));
 }
 
+/** Settles the running glide's promise — a cancelled glide must not hang awaiters. */
+let stopActive: (() => void) | null = null;
+
 export function cancelSmoothScroll() {
   if (activeRaf) {
     cancelAnimationFrame(activeRaf);
     activeRaf = 0;
   }
   scrollToken += 1;
+  const stop = stopActive;
+  stopActive = null;
+  stop?.();
+}
+
+const SCROLL_KEYS = new Set([
+  " ",
+  "PageUp",
+  "PageDown",
+  "Home",
+  "End",
+  "ArrowUp",
+  "ArrowDown",
+]);
+
+/** The user takes over mid-glide: wheel, touch or a scroll key cancels it. */
+function yieldToUserInput(): () => void {
+  const onInput = () => cancelSmoothScroll();
+  const onKey = (event: KeyboardEvent) => {
+    if (SCROLL_KEYS.has(event.key)) cancelSmoothScroll();
+  };
+  window.addEventListener("wheel", onInput, { passive: true });
+  window.addEventListener("touchstart", onInput, { passive: true });
+  window.addEventListener("keydown", onKey);
+  return () => {
+    window.removeEventListener("wheel", onInput);
+    window.removeEventListener("touchstart", onInput);
+    window.removeEventListener("keydown", onKey);
+  };
 }
 
 function setScrollBehavior(value: string) {
@@ -105,7 +138,17 @@ function settleScrollY(getTarget: () => number, token: number) {
   requestAnimationFrame(tick);
 }
 
-export function smoothScrollToY(target: number | (() => number)): Promise<void> {
+/** Glide length in ms for a distance in px. */
+export type GlideDuration = (distance: number) => number;
+
+/** Landing default — slow, cinematic travel. */
+const cinematicDuration: GlideDuration = (distance) =>
+  Math.min(2200, Math.max(900, distance * 0.75));
+
+export function smoothScrollToY(
+  target: number | (() => number),
+  opts?: { duration?: GlideDuration },
+): Promise<void> {
   cancelSmoothScroll();
   const token = scrollToken;
   const getTarget = typeof target === "function" ? target : () => target;
@@ -120,7 +163,7 @@ export function smoothScrollToY(target: number | (() => number)): Promise<void> 
   // Reduced motion: short fade, not a hard snap
   const duration = prefersReducedMotion()
     ? 280
-    : Math.min(2200, Math.max(900, Math.abs(distance) * 0.75));
+    : (opts?.duration ?? cinematicDuration)(Math.abs(distance));
 
   setScrollBehavior("auto");
 
@@ -128,11 +171,23 @@ export function smoothScrollToY(target: number | (() => number)): Promise<void> 
     let startTime: number | null = null;
     let stalledFrames = 0;
     let done = false;
+    let releaseInput = () => {};
+
+    /* Cancelled (newer glide, route change, user input): stop where we are */
+    const stop = () => {
+      if (done) return;
+      done = true;
+      window.clearTimeout(failSafe);
+      releaseInput();
+      resolve();
+    };
 
     const finish = (y: number) => {
       if (done) return;
       done = true;
       window.clearTimeout(failSafe);
+      releaseInput();
+      if (stopActive === stop) stopActive = null;
       activeRaf = 0;
       writeScrollY(y);
       settleScrollY(getTarget, token);
@@ -147,10 +202,12 @@ export function smoothScrollToY(target: number | (() => number)): Promise<void> 
       finish(getTarget());
     }, duration + 300);
 
+    stopActive = stop;
+    releaseInput = yieldToUserInput();
+
     const step = (now: number) => {
       if (token !== scrollToken || done) {
-        window.clearTimeout(failSafe);
-        resolve();
+        stop();
         return;
       }
       if (startTime === null) startTime = now;
@@ -189,6 +246,7 @@ export function smoothScrollToId(
     delayMs?: number;
     /** Sticky chrome height, re-read every frame; defaults to the landing nav. */
     offset?: () => number;
+    duration?: GlideDuration;
   },
 ): Promise<boolean> {
   const updateHash = opts?.updateHash ?? true;
@@ -199,17 +257,13 @@ export function smoothScrollToId(
     const el = document.getElementById(id);
     if (!el) return false;
 
-    // Unlock only for mobile menu — not video / modal overlays
-    if (
-      document.body.style.overflow === "hidden" &&
-      !document.querySelector(".quote-video-shell--overlay-fs")
-    ) {
-      document.body.style.overflow = "";
-    }
+    /* No unlock here: a scroll lock belongs to its overlay, and programmatic
+       scrolling works while the page is locked. The menu releases its own. */
 
     // Live target — re-measured every frame (menu close / layout settle)
-    await smoothScrollToY(() =>
-      getSectionScrollTop(el, offset ? offset() : stickyOffset()),
+    await smoothScrollToY(
+      () => getSectionScrollTop(el, offset ? offset() : stickyOffset()),
+      { duration: opts?.duration },
     );
 
     if (updateHash) {
@@ -222,10 +276,13 @@ export function smoothScrollToId(
   };
 
   if (delayMs > 0) {
-    // Any scroll started or cancelled meanwhile supersedes this one
+    // Any scroll started or cancelled meanwhile — or the user scrolling
+    // by hand during the pause — supersedes this one
     const token = scrollToken;
+    const releaseInput = yieldToUserInput();
     return new Promise((resolve) => {
       window.setTimeout(() => {
+        releaseInput();
         if (token !== scrollToken) {
           resolve(false);
           return;
@@ -244,8 +301,9 @@ function eventElement(target: EventTarget | null): Element | null {
   return null;
 }
 
+/** An overlay (the landing menu) holds the page — let it close first. */
 function isMenuLikelyOpen(): boolean {
-  return document.body.style.overflow === "hidden";
+  return isPageScrollLocked();
 }
 
 /**

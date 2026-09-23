@@ -6,6 +6,7 @@ import { landingAssets } from "@/lib/landing-assets";
 import { ClubCta } from "@/components/landing/ClubCta";
 import { reviews } from "@/lib/landing-data";
 import { useIsMobile } from "@/lib/landing-mode";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 type Review = (typeof reviews)[number];
 
@@ -226,14 +227,13 @@ function ReviewReader({
 
   useEffect(() => {
     setMounted(true);
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setClosing(true);
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = prev;
+      releaseScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, []);

@@ -18,7 +18,7 @@ import { useCatalogReturnHref } from "@/lib/catalog/return-to";
 import {
   scrollToSiteSection,
   scrollToSiteTop,
-  useHomeSectionSpy,
+  useHomeSection,
   type HomeSection,
 } from "@/lib/catalog/section-scroll";
 import { siteFocusRing } from "@/components/site/ui/Button";
@@ -33,6 +33,8 @@ const EASE_OUT = "ease-[cubic-bezier(0.22,1,0.36,1)]";
 const MENU_CLOSE_MS = 260;
 /** Home header picks up its surface once the hero starts moving. */
 const HOME_SURFACE_SCROLL_Y = 8;
+/** Page travel that dismisses the open phone menu. */
+const MENU_SCROLL_DISMISS_PX = 10;
 
 type NavKey = "home" | "catalog" | "support" | "reviews" | "contacts";
 
@@ -127,12 +129,16 @@ function useScrolledPast(y: number, enabled: boolean): boolean {
     const update = () => setPast(window.scrollY > y);
     update();
     window.addEventListener("scroll", update, { passive: true });
-    return () => window.removeEventListener("scroll", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      // Next visit starts clean — no stale surface flashing in and fading out
+      setPast(false);
+    };
   }, [enabled, y]);
   return enabled && past;
 }
 
-type SelectItem = (item: NavItem, event?: MouseEvent<HTMLAnchorElement>) => void;
+type SelectItem = (item: NavItem, event: MouseEvent<HTMLAnchorElement>) => void;
 
 function NavItemLink({
   item,
@@ -151,7 +157,7 @@ function NavItemLink({
         href={item.href}
         label={item.label}
         className={className}
-        onClick={() => onSelect(item)}
+        current={active}
       />
     );
   }
@@ -265,9 +271,17 @@ export function SiteNav() {
     stripped === "/" ? "home" : stripped.startsWith("/product/") ? "product" : "page";
   const onHome = variant === "home";
 
-  const spy = useHomeSectionSpy(onHome);
+  const homeSection = useHomeSection(onHome);
   const scrolled = useScrolledPast(HOME_SURFACE_SCROLL_Y, onHome);
-  const activeKey = onHome ? sectionNavKey[spy.active] : pageNavKey(stripped);
+  const activeKey = onHome ? sectionNavKey[homeSection] : pageNavKey(stripped);
+
+  // Any navigation (links, browser back, locale switch) drops the menu at once
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+    setClosing(false);
+  }
 
   const navItems: readonly NavItem[] = [
     { key: "home", href: routes.home, label: copy.nav.home, section: "top" },
@@ -288,7 +302,7 @@ export function SiteNav() {
   ];
 
   const menuVisible = menuOpen || closing;
-  const menuLocked = menuOpen && !closing;
+  const menuActive = menuOpen && !closing;
 
   const openMenu = () => {
     setClosing(false);
@@ -309,10 +323,14 @@ export function SiteNav() {
     return () => window.clearTimeout(timer);
   }, [closing]);
 
+  /* No body scroll lock: modals own that, and two save/restore locks racing
+     would leave the page frozen. Scrolling the page just dismisses the menu. */
   useEffect(() => {
-    if (!menuLocked) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (!menuActive) return;
+    const openedAtY = window.scrollY;
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - openedAtY) > MENU_SCROLL_DISMISS_PX) setClosing(true);
+    };
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setClosing(true);
     };
@@ -321,20 +339,20 @@ export function SiteNav() {
     const onDesktop = () => {
       if (desktop.matches) setClosing(true);
     };
+    window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("keydown", onKey);
     desktop.addEventListener("change", onDesktop);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("scroll", onScroll);
       window.removeEventListener("keydown", onKey);
       desktop.removeEventListener("change", onDesktop);
     };
-  }, [menuLocked]);
+  }, [menuActive]);
 
   /* Home anchors glide in place; from other pages the link navigates and
      useRouteScrollTop glides to the hash after arrival. */
   const onSelect: SelectItem = (item, event) => {
-    closeMenu();
-    if (!event || !onHome || !item.section) return;
+    if (!onHome || !item.section) return;
     if (
       event.defaultPrevented ||
       event.button !== 0 ||
@@ -346,9 +364,16 @@ export function SiteNav() {
       return;
     }
     event.preventDefault();
-    const glide =
-      item.section === "top" ? scrollToSiteTop() : scrollToSiteSection(item.section);
-    spy.pin(item.section, glide);
+    if (item.section === "top") void scrollToSiteTop();
+    else void scrollToSiteSection(item.section);
+  };
+
+  /* Any press inside the header other than the burger itself (menu links,
+     cart, language, sign-in) is a choice — the open menu gives way to it. */
+  const onHeaderClickCapture = (event: MouseEvent<HTMLElement>) => {
+    if (!(event.target instanceof Element)) return;
+    if (event.target.closest("[data-menu-toggle]")) return;
+    closeMenu();
   };
 
   const headerClass = {
@@ -379,7 +404,7 @@ export function SiteNav() {
         />
       ) : null}
 
-      <header data-site-header className={headerClass}>
+      <header data-site-header className={headerClass} onClickCapture={onHeaderClickCapture}>
         <div
           className={frameClass}
           style={onHome ? { maxWidth: `var(${SITE_CANVAS_WIDTH_VAR}, 100%)` } : undefined}
@@ -439,10 +464,11 @@ export function SiteNav() {
               </div>
               <button
                 type="button"
+                data-menu-toggle
                 className={`relative hidden size-8 rounded-full max-[600px]:block ${siteFocusRing}`}
-                aria-expanded={menuLocked}
-                aria-label={menuLocked ? copy.nav.closeMenu : copy.nav.menu}
-                onClick={() => (menuLocked ? closeMenu() : openMenu())}
+                aria-expanded={menuActive}
+                aria-label={menuActive ? copy.nav.closeMenu : copy.nav.menu}
+                onClick={() => (menuActive ? closeMenu() : openMenu())}
               >
                 <img
                   src={siteAssets.menuCircle}
@@ -453,13 +479,13 @@ export function SiteNav() {
                 />
                 <span className="absolute inset-x-[8px] top-[11px] flex h-[10px] flex-col justify-between">
                   <span
-                    className={`block h-0.5 rounded-[10px] bg-white transition-transform duration-300 ${EASE_OUT} ${menuLocked ? "translate-y-[4px] rotate-45" : ""}`}
+                    className={`block h-0.5 rounded-[10px] bg-white transition-transform duration-300 ${EASE_OUT} ${menuActive ? "translate-y-[4px] rotate-45" : ""}`}
                   />
                   <span
-                    className={`block h-0.5 rounded-[10px] bg-white transition-opacity duration-200 ${menuLocked ? "opacity-0" : ""}`}
+                    className={`block h-0.5 rounded-[10px] bg-white transition-opacity duration-200 ${menuActive ? "opacity-0" : ""}`}
                   />
                   <span
-                    className={`block h-0.5 rounded-[10px] bg-white transition-transform duration-300 ${EASE_OUT} ${menuLocked ? "-translate-y-[4px] -rotate-45" : ""}`}
+                    className={`block h-0.5 rounded-[10px] bg-white transition-transform duration-300 ${EASE_OUT} ${menuActive ? "-translate-y-[4px] -rotate-45" : ""}`}
                   />
                 </span>
               </button>

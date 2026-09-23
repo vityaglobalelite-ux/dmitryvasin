@@ -9,11 +9,14 @@ export function SupportNavLink({
   href,
   label,
   className,
+  current,
   onClick,
 }: {
   href: string;
   label: string;
   className?: string;
+  /** This link is the current page. */
+  current?: boolean;
   onClick?: () => void;
 }) {
   const { supportUnread } = useUnreadNotifications();
@@ -27,6 +30,7 @@ export function SupportNavLink({
         .filter(Boolean)
         .join(" ")}
       onClick={onClick}
+      aria-current={current ? "page" : undefined}
       aria-label={unread ? `${label}, ${copy.supportUnread}` : undefined}
     >
       <span>{label}</span>

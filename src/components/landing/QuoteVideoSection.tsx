@@ -14,6 +14,7 @@ import {
   setLandingLayoutFrozen,
   useIsMobile,
 } from "@/lib/landing-mode";
+import { lockPageScroll } from "@/lib/scroll-lock";
 
 type QuoteVideoPlayerProps = {
   playButtonSize: number;
@@ -316,8 +317,7 @@ function QuoteVideoPlayer({
   useEffect(() => {
     if (!overlayFs) return;
 
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const releaseScroll = lockPageScroll();
 
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") stopPlayback();
@@ -331,7 +331,7 @@ function QuoteVideoPlayer({
     window.addEventListener("keydown", onKey);
     window.addEventListener("popstate", onPopState);
     return () => {
-      document.body.style.overflow = prevOverflow;
+      releaseScroll();
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("popstate", onPopState);
     };
