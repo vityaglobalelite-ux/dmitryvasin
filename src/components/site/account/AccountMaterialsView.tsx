@@ -158,9 +158,12 @@ export function AccountMaterialsView() {
     );
   }, [access.data]);
 
-  // Without it both blocks stay listed on their own — nothing is lost.
-  const fullCourse = usePostureFullProduct(needsPostureFullProduct, locale);
-  const fullCourseProduct = fullCourse.product;
+  // Until (or unless) it loads, both blocks stay listed on their own — the
+  // library never waits on this request.
+  const fullCourseProduct = usePostureFullProduct(
+    needsPostureFullProduct,
+    locale,
+  ).product;
 
   const progressByProduct = useMemo(() => {
     const map = new Map<string, WatchProgress>();
@@ -197,11 +200,7 @@ export function AccountMaterialsView() {
     );
   }, [libraryRows]);
 
-  if (
-    gate.pending ||
-    (access.loading && access.data.length === 0 && !access.error) ||
-    fullCourse.pending
-  ) {
+  if (gate.pending || (access.loading && access.data.length === 0 && !access.error)) {
     return <AccountShellSkeleton variant="cards" />;
   }
 
