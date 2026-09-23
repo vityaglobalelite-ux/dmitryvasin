@@ -28,11 +28,49 @@ const AVATAR_OUTPUT_SIZE = 512;
 export function AccountProfileView() {
   const gate = useAccountGate();
   const copy = accountT(useLocale());
-  const passwordCopy = useCatalogT();
   const profileQuery = useMyProfile();
-  const [profile, setProfile] = useState<Profile | null>(() => profileQuery.data);
-  const [firstName, setFirstName] = useState(() => profileQuery.data?.firstName ?? "");
-  const [lastName, setLastName] = useState(() => profileQuery.data?.lastName ?? "");
+  const profile = profileQuery.data;
+
+  if (gate.pending || (!profile && profileQuery.loading)) {
+    return <AccountShellSkeleton variant="form" />;
+  }
+
+  const email = gate.user?.email ?? profile?.email ?? "";
+
+  /* An empty form here would save blank names over the real profile. */
+  if (!profile && profileQuery.error) {
+    return (
+      <AccountShell email={email} active="profile">
+        <div className="max-w-[640px] rounded-[20px] bg-light-gray p-10 max-[600px]:rounded-[10px] max-[600px]:p-[15px]">
+          <h1 className="text-[24px] font-medium leading-[1.2] text-text max-[600px]:text-[16px]">
+            {copy.profileLoadErrorTitle}
+          </h1>
+          <p className="mt-4 text-[16px] leading-[1.5] text-text/70 max-[600px]:text-[13px]">
+            {copy.errorBody}
+          </p>
+          <Button type="button" className="mt-8" onClick={profileQuery.reload}>
+            {copy.retry}
+          </Button>
+        </div>
+      </AccountShell>
+    );
+  }
+
+  // Mounted once the profile is known, so the fields start filled.
+  return <AccountProfileForm key={gate.user?.id} profile={profile} email={email} />;
+}
+
+function AccountProfileForm({
+  profile,
+  email,
+}: {
+  profile: Profile | null;
+  email: string;
+}) {
+  const copy = accountT(useLocale());
+  const passwordCopy = useCatalogT();
+  const [firstName, setFirstName] = useState(profile?.firstName ?? "");
+  const [lastName, setLastName] = useState(profile?.lastName ?? "");
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [removeAvatar, setRemoveAvatar] = useState(false);
@@ -46,17 +84,6 @@ export function AccountProfileView() {
   const [securityBusy, setSecurityBusy] = useState(false);
   const [securityError, setSecurityError] = useState<string | null>(null);
   const [securitySaved, setSecuritySaved] = useState(false);
-  const hydrated = useRef(Boolean(profileQuery.data));
-
-  useEffect(() => {
-    const next = profileQuery.data;
-    if (!next) return;
-    setProfile(next);
-    if (hydrated.current) return;
-    hydrated.current = true;
-    setFirstName(next.firstName);
-    setLastName(next.lastName);
-  }, [profileQuery.data]);
 
   useEffect(() => {
     return () => {
@@ -64,11 +91,6 @@ export function AccountProfileView() {
     };
   }, [previewUrl]);
 
-  if (gate.pending || (!profile && profileQuery.loading)) {
-    return <AccountShellSkeleton variant="form" />;
-  }
-
-  const email = gate.user?.email ?? profile?.email ?? "";
   const shownAvatar = previewUrl ?? (removeAvatar ? null : profileAvatarSrc(profile));
   const hasCustomPhoto = Boolean(shownAvatar);
 
@@ -114,7 +136,7 @@ export function AccountProfileView() {
       if (removeAvatar && previousPath) {
         void deleteMyAvatar(previousPath, previousBucket);
       }
-      setProfile(saved);
+      // updateMyProfile refreshed the profile cache — `profile` follows it.
       setFirstName(saved.firstName);
       setLastName(saved.lastName);
       if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -391,7 +413,7 @@ function AccountField({
           onChange={onChange ? (event) => onChange(event.target.value) : undefined}
           className={[
             "h-[62px] w-full rounded-[10px] bg-white px-5 text-[16px] leading-[1.5] text-[#242424] outline-none transition-shadow duration-150",
-            "focus:shadow-[0_0_0_2px_rgba(76,13,50,0.25)] max-[600px]:h-[50px] max-[600px]:text-[13px]",
+            "focus:shadow-[0_0_0_2px_rgba(76,13,50,0.25)] max-[600px]:h-[50px]",
             "read-only:cursor-default read-only:text-text/80",
             isPassword ? "pr-12" : "",
           ].join(" ")}

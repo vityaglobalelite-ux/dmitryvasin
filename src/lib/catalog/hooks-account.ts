@@ -32,59 +32,87 @@ function toError(error: unknown): Error {
   return error instanceof Error ? error : new Error("catalog_account");
 }
 
-export function useMyProfile(): QueryState<Profile | null> {
+type Settled<T> = { data: T; error: Error | null };
+
+/** Called from async callbacks only; `prev` is the data shown for this request. */
+type Settle<T> = (next: (prev: T) => Settled<T>) => void;
+
+type AccountQuery<T> = {
+  empty: T;
+  /** Session cache for this user — painted instantly while the fetch runs. */
+  readCache: (userId: string) => T | null;
+  clearCache: () => void;
+  /** Starts the fetch (and any subscriptions); returns the cleanup. */
+  start: (userId: string, settle: Settle<T>) => () => void;
+};
+
+type AccountQueryResult<T> = QueryState<T> & { reload: () => void };
+
+/**
+ * Per-user account data. A result belongs to one request (user + reload
+ * attempt); anything else is derived during render — cache for a new user,
+ * empty when signed out — so a switch never paints the previous user's rows.
+ */
+function useAccountQuery<T>(query: AccountQuery<T>): AccountQueryResult<T> {
   const { data: user, loading: authLoading } = useAuthUser();
-  const [state, setState] = useState<QueryState<Profile | null>>(() => {
-    const cached = user?.id ? peekCachedProfile(user.id) : null;
-    return {
-      data: cached,
-      loading: !cached && (authLoading || Boolean(user)),
-      error: null,
-    };
-  });
+  const userId = user?.id ?? null;
+  const [attempt, setAttempt] = useState(0);
+  const [settled, setSettled] = useState<(Settled<T> & { key: string }) | null>(null);
+  const key = userId ? `${userId}:${attempt}` : null;
+
+  // Drop a result once its request is gone (sign-out, other user, reload).
+  if (settled && settled.key !== key) setSettled(null);
+
+  const reload = useCallback(() => setAttempt((value) => value + 1), []);
 
   useEffect(() => {
     if (authLoading) return;
-
-    if (!user) {
-      clearProfileCache();
-      setState({ data: null, loading: false, error: null });
+    if (!userId) {
+      query.clearCache();
       return;
     }
+    const requestKey = `${userId}:${attempt}`;
+    return query.start(userId, (next) => {
+      setSettled((prev) => {
+        const shown =
+          prev?.key === requestKey
+            ? prev.data
+            : (query.readCache(userId) ?? query.empty);
+        return { key: requestKey, ...next(shown) };
+      });
+    });
+  }, [attempt, authLoading, query, userId]);
 
-    const cached =
-      peekCachedProfile(user.id) ?? hydrateProfileCache(user.id);
-    if (cached) {
-      setState({ data: cached, loading: false, error: null });
-    } else {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-    }
+  if (settled && settled.key === key) {
+    return { data: settled.data, loading: false, error: settled.error, reload };
+  }
+  if (!authLoading && !userId) {
+    return { data: query.empty, loading: false, error: null, reload };
+  }
+  const cached = userId ? query.readCache(userId) : null;
+  return { data: cached ?? query.empty, loading: !cached, error: null, reload };
+}
 
+const NO_ROWS: never[] = [];
+
+const profileQuery: AccountQuery<Profile | null> = {
+  empty: null,
+  readCache: (userId) => peekCachedProfile(userId) ?? hydrateProfileCache(userId),
+  clearCache: clearProfileCache,
+  start(userId, settle) {
     let cancelled = false;
-    const userId = user.id;
 
+    // A missing row keeps what is shown (cache) instead of blanking it.
     function apply(profile: Profile | null) {
       if (cancelled) return;
-      if (profile) {
-        setState({ data: profile, loading: false, error: null });
-        return;
-      }
-      setState((prev) => ({
-        data: prev.data,
-        loading: false,
-        error: null,
-      }));
+      settle((prev) => ({ data: profile ?? prev, error: null }));
     }
 
     getMyProfile()
       .then(apply)
       .catch((error: unknown) => {
         if (cancelled) return;
-        setState((prev) => ({
-          data: prev.data,
-          loading: false,
-          error: toError(error),
-        }));
+        settle((prev) => ({ data: prev, error: toError(error) }));
       });
 
     const unsubscribe = onProfileChanged(() => {
@@ -99,66 +127,69 @@ export function useMyProfile(): QueryState<Profile | null> {
       cancelled = true;
       unsubscribe();
     };
-  }, [authLoading, user?.id]);
+  },
+};
 
-  return state;
-}
-
-export function useMyAccess(): QueryState<Access[]> {
-  const { data: user, loading: authLoading } = useAuthUser();
-  const [state, setState] = useState<QueryState<Access[]>>(() => {
-    const cached =
-      (user?.id ? peekCachedAccess(user.id) : null) ??
-      (user?.id ? hydrateAccessCache(user.id) : null);
-    return {
-      data: cached ?? [],
-      loading: !cached && (authLoading || Boolean(user)),
-      error: null,
-    };
-  });
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      clearAccountListsCache();
-      setState({ data: [], loading: false, error: null });
-      return;
-    }
-
-    const cached =
-      peekCachedAccess(user.id) ?? hydrateAccessCache(user.id);
-    if (cached) {
-      setState({ data: cached, loading: false, error: null });
-    } else {
-      setState((prev) => ({ ...prev, loading: true, error: null }));
-    }
-
+const accessQuery: AccountQuery<Access[]> = {
+  empty: NO_ROWS,
+  readCache: (userId) => peekCachedAccess(userId) ?? hydrateAccessCache(userId),
+  clearCache: clearAccountListsCache,
+  start(userId, settle) {
     let cancelled = false;
     const gen = beginAccessFetch();
-    const userId = user.id;
 
     listMyAccess()
       .then((data) => {
         if (cancelled || !isAccessFetchCurrent(gen)) return;
         writeAccessCache(userId, data);
-        setState({ data, loading: false, error: null });
+        settle(() => ({ data, error: null }));
       })
       .catch((error: unknown) => {
         if (cancelled || !isAccessFetchCurrent(gen)) return;
-        setState((prev) => ({
-          data: prev.data,
-          loading: false,
-          error: toError(error),
-        }));
+        settle((prev) => ({ data: prev, error: toError(error) }));
       });
 
     return () => {
       cancelled = true;
     };
-  }, [authLoading, user?.id]);
+  },
+};
 
-  return state;
+const ordersQuery: AccountQuery<Order[]> = {
+  empty: NO_ROWS,
+  readCache: (userId) => peekCachedOrders(userId) ?? hydrateOrdersCache(userId),
+  clearCache: clearAccountListsCache,
+  start(userId, settle) {
+    let cancelled = false;
+    const gen = beginOrdersFetch();
+
+    listMyOrders()
+      .then((data) => {
+        if (cancelled || !isOrdersFetchCurrent(gen)) return;
+        writeOrdersCache(userId, data);
+        settle(() => ({ data, error: null }));
+      })
+      .catch((error: unknown) => {
+        if (cancelled || !isOrdersFetchCurrent(gen)) return;
+        settle((prev) => ({ data: prev, error: toError(error) }));
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  },
+};
+
+export function useMyProfile(): AccountQueryResult<Profile | null> {
+  return useAccountQuery(profileQuery);
+}
+
+export function useMyAccess(): AccountQueryResult<Access[]> {
+  return useAccountQuery(accessQuery);
+}
+
+export function useMyOrders(): AccountQueryResult<Order[]> {
+  return useAccountQuery(ordersQuery);
 }
 
 export function useMyWatchProgress(): QueryState<WatchProgress[]> {
@@ -175,7 +206,6 @@ export function useMyWatchProgress(): QueryState<WatchProgress[]> {
       if (!cancelled) setState({ data, loading: false, error: null });
     }
 
-    setState({ data: [], loading: true, error: null });
     listMyWatchProgress()
       .then(applyList)
       .catch(() => {
@@ -204,70 +234,4 @@ export function useMyWatchProgress(): QueryState<WatchProgress[]> {
   }, []);
 
   return state;
-}
-
-export function useMyOrders(): QueryState<Order[]> & { reload: () => void } {
-  const { data: user, loading: authLoading } = useAuthUser();
-  const [tick, setTick] = useState(0);
-  const [state, setState] = useState<QueryState<Order[]>>(() => {
-    const cached =
-      (user?.id ? peekCachedOrders(user.id) : null) ??
-      (user?.id ? hydrateOrdersCache(user.id) : null);
-    return {
-      data: cached ?? [],
-      loading: !cached && (authLoading || Boolean(user)),
-      error: null,
-    };
-  });
-
-  const reload = useCallback(() => {
-    setTick((value) => value + 1);
-  }, []);
-
-  useEffect(() => {
-    if (authLoading) return;
-
-    if (!user) {
-      clearAccountListsCache();
-      setState({ data: [], loading: false, error: null });
-      return;
-    }
-
-    const cached =
-      peekCachedOrders(user.id) ?? hydrateOrdersCache(user.id);
-    if (cached && tick === 0) {
-      setState({ data: cached, loading: false, error: null });
-    } else {
-      setState((prev) => ({
-        ...prev,
-        loading: !cached,
-        error: null,
-      }));
-    }
-
-    let cancelled = false;
-    const gen = beginOrdersFetch();
-    const userId = user.id;
-
-    listMyOrders()
-      .then((data) => {
-        if (cancelled || !isOrdersFetchCurrent(gen)) return;
-        writeOrdersCache(userId, data);
-        setState({ data, loading: false, error: null });
-      })
-      .catch((error: unknown) => {
-        if (cancelled || !isOrdersFetchCurrent(gen)) return;
-        setState((prev) => ({
-          data: prev.data,
-          loading: false,
-          error: toError(error),
-        }));
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [authLoading, tick, user?.id]);
-
-  return { ...state, reload };
 }

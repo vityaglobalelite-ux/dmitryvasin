@@ -7,6 +7,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // The keyboard overlays the page instead of shrinking the layout viewport:
+  // the Figma canvases pick 360 vs 1920 from it, and dialogs track the
+  // visible part themselves.
+  interactiveWidget: "resizes-visual",
 };
 
 export const metadata: Metadata = {

@@ -906,7 +906,7 @@ function SupportComposer({
           disabled={locked}
           aria-invalid={error ? true : undefined}
           className={[
-            "min-h-[60px] min-w-0 flex-1 resize-none rounded-[20px] border bg-white px-5 py-4 text-[16px] leading-[1.5] text-text outline-none transition-colors duration-150 placeholder:text-[#d9d9d9] max-[600px]:min-h-[50px] max-[600px]:px-4 max-[600px]:py-3 max-[600px]:text-[13px]",
+            "min-h-[60px] min-w-0 flex-1 resize-none rounded-[20px] border bg-white px-5 py-4 text-[16px] leading-[1.5] text-text outline-none transition-colors duration-150 placeholder:text-[#d9d9d9] max-[600px]:min-h-[50px] max-[600px]:px-4 max-[600px]:py-3",
             error
               ? "border-accent-red focus:border-accent-red"
               : "border-[#d9d9d9] focus:border-[rgba(76,13,50,0.4)]",

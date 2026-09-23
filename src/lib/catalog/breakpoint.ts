@@ -45,7 +45,7 @@ function aspectOf(w: number, h: number): "portrait" | "landscape" {
 
 /**
  * Stable size for canvas zoom.
- * Mobile browser chrome show/hide changes visualViewport height (and sometimes
+ * Mobile browser chrome show/hide changes viewport height (and sometimes
  * width by a few px) on scroll — that must NOT rescale the whole Figma canvas.
  */
 export function getSiteZoomViewportSize() {

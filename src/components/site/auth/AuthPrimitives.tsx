@@ -73,7 +73,7 @@ export function AuthField({
           type={resolvedType}
           aria-invalid={invalid || undefined}
           className={cx(
-            "min-w-0 flex-1 appearance-none border-0 bg-transparent text-[16px] leading-[1.5] shadow-none outline-none placeholder:text-[#d9d9d9] max-[600px]:text-[13px]",
+            "min-w-0 flex-1 appearance-none border-0 bg-transparent text-[16px] leading-[1.5] shadow-none outline-none placeholder:text-[#d9d9d9]",
             invalid ? "text-accent-red" : "text-text",
           )}
           {...inputProps}

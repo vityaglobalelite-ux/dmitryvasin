@@ -4,7 +4,6 @@ import {
   createContext,
   useContext,
   useLayoutEffect,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -87,13 +86,14 @@ export function CanvasZoomProvider({
   );
 }
 
-/** Live viewport — used for mobile/desktop mode detection. */
+/**
+ * Layout viewport, not the visual one — used for mode detection and zoom.
+ * The on-screen keyboard and pinch-zoom shrink `visualViewport`; reading it
+ * flips a portrait phone to desktop and rescales the canvas under the finger.
+ */
 export function getViewportSize() {
-  const w =
-    window.visualViewport?.width ?? document.documentElement.clientWidth;
-  const h =
-    window.visualViewport?.height ?? document.documentElement.clientHeight;
-  return { w, h };
+  const root = document.documentElement;
+  return { w: root.clientWidth, h: root.clientHeight };
 }
 
 function aspectOf(w: number, h: number): "portrait" | "landscape" {
@@ -102,7 +102,7 @@ function aspectOf(w: number, h: number): "portrait" | "landscape" {
 
 /**
  * Stable size for canvas zoom.
- * Mobile browser chrome show/hide changes visualViewport height (and sometimes
+ * Mobile browser chrome show/hide changes viewport height (and sometimes
  * width by a few px) on scroll — that must NOT rescale the whole Figma canvas.
  * Relock only when orientation flips or width jumps meaningfully.
  */
@@ -182,23 +182,19 @@ export function prefersTransformCanvasScale() {
 
 export function LandingModeProvider({ children }: { children: ReactNode }) {
   const [mode, setMode] = useState<LandingMode>("desktop");
-  const modeRef = useRef(mode);
-  modeRef.current = mode;
 
   useLayoutEffect(() => {
     const apply = () => {
       if (landingLayoutFrozen) return;
-      const next = isMobileViewport() ? "mobile" : "desktop";
-      if (next !== modeRef.current) setMode(next);
+      const next: LandingMode = isMobileViewport() ? "mobile" : "desktop";
+      setMode((prev) => (prev === next ? prev : next));
     };
     apply();
     window.addEventListener("resize", apply);
     window.addEventListener("orientationchange", apply);
-    window.visualViewport?.addEventListener("resize", apply);
     return () => {
       window.removeEventListener("resize", apply);
       window.removeEventListener("orientationchange", apply);
-      window.visualViewport?.removeEventListener("resize", apply);
     };
   }, []);
 

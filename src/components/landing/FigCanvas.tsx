@@ -97,11 +97,9 @@ function FigCanvasInner({ children }: { children: React.ReactNode }) {
     apply({ relock: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onOrientation);
-    window.visualViewport?.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onOrientation);
-      window.visualViewport?.removeEventListener("resize", onResize);
     };
   }, [canvas.w, height, mode]);
 

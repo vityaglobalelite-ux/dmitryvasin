@@ -56,11 +56,9 @@ export function SiteFigCanvas({
     applyMode();
     window.addEventListener("resize", applyMode);
     window.addEventListener("orientationchange", applyMode);
-    window.visualViewport?.addEventListener("resize", applyMode);
     return () => {
       window.removeEventListener("resize", applyMode);
       window.removeEventListener("orientationchange", applyMode);
-      window.visualViewport?.removeEventListener("resize", applyMode);
     };
   }, []);
 
@@ -121,11 +119,9 @@ export function SiteFigCanvas({
     const onOrientation = () => apply({ relock: true });
     window.addEventListener("resize", onResize);
     window.addEventListener("orientationchange", onOrientation);
-    window.visualViewport?.addEventListener("resize", onResize);
     return () => {
       window.removeEventListener("resize", onResize);
       window.removeEventListener("orientationchange", onOrientation);
-      window.visualViewport?.removeEventListener("resize", onResize);
       document.documentElement.style.removeProperty(SITE_CANVAS_WIDTH_VAR);
     };
   }, [canvas.h, canvas.w, mode]);

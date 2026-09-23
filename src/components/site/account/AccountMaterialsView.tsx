@@ -149,9 +149,10 @@ export function AccountMaterialsView() {
   const now = useNow();
   const copy = accountT(useLocale());
   const locale = useLocale();
-  const [fullCourseProduct, setFullCourseProduct] = useState<Product | null>(
-    null,
-  );
+  const [fullCourse, setFullCourse] = useState<{
+    locale: Locale;
+    product: Product | null;
+  } | null>(null);
 
   const needsPostureFullProduct = useMemo(() => {
     const ids = new Set(access.data.map((row) => row.productId));
@@ -163,18 +164,23 @@ export function AccountMaterialsView() {
   }, [access.data]);
 
   useEffect(() => {
-    if (!needsPostureFullProduct) {
-      setFullCourseProduct(null);
-      return undefined;
-    }
+    if (!needsPostureFullProduct) return undefined;
     let cancelled = false;
-    void getPublishedProduct(POSTURE_BUNDLE.fullId, locale).then((product) => {
-      if (!cancelled) setFullCourseProduct(product);
-    });
+    getPublishedProduct(POSTURE_BUNDLE.fullId, locale)
+      // Without it both blocks stay listed on their own — nothing is lost.
+      .catch(() => null)
+      .then((product) => {
+        if (!cancelled) setFullCourse({ locale, product });
+      });
     return () => {
       cancelled = true;
     };
   }, [needsPostureFullProduct, locale]);
+
+  const fullCourseProduct =
+    needsPostureFullProduct && fullCourse?.locale === locale
+      ? fullCourse.product
+      : null;
 
   const progressByProduct = useMemo(() => {
     const map = new Map<string, WatchProgress>();
@@ -231,7 +237,7 @@ export function AccountMaterialsView() {
           <Button
             type="button"
             className="mt-8"
-            onClick={() => window.location.reload()}
+            onClick={access.reload}
           >
             {copy.retry}
           </Button>
@@ -291,10 +297,10 @@ function MaterialCard({
   now: Date;
   progress: WatchProgress | null;
 }) {
-  const product = access.product;
-  if (!product) return null;
   const locale = useLocale();
   const routes = useLocalizedRoutes();
+  const product = access.product;
+  if (!product) return null;
   const ui = accountT(locale);
 
   const active = isAccessActive(access, now);
