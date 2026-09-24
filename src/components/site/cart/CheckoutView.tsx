@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   CartBackLink,
@@ -11,6 +11,7 @@ import {
   CartPanel,
   TotalsCard,
   cartColumnsClassName,
+  useLeavingCartRows,
 } from "@/components/site/cart/CartPieces";
 import { cartT, type CartCopy } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
@@ -47,6 +48,7 @@ export function CheckoutView() {
   const [redirecting, setRedirecting] = useState(false);
   const canceled = searchParams.get("canceled") === "1";
 
+  const lines = useLeavingCartRows(cart.items);
   const showCart =
     !redirecting &&
     (!processing.active ||
@@ -102,7 +104,7 @@ export function CheckoutView() {
                   </Button>
                 }
               />
-            ) : cart.items.length === 0 ? (
+            ) : cart.items.length === 0 && lines.empty ? (
               <CartMessage
                 title={copy.checkoutEmptyTitle}
                 body={copy.checkoutEmptyBody}
@@ -111,17 +113,22 @@ export function CheckoutView() {
                 }
               />
             ) : (
-              cart.items.map((item, index) => (
-                <Fragment key={item.productId}>
-                  {index > 0 ? <div className="h-px w-full bg-[#d9d9d9]" /> : null}
+              lines.rows.map((row, index) => (
+                <div
+                  key={row.item.productId}
+                  className={row.leaving ? "cart-line-leave" : undefined}
+                >
+                  {index > 0 ? (
+                    <div className="mb-[30px] h-px w-full bg-[#d9d9d9] max-[600px]:mb-5" />
+                  ) : null}
                   <CartLine
-                    item={item}
+                    item={row.item}
                     percent={cart.totals.percent}
                     onRemove={(id) => {
-                      void cart.remove(id);
+                      cart.remove(id);
                     }}
                   />
-                </Fragment>
+                </div>
               ))
             )}
           </CartPanel>

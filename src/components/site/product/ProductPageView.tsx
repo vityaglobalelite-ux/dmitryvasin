@@ -65,6 +65,7 @@ import {
   isHomeHref,
   useCatalogReturnHref,
 } from "@/lib/catalog/return-to";
+import { useAddedPop } from "@/lib/catalog/cart-membership";
 import { useAddToCart, useCartProductIds } from "@/lib/catalog/use-add-to-cart";
 import type { Locale, Product, ProductType } from "@/lib/catalog/types";
 
@@ -223,7 +224,7 @@ function ProductLoaded({
           currentId={product.id}
           pendingId={cart.pendingId}
           onAdd={(item) => {
-            void cart.add(item.id);
+            void cart.add(item);
           }}
         />
       </article>
@@ -468,9 +469,9 @@ function useProductCart(authReady: boolean): ProductCart {
   const inCartIds = useCartProductIds();
 
   const add = useCallback(
-    async (id: string) => {
-      if (addToCart.pendingId || !authReady) return;
-      await addToCart.add(id);
+    async (target: string | Product) => {
+      if (!authReady) return;
+      await addToCart.add(target);
     },
     [addToCart, authReady],
   );
@@ -564,6 +565,7 @@ function BuyRow({
   const priced = hasShopPrice(product);
   const added = cart.isAdded(product.id);
   const pending = cart.pendingFor(product.id);
+  const pop = useAddedPop(added);
   const label = added ? t.product.inCart : t.product.addToCart;
 
   return (
@@ -588,7 +590,7 @@ function BuyRow({
             added ? (
               <Button
                 href={routes.cart}
-                className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"
+                className={`gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px] ${pop ? "cart-pop" : ""}`}
               >
                 {label}
                 <img
@@ -603,7 +605,7 @@ function BuyRow({
               <Button
                 type="button"
                 onClick={() => {
-                  void cart.add(product.id);
+                  void cart.add(product);
                 }}
                 disabled={!cart.ready || pending}
                 className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]"

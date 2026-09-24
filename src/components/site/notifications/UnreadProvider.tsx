@@ -32,6 +32,7 @@ type UnreadValue = {
   unread: number;
   supportUnread: number;
   refresh: () => Promise<void>;
+  adjust: (delta: { unread?: number; support?: number }) => void;
 };
 
 const UnreadContext = createContext<UnreadValue | null>(null);
@@ -42,6 +43,7 @@ export function useUnreadNotifications(): UnreadValue {
       unread: 0,
       supportUnread: 0,
       refresh: async () => {},
+      adjust: () => {},
     }
   );
 }
@@ -156,6 +158,20 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
     await loadRef.current?.();
   }, []);
 
+  const adjust = useCallback(
+    (delta: { unread?: number; support?: number }) => {
+      setCounts((prev) => {
+        if (!userId || !prev || prev.userId !== userId) return prev;
+        return {
+          userId,
+          unread: Math.max(0, prev.unread + (delta.unread ?? 0)),
+          support: Math.max(0, prev.support + (delta.support ?? 0)),
+        };
+      });
+    },
+    [userId],
+  );
+
   useEffect(() => {
     const raw = document.title.replace(/^[●•]\s+/, "");
     if (supportUnread > 0 && !onSupportPath(pathname)) {
@@ -173,8 +189,8 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ unread, supportUnread, refresh }),
-    [refresh, supportUnread, unread],
+    () => ({ unread, supportUnread, refresh, adjust }),
+    [adjust, refresh, supportUnread, unread],
   );
 
   return (

@@ -1,6 +1,5 @@
 "use client";
 
-import { Fragment } from "react";
 import { cartAssets } from "@/components/site/cart/assets";
 import {
   CartBackLink,
@@ -12,6 +11,7 @@ import {
   TotalsCard,
   WholesaleBanner,
   cartColumnsClassName,
+  useLeavingCartRows,
 } from "@/components/site/cart/CartPieces";
 import { cartT } from "@/components/site/cart/copy";
 import { useCart } from "@/components/site/cart/use-cart";
@@ -25,7 +25,10 @@ export function CartView() {
   const checkoutLabel = cart.signedIn
     ? copy.checkoutSigned
     : copy.checkoutGuest;
-  const empty = !cart.loading && !cart.error && cart.items.length === 0;
+  const lines = useLeavingCartRows(cart.items);
+  const empty =
+    !cart.loading && !cart.error && cart.items.length === 0 && lines.empty;
+  const payable = !cart.loading && !cart.error && cart.items.length > 0;
 
   return (
     <main className="mx-auto w-full flex-1 px-[12.5%] pb-24 pt-16 max-[600px]:px-5 max-[600px]:pb-16 max-[600px]:pt-6">
@@ -63,36 +66,37 @@ export function CartView() {
           ) : (
             <>
               <WholesaleBanner />
-              {cart.items.map((item, index) => (
-                <Fragment key={item.productId}>
-                  {index > 0 ? (
-                    <div className="h-px w-full bg-[#d9d9d9]" />
-                  ) : null}
+              {lines.rows.map((row, index) => (
+                <div
+                  key={row.item.productId}
+                  className={row.leaving ? "cart-line-leave" : undefined}
+                >
+                  {index > 0 ? <div className="mb-[30px] h-px w-full bg-[#d9d9d9] max-[600px]:mb-5" /> : null}
                   <CartLine
-                    item={item}
+                    item={row.item}
                     percent={cart.totals.percent}
                     onRemove={(id) => {
-                      void cart.remove(id);
+                      cart.remove(id);
                     }}
                   />
-                </Fragment>
+                </div>
               ))}
             </>
           )}
         </CartPanel>
 
         <TotalsCard totals={cart.totals}>
-          {empty ? (
+          {payable ? (
             <Button
-              type="button"
-              disabled
+              href={routes.checkout}
               className="mt-auto h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
             >
               {checkoutLabel}
             </Button>
           ) : (
             <Button
-              href={routes.checkout}
+              type="button"
+              disabled
               className="mt-auto h-[60px] w-full p-2.5 max-[600px]:h-[50px] max-[600px]:text-[13px]"
             >
               {checkoutLabel}

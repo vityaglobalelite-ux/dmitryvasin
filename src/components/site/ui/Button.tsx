@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export const siteFocusRing =
   "outline-none focus-visible:ring-2 focus-visible:ring-plum/45 focus-visible:ring-offset-2 focus-visible:ring-offset-white";
@@ -29,7 +29,6 @@ type ButtonAsLink = CommonProps & {
   href: string;
   type?: never;
   disabled?: boolean;
-  style?: CSSProperties;
 };
 
 export type SiteButtonProps = ButtonAsButton | ButtonAsLink;
@@ -45,6 +44,23 @@ function buttonClassName(variant: SiteButtonVariant, className?: string) {
   }
   if (hasPx || hasMobilePx) {
     variantCls = variantCls.replace(/\bmax-\[600px\]:px-8\b/g, "");
+  }
+
+  const bareHeight = className?.match(/(?:^|\s)(h-\[[^\]]+\])/);
+  if (
+    bareHeight &&
+    bareHeight[1] !== "h-[60px]" &&
+    bareHeight[1] !== "h-[50px]"
+  ) {
+    variantCls = variantCls
+      .replace(/\bh-\[(?:60|35)px\]/g, "")
+      .replace(/\bmax-\[600px\]:h-\[50px\]/g, "")
+      .replace(/\bmax-\[600px\]:h-8\b/g, "");
+  }
+
+  const bareText = className?.match(/(?:^|\s)(text-\[[^\]]+\])/);
+  if (bareText && bareText[1] !== "text-[16px]" && bareText[1] !== "text-[13px]") {
+    variantCls = variantCls.replace(/\btext-\[16px\]/g, "");
   }
 
   return [
@@ -65,12 +81,7 @@ export function Button(props: SiteButtonProps) {
 
   if ("href" in props && props.href) {
     return (
-      <Link
-        href={props.href}
-        className={cls}
-        style={props.style}
-        aria-disabled={props.disabled}
-      >
+      <Link href={props.href} className={cls} aria-disabled={props.disabled}>
         {children}
       </Link>
     );

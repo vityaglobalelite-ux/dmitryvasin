@@ -67,7 +67,7 @@ function CatalogQuery({ onRetry }: { onRetry: () => void }) {
         pendingId={addToCart.pendingId}
         inCartIds={inCartIds}
         onAdd={(product) => {
-          void addToCart.add(product.id);
+          void addToCart.add(product);
         }}
         onRetry={onRetry}
       />
@@ -91,7 +91,7 @@ function CatalogFrame({
   error?: Error | null;
   products?: Product[];
   pendingId?: string | null;
-  inCartIds?: Set<string>;
+  inCartIds?: ReadonlySet<string>;
   onAdd?: (product: Product) => void;
   onRetry?: () => void;
 }) {

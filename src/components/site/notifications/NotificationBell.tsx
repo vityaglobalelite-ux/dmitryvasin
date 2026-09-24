@@ -13,6 +13,7 @@ import { withLocalePrefix } from "@/lib/catalog/locale";
 import {
   listNotifications,
   markNotificationRead,
+  SUPPORT_REPLY_TYPE,
 } from "@/lib/catalog/repo/notifications";
 import type { Notification } from "@/lib/catalog/types";
 
@@ -31,7 +32,7 @@ export function NotificationBell() {
   const { data: user, loading } = useSessionUser();
   const locale = useLocale();
   const copy = notificationT(locale);
-  const { unread, refresh } = useUnreadNotifications();
+  const { unread, adjust } = useUnreadNotifications();
   const router = useRouter();
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -82,16 +83,20 @@ export function NotificationBell() {
     };
   }, [open]);
 
-  async function onItemClick(item: Notification) {
-    try {
-      if (!item.read) await markNotificationRead(item.id);
-    } catch {
-      /* still navigate */
+  function onItemClick(item: Notification) {
+    if (!item.read) {
+      const support = item.type === SUPPORT_REPLY_TYPE ? -1 : 0;
+      setItems((prev) =>
+        prev.map((row) => (row.id === item.id ? { ...row, read: true } : row)),
+      );
+      adjust({ unread: -1, support });
+      void markNotificationRead(item.id).catch(() => {
+        setItems((prev) =>
+          prev.map((row) => (row.id === item.id ? { ...row, read: false } : row)),
+        );
+        adjust({ unread: 1, support: support ? 1 : 0 });
+      });
     }
-    setItems((prev) =>
-      prev.map((row) => (row.id === item.id ? { ...row, read: true } : row)),
-    );
-    void refresh();
     setOpen(false);
     if (item.href) router.push(withLocalePrefix(item.href, locale));
   }

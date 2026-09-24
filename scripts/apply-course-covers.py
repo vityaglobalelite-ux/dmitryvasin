@@ -13,9 +13,9 @@ import urllib.error
 import urllib.request
 
 COURSE_2 = [
-    "/assets/site/catalog/covers/course-2-1.webp",
-    "/assets/site/catalog/covers/course-2-2.webp",
-    "/assets/site/catalog/covers/course-2-3.webp",
+    "/assets/site/catalog/covers/course-2b-1.webp",
+    "/assets/site/catalog/covers/course-2b-2.webp",
+    "/assets/site/catalog/covers/course-2b-3.webp",
 ]
 POSTURE = [
     "/assets/site/catalog/covers/posture-1.webp",

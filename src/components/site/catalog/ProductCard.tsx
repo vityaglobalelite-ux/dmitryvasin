@@ -23,6 +23,7 @@ import { Button, siteFocusRing } from "@/components/site/ui/Button";
 import { CatalogPrice } from "@/components/site/ui/CatalogPrice";
 import { isPeekWatchable } from "@/lib/catalog/access";
 import { productCopy } from "@/lib/catalog/locale";
+import { useAddedPop } from "@/lib/catalog/cart-membership";
 import {
   useCatalogT,
   useLocale,
@@ -462,6 +463,7 @@ function CartButton({
 }) {
   const t = useCatalogT();
   const routes = useLocalizedRoutes();
+  const pop = useAddedPop(inCart);
   const frame = [
     "size-[60px] shrink-0 rounded-full transition-[transform,opacity] duration-200 ease-out hover:scale-105 active:scale-95 motion-reduce:transition-none motion-reduce:hover:scale-100 @max-[466px]:size-[50px] max-[600px]:size-[50px]",
     siteFocusRing,
@@ -472,7 +474,7 @@ function CartButton({
       <Link
         href={routes.cart}
         aria-label={t.product.inCart}
-        className={`${frame} grid place-items-center bg-[image:var(--brand-gradient)]`}
+        className={`${frame} grid place-items-center bg-[image:var(--brand-gradient)] ${pop ? "cart-pop" : ""}`}
       >
         <img
           src={productAssets.checkWhite}

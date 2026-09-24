@@ -81,7 +81,7 @@ function useHomeCatalogRail() {
     !loading && !error && listing.length > 0 && items.length === 0;
 
   const onAdd = (product: Product) => {
-    void addToCart.add(product.id);
+    void addToCart.add(product);
   };
 
   const seeAllFilterLabel =

@@ -1,165 +1,129 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
-import { getGuestCart, mergeGuestCartOnLogin, removeGuestItem } from "@/lib/catalog/cart";
-import { useAuthUser } from "@/lib/catalog/hooks";
-import { listCartItems, removeCartItem } from "@/lib/catalog/repo/cart";
-import {
-  getPublishedProduct,
-  listPublishedProducts,
-} from "@/lib/catalog/repo/products";
-import { getWholesaleTiers } from "@/lib/catalog/repo/settings";
+import { useCallback, useEffect, useState } from "react";
 import {
   CART_CHANGED_EVENT,
-  emitCartChanged,
 } from "@/lib/catalog/use-add-to-cart";
-import type { AuthUser, CartItem, Product, WholesaleTier } from "@/lib/catalog/types";
+import {
+  adoptGuest,
+  bundleCapProducts,
+  ensureGuestCart,
+  getCartSnapshot,
+  requestServerCart,
+  showCartNotice,
+  stageRemove,
+  useCartSnapshot,
+} from "@/lib/catalog/cart-membership";
+import { useAuthUser } from "@/lib/catalog/hooks";
+import { getWholesaleTiers } from "@/lib/catalog/repo/settings";
+import type { Product, WholesaleTier } from "@/lib/catalog/types";
 import { computeCartTotals } from "@/components/site/cart/totals";
 import { useCatalogCurrency } from "@/lib/catalog/currency-context";
-
-async function hydrateGuestItems(items: CartItem[]): Promise<CartItem[]> {
-  if (items.length === 0) return [];
-  const unique = new Map<string, CartItem>();
-  for (const item of items) {
-    if (!unique.has(item.productId)) unique.set(item.productId, { ...item, qty: 1 });
-  }
-  const products = await listPublishedProducts();
-  const byId = new Map(products.map((product) => [product.id, product]));
-  const hydrated: CartItem[] = [];
-  for (const item of unique.values()) {
-    const product = byId.get(item.productId);
-    if (!product) continue;
-    hydrated.push({ ...item, qty: 1, product });
-  }
-  return hydrated;
-}
-
-async function bundleCapProducts(items: CartItem[]): Promise<Product[]> {
-  const ids = new Set(items.map((item) => item.productId));
-  const hasBothBlocks =
-    ids.has(POSTURE_BUNDLE.block1Id) && ids.has(POSTURE_BUNDLE.block2Id);
-  if (!hasBothBlocks || ids.has(POSTURE_BUNDLE.fullId)) return [];
-  const fetched = await getPublishedProduct(POSTURE_BUNDLE.fullId);
-  return fetched ? [fetched] : [];
-}
-
-async function readCart(
-  user: AuthUser | null,
-  mergedRef: { current: boolean },
-): Promise<{ items: CartItem[]; tiers: WholesaleTier[]; extras: Product[] }> {
-  const tiers = await getWholesaleTiers().catch(() => [] as WholesaleTier[]);
-  if (user) {
-    if (!mergedRef.current) {
-      mergedRef.current = true;
-      try {
-        const guestHadItems = getGuestCart().length > 0;
-        await mergeGuestCartOnLogin();
-        if (guestHadItems) emitCartChanged();
-      } catch {
-        mergedRef.current = false;
-      }
-    }
-    const serverItems = await listCartItems();
-    const items = serverItems.map((item) => ({ ...item, qty: 1 }));
-    return {
-      tiers,
-      items,
-      extras: await bundleCapProducts(items),
-    };
-  }
-  mergedRef.current = false;
-  const items = await hydrateGuestItems(getGuestCart());
-  return { tiers, items, extras: await bundleCapProducts(items) };
-}
 
 export function useCart() {
   const auth = useAuthUser();
   const { currency } = useCatalogCurrency();
-  const [items, setItems] = useState<CartItem[]>([]);
+  const snap = useCartSnapshot();
   const [tiers, setTiers] = useState<WholesaleTier[]>([]);
   const [extras, setExtras] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const mergedRef = useRef(false);
-
-  const apply = useCallback(
-    (next: { items: CartItem[]; tiers: WholesaleTier[]; extras: Product[] }) => {
-      setTiers(next.tiers);
-      setItems(next.items);
-      setExtras(next.extras);
-      setError(null);
-      setLoading(false);
-    },
-    [],
-  );
+  const userId = auth.data?.id ?? null;
 
   useEffect(() => {
     if (auth.loading) return;
     let cancelled = false;
-    readCart(auth.data, mergedRef)
+
+    void getWholesaleTiers()
       .then((next) => {
-        if (!cancelled) apply(next);
+        if (!cancelled) setTiers(next);
+      })
+      .catch(() => {
+        if (!cancelled) setTiers([]);
+      });
+
+    if (!userId) adoptGuest();
+    const load = userId ? requestServerCart(userId) : ensureGuestCart();
+
+    void load
+      .then(() => {
+        if (!cancelled) setError(null);
       })
       .catch((caught: unknown) => {
         if (cancelled) return;
-        setItems([]);
-        setError(caught instanceof Error ? caught : new Error("cart"));
-        setLoading(false);
+        if (getCartSnapshot().items.length === 0) {
+          setError(caught instanceof Error ? caught : new Error("cart"));
+        } else {
+          showCartNotice();
+        }
       });
+
     return () => {
       cancelled = true;
     };
-  }, [apply, auth.data, auth.loading]);
+  }, [auth.loading, userId]);
 
   useEffect(() => {
     const onChange = () => {
       if (auth.loading) return;
-      void readCart(auth.data, mergedRef)
-        .then(apply)
-        .catch(() => {
-          /* keep current rows; user can retry */
-        });
+      const reload = userId
+        ? requestServerCart(userId, true)
+        : ensureGuestCart();
+      void reload.catch(() => {
+        /* keep the lines already on screen */
+      });
     };
     window.addEventListener(CART_CHANGED_EVENT, onChange);
-    window.addEventListener("storage", onChange);
+    return () => window.removeEventListener(CART_CHANGED_EVENT, onChange);
+  }, [auth.loading, userId]);
+
+  const orderKey = snap.ordered.join("\n");
+
+  useEffect(() => {
+    let cancelled = false;
+    void bundleCapProducts(getCartSnapshot().items).then((next) => {
+      if (!cancelled) setExtras(next);
+    });
     return () => {
-      window.removeEventListener(CART_CHANGED_EVENT, onChange);
-      window.removeEventListener("storage", onChange);
+      cancelled = true;
     };
-  }, [apply, auth.data, auth.loading]);
+  }, [orderKey]);
 
   const reload = useCallback(() => {
     if (auth.loading) return;
-    setLoading(true);
     setError(null);
-    void readCart(auth.data, mergedRef)
-      .then(apply)
-      .catch((caught: unknown) => {
-        setItems([]);
+    if (!userId) adoptGuest();
+    const load = userId ? requestServerCart(userId, true) : ensureGuestCart();
+    void load.catch((caught: unknown) => {
+      if (getCartSnapshot().items.length === 0) {
         setError(caught instanceof Error ? caught : new Error("cart"));
-        setLoading(false);
-      });
-  }, [apply, auth.data, auth.loading]);
+      } else {
+        showCartNotice();
+      }
+    });
+  }, [auth.loading, userId]);
 
   const remove = useCallback(
-    async (productId: string) => {
-      if (auth.data) {
-        await removeCartItem(productId);
-      } else {
-        removeGuestItem(productId);
-      }
-      emitCartChanged({ removed: productId });
-      setItems((current) => current.filter((item) => item.productId !== productId));
+    (productId: string) => {
+      stageRemove(productId, userId);
     },
-    [auth.data],
+    [userId],
   );
 
+  const known = snap.items.some((item) => item.product);
+  const loading =
+    !error &&
+    (auth.loading ||
+      (!snap.idsReady && !known) ||
+      (snap.idsReady &&
+        !snap.itemsHydrated &&
+        snap.items.length > 0 &&
+        !known));
+
   return {
-    items,
+    items: snap.items,
     tiers,
-    totals: computeCartTotals(items, tiers, currency, extras),
-    loading: loading || auth.loading,
+    totals: computeCartTotals(snap.items, tiers, currency, extras),
+    loading,
     error,
     signedIn: Boolean(auth.data),
     remove,

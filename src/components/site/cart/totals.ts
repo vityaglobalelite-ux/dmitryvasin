@@ -26,7 +26,7 @@ export function pickWholesalePercent(
 }
 
 export function computeCartTotals(
-  items: CartItem[],
+  items: readonly CartItem[],
   tiers: WholesaleTier[],
   currency: Currency,
   extraProducts: Product[] = [],

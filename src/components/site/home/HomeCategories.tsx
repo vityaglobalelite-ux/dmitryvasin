@@ -8,6 +8,11 @@ import { homeAssets } from "@/lib/catalog/home-assets";
 import { homeCategories, homeDesktopBreaks, homeMobileBreaks, homeT } from "@/lib/catalog/home-copy";
 import { useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 
+const extraGainEn = [
+  "And the more you choose,",
+  "the greater your benefit!",
+] as const;
+
 const photos = {
   catLifehack: homeAssets.catLifehack,
   catLesson: homeAssets.catLesson,
@@ -163,52 +168,49 @@ export function HomeCategoriesDesktop() {
         x={241}
         y={4236}
         w={1437}
-        h={224}
+        h={280}
         z={2}
-        className="overflow-hidden rounded-[30px] bg-[image:var(--brand-gradient)] p-10"
+        className="overflow-hidden rounded-[30px] bg-[image:var(--brand-gradient)] px-10"
       >
         <HomeImg
           src={homeAssets.percent3d}
           alt=""
-          width={341}
-          height={341}
-          className="pointer-events-none absolute left-[1143px] top-[-33px] h-[341px] w-[341px] object-contain"
+          width={380}
+          height={380}
+          className="pointer-events-none absolute -right-20 top-1/2 h-[360px] w-[360px] -translate-y-1/2 object-contain"
         />
-        <div className="relative z-[1] flex h-full items-end justify-between">
-          <div className="max-w-[662px]">
-            {ru ? (
-              <FigLines
-                lines={homeDesktopBreaks.extraLead}
-                className="w-[662px] text-[24px] font-medium leading-[1.2] text-white"
-              />
-            ) : (
-              <p className="text-[24px] font-medium leading-[1.2] text-white">
-                {copy.extraLead}
-              </p>
-            )}
-            <div className="mt-5 flex items-center gap-5">
+        <div className="relative z-[1] flex h-full flex-col justify-center">
+          {ru ? (
+            <FigLines
+              lines={homeDesktopBreaks.extraLead}
+              className="text-[24px] font-medium leading-[1.2] text-white/95"
+            />
+          ) : (
+            <p className="max-w-[820px] text-[24px] font-medium leading-[1.2] text-white/95">
+              {copy.extraLead}
+            </p>
+          )}
+          <div className="mt-4 flex items-center justify-between gap-8">
+            <div className="flex min-w-0 items-center gap-4">
               <HomeImg
                 src={homeAssets.iconDiscount}
                 alt=""
-                width={58}
-                height={58}
-                className="size-[58px]"
+                width={80}
+                height={80}
+                className="size-20 shrink-0"
               />
-              {ru ? (
-                <FigLines
-                  lines={homeDesktopBreaks.extraGain}
-                  className="w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white"
-                />
-              ) : (
-                <p className="max-w-[526px] text-[30px] font-medium leading-[1.1] tracking-[-0.9px] text-white">
-                  {copy.extraGain}
-                </p>
-              )}
+              <FigLines
+                lines={ru ? homeDesktopBreaks.extraGain : extraGainEn}
+                className="text-[56px] font-semibold leading-[1.12] tracking-[-0.2px] text-white"
+              />
             </div>
+            <Button
+              href={routes.catalog}
+              className="h-[80px] w-[400px] shrink-0 px-8 text-[18px]"
+            >
+              {copy.chooseVideos}
+            </Button>
           </div>
-          <Button href={routes.catalog} className="h-[60px] w-[309px] shrink-0 px-0">
-            {copy.chooseVideos}
-          </Button>
         </div>
       </Layer>
     </>
@@ -349,50 +351,48 @@ export function HomeCategoriesMobile() {
         w={320}
         h={272}
         z={2}
-        className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)] p-[15px]"
+        className="overflow-hidden rounded-[10px] bg-[image:var(--brand-gradient)] p-4"
       >
-        <HomeImg
-          src={homeAssets.percent3d}
-          alt=""
-          width={180}
-          height={180}
-          className="pointer-events-none absolute -right-8 top-8 h-[180px] w-[180px] object-contain opacity-80"
-        />
-        {ru ? (
-          <FigLines
-            lines={homeMobileBreaks.extraLead}
-            className="relative z-[1] text-[13px] leading-[1.5] text-white"
-          />
-        ) : (
-          <p className="relative z-[1] text-[13px] leading-[1.5] text-white">
-            {copy.extraLead}
-          </p>
-        )}
-        <div className="relative z-[1] mt-16 flex items-center gap-2.5">
-          <HomeImg
-            src={homeAssets.iconDiscount}
-            alt=""
-            width={40}
-            height={40}
-            className="size-10"
-          />
+        <div className="relative z-[1] flex h-full flex-col">
           {ru ? (
             <FigLines
-              lines={homeMobileBreaks.extraGain}
-              className="text-[16px] font-medium leading-[1.3] text-white"
+              lines={homeMobileBreaks.extraLead}
+              className="text-[13px] leading-[1.45] text-white"
             />
           ) : (
-            <p className="text-[16px] font-medium leading-[1.3] text-white">
-              {copy.extraGain}
-            </p>
+            <p className="text-[13px] leading-[1.45] text-white">{copy.extraLead}</p>
           )}
+          <div className="relative min-h-[64px] flex-1">
+            <HomeImg
+              src={homeAssets.percent3d}
+              alt=""
+              width={80}
+              height={80}
+              className="pointer-events-none absolute bottom-2 right-0 h-16 w-16 object-contain"
+            />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <HomeImg
+                src={homeAssets.iconDiscount}
+                alt=""
+                width={28}
+                height={28}
+                className="size-7 shrink-0"
+              />
+              <FigLines
+                lines={ru ? homeMobileBreaks.extraGain : extraGainEn}
+                className="text-[17px] font-semibold leading-[1.15] tracking-[-0.15px] text-white"
+              />
+            </div>
+            <Button
+              href={routes.catalog}
+              className="mt-3 h-[52px] w-full px-3 text-[14px]"
+            >
+              {copy.chooseVideos}
+            </Button>
+          </div>
         </div>
-        <Button
-          href={routes.catalog}
-          className="relative z-[1] mt-6 h-[50px] w-full px-0 text-[13px]"
-        >
-          {copy.chooseVideos}
-        </Button>
       </Layer>
     </>
   );

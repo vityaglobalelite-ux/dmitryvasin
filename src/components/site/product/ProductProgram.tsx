@@ -13,12 +13,13 @@ import {
   POSTURE_COURSE_BLOCK2_ID,
 } from "@/lib/catalog/ids";
 import { catalogT } from "@/lib/catalog/i18n";
+import { useAddedPop } from "@/lib/catalog/cart-membership";
 import { useCatalogT, useLocale, useLocalizedRoutes } from "@/lib/catalog/locale-context";
 import { catalogPriceMinor } from "@/lib/catalog/money";
 import type { Locale, Product, ProgramBlock } from "@/lib/catalog/types";
 
 export type ProductCartApi = {
-  add: (productId: string) => Promise<void>;
+  add: (target: string | Product) => Promise<void>;
   isAdded: (productId: string) => boolean;
   pendingFor: (productId: string) => boolean;
   ready: boolean;
@@ -275,7 +276,7 @@ function ProgramBlockCard({
             ready={cart.ready}
             label={added ? t.product.inCart : t.product.addToCart}
             onAdd={() => {
-              void cart.add(buyId);
+              if (sku) void cart.add(sku);
             }}
           />
         </div>
@@ -375,7 +376,7 @@ function BundleBanner({
             ready={cart.ready}
             label={added ? t.product.inCart : t.product.buyCourse}
             onAdd={() => {
-              void cart.add(full.id);
+              void cart.add(full);
             }}
           />
         </div>
@@ -415,9 +416,10 @@ function SkuBuyButton({
   onAdd: () => void;
 }) {
   const routes = useLocalizedRoutes();
+  const pop = useAddedPop(added);
   if (added) {
     return (
-      <Button href={routes.cart} className="gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px]">
+      <Button href={routes.cart} className={`gap-2.5 max-[600px]:h-[50px] max-[600px]:px-4 max-[600px]:text-[13px] ${pop ? "cart-pop" : ""}`}>
         {label}
         <img
           src={productAssets.checkWhite}

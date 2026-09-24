@@ -80,7 +80,7 @@ def find_course2_plaque_zip() -> pathlib.Path | None:
 
 
 def import_course2_plaques(plaque_zip: pathlib.Path) -> None:
-    """Dedicated zip: «Для курса плашки/{1,2,3}.png|jpg» → covers/course-2-N.webp."""
+    """Dedicated zip: «Для курса плашки/{1,2,3}.png|jpg» → covers/course-2b-N.webp."""
     covers = OUT / "covers"
     covers.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(plaque_zip) as zf:
@@ -93,7 +93,7 @@ def import_course2_plaques(plaque_zip: pathlib.Path) -> None:
             )
             if not entry:
                 raise SystemExit(f"course-2 plaque {frame} missing in {plaque_zip.name}")
-            dest = covers / f"course-2-{frame}.webp"
+            dest = covers / f"course-2b-{frame}.webp"
             print(f"course-2/{frame} <- {entry}")
             to_webp_still(zf.read(entry), dest)
 
@@ -215,7 +215,7 @@ def import_plaques(plaque_zip: pathlib.Path) -> None:
             if not entry:
                 print(f"warn: course-2 frame {frame} missing", file=sys.stderr)
                 continue
-            to_webp_still(zf.read(entry), covers / f"course-2-{frame}.webp")
+            to_webp_still(zf.read(entry), covers / f"course-2b-{frame}.webp")
 
         import_lifehack_plaques(zf, names, covers)
 

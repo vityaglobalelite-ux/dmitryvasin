@@ -5,7 +5,9 @@ import {
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
 import type { CartItem } from "@/lib/catalog/types";
 
-const STORAGE_KEY = "catalog.guest-cart.v1";
+export const GUEST_CART_STORAGE_KEY = "catalog.guest-cart.v1";
+
+const STORAGE_KEY = GUEST_CART_STORAGE_KEY;
 
 function readWindow(): Storage | null {
   if (typeof window === "undefined") return null;

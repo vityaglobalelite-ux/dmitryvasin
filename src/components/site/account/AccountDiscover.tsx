@@ -104,7 +104,7 @@ export function AccountDiscover({
               <ProductCard
                 product={product}
                 onAdd={(item) => {
-                  void addToCart.add(item.id);
+                  void addToCart.add(item);
                 }}
                 adding={addToCart.pendingId === product.id}
                 inCart={inCartIds.has(product.id)}

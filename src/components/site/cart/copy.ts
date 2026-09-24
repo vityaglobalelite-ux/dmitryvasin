@@ -30,6 +30,7 @@ const ru = {
   unavailableTitle: "Товар недоступен",
   errorTitle: "Не удалось загрузить корзину",
   errorBody: "Попробуйте ещё раз — позиции подтянутся из сохранённой корзины.",
+  syncFailed: "Не удалось обновить корзину. Вернули как было — попробуйте ещё раз.",
   retry: "Повторить",
   modalTitle: "Чем больше видео покупаете — тем выше выгода!",
   modalBody:
@@ -99,6 +100,7 @@ const en = {
   unavailableTitle: "This item is unavailable",
   errorTitle: "Couldn’t load the cart",
   errorBody: "Please try again — items will load from your saved cart.",
+  syncFailed: "Couldn’t update the cart. It’s back as it was — please try again.",
   retry: "Try again",
   modalTitle: "The more videos you buy — the greater the benefit!",
   modalBody:

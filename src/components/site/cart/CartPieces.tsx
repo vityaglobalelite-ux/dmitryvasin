@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import { cartAssets } from "@/components/site/cart/assets";
 import { cartT } from "@/components/site/cart/copy";
 import {
@@ -445,4 +445,62 @@ export function CartMessage({
       <div className="mt-2">{action}</div>
     </div>
   );
+}
+
+type LeavingRow = { item: CartItem; leaving: boolean };
+
+/** Keeps a removed line on screen long enough to fade, then drops it. */
+export function useLeavingCartRows(items: readonly CartItem[]): {
+  rows: LeavingRow[];
+  empty: boolean;
+} {
+  const [rows, setRows] = useState<LeavingRow[]>(() =>
+    items.map((item) => ({ item, leaving: false })),
+  );
+
+  useLayoutEffect(() => {
+    setRows((current) => {
+      const live = new Map(items.map((item) => [item.productId, item]));
+      const next: LeavingRow[] = [];
+      const seen = new Set<string>();
+      let changed = false;
+
+      for (const row of current) {
+        const fresh = live.get(row.item.productId);
+        if (fresh) {
+          if (fresh !== row.item || row.leaving) changed = true;
+          next.push({ item: fresh, leaving: false });
+          seen.add(fresh.productId);
+        } else if (!row.leaving) {
+          changed = true;
+          next.push({ item: row.item, leaving: true });
+        } else {
+          next.push(row);
+        }
+      }
+
+      for (const item of items) {
+        if (seen.has(item.productId)) continue;
+        changed = true;
+        next.push({ item, leaving: false });
+      }
+
+      if (!changed && next.length === current.length) return current;
+      return next;
+    });
+  }, [items]);
+
+  useEffect(() => {
+    if (!rows.some((row) => row.leaving)) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(
+      () => {
+        setRows((current) => current.filter((row) => !row.leaving));
+      },
+      reduce ? 0 : 200,
+    );
+    return () => window.clearTimeout(timer);
+  }, [rows]);
+
+  return { rows, empty: rows.length === 0 };
 }

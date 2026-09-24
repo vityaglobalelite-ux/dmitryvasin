@@ -159,7 +159,7 @@ const POSTURE_BLOCK2_COVERS = [1, 2, 3].map(
   (n) => `/assets/site/catalog/covers/posture-b2-${n}.webp`,
 );
 const COURSE_2_COVERS = [1, 2, 3].map(
-  (n) => `/assets/site/catalog/covers/course-2-${n}.webp`,
+  (n) => `/assets/site/catalog/covers/course-2b-${n}.webp`,
 );
 
 export function postureProgramRows(productId, blocks) {

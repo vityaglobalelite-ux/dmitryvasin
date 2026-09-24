@@ -4,17 +4,35 @@ import {
   isPostureBundleFull,
 } from "@/lib/catalog/bundles";
 import { POSTURE_BUNDLE } from "@/lib/catalog/ids";
-import type { CartItem } from "@/lib/catalog/types";
+import { asIdentifiedUser, type CartItem } from "@/lib/catalog/types";
 import { getSupabase } from "@/lib/supabase/client";
+import { mapAuthUser, peekCachedAuthUser } from "@/lib/supabase/auth";
 import {
+  AuthRequiredError,
   CART_ITEMS_SELECT,
   CART_ITEMS_SELECT_LEGACY,
   catalogSelectWithFallback,
   mapProductRow,
-  requireUserId,
   throwIfPostgrestError,
   type ProductRow,
 } from "@/lib/catalog/repo/internal";
+
+/** Local session id. RLS still checks the JWT; this skips the Auth round trip. */
+async function actorId(): Promise<string> {
+  const cached = peekCachedAuthUser();
+  if (cached) return cached.id;
+
+  const supabase = getSupabase();
+  if (!supabase) throw new Error("Supabase is not configured");
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
+  if (error || !session?.user) throw new AuthRequiredError();
+  const mapped = asIdentifiedUser(mapAuthUser(session.user));
+  if (!mapped) throw new AuthRequiredError();
+  return mapped.id;
+}
 
 type CartItemRow = {
   product_id: string;
@@ -42,7 +60,7 @@ export async function listCartItems(): Promise<CartItem[]> {
   const supabase = getSupabase();
   if (!supabase) return [];
 
-  await requireUserId();
+  await actorId();
 
   const result = await catalogSelectWithFallback(
     CART_ITEMS_SELECT,
@@ -126,7 +144,7 @@ export async function upsertCartItem(productId: string, qty = 1): Promise<void> 
   const supabase = getSupabase();
   if (!supabase) return;
 
-  const userId = await requireUserId();
+  const userId = await actorId();
   const safeQty = Math.min(Math.max(qty, 1), 1);
 
   await enforceBundleCartRules(userId, productId);
@@ -148,7 +166,7 @@ export async function removeCartItem(productId: string): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
 
-  const userId = await requireUserId();
+  const userId = await actorId();
 
   const { error } = await supabase
     .from("catalog_cart_items")
@@ -163,7 +181,7 @@ export async function mergeGuestCart(items: CartItem[]): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
 
-  const userId = await requireUserId();
+  const userId = await actorId();
   const unique = new Map<string, CartItem>();
   for (const item of items) {
     if (!unique.has(item.productId)) unique.set(item.productId, item);
@@ -211,7 +229,7 @@ export async function clearCart(): Promise<void> {
   const supabase = getSupabase();
   if (!supabase) return;
 
-  const userId = await requireUserId();
+  const userId = await actorId();
 
   const { error } = await supabase
     .from("catalog_cart_items")
